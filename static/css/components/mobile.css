@@ -1,0 +1,86 @@
+/* Mobile-specific adjustments (phones and small tablets) */
+@media only screen and (max-width: 768px) {
+  /* Only handle UI positioning - let base.css handle main layout */
+  
+  /* Optimize map rendering for mobile to prevent blinking */
+  #map {
+    backface-visibility: hidden !important; /* Prevent flickering during transforms */
+    -webkit-backface-visibility: hidden !important;
+    transform: translateZ(0) !important; /* Force hardware acceleration */
+    -webkit-transform: translateZ(0) !important;
+  }
+  
+  /* Ensure search bar is visible on mobile */
+  #top-controls {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    z-index: 1000 !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  #search-control {
+    width: 100% !important; /* Make the search bar fill the available width */
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Adjust legend positioning for mobile - auto-size to content width */
+  #legend {
+    position: absolute !important;
+    top: 70px !important; /* Position below search bar */
+    left: 10px !important;
+    width: fit-content !important; /* Auto-size to content width */
+    max-width: calc(100vw - 20px) !important; /* Don't exceed screen width minus padding */
+    max-height: 40% !important; /* Limit height to 40% of the viewport */
+    overflow-y: auto !important; /* Allow scrolling if legend is too tall */
+    display: block !important;
+    visibility: visible !important;
+    z-index: 1000 !important;
+  }
+}
+
+/* Tablet-specific adjustments (iPad and similar) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Only handle UI positioning - let base.css handle main layout */
+  
+  /* Ensure search bar is visible on tablet and positioned correctly with higher z-index */
+  #top-controls {
+    position: absolute !important;
+    top: 10px !important;
+    left: 10px !important;
+    z-index: 1000 !important; /* Higher than legend */
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  #search-control {
+    width: 300px !important; /* Fixed width for tablet */
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Adjust legend positioning for tablet - position below search bar with lower z-index */
+  #legend {
+    position: absolute !important;
+    top: 70px !important; /* Position below search bar */
+    left: 10px !important;
+    max-width: 300px !important;
+    display: block !important;
+    visibility: visible !important;
+    z-index: 1000 !important; /* Lower than search */
+  }
+  
+  /* Override any conflicting legend search container rules */
+  #legend-search-container {
+    max-width: none !important;
+  }
+  
+  #legend-search-container input {
+    width: 100% !important;
+    padding-right: 25px !important;
+  }
+}

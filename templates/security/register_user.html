@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Register - Tamermap.com{% endblock %}
+{% block content %}
+<div class="page-content">
+  <h1 class="center">Register</h1>
+  <div class="form-container">
+    {% if register_user_form.errors %}
+      <div class="error-messages">
+        <ul>
+          {% for field, errors in register_user_form.errors.items() %}
+            {% for error in errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    <form action="{{ url_for('security.register') }}" method="POST">
+      {{ register_user_form.hidden_tag() }}
+      <div>
+        <label for="first-name">{{ register_user_form.first_name.label.text }}</label>
+        {{ register_user_form.first_name(placeholder="Enter your first name", id="first-name") }}
+      </div>
+      <div>
+        <label for="last-name">{{ register_user_form.last_name.label.text }}</label>
+        {{ register_user_form.last_name(placeholder="Enter your last name", id="last-name") }}
+      </div>
+      <div>
+        <label for="register-email">{{ register_user_form.email.label.text }}</label>
+        {{ register_user_form.email(placeholder="Enter your email", id="register-email") }}
+      </div>
+      <div>
+        <label for="register-password">{{ register_user_form.password.label.text }}</label>
+        {{ register_user_form.password(placeholder="Enter your password", id="register-password") }}
+      </div>
+      <div>
+        <label for="confirm-password">{{ register_user_form.password_confirm.label.text }}</label>
+        {{ register_user_form.password_confirm(placeholder="Confirm your password", id="confirm-password") }}
+      </div>
+      <button type="submit">Register</button>
+    </form>
+    <div class="options">
+      <a href="{{ url_for('security.login') }}">Already have an account? Login</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

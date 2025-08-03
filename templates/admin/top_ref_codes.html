@@ -1,0 +1,122 @@
+<!-- touch -->
+{% extends "admin/master.html" %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Referral Codes</h1>
+        <div class="d-flex">
+            <span class="badge badge-primary">Code Analytics</span>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <span data-bs-toggle="tooltip" title="Referral codes ranked by usage count, showing most popular codes first.">Referral Codes by Usage Count (Last <span id="ref-codes-days">30</span> Days)</span>
+            <div class="d-flex align-items-center border rounded p-2">
+                <label for="refCodesDaysSlider" class="form-label me-2 mb-0">Time Period:</label>
+                <input type="range" class="form-range" id="refCodesDaysSlider" min="1" max="60" value="30" style="width: 150px;">
+                <span class="ms-2 text-muted" id="refCodesDaysDisplay" style="min-width: 70px; text-align: right;">30 days</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm" id="top-ref-codes-table">
+                    <thead>
+                        <tr>
+                            <th>Referral Code</th>
+                            <th>Usage Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    let refCodesDataTable;
+    let refCodesUpdateTimeout;
+    
+    // Initialize DataTable
+    function initializeRefCodesTable() {
+        refCodesDataTable = $('#top-ref-codes-table').DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            order: [[1, 'desc']], // Sort by usage count descending
+            responsive: true,
+            fixedHeader: false,
+            scrollY: '400px',
+            scrollCollapse: true,
+            lengthMenu: [[25, 50, 100, 250, 500], [25, 50, 100, 250, 500]],
+            pageLength: 25,
+            language: { 
+                lengthMenu: 'Show _MENU_ entries per page'
+            },
+            serverSide: true, // Use server-side processing with DataTables endpoint
+            processing: true,
+            ajax: {
+                url: '/admin/ref_codes/data',
+                type: 'GET',
+                data: function(d) {
+                    d.days = $('#refCodesDaysSlider').val();
+                }
+            },
+        columns: [
+            { 
+                data: 'code',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        const displayCode = data || 'None';
+                        let html = displayCode;
+                        if (!data || data === 'None') {
+                            html += ' <span class="badge badge-secondary">No Code</span>';
+                        }
+                        return html;
+                    }
+                    return data || 'None';
+                }
+            },
+            { data: 'count' }
+        ]
+    });
+    }
+    
+    // Initialize the table
+    initializeRefCodesTable();
+    
+    // Handle slider changes
+    $('#refCodesDaysSlider').on('input', function() {
+        const days = this.value;
+        $('#refCodesDaysDisplay').text(days + ' days');
+        $('#ref-codes-days').text(days);
+        
+        // Clear previous timeout
+        if (refCodesUpdateTimeout) {
+            clearTimeout(refCodesUpdateTimeout);
+        }
+        
+        // Debounce the reload (wait 500ms after user stops sliding)
+        refCodesUpdateTimeout = setTimeout(() => {
+            refCodesDataTable.ajax.reload();
+        }, 500);
+    });
+
+    // Re-initialize tooltips on page load
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

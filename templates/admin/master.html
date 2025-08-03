@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - TAMERMAP.COM{% endblock %}
+
+{% block extra_head %}
+  {{ super() }}
+  <!-- Admin-specific styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="admin-container">
+  <!-- Sidebar -->
+  <div class="admin-sidebar">
+    <h4>Admin Navigation</h4>
+    <ul>
+      <li><a href="{{ url_for('admin.index') }}">Dashboard</a></li>
+      <li><a href="{{ url_for('admin.users') }}">Users</a></li>
+      <li><a href="{{ url_for('admin.retailers') }}">Retailers</a></li>
+      <li><a href="{{ url_for('admin.events') }}">Events</a></li>
+                      <!-- Future Events functionality has been consolidated into the main Events page -->
+      <li><a href="{{ url_for('admin.messages') }}">Messages</a></li>
+      <li><a href="{{ url_for('admin.visitors') }}">Visitors</a></li>
+      <li><a href="{{ url_for('admin.top_referrers') }}">Referrers</a></li>
+      <li><a href="{{ url_for('admin.top_pages') }}">Visited Pages</a></li>
+      <li><a href="{{ url_for('admin.top_ref_codes') }}">Referral Codes</a></li>
+      <li><a href="{{ url_for('admin.referral_journeys') }}">Referral Journeys</a></li>
+      
+      <!-- Payment Management Section -->
+      <li style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px;">
+        <strong style="color: #007bff;">💳 Manage Payments</strong>
+      </li>
+      <li><a href="{{ url_for('admin.setup_intents') }}">Payment Setup Management</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Admin Content -->
+  <div class="admin-content">
+    {% block body %}
+      <!-- Default content goes here; built-in admin views will populate this block -->
+    {% endblock %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+  {{ super() }}
+  <!-- Load necessary libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    });
+  </script>
+
+  <!-- Bulk Actions Script: Defines the global modelActions object -->
+  <script type="text/javascript">
+    $(document).ready(function() {
+      window.modelActions = {
+        execute: function(action) {
+          var form = $('#list-form');
+          if (form.length === 0) {
+            return false;
+          }
+          form.attr('action', action);
+          form.submit();
+          return false;
+        }
+      };
+    });
+  </script>
+  
+  <!-- Admin Common Utilities -->
+  <script src="{{ url_for('static', filename='js/admin-common.js') }}"></script>
+{% endblock %}

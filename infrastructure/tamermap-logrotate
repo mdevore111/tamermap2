@@ -1,0 +1,41 @@
+# Log rotation for Tamermap application
+/home/tamermap/app/logs/*.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    create 644 tamermap tamermap
+    postrotate
+        systemctl reload tamermap-monitor >/dev/null 2>&1 || true
+    endscript
+}
+
+# Specific configuration for monitor.log
+/home/tamermap/app/logs/monitor.log {
+    daily
+    missingok
+    rotate 14
+    compress
+    delaycompress
+    notifempty
+    create 644 tamermap tamermap
+    postrotate
+        systemctl reload tamermap-monitor >/dev/null 2>&1 || true
+    endscript
+}
+
+# Configuration for debug logs (more frequent rotation)
+/home/tamermap/app/logs/debug*.log {
+    daily
+    missingok
+    rotate 3
+    compress
+    delaycompress
+    notifempty
+    create 644 tamermap tamermap
+    postrotate
+        systemctl reload tamermap >/dev/null 2>&1 || true
+    endscript
+} 

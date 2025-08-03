@@ -1,0 +1,384 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Referral Journey - {{ ref_code }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-route"></i> Referral Journey: <strong>{{ ref_code }}</strong>
+                    </h3>
+                    <div class="card-tools">
+                        <a href="/admin/referral-journeys" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Journeys
+                        </a>
+                        <div class="btn-group ml-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(7)">7 Days</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary active" onclick="setTimeRange(30)">30 Days</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setTimeRange(90)">90 Days</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Journey Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info"><i class="fas fa-users"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Sessions</span>
+                                    <span class="info-box-number">{{ journey_data.total_sessions }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success"><i class="fas fa-clock"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Avg Session Duration</span>
+                                    <span class="info-box-number">{{ journey_data.avg_session_duration }} min</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning"><i class="fas fa-percentage"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Conversion Rate</span>
+                                    <span class="info-box-number">{{ journey_data.conversion_rate }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-primary"><i class="fas fa-redo"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Return Visits</span>
+                                    <span class="info-box-number">{{ journey_data.return_visits }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Funnel Chart -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">User Journey Funnel</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="funnelChart" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Top Pages Visited</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="top-pages-list">
+                                        {% for page in journey_data.page_flow[:5] %}
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-truncate" style="max-width: 200px;" title="{{ page.page }}">
+                                                {{ page.page }}
+                                            </span>
+                                            <span class="badge badge-primary">{{ page.visits }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time and Geographic Analysis -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Hourly Traffic Pattern</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="hourlyChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">Device Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="deviceChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let currentTimeRange = {{ days }};
+
+function setTimeRange(days) {
+    currentTimeRange = days;
+    $('.btn-group .btn').removeClass('active');
+    $(event.target).addClass('active');
+    loadCharts();
+}
+
+function loadCharts() {
+    loadFunnelChart();
+    loadHourlyChart();
+    loadDeviceChart();
+}
+
+function loadFunnelChart() {
+    fetch(`/admin/api/analytics/referral-funnel/{{ ref_code }}?days=${currentTimeRange}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                createFunnelChart(data.data);
+            }
+        })
+        .catch(error => console.error('Error loading funnel data:', error));
+}
+
+function loadHourlyChart() {
+    fetch(`/admin/api/analytics/referral-time/{{ ref_code }}?days=${currentTimeRange}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                createHourlyChart(data.data.hourly);
+            }
+        })
+        .catch(error => console.error('Error loading hourly data:', error));
+}
+
+function loadDeviceChart() {
+    fetch(`/admin/api/analytics/referral-devices/{{ ref_code }}?days=${currentTimeRange}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                createDeviceChart(data.data);
+            }
+        })
+        .catch(error => console.error('Error loading device data:', error));
+}
+
+function createFunnelChart(funnelData) {
+    const ctx = document.getElementById('funnelChart').getContext('2d');
+    
+    if (window.funnelChart) {
+        window.funnelChart.destroy();
+    }
+    
+    const labels = funnelData.map(item => {
+        const stepNames = {
+            'entry': 'Entry',
+            'first_page': 'First Page',
+            'maps_page': 'Maps Page',
+            'search_page': 'Search Page',
+            'pin_interaction': 'Pin Interaction',
+            'signup': 'Signup',
+            'pro_upgrade': 'Pro Upgrade'
+        };
+        return stepNames[item.step] || item.step;
+    });
+    
+    const data = funnelData.map(item => item.count);
+    const percentages = funnelData.map(item => item.percentage);
+    
+    window.funnelChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Users',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const index = context.dataIndex;
+                            return `Conversion: ${percentages[index]}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createHourlyChart(hourlyData) {
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    
+    if (window.hourlyChart) {
+        window.hourlyChart.destroy();
+    }
+    
+    const hours = Array.from({length: 24}, (_, i) => i);
+    const visits = hours.map(hour => {
+        const data = hourlyData.find(item => item.hour === hour);
+        return data ? data.visits : 0;
+    });
+    
+    window.hourlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: hours.map(h => `${h}:00`),
+            datasets: [{
+                label: 'Visits',
+                data: visits,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Visits'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hour of Day'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createDeviceChart(deviceData) {
+    const ctx = document.getElementById('deviceChart').getContext('2d');
+    
+    if (window.deviceChart) {
+        window.deviceChart.destroy();
+    }
+    
+    const labels = deviceData.map(item => item.device);
+    const data = deviceData.map(item => item.visits);
+    const colors = ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 205, 86, 0.8)'];
+    
+    window.deviceChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Load charts on page load
+$(document).ready(function() {
+    loadCharts();
+});
+</script>
+
+<style>
+.info-box {
+    display: flex;
+    min-height: 80px;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.info-box-icon {
+    border-radius: 0.25rem 0 0 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.875rem;
+    font-weight: 700;
+    width: 70px;
+    text-align: center;
+    color: #fff;
+}
+
+.info-box-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 80px;
+    flex: 1;
+    padding: 0 10px;
+}
+
+.info-box-text {
+    display: block;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #6c757d;
+}
+
+.info-box-number {
+    display: block;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+</style>
+{% endblock %} 

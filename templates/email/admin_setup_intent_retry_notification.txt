@@ -1,0 +1,27 @@
+Setup Intent Retry Initiated - Admin Alert
+Admin Action Completed
+
+ADMIN ACTION: A setup intent retry has been successfully initiated for a customer.
+
+Retry Details:
+- Original Setup Intent ID: {{ original_setup_intent_id }}
+- New Checkout Session ID: {{ new_session_id }}
+- Customer Email: {{ customer_email }}
+- Customer ID: {{ customer_id }}
+- Original Status: {{ original_status }}
+- Retry Reason: {{ retry_reason }}
+- Initiated By: {{ admin_email }}
+- Initiated At: {{ retry_timestamp }}
+
+Next Steps:
+- The customer has been notified via email with the new checkout link
+- Monitor the new checkout session for completion
+- Check if the customer completes the setup within 24 hours
+- Follow up if the setup is not completed
+
+Admin Dashboard: {{ admin_url }}
+Checkout Session: {{ checkout_url }}
+
+---
+This is an automated alert from the TamerMap Admin System
+Generated on {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC') }} 

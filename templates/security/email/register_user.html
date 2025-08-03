@@ -1,0 +1,16 @@
+{% extends "security/email/base_email.html" %}
+
+{% block subject %}
+[{{ config.SITE_NAME or "Tamermap.com" }}] Welcome to {{ config.SITE_NAME or "Tamermap.com" }}
+{% endblock %}
+
+{% block body %}
+<p>Hello {{ user.first_name }} {{ user.last_name }},</p>
+
+<p>Welcome to TAMERMAP.COM! We’re excited to have you join our community.</p>
+
+<p>Please confirm your email address by clicking the link in the confirmation email we sent you.</p>
+
+<p>Thank you,<br>
+The {{ config.SITE_NAME or "Tamermap.com" }} Team</p>
+{% endblock %}

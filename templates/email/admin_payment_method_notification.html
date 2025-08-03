@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Method Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .content { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .alert { padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .alert-warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Payment Method Notification</h2>
+            <p><strong>Event:</strong> {{ event_type|title }}</p>
+        </div>
+        
+        <div class="content">
+            <h3>Payment Method Details</h3>
+            <p><strong>Payment Method ID:</strong> {{ source_id }}</p>
+            <p><strong>User:</strong> {{ user_name }} ({{ user_email }})</p>
+            <p><strong>Card Type:</strong> {{ card_type|title }}</p>
+            <p><strong>Expires:</strong> {{ exp_month }}/{{ exp_year }}</p>
+            
+            <div class="alert alert-warning">
+                <h4>⚠️ Payment Method Expiring</h4>
+                <p>This customer's payment method is expiring soon.</p>
+                <p><strong>Expiry Date:</strong> {{ exp_month }}/{{ exp_year }}</p>
+                <p>Consider reaching out to the customer to update their payment information to prevent service interruption.</p>
+            </div>
+            
+            <h3>Admin Actions</h3>
+            <p>You can review user details and payment history:</p>
+            <a href="{{ config.get('BASE_URL', 'https://www.tamermap.com') }}/admin/users" class="btn">View User Details</a>
+            <a href="{{ config.get('BASE_URL', 'https://www.tamermap.com') }}/admin/setup-intents" class="btn">Payment Setup History</a>
+            
+            <p style="margin-top: 20px;">
+                <strong>Time:</strong> {{ moment().format('YYYY-MM-DD HH:mm:ss UTC') }}
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from the TAMERMAP payment system.</p>
+            <p>If you have any questions, please contact the development team.</p>
+        </div>
+    </div>
+</body>
+</html> 

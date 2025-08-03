@@ -1,0 +1,7 @@
+[2025-04-15 18:35:39,211] ERROR: Error cleaning database: name 'DAYS_THRESHOLD' is not defined
+[2025-04-15 18:37:50,534] INFO: Deleting PinInteraction records older than 2025-03-17T01:37:50.534313
+[2025-04-15 18:37:50,540] INFO: Deleted 0 PinInteraction records
+[2025-04-15 18:37:50,541] INFO: Deleting MapUsage records older than 2025-03-17T01:37:50.534313
+[2025-04-15 18:37:50,543] INFO: Deleted 0 MapUsage records
+[2025-04-15 18:37:50,543] INFO: Deleting VisitorLog records older than 2025-01-16T01:37:50.534313
+[2025-04-15 18:37:50,545] INFO: Deleted 0 VisitorLog records

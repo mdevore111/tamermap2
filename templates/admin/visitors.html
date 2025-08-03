@@ -1,0 +1,124 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Visitors</h1>
+        <div class="d-flex">
+            <span class="badge badge-primary">Visitor Logs</span>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <span data-bs-toggle="tooltip" title="Raw visitor logs showing individual visits with details like timestamp, IP, page, referrer, location, etc.">Visitor Logs (Last <span id="visitors-days">30</span> Days)</span>
+            <div class="d-flex align-items-center border rounded p-2">
+                <label for="visitorsDaysSlider" class="form-label me-2 mb-0">Time Period:</label>
+                <input type="range" class="form-range" id="visitorsDaysSlider" min="1" max="60" value="30" style="width: 150px;">
+                <span class="ms-2 text-muted" id="visitorsDaysDisplay" style="min-width: 70px; text-align: right;">30 days</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm" id="visitors-table">
+                    <thead>
+                        <tr>
+                            <th data-bs-toggle="tooltip" title="When the visit occurred">Timestamp</th>
+                            <th data-bs-toggle="tooltip" title="Visitor's IP address">IP Address</th>
+                            <th data-bs-toggle="tooltip" title="Page that was visited">Path</th>
+                            <th data-bs-toggle="tooltip" title="Where the visitor came from">Referrer</th>
+                            <th data-bs-toggle="tooltip" title="Visitor's location">Location</th>
+                            <th data-bs-toggle="tooltip" title="Tracking code used (if any)">Ref Code</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- touch -->
+
+{% block extra_scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    let visitorsDataTable;
+    let visitorsUpdateTimeout;
+    
+    // Initialize DataTable
+    function initializeVisitorsTable() {
+        visitorsDataTable = $('#visitors-table').DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            order: [[0, 'desc']], // Sort by timestamp descending (newest first)
+            responsive: true,
+            fixedHeader: false,
+            scrollY: '400px',
+            scrollCollapse: true,
+            lengthMenu: [[25, 50, 100, 250, 500], [25, 50, 100, 250, 500]],
+            pageLength: 25,
+            language: { 
+                lengthMenu: 'Show _MENU_ entries per page'
+            },
+            serverSide: true,
+            processing: true,
+                    ajax: {
+            url: '/admin/visitors/data',
+            type: 'GET',
+            data: function(d) {
+                d.days = $('#visitorsDaysSlider').val();
+            }
+        },
+        columns: [
+            { data: 'timestamp' },
+            { data: 'ip_address' },
+            { data: 'path' },
+            { data: 'referrer', render: function(data, type, row) {
+                if (type === 'display' && data && data !== 'Direct') {
+                    return '<a href="' + data + '" target="_blank" rel="noopener" title="' + data + '">' + 
+                           (data.length > 50 ? data.substring(0, 50) + '...' : data) + '</a>';
+                }
+                return data || 'Direct';
+            }},
+            { data: 'location' },
+            { data: 'ref_code' }
+        ]
+    });
+    }
+    
+    // Initialize the table
+    initializeVisitorsTable();
+    
+    // Handle slider changes
+    $('#visitorsDaysSlider').on('input', function() {
+        const days = this.value;
+        $('#visitorsDaysDisplay').text(days + ' days');
+        $('#visitors-days').text(days);
+        
+        // Clear previous timeout
+        if (visitorsUpdateTimeout) {
+            clearTimeout(visitorsUpdateTimeout);
+        }
+        
+        // Debounce the reload (wait 500ms after user stops sliding)
+        visitorsUpdateTimeout = setTimeout(() => {
+            visitorsDataTable.ajax.reload();
+        }, 500);
+    });
+
+    // Re-initialize tooltips on page load
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+<!-- touch -->
+{% endblock %}

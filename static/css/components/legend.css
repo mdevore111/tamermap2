@@ -1,0 +1,185 @@
+/* Legend Container adjustments */
+#legend {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.70);
+  border: 1px solid #ccc;
+  font-size: 14px;
+  min-width: 180px;
+  max-width: 220px;
+  border-radius: 5px;
+  display: block !important;
+  visibility: visible !important;
+  box-sizing: border-box;
+  z-index: 1000 !important;
+}
+
+@media only screen and (min-width: 769px) {
+  #legend {
+    top: 70px;    /* Place just below the search bar (search bar height + margin) */
+    left: 10px;   /* Align with search bar */
+  }
+}
+
+/* Legend Header - make the background match the container,
+   and round only the top corners */
+#legend-header {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px 5px 12px; /* Different left/right padding for better alignment */
+  border-bottom: 1px solid #ccc;
+  min-height: 35px;  
+  visibility: visible !important;
+  border-top-left-radius: 5px;    /* Rounded top left corner */
+  border-top-right-radius: 5px;   /* Rounded top right corner */
+  box-sizing: border-box; /* Ensure padding is included in width calculation */
+  width: 100%; /* Ensure header takes full width of legend */
+}
+
+/* When collapsed, reduce width but ensure buttons fit */
+#legend.collapsed {
+  display: block !important;
+  min-width: 140px; /* Increased from 120px to ensure buttons fit */
+}
+
+/* When expanded, ensure there's enough width */
+#legend:not(.collapsed) {
+  min-width: 180px; /* Increased from 168px to match container */
+}
+
+/* Group legend header controls (reset and toggle buttons) */
+.legend-header-controls {
+  display: flex;
+  gap: 8px; /* Increased gap from 6px to 8px */
+  align-items: center;
+  margin-left: 10px; /* Add space between title and buttons */
+  flex-shrink: 0; /* Prevent controls from shrinking */
+}
+
+/* Styling for the toggle button container */
+.toggle-button-container {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  padding: 2px 4px;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-button-container:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Only show reset button when legend is expanded */
+#legend.collapsed #reset-button-container {
+  display: none;
+}
+
+/* Styling for the toggle button and reset button */
+#legend-toggle,
+#legend-reset {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keep header styling the same whether collapsed or not */
+#legend.collapsed #legend-header {
+  display: flex !important;
+  /* Do not change the border here so that the header remains consistent */
+}
+
+/* Legend Body: visible by default */
+#legend #legend-body {
+  padding: 10px;
+  display: block;
+}
+
+/* When the legend is collapsed, ONLY hide the legend-body */
+#legend.collapsed #legend-body {
+  display: none !important;
+}
+
+/* Ensure collapsed class doesn't hide the container */
+#legend.collapsed {
+  display: block !important;
+}
+
+/* Add extra spacing above the legend search container */
+#legend-search-container {
+  margin-top: 5px;           /* Adjust as needed for more space */
+}
+
+#legend-search-container {
+  position: relative;
+}
+
+#legend-search-container input {
+  width: 100%;
+  padding-right: 25px; /* ensure space for clear icon */
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background: white;
+}
+
+#legend-search-container .clear-icon {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  display: none; /* hidden by default - controlled by JavaScript */
+  color: #999;
+  font-size: 16px;
+  font-weight: bold;
+  user-select: none;
+  z-index: 10;
+  background: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  line-height: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+#legend-search-container .clear-icon:hover {
+  color: #666;
+  background: #f0f0f0;
+}
+
+/* Force remove any browser default search styling */
+#legend-search-container input[type="text"]::-webkit-search-cancel-button,
+#legend-search-container input[type="text"]::-webkit-search-decoration,
+#legend-search-container input[type="text"]::-webkit-search-results-button,
+#legend-search-container input[type="text"]::-webkit-search-results-decoration,
+#legend-search-container input::-webkit-search-cancel-button,
+#legend-search-container input::-webkit-search-decoration,
+#legend-search-container input::-webkit-search-results-button,
+#legend-search-container input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+#legend.has-active-infowindow {
+  opacity: 0.85;
+  z-index: 900; /* Keep under InfoWindow but above most other content */
+}
+
+/* Remove the conflicting flexbox-friendly legend rules that were causing issues */
+/* #legend, .legend-container {
+  position: static !important;
+  margin-top: 0 !important;
+  margin-bottom: 8px;
+  z-index: auto !important;
+  width: 100%;
+  max-width: 420px;
+} */ 

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block body_class %} map-page{% endblock %}
+
+{% block title %}
+Tamermap.com - Map
+{% endblock %}
+
+{% block extra_head %}
+  <!-- Load map-specific CSS styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/maps.css') }}">
+{% endblock %}
+
+{% block content %}
+  <div class="map-container">
+    {% include 'components/map.html' %}
+    {% include 'components/legend.html' %}
+    {% include 'components/search.html' %}
+  </div>
+
+  <!-- Pro Features -->
+  {# {% if is_pro %}
+    <div class="pro-features">
+      <div class="pro-banner">
+        <i class="fas fa-crown"></i> Pro Features Active
+      </div>
+    </div>
+  {% endif %} #}
+
+  <!-- Admin Features -->
+  {# {% if is_admin %}
+    <div class="admin-features">
+      <div class="admin-banner">
+        <i class="fas fa-shield-alt"></i> Admin Mode Active
+      </div>
+    </div>
+  {% endif %} #}
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Initialize global variables -->
+<script>
+  // Set is_pro based on the context processor value for frontend use
+  window.is_pro = {{ is_pro|tojson }};
+  window.userRole = "{{ current_user.is_authenticated and current_user.roles[0].name or 'User' }}";
+  window.retailersEndpoint = "{{ url_for('api.retailers_endpoint') }}";
+  
+  // Define initApp function immediately to ensure it's available for Google Maps API
+  window.initApp = function() {
+    // This will be called by Google Maps API
+    // The actual implementation will be loaded by the module
+    if (window.initAppImpl) {
+      window.initAppImpl();
+    } else {
+      console.warn('initApp implementation not loaded yet, retrying...');
+      setTimeout(() => {
+        if (window.initAppImpl) {
+          window.initAppImpl();
+        } else {
+          console.error('initApp implementation failed to load');
+        }
+      }, 100);
+    }
+  };
+</script>
+
+<!-- Load our modules first -->
+<script type="module" src="{{ url_for('static', filename='js/map-init.js') }}"></script>
+
+<!-- Load Google Maps API with callback -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key={{google_api_key}}&libraries=visualization,places,geometry&callback=initApp"
+  defer>
+</script>
+
+<!-- Add pinch-to-zoom control -->
+<script>
+  // Progressive Enhancement: Only add touch-specific features if the browser supports them.
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.addEventListener('touchmove', function(event) {
+      if (event.touches.length > 1) {
+        const mapElement = document.getElementById('map');
+        const isTouchOnMap = Array.from(event.touches).some(touch =>
+          mapElement.contains(document.elementFromPoint(touch.clientX, touch.clientY))
+        );
+        if (!isTouchOnMap) {
+          event.preventDefault();
+        }
+      }
+    }, { passive: false });
+  }
+</script>
+
+{% if not is_pro %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof Swal !== 'undefined') {
+        const lastPopupTime = localStorage.getItem('lastPopupTime');
+        const now = Date.now();
+        const oneHour = 60 * 60 * 1000; // One hour in milliseconds
+
+        // Show popup if no last time or more than an hour has passed
+        if (!lastPopupTime || now - parseInt(lastPopupTime) > oneHour) {
+          localStorage.setItem('lastPopupTime', now.toString());
+
+          const htmlContent = `
+            <div>
+              <img src="{{ url_for('static', filename='images/pro-compare.png') }}" alt="Retail shops map" style="width: 100%; height: auto;" />
+            </div>
+          `;
+
+          Swal.fire({
+            title: 'Find more even faster with Pro',
+            html: htmlContent,
+            showCancelButton: true,
+            confirmButtonText: 'Upgrade Now',
+            cancelButtonText: 'Maybe Later',
+            allowOutsideClick: true,
+            allowEscapeKey: true,
+            allowEnterKey: true,
+            stopKeydownPropagation: false
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "{{ url_for('public.learn') }}";
+            }
+          });
+        }
+      } else {
+        console.warn("SweetAlert (Swal) not loaded, skipping upgrade modal.");
+      }
+    });
+  </script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}Sitemap - TamerMap: Find Pokémon Card Stores & Events Near You{% endblock %}
+
+{% block meta_description %}Navigate TamerMap's features easily with our comprehensive sitemap. Find Pokémon card stores, kiosks, events, and plan your card hunting routes with our interactive tools.{% endblock %}
+
+{% block extra_head %}
+<!-- Open Graph tags -->
+<meta property="og:title" content="TamerMap Sitemap - Find Pokémon Card Stores & Events">
+<meta property="og:description" content="Navigate TamerMap's features easily with our comprehensive sitemap. Find Pokémon card stores, kiosks, events, and plan your card hunting routes.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="{{ url_for('public.sitemap', _external=True) }}">
+<meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+
+<!-- Additional SEO tags -->
+<meta name="keywords" content="Pokemon cards, store locator, Pokemon kiosks, card shops, trading card stores, Pokemon events, card hunting">
+<link rel="canonical" href="{{ url_for('public.sitemap', _external=True) }}">
+
+<!-- Schema.org markup for Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "TamerMap",
+  "url": "{{ url_for('public.splash', _external=True) }}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ url_for('public.maps', _external=True) }}?search={search_term_string}",
+    "query-input": "required name=search_term_string"
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Interactive Map",
+        "description": "Find Pokémon card locations and plan your routes",
+        "url": "{{ url_for('public.maps', _external=True) }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "About TamerMap",
+        "description": "Learn about our mission and story",
+        "url": "{{ url_for('public.about', _external=True) }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Route Planner",
+        "description": "Plan efficient routes to multiple card locations",
+        "url": "{{ url_for('public.maps', _anchor='route-planner', _external=True) }}"
+      }
+    ]
+  }
+}
+</script>
+<style>
+.sitemap-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.sitemap-section {
+    margin-bottom: 2rem;
+}
+
+.sitemap-section h2 {
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+}
+
+.sitemap-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sitemap-list li {
+    margin-bottom: 0.5rem;
+}
+
+.sitemap-list a {
+    color: #555;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.sitemap-list a:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+.sitemap-list i {
+    color: #667eea;
+    width: 20px;
+    text-align: center;
+}
+
+/* Dropdown styles */
+.dropdown-container {
+    position: relative;
+}
+
+.dropdown-trigger {
+    cursor: pointer;
+}
+
+.dropdown-arrow {
+    margin-left: 0.5rem;
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.dropdown-container:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.contact-dropdown {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 0.5rem;
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 100;
+    list-style: none;
+}
+
+.dropdown-container:hover .contact-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.contact-dropdown li {
+    margin: 0;
+}
+
+.contact-dropdown a {
+    padding: 0.5rem 0.75rem;
+    color: #555;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.contact-dropdown a:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+.contact-dropdown i {
+    width: 16px;
+    font-size: 0.9rem;
+}
+
+.sitemap-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin-left: 1.8rem;
+}
+
+.newsletter-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #667eea;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.newsletter-link:hover {
+    background: #5a6fd6;
+    color: white !important;
+    text-decoration: none;
+}
+
+.newsletter-link i {
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .sitemap-container {
+        margin: 1rem auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sitemap-container">
+    <h1>TamerMap Sitemap</h1>
+    
+    <div class="sitemap-section">
+        <h2>Main Navigation</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.splash') }}">
+                    <i class="fas fa-home"></i>
+                    Home
+                </a>
+                <div class="sitemap-description">Welcome to TamerMap - Your Pokémon card hunting companion</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.maps') }}">
+                    <i class="fas fa-map-marked-alt"></i>
+                    Interactive Map
+                </a>
+                <div class="sitemap-description">Find Pokémon card locations and plan your routes</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.about') }}">
+                    <i class="fas fa-info-circle"></i>
+                    About Us
+                </a>
+                <div class="sitemap-description">Learn about TamerMap's mission and story</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Features</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.maps', _anchor='kiosks') }}">
+                    <i class="fas fa-store"></i>
+                    Pokémon Kiosks
+                </a>
+                <div class="sitemap-description">Find official Pokémon Center kiosks near you</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.maps', _anchor='retail') }}">
+                    <i class="fas fa-shopping-cart"></i>
+                    Retail Stores
+                </a>
+                <div class="sitemap-description">Discover major retailers carrying Pokémon cards</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.maps', _anchor='indie') }}">
+                    <i class="fas fa-store-alt"></i>
+                    Indie Stores
+                </a>
+                <div class="sitemap-description">Support local game stores and card shops</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.maps', _anchor='events') }}">
+                    <i class="fas fa-calendar-alt"></i>
+                    Events
+                </a>
+                <div class="sitemap-description">Find upcoming Pokémon card events and tournaments</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Pro Features</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.maps', _anchor='route-planner') }}">
+                    <i class="fas fa-route"></i>
+                    Route Planner
+                </a>
+                <div class="sitemap-description">Plan efficient routes to multiple card locations</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.maps', _anchor='heatmap') }}">
+                    <i class="fas fa-fire"></i>
+                    Heat Maps
+                </a>
+                <div class="sitemap-description">View popular areas and activity hotspots</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Support</h2>
+        <ul class="sitemap-list">
+            <li class="dropdown-container">
+                <a href="#" class="dropdown-trigger">
+                    <i class="fas fa-envelope"></i>
+                    Contact Us
+                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+                </a>
+                <div class="sitemap-description">Get in touch with our support team</div>
+                <ul class="contact-dropdown">
+                    <li>
+                        <a href="{{ url_for('public.send_message', type='contact') }}">
+                            <i class="fas fa-question-circle"></i>
+                            General Contact
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('public.send_message', type='suggestion') }}">
+                            <i class="fas fa-lightbulb"></i>
+                            Suggestions
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('public.send_message', type='bug') }}">
+                            <i class="fas fa-bug"></i>
+                            Report Bug
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('public.send_message', type='business') }}">
+                            <i class="fas fa-briefcase"></i>
+                            Business Inquiry
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="{{ url_for('public.privacy') }}">
+                    <i class="fas fa-shield-alt"></i>
+                    Privacy Policy
+                </a>
+                <div class="sitemap-description">Learn about how we protect your data</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.terms') }}">
+                    <i class="fas fa-file-contract"></i>
+                    Terms of Service
+                </a>
+                <div class="sitemap-description">Review our terms and conditions</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Stay Connected</h2>
+        <p class="text-center">Help us make TamerMap even better! If you know of a store or event that's not listed, or if you spot any information that needs updating, please use our contact form to let us know.</p>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('public.send_message', type='newsletter') }}" class="newsletter-link">
+                <i class="fas fa-envelope"></i>
+                Subscribe to Updates
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
