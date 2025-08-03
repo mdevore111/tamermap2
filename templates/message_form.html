@@ -1,0 +1,127 @@
+{# message_form.html #}
+{% extends "base.html" %}
+{% block title %}Send a Message - Tamermap.com{% endblock %}
+{% block content %}
+<div class="page-content">
+  {% if message_sent %}
+    <div class="form-container">
+      <h1>Message Sent!</h1>
+      <div class="text-center mt-3">
+        <a href="/maps" class="btn btn-link">Back to Map</a>
+      </div>
+    </div>
+    <script>
+      setTimeout(function() {
+        window.location.href = '/maps';
+      }, 5000);
+    </script>
+  {% else %}
+    <div class="form-container">
+      {% set comm_label = dict(form.communication_type.choices)
+                          .get(form.communication_type.data, "Let's Connect") %}
+      <h1>{{ comm_label }}</h1>
+      <p>Use the form below to tell us more, and our customer support team will help you find your answers.</p>
+
+      <form method="POST" action="{{ request.path }}">
+        {{ form.hidden_tag() }}
+
+      {# always hide the type dropdown, drive via link #}
+      <input type="hidden" name="communication_type" value="{{ form.communication_type.data }}">
+      
+      {# Spam prevention fields #}
+      {{ form.honeypot(class="honeypot-field") }}
+      {{ form.timestamp(value=request.args.get('ts', '')) }}
+      {{ form.website(class="honeypot-field") }}
+      {{ form.phone(class="honeypot-field") }}
+      
+      <script>
+        // Add timestamp to form for spam prevention
+        document.addEventListener('DOMContentLoaded', function() {
+          var timestampField = document.querySelector('input[name="timestamp"]');
+          if (timestampField) {
+            timestampField.value = Date.now();
+          }
+          
+          // Add random delay to prevent instant submissions
+          var submitButton = document.querySelector('input[type="submit"]');
+          if (submitButton) {
+            submitButton.addEventListener('click', function(e) {
+              var currentTime = Date.now();
+              var timestamp = parseInt(timestampField.value);
+              if (currentTime - timestamp < 2000) { // Less than 2 seconds
+                e.preventDefault();
+                alert('Please wait a moment before submitting the form.');
+                return false;
+              }
+            });
+          }
+        });
+      </script>
+
+      {# New: Name and Address fields for all types #}
+      <div class="mb-3">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+      </div>
+      <div class="mb-3">
+        {{ form.address.label(class="form-label") }}
+        {{ form.address(class="form-control") }}
+      </div>
+
+      {# only for report: hide subject field and pass original address #}
+      {% if form.communication_type.data == 'report' %}
+        <input type="hidden" name="subject" value="{{ form.subject.data }}">
+      {% endif %}
+
+      {# visible subject for non-report types #}
+      {% if form.communication_type.data != 'report' %}
+        <div class="mb-3">
+          {{ form.subject.label(class="form-label") }}
+          {{ form.subject(class="form-control") }}
+        </div>
+      {% endif %}
+
+      {# body field with dynamic label #}
+      <div class="mb-3">
+        {% if form.communication_type.data == 'report' %}
+          <label for="{{ form.body.id }}" class="form-label">
+            Describe Your Changes Here and Correct Data Below:
+          </label>
+        {% else %}
+          {{ form.body.label(class="form-label") }}
+        {% endif %}
+        {{ form.body(class="form-control", rows=8) }}
+      </div>
+
+        {# extra report metadata #}
+        {% if form.communication_type.data == 'report' %}
+          <div class="mb-3">
+            {{ form.reported_address.label(class="form-label") }}
+            {{ form.reported_address(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ form.reported_phone.label(class="form-label") }}
+            {{ form.reported_phone(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ form.reported_website.label(class="form-label") }}
+            {{ form.reported_website(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ form.reported_hours.label(class="form-label") }}
+            {{ form.reported_hours(class="form-control") }}
+          </div>
+        {% endif %}
+
+        <div>
+          {{ form.submit(class="btn btn-primary w-100") }}
+        </div>
+      </form>
+
+      <div class="text-center mt-3">
+        <a href="/maps" class="btn btn-link">Back to Map</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

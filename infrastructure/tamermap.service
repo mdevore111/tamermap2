@@ -1,0 +1,25 @@
+[Unit]
+Description=Gunicorn instance to serve Tamermap Flask app
+After=network.target
+
+[Service]
+User=tamermap
+Group=tamermap
+WorkingDirectory=/home/tamermap/app
+Environment="PATH=/home/tamermap/app/venv/bin"
+Environment="PYTHONPATH=/home/tamermap/app"
+Environment="FLASK_APP=run.py"
+Environment="FLASK_ENV=production"
+Environment="PYTHONUNBUFFERED=1"
+
+# Start Gunicorn
+ExecStart=/home/tamermap/app/venv/bin/gunicorn -w 1 -b 127.0.0.1:8000 --log-level debug --access-logfile /home/tamermap/app/logs/access.log --error-logfile /home/tamermap/app/logs/error.log --log-file /home/tamermap/app/logs/debug.log --user tamermap --group tamermap run:app
+
+# Start Monitor in background with proper environment
+ExecStartPost=/bin/bash -c "cd /home/tamermap/app && source venv/bin/activate && python3 utils/monitor.py &"
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target 

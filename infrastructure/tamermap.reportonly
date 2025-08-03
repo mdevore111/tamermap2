@@ -1,0 +1,86 @@
+# ────────────────────────────────────────────────────────────
+# /etc/nginx/sites-available/tamermap.reportonly
+# Tamermap virtual-host configuration (CSP Report-Only Mode)
+# ────────────────────────────────────────────────────────────
+
+# 1) Redirect all HTTP → HTTPS
+server {
+    listen 80;
+    server_name tamermap.com www.tamermap.com dev.tamermap.com;
+    return 301 https://$host$request_uri;
+}
+
+
+# 2) HTTPS server block
+server {
+    listen 443 ssl;
+    server_name tamermap.com www.tamermap.com dev.tamermap.com;
+
+    ## SSL certificates
+    ssl_certificate           /etc/nginx/ssl/tamermap/tamermap_bundle.crt;
+    ssl_certificate_key       /etc/nginx/ssl/tamermap/tamermap.key;
+    ssl_protocols             TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers               HIGH:!aNULL:!MD5;
+
+    # ────────────────────────────────────────────────────────────
+    # REPORT-ONLY MODE: Strip any upstream CSP and inject our Report-Only policy
+    # This allows testing CSP without blocking content
+    # ────────────────────────────────────────────────────────────
+    # CSP Report-Only: allow inline scripts + Google Maps JS (monitoring only)
+    proxy_hide_header Content-Security-Policy;
+    proxy_hide_header Content-Security-Policy-Report-Only;
+    add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://maps.googleapis.com; script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://maps.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://maps.googleapis.com https://maps.gstatic.com; connect-src 'self' https://maps.googleapis.com;" always;
+    # ────────────────────────────────────────────────────────────
+
+    ## Global per-vhost security rules
+    include /etc/nginx/snippets/security_server.conf;
+
+    ## 2.1) Stripe webhooks (no IP restrictions for dev/testing)
+    location /webhooks/stripe {
+        proxy_http_version 1.1;
+        proxy_set_header   Connection "";     
+        proxy_pass         http://127.0.0.1:8000;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    ## 2.2) API endpoints (no auth)
+    location /api/ {
+        proxy_http_version 1.1;
+        proxy_set_header   Connection "";
+        proxy_pass         http://127.0.0.1:8000;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    ## 2.3) Static assets
+    location /static/ {
+        alias /home/tamermap/app/static/;
+    }
+
+    ## 2.4) Main application (no auth for dev/testing)
+    location / {
+        # Speak HTTP/1.1 to upstream so chunked responses are decoded properly
+        proxy_http_version    1.1;
+        proxy_set_header      Connection "";
+        gzip off;
+
+
+        # Standard proxy headers
+        proxy_set_header      Host               $host;
+        proxy_set_header      X-Real-IP          $remote_addr;
+        proxy_set_header      X-Forwarded-For    $proxy_add_x_forwarded_for;
+
+        # Don't let the backend compress or send its own encoding header
+        proxy_set_header      Accept-Encoding    "";
+        proxy_hide_header     Content-Encoding;
+
+        # Turn off buffering so chunks pass straight through
+        proxy_buffering       off;
+
+        proxy_pass            http://127.0.0.1:8000;
+    }
+} 

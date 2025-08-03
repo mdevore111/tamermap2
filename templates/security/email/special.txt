@@ -1,0 +1,22 @@
+Hi {{ user.email }},
+
+Thank you for being one of our early beta users! As a token of our appreciation, we’re giving you an exclusive 30 days of Tamermap Pro for free! Others only get a 7-day free trial, so you’re getting a special deal.
+
+You’ve just unlocked a whole new level of Pokémon hunting. Expect faster finds, smoother planning, and exclusive perks.
+
+Here’s what you’ll love:
+* Find Pokémon cards at 25+ major retailers and indie shops.
+* Spot favorite stores instantly with custom-branded pins.
+* Plan like a champ with store hours, websites, and tap-to-call features.
+* Stay in the know with the latest kiosks added.
+* Enjoy zero ads.
+
+Ready to jump in? To access your account, you may need to reset your password. If you don’t see the reset email, please check your spam folder. Log in now:
+https://tamermap.com/login
+
+If you need help or have any suggestions, contact support at support@tamermap.com.
+
+Happy Hunting!
+The Tamermap Team
+
+© 2025 Tamermap.com All rights reserved.

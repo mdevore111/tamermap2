@@ -1,0 +1,310 @@
+/* Route Planner SweetAlert2 Modal Styles */
+
+/* Custom class for the route planner modal */
+.swal2-route-planner {
+    padding: 0 !important;
+    background: #fff;
+}
+
+.swal2-route-planner .swal2-popup {
+    padding: 0 !important;
+    width: min(95vw, 400px) !important;
+}
+
+.swal2-route-planner .swal2-title {
+    margin: 0;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.swal2-route-planner .swal2-html-container {
+    margin: 0;
+    padding: 0.75rem;
+}
+
+.route-planner-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Header Styles */
+.route-planner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.route-planner-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Control Groups */
+.route-control-group {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+.route-control-group h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+    color: #333;
+    font-weight: 600;
+}
+
+/* Sliders */
+.route-slider-container {
+    margin-bottom: 0.5rem;
+}
+
+.route-slider-container:last-child {
+    margin-bottom: 0;
+}
+
+.route-slider-container label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    color: #555;
+}
+
+.route-slider-container label span {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.route-slider {
+    width: 100%;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.route-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.route-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Checkboxes */
+.route-checkbox-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.route-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: #495057;
+    cursor: pointer;
+    user-select: none;
+}
+
+.route-checkbox input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.route-checkbox span {
+    padding-top: 1px;
+}
+
+/* Filter Toggles */
+.route-filter-toggles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 0.35rem;
+}
+
+.route-filter-toggle {
+    padding: 0.35rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #495057;
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+.route-filter-toggle i {
+    font-size: 0.8rem;
+}
+
+.route-filter-toggle:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.route-filter-toggle.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+}
+
+/* Action Buttons */
+.route-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.route-btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.route-btn i {
+    font-size: 0.8rem;
+}
+
+.route-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.route-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 4px rgba(102, 126, 234, 0.3);
+}
+
+.route-btn-secondary {
+    background: white;
+    color: #667eea;
+    border: 1px solid #667eea;
+}
+
+.route-btn-secondary:hover {
+    background: #f8f9ff;
+}
+
+/* Summary Section */
+.route-summary {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    border-left: 2px solid #667eea;
+}
+
+.route-summary h4 {
+    margin: 0 0 0.25rem;
+    font-size: 0.8rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.route-summary small {
+    color: #666;
+    font-size: 0.7rem;
+}
+
+.route-summary .store-list {
+    margin-top: 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1.3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .swal2-route-planner {
+        width: 95% !important;
+        margin: 0.5rem !important;
+    }
+
+    .route-planner-landscape {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .route-planner-header h3 {
+        font-size: 1rem;
+    }
+
+    .route-control-group {
+        padding: 0.75rem;
+    }
+
+    .route-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Orientation Detection */
+@media (orientation: landscape) and (min-width: 769px) {
+    .route-planner-portrait {
+        display: none;
+    }
+    .route-planner-landscape {
+        display: grid;
+    }
+}
+
+@media (orientation: portrait), (max-width: 768px) {
+    .route-planner-landscape {
+        display: none;
+    }
+    .route-planner-portrait {
+        display: flex;
+    }
+}

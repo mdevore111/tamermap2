@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>{% block subject %}{% endblock %}</title>
+  <style type="text/css">
+    /* Reset styles */
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100% !important;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    /* Base styles */
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Open Sans', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 16px;
+      line-height: 1.4;
+      color: #333;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .email-header {
+      background-color: #007bff;
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+    .email-header img {
+      max-width: 150px;
+      height: auto;
+      border: 0;
+    }
+    .email-body {
+      padding: 20px;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #333;
+    }
+    .email-footer {
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      margin-top: 20px;
+    }
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff !important;
+      text-decoration: none;
+      border-radius: 4px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .button:hover {
+      background-color: #0056b3;
+      text-decoration: none;
+    }
+    /* Mobile styles */
+    @media only screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+        padding: 10px !important;
+      }
+      .email-body {
+        padding: 10px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <img src="{{ config.EMAIL_LOGO_URL }}" alt="{{ config.SITE_NAME or 'Tamermap' }} Logo" width="150">
+    </div>
+    <div class="email-body">
+      {% block body %}{% endblock %}
+    </div>
+    <div class="email-footer">
+      &copy; {{ config.SITE_NAME or "TAMERMAP.COM" }} {{ datetime.now().year }}
+      <br>
+      <a href="{{ config.EMAIL_BASE_URL }}/terms">Terms of Service</a> | 
+      <a href="{{ config.EMAIL_BASE_URL }}/privacy">Privacy Policy</a>
+      <br>
+      <small>
+        <a href="{{ config.MAILGUN_LIST_UNSUBSCRIBE }}">Unsubscribe</a> | 
+        <a href="mailto:{{ config.MAILGUN_REPLY_TO }}">Contact Support</a>
+      </small>
+    </div>
+  </div>
+</body>
+</html>

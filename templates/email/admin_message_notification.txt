@@ -1,0 +1,13 @@
+New Communication Form Submission on Tamermap.com
+
+Type: {{ communication_type }}
+Name: {{ name or '(not provided)' }}
+Email: {{ address or '(not provided)' }}
+Subject: {{ form_subject or '(not provided)' }}
+Message: {{ body or '(not provided)' }}
+{% if reported_address %}Reported Address: {{ reported_address }}
+{% endif %}{% if reported_phone %}Reported Phone: {{ reported_phone }}
+{% endif %}{% if reported_website %}Reported Website: {{ reported_website }}
+{% endif %}{% if reported_hours %}Reported Hours: {{ reported_hours }}
+{% endif %}
+Submitted at: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}

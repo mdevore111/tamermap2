@@ -1,0 +1,266 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+    {% set title = 'Users' %}
+            {% set tooltip = 'All registered users. Columns include email, names, status, roles, and actions.' %}
+            {% set table_id = 'users-table' %}
+    {% set columns = ['Email', 'Name', 'Active', 'Last Login', 'Roles', 'Pro', 'Admin', 'Actions'] %}
+            {% set extra_header = '<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button>' %}
+            {% include 'admin/_datatable_card.html' %}
+
+            <!-- Add User Modal -->
+            <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <form id="addUserForm">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="addUserModalLabel">Add User</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <!-- Form fields will be injected by JS or rendered here -->
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-success">Add User</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edit User Modal -->
+            <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <form id="editUserForm">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <!-- Form fields will be injected by JS or rendered here -->
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                  </form>
+                </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- jQuery (must be loaded before DataTables and custom JS) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- DataTables JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function fetchRoles(callback) {
+    $.get('/admin/roles', function(roles) {
+        callback(roles);
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+                    Swal.fire({
+                title: 'Error!',
+                text: 'Error loading roles. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+    });
+}
+
+function initServerSideTable(tableId, ajaxUrl, columns, columnDefs=[]) {
+    $(tableId).DataTable({
+        paging: true,
+        searching: true,
+        info: true,
+        order: [],
+        responsive: true,
+        fixedHeader: false,
+        scrollY: '400px', // Fixed height for table scrolling
+        scrollCollapse: true,
+        lengthMenu: [[25, 50, 100, 250, 500], [25, 50, 100, 250, 500]],
+        pageLength: 25,
+        language: { lengthMenu: 'Show _MENU_ entries per page' },
+        serverSide: true,
+        processing: true,
+        ajax: { url: ajaxUrl, type: 'GET' },
+        columns: columns,
+        columnDefs: columnDefs
+    });
+}
+
+$(document).ready(function() {
+    initServerSideTable('#users-table', '/admin/users/data', [
+        { data: 'email' },
+        { data: 'name' },
+        { data: 'active' },
+        { data: 'last_login' },
+        { data: 'roles' },
+        { data: 'is_pro' },
+        { data: 'is_admin', orderable: false },
+        { data: 'actions', orderable: false, searchable: false }
+    ]);
+
+    // Add User Modal: Render form fields
+    $('#addUserModal').on('show.bs.modal', function() {
+        fetchRoles(function(roles) {
+            var form = $('#addUserModal .modal-body');
+            var rolesOptions = roles.map(r => `<option value='${r.name}'>${r.name}</option>`).join('');
+            form.html(`
+                <div class='mb-3'><label>First Name</label><input name='first_name' class='form-control'></div>
+                <div class='mb-3'><label>Last Name</label><input name='last_name' class='form-control'></div>
+                <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control' required></div>
+                <div class='mb-3'><label>Password</label><input name='password' type='password' class='form-control' required></div>
+                <div class='mb-3'><label>Active</label><select name='active' class='form-select'><option value='1'>Yes</option><option value='0'>No</option></select></div>
+                <div class='mb-3'><label>Pro End Date</label><input name='pro_end_date' type='date' class='form-control'></div>
+                <div class='mb-3'><label>Roles</label><select name='roles' class='form-select' multiple>${rolesOptions}</select></div>
+            `);
+        });
+    });
+
+    // Handle Add User submit
+    $('#addUserForm').on('submit', function(e) {
+        e.preventDefault();
+        var data = {};
+        $(this).find('input,select').each(function() {
+            if ($(this).attr('name') === 'roles') {
+                data['roles'] = $(this).val() || [];
+            } else {
+                data[$(this).attr('name')] = $(this).val();
+            }
+        });
+        $.ajax({
+            url: '/admin/users/add',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(resp) {
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : 'Unknown error'));
+            }
+        });
+    });
+
+    // Edit User Modal: Populate form fields
+    $(document).on('click', '.edit-user-btn', function() {
+        var id = $(this).data('id');
+        // Fetch user data from the server
+        $.get('/admin/users/' + id, function(userData) {
+            fetchRoles(function(roles) {
+                var modal = $('#editUserModal');
+                var form = modal.find('.modal-body');
+                // Use userData.roles from the API, not from the table
+                var userRoles = userData.roles || [];
+                var rolesOptions = roles.map(r => 
+                    `<option value='${r.name}' ${userRoles.includes(r.name) ? 'selected' : ''}>${r.name}</option>`
+                ).join('');
+                // Format dates for input fields
+                var proEndDate = userData.pro_end_date ? new Date(userData.pro_end_date).toISOString().split('T')[0] : '';
+                var lastLogin = userData.last_login ? new Date(userData.last_login).toLocaleString() : 'Never';
+                var loginCount = userData.login_count || 0;
+                var canceledAt = userData.canceled_at ? new Date(userData.canceled_at).toISOString().split('T')[0] : '';
+                var custIdHtml = userData.cust_id ? `<a href='https://dashboard.stripe.com/customers/${userData.cust_id}' target='_blank' rel='noopener'>${userData.cust_id}</a>` : 'N/A';
+                var formHtml = `
+                    <input type='hidden' name='id' value='${id}'>
+                    <input type='hidden' name='cust_id' value='${userData.cust_id || ''}'>
+                    <input type='hidden' name='login_count' value='${loginCount}'>
+                    <input type='hidden' name='last_login' value='${userData.last_login || ''}'>
+                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>User ID:</label><span class='ms-2'>${id}</span></div>
+                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>Customer ID:</label><span class='ms-2'>${custIdHtml}</span></div>
+                    <div class='mb-3'><label>First Name</label><input name='first_name' class='form-control' value='${userData.first_name || ''}'></div>
+                    <div class='mb-3'><label>Last Name</label><input name='last_name' class='form-control' value='${userData.last_name || ''}'></div>
+                    <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control' value='${userData.email || ''}' required></div>
+                    <div class='mb-3'><label>Password</label><input name='password' type='password' class='form-control' placeholder='Leave blank to keep current password'></div>
+                    <div class='mb-3'><label>Pro End Date</label><input type='date' name='pro_end_date' class='form-control' value='${proEndDate}'></div>
+                    <div class='mb-3'><label>Active</label><select name='active' class='form-select'><option value='1' ${userData.active ? 'selected' : ''}>Yes</option><option value='0' ${!userData.active ? 'selected' : ''}>No</option></select></div>
+                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>Last Login:</label><span class='ms-2'>${lastLogin}</span></div>
+                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>Login Count:</label><span class='ms-2'>${loginCount}</span></div>
+                    <div class='mb-3'><label>Roles</label><select name='roles' class='form-select' multiple>${rolesOptions}</select></div>
+                    <div class='mb-3'><label>Canceled At</label><input name='canceled_at' type='date' class='form-control' value='${canceledAt}'></div>
+                    <div class='mb-3'><label>Cancel Reason</label><input name='cancellation_reason' class='form-control' value='${userData.cancellation_reason || ''}'></div>
+                    <div class='mb-3'><label>Cancel Comment</label><textarea name='cancellation_comment' class='form-control'>${userData.cancellation_comment || ''}</textarea></div>
+                `;
+                form.html(formHtml);
+                modal.modal('show');
+            });
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            alert('Error loading user data. Please try again.');
+        });
+    });
+
+    // Handle Edit User submit
+    $('#editUserForm').on('submit', function(e) {
+        e.preventDefault();
+        var id = $(this).find('input[name="id"]').val();
+        var data = {};
+        $(this).find('input,select').each(function() {
+            var name = $(this).attr('name');
+            if (name === 'roles') {
+                data['roles'] = $(this).val() || [];
+            } else if (name !== 'id' && name !== 'login_count' && name !== 'last_login') {
+                data[name] = $(this).val();
+            }
+        });
+        // Check if Pro role is selected and Pro End Date is empty
+        if (data.roles.includes('Pro') && !data.pro_end_date) {
+            alert('Pro End Date is required when Pro role is selected.');
+            return;
+        }
+        $.ajax({
+            url: '/admin/users/edit/' + id,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(resp) {
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : 'Unknown error'));
+            }
+        });
+    });
+
+    // Handle Delete User
+    $(document).on('click', '.delete-user-btn', function() {
+            var id = $(this).data('id');
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You are about to delete this user. This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+            $.ajax({
+                    url: '/admin/users/' + id,
+                method: 'DELETE',
+                success: function(resp) {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : 'Unknown error'));
+                }
+            });
+        }
+        });
+    });
+
+    // Bootstrap tooltip initialization
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,29 @@
+[Unit]
+Description=Tamermap Application Health Monitor
+After=network.target tamermap.service redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=tamermap
+Group=tamermap
+WorkingDirectory=/home/tamermap/app
+ExecStart=/home/tamermap/app/venv/bin/python /home/tamermap/app/monitor.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/tamermap/app/logs /home/tamermap/app/instance
+
+# Environment
+Environment=PYTHONPATH=/home/tamermap/app
+Environment=FLASK_ENV=production
+
+[Install]
+WantedBy=multi-user.target 

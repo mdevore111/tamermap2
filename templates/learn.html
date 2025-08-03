@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Upgrade to Tamermap Pro - Enhance Your Pokémon Kiosk Experience{% endblock %}
+
+{% block extra_head %}
+<!-- Include Font Awesome for icons and Google Fonts for Inter -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* Global Styles */
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+  }
+
+
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #000000;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  p, li {
+    color: #333333;
+  }
+
+  /* Content Containers */
+  .content-box {
+    background-color: #FFFFFF;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+
+
+  .feature-box {
+    padding: 20px;
+    background: #E6F0FA;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .card {
+    background-color: #E6F0FA;
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden; /* Clip child elements to the rounded corners */
+  }
+
+  .bigpad {
+    padding: 40px;
+  }
+
+  /* Buttons */
+  .btn {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .subscribe-btn {
+    background-color: #4A90E2;
+    border-color: #4A90E2;
+    font-weight: bold;
+    --bs-btn-padding-y: 0.75rem !important;
+    --bs-btn-padding-x: 1.25rem !important;
+  }
+
+  .subscribe-btn:hover {
+    background-color: #357ABD;
+    border-color: #357ABD;
+  }
+
+  /* Badges */
+  .badge.bg-success {
+    background-color: #4A90E2;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+  }
+
+  .badge.bg-primary {
+    background-color: #FF6F61;
+  }
+
+  /* Images */
+  img {
+    border-radius: 20px;
+  }
+
+  /* Icons and List Items */
+  .feature-box i, .list-group-item i {
+    color: #4A90E2;
+  }
+
+  /* Card Header */
+  .card-header {
+    background-color: #E6F0FA; /* Default background */
+    color: #333333;
+    border-top-left-radius: 20px; /* Round top-left corner */
+    border-top-right-radius: 20px; /* Round top-right corner */
+    border-bottom-left-radius: 0; /* Keep bottom-left square */
+    border-bottom-right-radius: 0; /* Keep bottom-right square */
+  }
+
+  /* Card Headers */
+  .card-header.bg-secondary {
+    background-color: #E6F0FA;
+    color: #333333;
+  }
+
+  /* Card Footer */
+  .card-footer {
+    border-bottom-left-radius: 20px; /* Round bottom-left corner */
+    border-bottom-right-radius: 20px; /* Round bottom-right corner */
+    border-top-left-radius: 0; /* Keep top-left square */
+    border-top-right-radius: 0; /* Keep top-right square */
+  }
+
+  /* Ensure consistent icon sizing and centering */
+  .list-group-item {
+    display: flex;
+    align-items: center; /* Vertically center the icon and text */
+    padding: 10px 15px; /* Adjust padding for better spacing */
+  }
+
+  .icon-wrapper {
+    width: 40px; /* Fixed width for the icon container */
+    display: flex;
+    justify-content: center; /* Center the icon horizontally */
+    align-items: center; /* Center the icon vertically */
+    margin-right: 10px; /* Space between icon and text */
+  }
+
+  .list-group-item i {
+    font-size: 1.2rem; /* Uniform size for all icons */
+  }
+
+  /* Text alignment */
+  .list-group-item span {
+    flex: 1; /* Take up remaining space, ensuring text starts at the same point */
+  }
+
+  /* Icon colors for Free tier (grey) */
+  .card.border-secondary .list-group-item i {
+    color: #6C757D; /* Grey color for Free tier icons */
+  }
+
+  /* Icon colors for Pro tier (green) */
+  .card.border-primary .list-group-item i {
+    color: #28A745; /* Green color for Pro tier icons */
+  }
+
+  .free-trial-banner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100px; /* Adjust based on image size */
+    height: auto;
+    z-index: 10;
+    border-radius: 0px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  <!-- Hero Section -->
+  <section class="container my-5">
+    <div class="content-box">
+      <div class="row align-items-center">
+        <!-- Left Column: Text and Button -->
+        <div class="col-md-6 order-md-1 order-2">
+          <h1 class="display-4">Snag Rare Pokémon Cards First with One Tap.</h1>
+          <p class="lead">Unlock a suite of powerful features including custom vendor pins, detailed store data, advanced filters, and heatmaps to take your Pokémon hunting to the next level. Tamermap Pro helps you find and explore kiosks and stores more efficiently than ever.</p>
+          <div class="text-center mt-4">
+            <button class="btn btn-primary btn-lg subscribe-btn">Try Pro Now →</button>
+          </div>
+        </div>
+        <!-- Right Column: Preview Image -->
+        <div class="col-md-6 order-md-2 order-1">
+          <img src="/static/images/preview.png" class="img-fluid d-block mx-auto" alt="Preview of map">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plan Comparison Section -->
+  <section class="container my-5">
+    <h1 class="text-center mb-4">Choose Your Plan to Supercharge Your Hunt!</h1>
+    <div class="row">
+      <!-- Free Plan Card -->
+      <div class="col-md-6 mb-4">
+        <div class="card border-secondary h-100">
+          <div class="card-header text-center bg-secondary"><p></p>
+            <h1 class="text-white">Free</h1>
+            <h3 class="text-white" style="font-weight:100">$0</h3>
+          </div>
+          <div class="card-body" style="background: #ffffff;">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-map-pin"></i></div>
+                <span>Access only kiosk locations</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-info-circle"></i></div>
+                <span>Basic store details</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-store"></i></div>
+                <span>Limited to kiosks—no major retailers</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-map-marker-alt"></i></div>
+                <span>Standard pins for kiosks</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-clock"></i></div>
+                <span>No new kiosk filter</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-chart-area"></i></div>
+                <span>No heat maps</span>
+              </li>
+            </ul>
+          </div>
+          <div class="card-footer text-center">
+            <button class="btn btn-secondary" disabled>Current Plan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pro Plan Card -->
+      <div class="col-md-6 mb-4">
+        <div class="card border-primary h-100 position-relative">
+          <img src="/static/images/free-trial-banner.png" class="free-trial-banner" alt="Free 7 Day Trial">
+          <div class="card-header text-center bg-primary text-white"><p></p>
+            <h1 class="text-white">Pro</h1>
+            <h3 class="text-white" style="font-weight:100">$9.95/mo</h3>
+          </div>
+          <div class="card-body" style="background: #ffffff;">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-map-pin"></i></div>
+                <span>Unlock 25+ major retailers & indie shops</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-info-circle"></i></div>
+                <span>Full store details with tap-to-call & directions</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-store"></i></div>
+                <span>Access to all Pokémon-stocking stores</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-map-marker-alt"></i></div>
+                <span>Custom-branded pins for easy spotting</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-clock"></i></div>
+                <span>Filter new kiosks (last 30 days)</span>
+              </li>
+              <li class="list-group-item">
+                <div class="icon-wrapper"><i class="fas fa-chart-area"></i></div>
+                <span>Heat maps of popular locations</span>
+              </li>
+            </ul>
+          </div>
+          <div class="card-footer text-center">
+            <button class="btn btn-primary subscribe-btn" style="padding: 15px 30px; font-size: 1.2em;">Try Pro Now →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Pro Section -->
+  <section class="container my-5">
+    <h1 class="text-center mb-4">Find Pokémon Cards Faster</h1>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="feature-box text-center">
+          <i class="fas fa-expand-arrows-alt fa-3x mb-3"></i>
+          <h3>3x More Stores</h3>
+          <p>Unlock pins for over 25 nationwide stores and every indie card shop stocking Pokémon, not just kiosks! Filter new kiosks from the last 30 days in an ad-free experience.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-box text-center">
+          <i class="fas fa-map-pin fa-3x mb-3"></i>
+          <h3>Custom Pins</h3>
+          <p>Find Fred Meyer, Safeway, Walmart, QFC, and 25+ brands fast with custom pins, no more guesswork to get your Pokémon favorites. Start hunting smarter now!</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-box text-center">
+          <i class="fas fa-info-circle fa-3x mb-3"></i>
+          <h3>Full Store Details</h3>
+          <p>Check hours, visit websites, call, or navigate to kiosks, card shops, and retailers with one tap, everything in one spot. Get Pro and save time!</p>
+        </div>
+      </div>
+    </div>
+    <section id="cta" style="margin-top: 30px; text-align: center;">
+      <button class="btn btn-primary subscribe-btn" style="padding: 15px 30px; font-size: 1.2em;">Try Pro Now →</button>
+    </section>
+  </section>
+
+  <!-- Pro Features in Action Section -->
+  <section class="container my-5">
+    <h1 class="text-center mb-4">Supercharge Your Hunt with Pro Features!</h1>
+
+    <!-- Access to Retail Shops -->
+    <div class="card bigpad mb-4">
+      <div class="row g-0">
+        <div class="col-md-6 order-md-1">
+          <div class="card-body">
+            <h1 class="card-title">Hunt at All Major Retailers</h1>
+            <ul class="lead list-group" style="list-style: none;">
+              <li>🌐 Unlock thousands of retailers and indie card shops</li>
+              <li>🛍️ Hunt at Walmart, Best Buy, Costco, GameStop, Target, and more</li>
+              <li>🚀 Level up your Pokémon kiosk game with Tamermap Pro!</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6 order-md-2">
+          <img src="/static/images/retail-shops-map.png" class="half-size img-fluid d-block mx-auto" alt="Map with retail shop pins">
+        </div>
+      </div>
+    </div>
+
+    <!-- Dedicated Pins -->
+    <div class="card bigpad mb-4">
+      <div class="row g-0">
+        <div class="col-md-6 order-md-1">
+          <img src="/static/images/dedicated-pins-map.png" class="half-size img-fluid d-block mx-auto" alt="Map with custom pins">
+        </div>
+        <div class="col-md-6 order-md-2">
+          <div class="card-body">
+            <h1 class="card-title">Identify Stores Fast with Branded Pins</h1>
+            <ul class="lead list-group" style="list-style: none;">
+              <li>🏷️ Branded pins: spot retailers and indie shops instantly</li>
+              <li>🌟 Pro feature: no more guessing or tapping for info</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enhanced Store Data -->
+    <div class="card bigpad mb-4">
+      <div class="row g-0">
+        <div class="col-md-6 order-md-1">
+          <div class="card-body">
+            <h1 class="card-title">Explore Faster With Pro Details</h1>
+            <ul class="lead list-group" style="list-style: none;">
+              <li>⏰ Plan your visits with store hours</li>
+              <li>📞 Call stores to confirm stock</li>
+              <li>🌐 Visit store websites for deals</li>
+              <li>🗺️ Navigate to kiosks with ease</li>
+              <li>🕹️ Know kiosk numbers before you go</li>
+              <li>🚀 Unlock more tools for collectors</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6 order-md-2">
+          <img src="/static/images/store-details.png" class="half-size img-fluid d-block mx-auto" alt="Store details card">
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap Feature -->
+    <div class="card bigpad mb-4">
+      <div class="row g-0">
+        <div class="col-md-6 order-md-1">
+          <img src="/static/images/heatmap.png" class="half-size img-fluid d-block mx-auto" alt="Heatmap showing popular areas">
+        </div>
+        <div class="col-md-6 order-md-2">
+          <div class="card-body">
+            <h1 class="card-title">Discover Hotspots with Heatmaps</h1>
+            <ul class="lead list-group" style="list-style: none;">
+              <li>🔥 See where the action is with real-time heatmaps</li>
+              <li>📊 Identify high-traffic zones to maximize efficiency</li>
+              <li>🏆 Stay ahead by knowing where others find great deals</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Call-to-Action Section -->
+  <section class="container my-5 text-center" style="margin-bottom: 100px;">
+    <div class="content-box">
+      <h1>Power Up Your Hunt!</h1>
+      <p></p>
+      <p>Try it free for 7 days.</p>
+      <button class="btn btn-primary btn-lg subscribe-btn">Try Pro Now →</button>
+      <p></p>
+      <p><small class="text-muted">Say goodbye to missing opportunities to find cards fast</small></p>
+    </div>
+  </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://js.stripe.com/v3/?locale=en"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const subscribeBtns = document.querySelectorAll(".subscribe-btn");
+  if (subscribeBtns.length === 0) {
+    console.error("No subscribe buttons found");
+    return;
+  }
+
+  const stripe = Stripe("{{ stripe_public_key }}");
+
+  subscribeBtns.forEach(btn => {
+    btn.addEventListener("click", function() {
+<!--      console.log("Subscribe button clicked");-->
+      fetch("/payment/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscription: true })
+      })
+      .then(response => response.json())
+      .then(data => {
+<!--        console.log("Response:", data);-->
+        if (data.error) {
+          alert("Error: " + data.error);
+        } else {
+          stripe.redirectToCheckout({ sessionId: data.id })
+            .then(result => {
+              if (result.error) {
+                alert(result.error.message);
+              }
+            });
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

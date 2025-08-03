@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Session Expired - Admin Alert</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #dc3545;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+        }
+        .alert {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .details {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .detail-value {
+            color: #6c757d;
+        }
+        .footer {
+            background-color: #6c757d;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 0 0 5px 5px;
+            font-size: 12px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚠️ Checkout Session Expired</h1>
+        <p>Potential Revenue Loss Alert</p>
+    </div>
+    
+    <div class="content">
+        <div class="alert">
+            <strong>Attention:</strong> A checkout session has expired before completion. This may indicate a lost sale opportunity.
+        </div>
+        
+        <div class="details">
+            <h3>Session Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Session ID:</span>
+                <span class="detail-value">{{ session_id }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Customer Email:</span>
+                <span class="detail-value">{{ customer_email or 'Unknown' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Customer ID:</span>
+                <span class="detail-value">{{ customer_id or 'Unknown' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Mode:</span>
+                <span class="detail-value">{{ mode }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Amount:</span>
+                <span class="detail-value">{{ amount_display }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Created:</span>
+                <span class="detail-value">{{ created_at }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Expired:</span>
+                <span class="detail-value">{{ expired_at }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Payment Status:</span>
+                <span class="detail-value">{{ payment_status }}</span>
+            </div>
+        </div>
+        
+        <div class="details">
+            <h3>Recommended Actions</h3>
+            <ul>
+                <li>Review the customer's journey to identify potential issues</li>
+                <li>Check if there were any technical problems during checkout</li>
+                <li>Consider reaching out to the customer if contact information is available</li>
+                <li>Monitor for similar patterns in other expired sessions</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="{{ admin_url }}" class="button">View in Admin Dashboard</a>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated alert from the TamerMap Admin System</p>
+        <p>Generated on {{ timestamp }}</p>
+    </div>
+</body>
+</html> 

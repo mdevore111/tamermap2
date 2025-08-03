@@ -1,0 +1,30 @@
+Payment Setup Retry - TamerMap
+Complete Your Payment Method Setup
+
+Hello {{ user.first_name or user.email }},
+
+ACTION REQUIRED: We've created a new payment setup session for your account. Your previous setup attempt encountered an issue and needs to be completed.
+
+Our support team has initiated a retry for your payment method setup. This is often needed when:
+- 3D Secure authentication timed out
+- The payment setup was interrupted
+- There was a temporary technical issue
+
+Setup Details:
+- Original Issue: {{ retry_reason }}
+- Retry Initiated: {{ retry_timestamp }}
+- Setup Type: Payment Method Configuration
+
+To complete your payment setup, please visit this link:
+{{ checkout_url }}
+
+IMPORTANT: This link will expire in 24 hours. If you don't complete the setup within this time, you may need to contact support for another retry.
+
+If you have any questions or need assistance, please don't hesitate to contact our support team.
+
+Best regards,
+The TamerMap Team
+
+---
+This email was sent because an admin initiated a payment setup retry for your account.
+Generated on {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC') }} 

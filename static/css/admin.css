@@ -1,0 +1,239 @@
+/* Admin Portal Styles */
+
+/* Form overrides for admin interface */
+form.icon {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .dashboard-tile {
+    /* Override the default col-md-3 to force two columns instead of four */
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+}
+
+/* Override button styling so the trash icon doesn't get a large box */
+form.icon button {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  box-shadow: none !important;
+  vertical-align: middle !important;
+}
+
+/* Make the trash icon blue to match the pencil */
+form.icon button .fa-trash {
+  color: #007bff !important;  /* same "primary" color as pencil */
+  font-size: 1.2rem;          /* adjust if you want smaller/larger icons */
+  vertical-align: middle !important;
+}
+
+/* Also ensure the pencil icon is aligned in case it's using a similar approach */
+a.icon,
+a.icon span.fa-pencil {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Styling for the bootstrap infographics */
+.progress {
+  background-color: #e9ecef;
+  border-radius: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.progress-bar {
+  transition: width 0.3s ease-in-out;
+}
+
+/* Universal Admin Form Overrides */
+
+/* Increase spacing between form groups */
+.form-group {
+  margin-bottom: 15px; /* Default is often 15px, adjust as needed */
+}
+
+/* Make labels bold and add a bit of spacing on the right */
+.control-label {
+  font-weight: bold;
+  margin-right: 8px;
+}
+
+/* Make form inputs 100% wide (or any width you prefer) */
+.form-control {
+  width: 100% !important;
+  max-width: 600px; /* optional: limit input width if you don't want them super wide */
+  display: inline-block;
+}
+
+/* If you have a 'field' or 'field-container' class, you can style it similarly */
+.field, .field-container {
+  margin-bottom: 10px;
+}
+
+/* Admin Layout */
+.admin-container {
+  display: flex;
+  height: calc(100vh - 120px); /* Subtract header and footer height */
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent container from creating scrollbars */
+}
+
+.admin-sidebar {
+  flex: 0 0 200px;
+  background: #f8f9fa;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+  height: 100%;
+  overflow-y: auto; /* Only sidebar scrolls if navigation is too long */
+}
+
+.admin-sidebar h4 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Style page headers to match navigation header */
+.admin-content h1.h2 {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Reduce excessive padding in page header container */
+.admin-content div.d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Alternative approach - target any div with these classes in admin content */
+.admin-content div.pt-3.pb-2.mb-3 {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Add padding to DataTables info and pagination area */
+.dataTables_info,
+.dataTables_paginate {
+  padding-top: 10px !important;
+}
+
+.dataTables_wrapper .row:last-child {
+  padding-top: 10px;
+}
+
+/* Make the search box narrower so it doesn't extend off the page */
+.dataTables_filter input {
+  width: 300px !important;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  padding: 0.375rem 0.75rem;
+}
+
+.dataTables_filter input:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.admin-sidebar ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.admin-sidebar ul li {
+  margin-bottom: 5px;
+}
+
+.admin-sidebar ul li a {
+  text-decoration: none;
+  color: #007bff;
+  font-size: 0.9rem;
+  padding: 6px 8px;
+  display: block;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.admin-sidebar ul li a:hover {
+  background-color: #e9ecef;
+  color: #0056b3;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 15px;
+  min-width: 0; /* Allow content to shrink */
+  height: 100%;
+  overflow: auto; /* Allow content to scroll */
+}
+
+.admin-content .card {
+  max-width: 100%;
+  margin: 0 auto;
+  height: auto; /* Let content determine height */
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-content .card-body {
+  flex: 1;
+  overflow: visible; /* Allow content to scroll */
+  padding: 15px;
+}
+
+.table-responsive {
+  height: auto;
+  overflow: visible; /* Allow table to scroll naturally */
+}
+
+/* Dashboard styles */
+.dashboard-header {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+
+/* Standardized font weights for admin consistency */
+.admin-content h1.h3 {
+  font-weight: 600;
+}
+
+.admin-content .card-header span {
+  font-weight: 500;
+}
+
+.admin-content .table th {
+  font-weight: 600;
+}
+
+.admin-content .table td {
+  font-weight: 400;
+}
+
+/* Ensure consistent badge styling */
+.badge {
+  font-weight: 500;
+}
+
+.card {
+  transition: transform .2s, box-shadow .2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+} 

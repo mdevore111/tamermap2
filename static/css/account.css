@@ -1,0 +1,78 @@
+/* Section Header */
+.section-header {
+    display: flex;
+    justify-content: space-between; /* Pushes "Edit" and "Verify" to the far right */
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Section Titles */
+.tds-text--h2 {
+    font-weight: bold;
+    text-transform: uppercase; /* Matches the uppercase style in screenshots */
+    font-size: 18px;
+    color: #000;
+}
+
+/* Edit and Verify Links */
+.edit-link, .verify-link {
+    color: #000; /* Black, matching some screenshot styles */
+    text-decoration: underline;
+    font-size: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.verify-link {
+    margin-right: 10px; /* Space between Verify and Edit */
+}
+
+/* Field Labels */
+.tds-text--label {
+    font-weight: bold; /* Makes labels bold as requested */
+    font-size: 14px;
+    color: #333; /* Darker gray for contrast, different from light gray values */
+    margin-bottom: 5px;
+}
+
+/* Field Values */
+.tds-text--value {
+    font-size: 16px;
+    color: #666; /* Lighter gray for values, matching screenshots */
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+.unverified {
+    background-color: white;
+    color: blue;
+    border: 1px solid blue;
+}
+.verified {
+    background-color: white;
+    color: green;
+    border: 1px solid green;
+}
+
+/* Section Spacing */
+.profile-section {
+    margin-bottom: 30px;
+}
+
+/* Form Container */
+.form-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+}

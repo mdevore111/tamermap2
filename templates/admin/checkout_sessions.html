@@ -1,0 +1,141 @@
+{% extends "admin/master.html" %}
+
+{% block title %}Checkout Sessions - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-credit-card me-2"></i>
+                        Checkout Sessions
+                    </h3>
+                    <p class="card-subtitle text-muted">
+                        Monitor Stripe checkout sessions and their status
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="checkout-sessions-table" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Session ID</th>
+                                    <th>Status</th>
+                                    <th>Customer</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                    <th>Mode</th>
+                                    <th>Amount</th>
+                                    <th>Payment Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Checkout Session Modal -->
+<div class="modal fade" id="viewCheckoutSessionModal" tabindex="-1" aria-labelledby="viewCheckoutSessionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewCheckoutSessionModalLabel">Checkout Session Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="checkout-session-details">
+                    <!-- Details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize DataTable
+    var table = $('#checkout-sessions-table').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: '/admin/checkout-sessions/data',
+            type: 'GET',
+            error: function(xhr, error, thrown) {
+                console.error('Error loading checkout sessions:', error);
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    alert('Error: ' + xhr.responseJSON.error);
+                } else {
+                    alert('Failed to load checkout sessions data');
+                }
+            }
+        },
+        columns: [
+            { data: 'id', width: '200px' },
+            { 
+                data: 'status',
+                render: function(data, type, row) {
+                    return `<span class="${row.status_class}">${data}</span>`;
+                }
+            },
+            { data: 'user_email' },
+            { data: 'created' },
+            { data: 'expires_at' },
+            { data: 'mode' },
+            { data: 'amount_total' },
+            { data: 'payment_status' },
+            { 
+                data: 'actions',
+                orderable: false,
+                searchable: false
+            }
+        ],
+        order: [[3, 'desc']], // Sort by created date descending
+        pageLength: 25,
+        responsive: true,
+        language: {
+            processing: '<div class="spinner-border spinner-border-sm" role="status"></div> Loading...',
+            emptyTable: 'No checkout sessions found',
+            info: 'Showing _START_ to _END_ of _TOTAL_ sessions',
+            infoEmpty: 'Showing 0 to 0 of 0 sessions',
+            infoFiltered: '(filtered from _MAX_ total sessions)'
+        }
+    });
+
+    // Handle view checkout session button clicks
+    $(document).on('click', '.view-checkout-session', function() {
+        var sessionId = $(this).data('id');
+        viewCheckoutSession(sessionId);
+    });
+
+    function viewCheckoutSession(sessionId) {
+        // For now, just show basic info since we don't have a detailed endpoint
+        $('#checkout-session-details').html(`
+            <div class="alert alert-info">
+                <strong>Session ID:</strong> ${sessionId}<br>
+                <strong>Note:</strong> Detailed session information will be available in a future update.
+            </div>
+        `);
+        $('#viewCheckoutSessionModal').modal('show');
+    }
+
+    // Refresh table every 30 seconds
+    setInterval(function() {
+        table.ajax.reload(null, false);
+    }, 30000);
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,17 @@
+{% extends "security/email/base_email.html" %}
+{% block subject %}New Communication Form Submission{% endblock %}
+{% block body %}
+<p><strong>A new communication form was submitted on Tamermap.com:</strong></p>
+<ul>
+  <li><strong>Type:</strong> {{ communication_type }}</li>
+  <li><strong>Name:</strong> {{ name or '(not provided)' }}</li>
+  <li><strong>Email:</strong> {{ address or '(not provided)' }}</li>
+  <li><strong>Subject:</strong> {{ form_subject or '(not provided)' }}</li>
+  <li><strong>Message:</strong> {{ body or '(not provided)' }}</li>
+  {% if reported_address %}<li><strong>Reported Address:</strong> {{ reported_address }}</li>{% endif %}
+  {% if reported_phone %}<li><strong>Reported Phone:</strong> {{ reported_phone }}</li>{% endif %}
+  {% if reported_website %}<li><strong>Reported Website:</strong> {{ reported_website }}</li>{% endif %}
+  {% if reported_hours %}<li><strong>Reported Hours:</strong> {{ reported_hours }}</li>{% endif %}
+</ul>
+<p>Submitted at: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}</p>
+{% endblock %} 

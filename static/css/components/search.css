@@ -1,0 +1,53 @@
+/* ========================================================================== */
+/* TOP CONTROLS (SEARCH BAR) */
+/* ========================================================================== */
+@media only screen and (min-width: 769px) {
+  #top-controls {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+  }
+}
+
+/* Container for the search control */
+#search-control {
+  position: relative;
+  background: white;
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  width: 300px;
+}
+
+#search-control form {
+  margin: 0;
+  position: relative;
+}
+
+#search-control i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+#search-control input {
+  border: none;
+  outline: none;
+  width: 100%;
+  padding-left: 30px;
+  margin-bottom: 0px;
+}
+
+.fa-search {
+  margin: 0px;
+  font-size: 14px;
+  color: #666;
+}
+
+#top-controls, #search-control {
+  margin-top: 0 !important;
+  margin-bottom: 8px;
+} 

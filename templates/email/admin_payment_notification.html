@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .content { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .alert { padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .alert-danger { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .btn { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Payment Notification</h2>
+            <p><strong>Event:</strong> {{ event_type|title }}</p>
+        </div>
+        
+        <div class="content">
+            <h3>Payment Details</h3>
+            <p><strong>Payment Intent ID:</strong> {{ payment_intent_id }}</p>
+            <p><strong>User:</strong> {{ user_name }} ({{ user_email }})</p>
+            <p><strong>Amount:</strong> {{ "%.2f"|format(amount / 100) }} {{ currency|upper }}</p>
+            
+            <div class="alert alert-danger">
+                <h4>💳 Payment Failed</h4>
+                <p>This payment intent failed to process.</p>
+                {% if error_message %}
+                <p><strong>Error Message:</strong> {{ error_message }}</p>
+                {% endif %}
+            </div>
+            
+            <h3>Admin Actions</h3>
+            <p>You can review payment issues through the admin panel:</p>
+            <a href="{{ config.get('BASE_URL', 'https://www.tamermap.com') }}/admin/setup-intents" class="btn">View Setup Intents</a>
+            
+            <p style="margin-top: 20px;">
+                <strong>Time:</strong> {{ moment().format('YYYY-MM-DD HH:mm:ss UTC') }}
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from the TAMERMAP payment system.</p>
+            <p>If you have any questions, please contact the development team.</p>
+        </div>
+    </div>
+</body>
+</html> 

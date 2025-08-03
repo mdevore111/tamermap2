@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}
+Tamermap Cache Tests
+{% endblock %}
+
+{% block extra_head %}
+  <style>
+    body {
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+    
+    #test-output {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      min-height: 300px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    #test-output div {
+      margin-bottom: 8px;
+    }
+    
+    hr {
+      border: 0;
+      border-top: 1px solid #eee;
+      margin: 15px 0;
+    }
+    
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h1>Tamermap Cache Testing</h1>
+    <p>This page tests the caching functionality of the dataService module. It verifies that:</p>
+    <ul>
+      <li>Data is fetched from the server on first request</li>
+      <li>Subsequent requests use the memory cache</li>
+      <li>The cache can be forcibly refreshed</li>
+      <li>localStorage is used as a fallback when memory cache is cleared</li>
+      <li>Different data types (retailers, events) are cached independently</li>
+    </ul>
+    
+    <button id="run-tests">Run Tests Again</button>
+    
+    <div id="test-output"></div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script type="module" src="{{ url_for('static', filename='js/test-cache.js') }}"></script>
+{% endblock %} 

@@ -1,0 +1,250 @@
+{% extends "admin/master.html" %}
+
+{% block title %}Payment Method Setup Management - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">Payment Method Setup Management</h1>
+    <p class="text-muted mb-4">Monitor and manage payment method setup attempts, 3D Secure authentication, and failed payment setups.</p>
+    
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0">Payment Setup Attempts & 3D Secure Authentication</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="setup-intents-table">
+                    <thead>
+                        <tr>
+                            <th>Payment Setup ID</th>
+                            <th>Status</th>
+                            <th>Stripe Customer ID</th>
+                            <th>User Email</th>
+                            <th>Created Date</th>
+                            <th>Payment Method Types</th>
+                            <th>Admin Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Payment Setup Details -->
+<div class="modal fade" id="setupIntentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Setup Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="setupIntentModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="retrySetupIntent">Retry Setup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+  {{ super() }}
+  <!-- DataTables CSS and JS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+  <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+  
+  <script>
+$(document).ready(function() {
+    // Initialize DataTable
+    var table = $('#setup-intents-table').DataTable({
+        processing: true,
+        serverSide: false,
+        ajax: {
+            url: '/admin/setup-intents/data',
+            type: 'GET',
+            dataSrc: function(json) {
+
+                return json.data || [];
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables AJAX error:', error, thrown);
+                console.error('Response:', xhr.responseText);
+            }
+        },
+        columns: [
+            { data: 'id' },
+            { 
+                data: 'status',
+                render: function(data) {
+                    var statusClass = '';
+                    switch(data) {
+                        case 'requires_action': statusClass = 'badge bg-warning'; break;
+                        case 'requires_payment_method': statusClass = 'badge bg-danger'; break;
+                        case 'succeeded': statusClass = 'badge bg-success'; break;
+                        case 'canceled': statusClass = 'badge bg-secondary'; break;
+                        default: statusClass = 'badge bg-info';
+                    }
+                    return '<span class="' + statusClass + '">' + data + '</span>';
+                }
+            },
+            { data: 'customer_id' },
+            { data: 'user_email' },
+            { data: 'created' },
+            { data: 'payment_method_types' },
+            { 
+                data: 'actions',
+                orderable: false,
+                searchable: false
+            }
+        ],
+        order: [[4, 'desc']] // Sort by created date descending
+    });
+
+    // Handle view setup intent
+    $(document).on('click', '.view-setup-intent', function() {
+        var setupIntentId = $(this).data('id');
+        
+        $.get('/admin/setup-intents/' + setupIntentId)
+            .done(function(data) {
+                var modalBody = $('#setupIntentModalBody');
+                modalBody.html(`
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <table class="table table-sm">
+                                <tr><td>ID:</td><td>${data.id}</td></tr>
+                                <tr><td>Status:</td><td><span class="badge bg-${getStatusColor(data.status)}">${data.status}</span></td></tr>
+                                <tr><td>Customer ID:</td><td>${data.customer_id || 'N/A'}</td></tr>
+                                <tr><td>User Email:</td><td>${data.user_email}</td></tr>
+                                <tr><td>Created:</td><td>${data.created}</td></tr>
+                                <tr><td>Usage:</td><td>${data.usage}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Payment Details</h6>
+                            <table class="table table-sm">
+                                <tr><td>Payment Methods:</td><td>${data.payment_method_types.join(', ')}</td></tr>
+                                <tr><td>Client Secret:</td><td>${data.client_secret || 'N/A'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    ${data.next_action ? `
+                    <div class="mt-3">
+                        <h6>Next Action Required</h6>
+                        <div class="alert alert-warning">
+                            <strong>Type:</strong> ${data.next_action.type}<br>
+                            ${data.next_action.use_stripe_sdk ? '3D Secure authentication required' : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${data.last_setup_error ? `
+                    <div class="mt-3">
+                        <h6>Last Error</h6>
+                        <div class="alert alert-danger">
+                            <strong>Message:</strong> ${data.last_setup_error.message}<br>
+                            <strong>Type:</strong> ${data.last_setup_error.type}
+                        </div>
+                    </div>
+                    ` : ''}
+                `);
+                
+                $('#setupIntentModal').modal('show');
+                $('#retrySetupIntent').data('id', setupIntentId);
+                
+                // Enable/disable retry button based on status
+                var canRetry = ['requires_action', 'canceled'].includes(data.status);
+                $('#retrySetupIntent').prop('disabled', !canRetry);
+                if (canRetry) {
+                    $('#retrySetupIntent').removeClass('btn-secondary').addClass('btn-warning');
+                    $('#retrySetupIntent').text('Retry Setup');
+                } else {
+                    $('#retrySetupIntent').removeClass('btn-warning').addClass('btn-secondary');
+                    $('#retrySetupIntent').text('Retry Not Available');
+                }
+            })
+            .fail(function() {
+                alert('Failed to load setup intent details');
+            });
+    });
+
+    // Handle retry setup intent from modal
+    $('#retrySetupIntent').click(function() {
+        var setupIntentId = $(this).data('id');
+        
+        if (!confirm('Are you sure you want to retry this setup intent? This will create a new checkout session for the customer.')) {
+            return;
+        }
+        
+        $.post('/admin/setup-intents/' + setupIntentId + '/retry')
+            .done(function(data) {
+                if (data.success) {
+                    alert('Success! ' + data.message + '\n\nA new checkout session has been created and the customer has been notified via email.');
+                    $('#setupIntentModal').modal('hide');
+                    table.ajax.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .fail(function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error';
+                alert('Failed to retry setup intent: ' + error);
+            });
+    });
+
+    // Handle retry setup intent from table
+    $(document).on('click', '.retry-setup-intent', function() {
+        var setupIntentId = $(this).data('id');
+        var button = $(this);
+        
+        // Check if button is disabled
+        if (button.prop('disabled')) {
+            return;
+        }
+        
+        if (!confirm('Are you sure you want to retry this setup intent? This will create a new checkout session for the customer.')) {
+            return;
+        }
+        
+        // Disable button during request
+        button.prop('disabled', true).text('Processing...');
+        
+        $.post('/admin/setup-intents/' + setupIntentId + '/retry')
+            .done(function(data) {
+                if (data.success) {
+                    alert('Success! ' + data.message + '\n\nA new checkout session has been created and the customer has been notified via email.');
+                    table.ajax.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                    // Re-enable button on error
+                    button.prop('disabled', false).text('Retry');
+                }
+            })
+            .fail(function(xhr) {
+                var error = xhr.responseJSON ? xhr.responseJSON.error : 'Unknown error';
+                alert('Failed to retry setup intent: ' + error);
+                // Re-enable button on error
+                button.prop('disabled', false).text('Retry');
+            });
+    });
+
+    function getStatusColor(status) {
+        switch(status) {
+            case 'requires_action': return 'warning';
+            case 'requires_payment_method': return 'danger';
+            case 'succeeded': return 'success';
+            case 'canceled': return 'secondary';
+            default: return 'info';
+        }
+    }
+});
+  </script>
+{% endblock %} 

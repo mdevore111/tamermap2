@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}
+Tamermap Cache Tests (Development)
+{% endblock %}
+
+{% block extra_head %}
+  <style>
+    body {
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+    
+    #test-output {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+      min-height: 300px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    #test-output div {
+      margin-bottom: 8px;
+    }
+    
+    hr {
+      border: 0;
+      border-top: 1px solid #eee;
+      margin: 15px 0;
+    }
+    
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-top: 15px;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 15px 0;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="warning">
+      <strong>Development Mode Only!</strong>
+      This page is only available in development mode and requires authentication.
+    </div>
+
+    <h1>Tamermap Cache Testing (Development)</h1>
+    <p>This page tests the caching functionality. It verifies that:</p>
+    <ul>
+      <li>Data is fetched from the server on first request</li>
+      <li>Subsequent requests within 60 seconds use the cache</li>
+      <li>Cache can be manually cleared</li>
+      <li>Response includes timestamps to verify caching</li>
+    </ul>
+    
+    <button id="test-cache">Test Cache</button>
+    <button id="clear-output">Clear Output</button>
+    
+    <div id="test-output"></div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const testKey = localStorage.getItem('TEST_API_KEY') || 'test_key_local';
+      const output = document.getElementById('test-output');
+      
+      function addOutput(text) {
+        const div = document.createElement('div');
+        div.textContent = `${new Date().toLocaleTimeString()}: ${text}`;
+        output.appendChild(div);
+        output.scrollTop = output.scrollHeight;
+      }
+      
+      document.getElementById('test-cache').addEventListener('click', async function() {
+        try {
+          const response = await fetch('/dev/api/test-cache-data', {
+            headers: {
+              'X-Test-Key': testKey
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          addOutput(`Response received - Server timestamp: ${data.timestamp}`);
+          addOutput(`Cache status: ${data.cache_status}`);
+        } catch (error) {
+          addOutput(`Error: ${error.message}`);
+        }
+      });
+      
+      document.getElementById('clear-output').addEventListener('click', function() {
+        output.innerHTML = '';
+      });
+    });
+  </script>
+{% endblock %} 
