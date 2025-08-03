@@ -415,6 +415,33 @@ export class MarkerManager {
             eventDays: eventDays
         };
     }
+
+    /**
+     * Hide all visible markers
+     */
+    hideAllMarkers() {
+        this.visibleMarkers.forEach(marker => {
+            marker.setVisible(false);
+        });
+    }
+
+    /**
+     * Show all markers that should be visible based on current filters
+     */
+    showAllMarkers() {
+        this.visibleMarkers.forEach(marker => {
+            marker.setVisible(true);
+        });
+        // Re-apply current filters to ensure correct visibility
+        this.applyFilters(this.currentFilters);
+    }
+
+    /**
+     * Get all currently visible markers
+     */
+    getVisibleMarkers() {
+        return Array.from(this.visibleMarkers);
+    }
 }
 // touch
  

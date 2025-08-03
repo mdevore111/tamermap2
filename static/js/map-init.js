@@ -355,6 +355,11 @@ async function loadOptimizedMapData() {
     window.allEventMarkers = Array.from(markerManager.markerCache.values())
       .filter(marker => marker.event_title); // Only event markers
     
+    // Expose marker visibility functions globally for route planner
+    window.hideAllMarkers = () => markerManager.hideAllMarkers();
+    window.showAllMarkers = () => markerManager.showAllMarkers();
+    window.getVisibleMarkers = () => markerManager.getVisibleMarkers();
+    
     // Set up drag end listener for info windows
     window.map.addListener('dragend', () => {
       if (window.currentOpenMarker && !window.map.getBounds().contains(window.currentOpenMarker.getPosition())) {
