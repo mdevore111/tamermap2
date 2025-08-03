@@ -358,7 +358,41 @@ function handleSearch(event) {
 // Expose handleSearch globally
 window.handleSearch = handleSearch;
 
-// Expose initUI globally
+/**
+ * Open route planner modal using SweetAlert2
+ */
+function openRoutePanel() {
+  if (!window.routePlanner) {
+    console.error('Route planner not initialized');
+    return;
+  }
+
+  // Use the SweetAlert2 configuration from routePlanner
+  Swal.fire({
+    title: '<i class="fas fa-route"></i> Route Planner',
+    html: window.routePlanner.createModalContent(),
+    showConfirmButton: false,
+    showCancelButton: false,
+    customClass: {
+      popup: 'swal2-route-planner'
+    },
+    width: 'auto',
+    didOpen: () => {
+      window.routePlanner.initializeModalControls();
+    }
+  });
+}
+
+/**
+ * Close route planner modal
+ */
+function closeRoutePanel() {
+  Swal.close();
+}
+
+// Expose functions globally
+window.openRoutePanel = openRoutePanel;
+window.closeRoutePanel = closeRoutePanel;
 window.initUI = initUI;
 
 // Don't auto-initialize - let map-init.js handle it

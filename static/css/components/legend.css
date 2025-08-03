@@ -182,4 +182,58 @@
   z-index: auto !important;
   width: 100%;
   max-width: 420px;
-} */ 
+} */
+
+/* Route Planning Section */
+#route-planning-section {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+}
+
+.route-planning-header {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.route-planning-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.route-planning-btn {
+  flex: 1;
+  min-width: 60px;
+  padding: 6px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.route-planning-btn:hover {
+  background: #e9ecef;
+  border-color: #ced4da;
+}
+
+.route-planning-btn.active {
+  background: #007bff;
+  border-color: #0056b3;
+  color: white;
+}
+
+.route-planning-btn i {
+  font-size: 14px;
+}
+
+.route-planning-btn span {
+  font-size: 12px;
+  white-space: nowrap;
+} 
