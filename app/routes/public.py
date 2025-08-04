@@ -1,0 +1,297 @@
+# app/routes/public.py
+import stripe
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import session
+from flask_login import current_user
+from datetime import datetime
+from sqlalchemy import func
+
+from ..extensions import db, limiter
+from ..models import Message, Retailer, Event, VisitorLog
+from app.communication_forms import MessageForm
+from app.routes.security import check_referrer
+from app.custom_email import send_email_with_context
+
+# Create a blueprint for public (unprotected) routes
+public_bp = Blueprint("public", __name__)
+
+
+@public_bp.route("/")
+def splash():  # Or rename to 'index' for clarity
+    google_api_key = current_app.config.get("GOOGLE_API_KEY")
+    return render_template("maps.html", google_api_key=google_api_key)
+
+
+@public_bp.route("/maps")
+def maps():
+    google_api_key = current_app.config.get("GOOGLE_API_KEY")
+    return render_template("maps.html", google_api_key=google_api_key)
+
+
+@public_bp.route("/learn")
+def learn():
+    """
+    Render the learn page, which contains educational or informational content.
+
+    Returns:
+        str: Rendered HTML for the learn page.
+    """
+    stripe_public_key = current_app.config.get('STRIPE_PUBLISHABLE_KEY')
+    return render_template("learn.html", stripe_public_key=stripe_public_key)
+
+
+@public_bp.route("/play")
+def play():
+    """
+    Render the play page, which contains educational or informational content.
+
+    Returns:
+        str: Rendered HTML for the play page.
+    """
+    stripe_public_key = current_app.config.get('STRIPE_PUBLISHABLE_KEY')
+    return render_template("play.html", stripe_public_key=stripe_public_key)
+
+
+@public_bp.route("/message", methods=["GET", "POST"])
+@limiter.limit("5 per minute")  # Rate limit message submissions
+def send_message():
+    """
+    Display and process the message form.
+
+    - On GET: Displays the message form.
+    - On POST: Validates and processes the submitted form data to create a new message.
+      If the form includes a communication type (e.g., suggestion, contact, support, or report),
+      it pre-populates the form accordingly. Additional context (like the reported address)
+      is appended to the message body if provided.
+
+    If the user is authenticated, their name and user ID are captured.
+    Otherwise, "Anonymous" is used and no sender ID is recorded.
+
+    Returns:
+        str or Response: Rendered message form template on GET,
+        or a redirect response on successful POST.
+    """
+    form = MessageForm()
+
+    # only override on GET when link provides type & metadata
+    if request.method == "GET":
+        pre = request.args.get("type", "")
+        form.communication_type.data = (
+            pre if pre in ["suggestion", "contact", "report", "support"] else "contact"
+        )
+        if form.communication_type.data == "report":
+            addr = request.args.get("address", "")
+            form.subject.data = addr
+            form.reported_address.data = addr
+            form.reported_phone.data = request.args.get("phone", "")
+            form.reported_website.data = request.args.get("website", "")
+            form.reported_hours.data = request.args.get("hours", "")
+
+    if form.validate_on_submit():
+        # Additional SPAM protection checks
+        client_ip = request.remote_addr
+        
+        # Check for suspicious patterns in the message
+        body_text = form.body.data.lower()
+        subject_text = form.subject.data.lower() if form.subject.data else ""
+        
+        # Check for excessive punctuation
+        if body_text.count('!') > 5 or body_text.count('?') > 5:
+            current_app.logger.warning(f"Potential spam from IP {client_ip}: excessive punctuation")
+            flash("Message contains too much punctuation.", "danger")
+            return render_template("message_form.html", form=form)
+        
+        # Check for suspicious keywords in subject or body
+        spam_keywords = ['urgent', 'act now', 'limited time', 'free money', 'make money fast', 'work from home', 'earn cash']
+        for keyword in spam_keywords:
+            if keyword in body_text or keyword in subject_text:
+                current_app.logger.warning(f"Potential spam from IP {client_ip}: keyword '{keyword}' detected")
+                flash("Message contains inappropriate content.", "danger")
+                return render_template("message_form.html", form=form)
+        
+        # Check for suspicious user agent
+        user_agent = request.headers.get('User-Agent', '').lower()
+        if 'bot' in user_agent or 'crawler' in user_agent or 'spider' in user_agent:
+            current_app.logger.warning(f"Bot detected from IP {client_ip}: {user_agent}")
+            flash("Automated submissions are not allowed.", "danger")
+            return render_template("message_form.html", form=form)
+        
+        # Get sender info
+        if current_user.is_authenticated:
+            user_name = (
+                f"{current_user.first_name} {current_user.last_name}".strip()
+                if current_user.first_name or current_user.last_name
+                else current_user.email or "User"
+            )
+            sender_id = current_user.id
+        else:
+            user_name = "Anonymous"
+            sender_id = None
+
+        # Construct message body with report metadata
+        extra = f"Reported by {user_name}:\n"
+
+        try:
+            msg_record = Message(
+                sender_id=sender_id,
+                recipient_id=None,
+                communication_type=form.communication_type.data,
+                subject=form.subject.data,
+                body=extra + form.body.data,
+                reported_address=form.reported_address.data,
+                reported_phone=form.reported_phone.data,
+                reported_website=form.reported_website.data,
+                reported_hours=form.reported_hours.data,
+                name=form.name.data,
+                address=form.address.data
+            )
+            db.session.add(msg_record)
+            db.session.commit()
+
+            # Send admin notification email
+            send_email_with_context(
+                subject="New Communication Form Submission",
+                template="email/admin_message_notification",
+                recipient=current_app.config.get('ADMIN_EMAIL', 'mark@markdevore.com'),
+                communication_type=form.communication_type.data,
+                name=form.name.data,
+                address=form.address.data,
+                form_subject=form.subject.data,
+                body=form.body.data,
+                reported_address=form.reported_address.data,
+                reported_phone=form.reported_phone.data,
+                reported_website=form.reported_website.data,
+                reported_hours=form.reported_hours.data,
+                config=current_app.config
+            )
+
+            # Log successful submission for monitoring
+            current_app.logger.info(f"Message submitted successfully from IP {client_ip} by {user_name}")
+            
+            flash("Your message has been sent.", "success")
+            return redirect(url_for("public.maps"))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Failed to save message: {e}")
+            flash("An error occurred while sending your message.", "danger")
+
+    # Render the message form template (on GET or if form submission fails)
+    return render_template("message_form.html", form=form)
+
+
+@public_bp.route("/terms")
+def terms():
+    """
+    Render the 'terms' page.
+
+    Returns:
+        str: Rendered HTML for the 'terms' page.
+    """
+    return render_template("terms.html")
+
+
+@public_bp.route("/privacy")
+def privacy():
+    """
+    Render the 'privacy' page.
+
+    Returns:
+        str: Rendered HTML for the 'privacy' page.
+    """
+    return render_template("privacy.html")
+
+
+@public_bp.route("/about")
+def about():
+    """
+    Render the 'about' page.
+
+    Returns:
+        str: Rendered HTML for the 'about' page.
+    """
+    return render_template("about.html")
+
+
+@public_bp.route("/sitemap")
+def sitemap():
+    """
+    Render the 'sitemap' page.
+
+    Returns:
+        str: Rendered HTML for the 'sitemap' page.
+    """
+    return render_template("sitemap.html")
+
+
+@public_bp.route('/success')
+def success():
+    """
+    After a successful Checkout session, retrieve the session details,
+    extract the custom 'full_name' field (if provided), and update the subscription metadata.
+    """
+    session_id = request.args.get('session_id')
+    if not session_id:
+        flash("No session ID provided.", "error")
+        return redirect(url_for("auth.account"))
+
+    try:
+        # Retrieve the Checkout Session and expand the subscription object.
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=["subscription"]
+        )
+
+        # Extract the custom fields (ensure it's a list).
+        custom_fields = session.get("custom_fields") or []
+        full_name = None
+        for field in custom_fields:
+            if field.get('key') == 'full_name':
+                value = field.get('text', {}).get('value', '').strip()
+                current_app.logger.debug("Found custom field 'full_name': '%s'", value)
+                if value:
+                    optional_full_name = value
+                break
+
+        if full_name:
+            # Update subscription metadata with the full name.
+            subscription_id = session.subscription.id
+            stripe.Subscription.modify(
+                subscription_id,
+                metadata={"full_name": full_name}
+            )
+            flash("Your subscription has been updated with your full name.", "success")
+        else:
+            flash("No custom full name provided; using billing name.", "info")
+    except Exception as e:
+        # Log and flash an error message if something goes wrong.
+        current_app.logger.error("Error updating subscription metadata: %s", e)
+        flash("There was an error updating your subscription details.", "error")
+
+    # Continue with redirecting the user to their account page.
+    return redirect(url_for("auth.account"))
+
+
+@public_bp.route('/cancel')
+def cancel():
+    """
+    Handle a canceled checkout session.
+
+    This route flashes a cancellation message and redirects the user back to the account page.
+
+    Returns:
+        A redirect response to the account page.
+    """
+    current_app.logger.info("Checkout session canceled by user.")
+    flash("Payment was canceled. You can try again if you like.", "warning")
+    return redirect(url_for("auth.account"))
+
+
+@public_bp.route("/test-cache")
+def test_cache():
+    """
+    Render the test-cache page for testing the caching functionality.
+    
+    Returns:
+        str: Rendered HTML for the test-cache page.
+    """
+    return render_template("test-cache.html")
