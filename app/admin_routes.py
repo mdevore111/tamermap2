@@ -1,0 +1,2683 @@
+from flask import Blueprint, render_template, jsonify, request, flash, redirect, url_for, current_app
+from flask_login import login_required, current_user
+from flask_authorize import Authorize
+from flask_security import utils
+from app.models import User, Retailer, Event, Message, Role, VisitorLog  # Removed Location import since table doesn't exist
+from app import db
+from datetime import datetime, timedelta
+from sqlalchemy import desc, func, or_
+from functools import wraps
+import time
+from collections import defaultdict
+import stripe
+from app.payment.stripe_webhooks import log_billing_event
+from app.custom_email import send_email_with_context
+from app.admin_utils import get_top_referrers, get_top_pages, get_top_ref_codes
+
+admin_bp = Blueprint('admin', __name__)
+authorize = Authorize()
+
+# Simple rate limiting for DataTables requests
+request_timestamps = defaultdict(list)
+
+# Simple cache for DataTables responses
+data_cache = {}
+CACHE_DURATION = 30  # seconds
+
+def get_cache_key(endpoint, **kwargs):
+    """Generate cache key for DataTables requests"""
+    params = sorted(kwargs.items())
+    return f"{endpoint}:{hash(str(params))}"
+
+def get_cached_response(cache_key):
+    """Get cached response if still valid"""
+    if cache_key in data_cache:
+        timestamp, response = data_cache[cache_key]
+        if time.time() - timestamp < CACHE_DURATION:
+            return response
+        else:
+            del data_cache[cache_key]
+    return None
+
+def cache_response(cache_key, response):
+    """Cache response with timestamp"""
+    data_cache[cache_key] = (time.time(), response)
+
+def rate_limit_data_tables(max_requests=10, window_seconds=60):
+    """Simple rate limiting decorator for DataTables endpoints"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Get client IP or user ID for rate limiting
+            client_id = current_user.id if current_user.is_authenticated else request.remote_addr
+            
+            # Initialize timestamps list if not exists
+            if client_id not in request_timestamps:
+                request_timestamps[client_id] = []
+            
+            current_time = time.time()
+            timestamps = request_timestamps[client_id]
+            
+            # Remove old timestamps outside the window
+            timestamps[:] = [ts for ts in timestamps if current_time - ts < window_seconds]
+            
+            # Check if rate limit exceeded
+            if len(timestamps) >= max_requests:
+                # Return a more DataTables-friendly error response
+                return jsonify({
+                    'error': 'Rate limit exceeded. Please wait before making more requests.',
+                    'draw': request.args.get('draw', 1),
+                    'recordsTotal': 0,
+                    'recordsFiltered': 0,
+                    'data': []
+                }), 429
+            
+            # Add current timestamp
+            timestamps.append(current_time)
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def admin_required(f):
+    """Decorator that combines @login_required and @authorize.has_role('Admin')"""
+    @wraps(f)
+    @login_required
+    @authorize.has_role('Admin')
+    def decorated_function(*args, **kwargs):
+        return f(*args, **kwargs)
+    return decorated_function
+
+@admin_bp.route('/')
+@admin_required
+def index():
+    # Import admin utilities for analytics
+    from app.admin_utils import get_visitors_today, get_visitors_this_week, get_top_referrers, get_top_pages, get_top_ref_codes, get_system_stats, get_visit_trends_30d, get_total_retailers, get_kiosk_retailers, get_stores, get_card_shops, get_total_kiosks
+    
+    # Get system statistics with cross-platform support
+    system_stats = get_system_stats()
+    
+    # Batch database queries for better performance
+    def get_dashboard_counts():
+        """Get all dashboard counts in batched queries"""
+        try:
+            # Get basic counts with separate queries for reliability
+            total_users = db.session.query(func.count(User.id)).scalar() or 0
+            total_retailers = db.session.query(func.count(Retailer.id)).scalar() or 0
+            total_events = db.session.query(func.count(Event.id)).scalar() or 0
+            total_messages = db.session.query(func.count(Message.id)).scalar() or 0
+            
+            # Get retailer type counts
+            kiosk_retailers = get_kiosk_retailers()
+            retail_stores = get_stores()
+            indie_stores = get_card_shops()
+            total_kiosks = get_total_kiosks()
+            
+            # Validate that total retailers equals sum of types
+            calculated_total = kiosk_retailers + retail_stores + indie_stores
+            if calculated_total != total_retailers:
+                current_app.logger.warning(f"Retailer count mismatch: total={total_retailers}, calculated={calculated_total} (kiosk={kiosk_retailers}, stores={retail_stores}, indie={indie_stores})")
+            
+            # Validate that total kiosks >= kiosk retailers
+            if total_kiosks < kiosk_retailers:
+                current_app.logger.warning(f"Kiosk count anomaly: total_kiosks={total_kiosks}, kiosk_retailers={kiosk_retailers}")
+            
+            # Get role-based counts with proper join
+            from app.models import roles_users
+            pro_users = db.session.query(func.count(User.id)).join(roles_users).join(Role).filter(Role.name == 'Pro').scalar() or 0
+            admin_users = db.session.query(func.count(User.id)).join(roles_users).join(Role).filter(Role.name == 'Admin').scalar() or 0
+            active_users = total_users  # For now, consider all users as active
+            
+            # Get visitor analytics counts (excluding monitor traffic)
+            from app.admin_utils import exclude_monitor_traffic
+            unique_pages = exclude_monitor_traffic(
+                db.session.query(func.count(func.distinct(VisitorLog.path)))
+            ).scalar() or 0
+            unique_referrers = exclude_monitor_traffic(
+                db.session.query(func.count(func.distinct(VisitorLog.referrer)))
+            ).filter(
+                VisitorLog.referrer.isnot(None),
+                VisitorLog.referrer != ''
+            ).scalar() or 0
+            
+            return {
+                'total_users': total_users,
+                'total_retailers': total_retailers,
+                'total_events': total_events,
+                'total_messages': total_messages,
+                'kiosk_retailers': kiosk_retailers,
+                'retail_stores': retail_stores,
+                'indie_stores': indie_stores,
+                'total_kiosks': total_kiosks,
+                'pro_users': pro_users,
+                'admin_users': admin_users,
+                'active_users': active_users,
+                'unique_pages': unique_pages,
+                'unique_referrers': unique_referrers
+            }
+        except Exception as e:
+            current_app.logger.error(f"Error getting dashboard counts: {e}")
+            # Return safe defaults
+            return {
+                'total_users': 0, 'total_retailers': 0, 'total_events': 0, 'total_messages': 0,
+                'kiosk_retailers': 0, 'retail_stores': 0, 'indie_stores': 0, 'total_kiosks': 0,
+                'pro_users': 0, 'admin_users': 0, 'active_users': 0,
+                'unique_pages': 0, 'unique_referrers': 0
+            }
+    
+    # Get all counts in batched queries
+    counts = get_dashboard_counts()
+    
+    # Get visitor statistics
+    try:
+        visitors_today = get_visitors_today()
+        visitors_this_week = get_visitors_this_week()
+    except Exception:
+        visitors_today = 0
+        visitors_this_week = 0
+    
+    # Get date filter parameter (default to 30 days)
+    days_filter = request.args.get('days', 30, type=int)
+    if days_filter < 1 or days_filter > 60:
+        days_filter = 30
+    
+    # Get top analytics data with date filtering
+    try:
+        top_referrers = get_top_referrers(limit=10, include_internal=False, days=days_filter)
+        top_pages = get_top_pages(limit=10, days=days_filter)
+        # Get top referral codes for dashboard
+        top_ref_codes = get_top_ref_codes(limit=10, days=days_filter)
+    except Exception:
+        top_referrers = []
+        top_pages = []
+        top_ref_codes = []
+
+    dashboard_groups = [
+        ('User Statistics', [
+            {'title': 'Total Users', 'value': counts['total_users'], 'summary': 'Total registered users'},
+            {'title': 'Pro Users', 'value': counts['pro_users'], 'summary': 'Users with Pro subscription'},
+            {'title': 'Admin Users', 'value': counts['admin_users'], 'summary': 'Administrative users'},
+            {'title': 'Active Users', 'value': counts['active_users'], 'summary': 'Currently active users'}
+        ]),
+        ('Visitor Statistics', [
+            {'title': 'Visitors Today', 'value': visitors_today, 'summary': 'Unique visitors today'},
+            {'title': 'Visitors This Week', 'value': visitors_this_week, 'summary': 'Unique visitors this week'},
+            {'title': 'Unique Referrers', 'value': counts['unique_referrers'], 'summary': 'Unique referrer domains'}
+        ]),
+        ('Content Statistics', [
+            {'title': 'Total Retailers', 'value': counts['total_retailers'], 'summary': 'Total retailer locations'},
+            {'title': 'Kiosk Retailers', 'value': counts['kiosk_retailers'], 'summary': 'Retailers with kiosks'},
+            {'title': 'Retail Stores', 'value': counts['retail_stores'], 'summary': 'Retail store locations'},
+            {'title': 'Indie Stores', 'value': counts['indie_stores'], 'summary': 'Card shop locations'},
+            {'title': 'Events', 'value': counts['total_events'], 'summary': 'Total events'},
+            {'title': 'Messages', 'value': counts['total_messages'], 'summary': 'Total user messages'},
+            {'title': 'Unique Pages', 'value': counts['unique_pages'], 'summary': 'Unique pages visited'},
+            {'title': 'Kiosks', 'value': counts['total_kiosks'], 'summary': 'Total kiosk machines'}
+        ])
+    ]
+    
+    # Get visit trends data for the chart
+    try:
+        visit_trends = get_visit_trends_30d()
+        current_app.logger.debug(f"Retrieved {len(visit_trends)} visit trend records")
+        
+        # Prepare chart data
+        chart_data = {
+            'labels': [trend['date'] for trend in visit_trends],
+            'total': [trend['total'] for trend in visit_trends],
+            'registered': [trend['pro'] for trend in visit_trends],
+            'guests': [trend['guest'] for trend in visit_trends],
+            'moving_average': [trend['moving_average'] for trend in visit_trends]
+        }
+        
+        # Log some sample data for debugging
+        if visit_trends:
+            sample = visit_trends[0]
+            current_app.logger.debug(f"Sample trend data: {sample}")
+            
+    except Exception as e:
+        current_app.logger.error(f"Error getting visit trends: {e}")
+        # Fallback to empty data
+        chart_data = {
+            'labels': [],
+            'total': [],
+            'registered': [],
+            'guests': []
+        }
+    
+    return render_template('admin/dashboard.html', 
+                         system_stats=system_stats,
+                         dashboard_groups=dashboard_groups,
+                         chart_data=chart_data,
+                         top_referrers=top_referrers,
+                         top_pages=top_pages,
+                         top_ref_codes=top_ref_codes,
+                         days_filter=days_filter)
+
+# AJAX endpoints for dynamic analytics updates
+@admin_bp.route('/api/analytics/top-referrers')
+@admin_required
+def api_top_referrers():
+    """AJAX endpoint for top referrers data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    try:
+        top_referrers = get_top_referrers(limit=10, include_internal=False, days=days)
+        return jsonify({
+            'success': True,
+            'data': top_referrers,
+            'days': days
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting top referrers: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load referrers data'
+        }), 500
+
+@admin_bp.route('/api/analytics/top-pages')
+@admin_required
+def api_top_pages():
+    """AJAX endpoint for top pages data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    try:
+        top_pages = get_top_pages(limit=10, days=days)
+        return jsonify({
+            'success': True,
+            'data': top_pages,
+            'days': days
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting top pages: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load pages data'
+        }), 500
+
+@admin_bp.route('/api/analytics/top-ref-codes')
+@admin_required
+def api_top_ref_codes():
+    """AJAX endpoint for top referral codes data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    try:
+        top_ref_codes = get_top_ref_codes(limit=10, days=days)
+        return jsonify({
+            'success': True,
+            'data': top_ref_codes,
+            'days': days
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting top referral codes: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load referral codes data'
+        }), 500
+
+@admin_bp.route('/api/analytics/visit-trends')
+@admin_required
+def api_visit_trends():
+    """AJAX endpoint for visit trends data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    try:
+        from app.admin_utils import get_visit_trends_30d
+        visit_trends = get_visit_trends_30d(days=days)
+        
+        # Prepare chart data
+        chart_data = {
+            'labels': [trend['date'] for trend in visit_trends],
+            'total': [trend['total'] for trend in visit_trends],
+            'registered': [trend['pro'] for trend in visit_trends],
+            'guests': [trend['guest'] for trend in visit_trends],
+            'moving_average': [trend['moving_average'] for trend in visit_trends]
+        }
+        
+        return jsonify({
+            'success': True,
+            'data': chart_data,
+            'days': days
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting visit trends: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load visit trends data'
+        }), 500
+
+# Users routes
+@admin_bp.route('/users')
+@admin_required
+def users():
+    return render_template('admin/users.html')
+
+@admin_bp.route('/roles')
+@admin_required
+def get_roles():
+    roles = Role.query.all()
+    return jsonify([{'id': role.id, 'name': role.name} for role in roles])
+
+@admin_bp.route('/users/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def users_data():
+    try:
+        draw = request.args.get('draw', type=int)
+        start = request.args.get('start', type=int)
+        length = request.args.get('length', type=int)
+        search_value = request.args.get('search[value]', '')
+        current_app.logger.debug(f"users_data called with draw={draw}, start={start}, length={length}, search={search_value}")
+
+        # Check cache first
+        cache_key = get_cache_key('users_data', draw=draw, start=start, length=length, search=search_value)
+        cached_response = get_cached_response(cache_key)
+        if cached_response:
+            return cached_response
+
+        query = User.query
+
+        if search_value:
+            search = f"%{search_value}%"
+            query = query.filter(
+                (User.email.ilike(search)) |
+                (User.first_name.ilike(search)) |
+                (User.last_name.ilike(search))
+            )
+
+        # Handle sorting
+        order_column = request.args.get('order[0][column]', type=int)
+        order_dir = request.args.get('order[0][dir]', 'asc')
+
+        # Define column mapping for sorting
+        column_map = {
+            0: User.email,      # Email column
+            1: User.first_name, # Name column (sort by first_name)
+            2: User.active,     # Active column
+            3: User.last_login, # Last Login column
+            4: None,            # Roles column (will handle separately)
+            5: User.pro_end_date, # Is Pro column (sort by pro_end_date)
+            6: None,            # Is Admin column (not sortable)
+            7: None             # Actions column (not sortable)
+        }
+
+        if order_column is not None and order_column in column_map:
+            if order_column == 4:  # Roles column
+                # Sort by roles using a subquery
+                if order_dir == 'desc':
+                    query = query.outerjoin(User.roles).group_by(User.id).order_by(db.func.max(Role.name).desc())
+                else:
+                    query = query.outerjoin(User.roles).group_by(User.id).order_by(db.func.max(Role.name).asc())
+            elif column_map[order_column] is not None:
+                sort_column = column_map[order_column]
+                if order_dir == 'desc':
+                    sort_column = sort_column.desc()
+                query = query.order_by(sort_column)
+            else:
+                # Default sorting by ID if no valid sort column
+                query = query.order_by(User.id)
+        else:
+            # Default sorting by ID if no valid sort column
+            query = query.order_by(User.id)
+
+        total_records = query.count()
+        current_app.logger.debug(f"Total records: {total_records}")
+
+        users = query.offset(start).limit(length).all()
+        current_app.logger.debug(f"Retrieved {len(users)} users")
+
+        data = []
+        for user in users:
+            try:
+                # Get user roles as a comma-separated string
+                roles = ', '.join([role.name for role in user.roles]) if user.roles else 'User'
+                data.append({
+                    'id': user.id,
+                    'name': f"{user.first_name or ''} {user.last_name or ''}".strip() or 'N/A',
+                    'email': user.email,
+                    'active': 'Yes' if user.active else 'No',
+                    'last_login': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never',
+                    'roles': roles,
+                    'is_pro': 'Yes' if user.has_role('Pro') else 'No',
+                    'is_admin': 'Yes' if any(role.name == 'Admin' for role in user.roles) else 'No',
+                    'actions': f'<button class="btn btn-sm btn-primary edit-user-btn" data-id="{user.id}">Edit</button> <button class="btn btn-sm btn-danger delete-user-btn" data-id="{user.id}">Delete</button>'
+                })
+            except Exception as e:
+                current_app.logger.debug(f"Error processing user {user.id}: {e}")
+                continue
+
+        current_app.logger.debug(f"Returning {len(data)} records")
+
+        response_data = {
+            'draw': draw,
+            'recordsTotal': User.query.count(),
+            'recordsFiltered': total_records,
+            'data': data
+        }
+        
+        # Cache the response
+        cache_response(cache_key, response_data)
+        
+        return jsonify(response_data)
+
+    except Exception as e:
+        current_app.logger.error(f"users_data route failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to load users data'}), 500
+
+@admin_bp.route('/users/<int:id>', methods=['GET'])
+@admin_required
+def get_user(id):
+    user = User.query.get_or_404(id)
+    return jsonify({
+        'id': user.id,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+        'active': user.active,
+        'pro_end_date': user.pro_end_date.isoformat() if user.pro_end_date else None,
+        'last_login': user.last_login.isoformat() if user.last_login else None,
+        'login_count': user.login_count,
+        'cust_id': user.cust_id,
+        'canceled_at': user.canceled_at.isoformat() if user.canceled_at else None,
+        'cancellation_reason': user.cancellation_reason,
+        'cancellation_comment': user.cancellation_comment,
+        'roles': [role.name for role in user.roles]
+    })
+
+@admin_bp.route('/users/<int:id>', methods=['PUT'])
+@admin_required
+def update_user(id):
+    user = User.query.get_or_404(id)
+    data = request.get_json()
+    
+    # Update basic fields
+    if 'first_name' in data:
+        user.first_name = data['first_name']
+    if 'last_name' in data:
+        user.last_name = data['last_name']
+    if 'email' in data:
+        user.email = data['email']
+    if 'active' in data:
+        user.active = bool(int(data['active']))
+    if 'password' in data and data['password']:
+        user.password = utils.encrypt_password(data['password'])
+    
+    # Handle Pro end date
+    if 'pro_end_date' in data:
+        if data['pro_end_date']:
+            try:
+                user.pro_end_date = datetime.strptime(data['pro_end_date'], '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid pro_end_date format'}), 400
+        else:
+            user.pro_end_date = None
+    
+    # Handle cancellation fields
+    if 'canceled_at' in data:
+        if data['canceled_at']:
+            try:
+                user.canceled_at = datetime.strptime(data['canceled_at'], '%Y-%m-%d')
+            except ValueError:
+                return jsonify({'error': 'Invalid canceled_at format'}), 400
+        else:
+            user.canceled_at = None
+    
+    if 'cancellation_reason' in data:
+        user.cancellation_reason = data['cancellation_reason']
+    if 'cancellation_comment' in data:
+        user.cancellation_comment = data['cancellation_comment']
+    
+    # Handle roles
+    if 'roles' in data:
+        # Clear existing roles
+        user.roles = []
+        # Add new roles
+        for role_name in data['roles']:
+            role = Role.query.filter_by(name=role_name).first()
+            if role:
+                user.roles.append(role)
+    
+    db.session.commit()
+    return jsonify({'message': 'User updated successfully'})
+
+@admin_bp.route('/users/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': 'User deleted successfully'})
+
+@admin_bp.route('/users/add', methods=['POST'])
+@admin_required
+def add_user():
+    data = request.get_json()
+    
+    # Check if user with this email already exists
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({'errors': {'email': 'User with this email already exists'}}), 400
+    
+    # Create new user
+    user = User(
+        first_name=data.get('first_name'),
+        last_name=data.get('last_name'),
+        email=data['email'],
+        password=utils.encrypt_password(data['password']),
+        active=bool(int(data.get('active', 1)))
+    )
+    
+    # Handle Pro end date
+    if data.get('pro_end_date'):
+        try:
+            user.pro_end_date = datetime.strptime(data['pro_end_date'], '%Y-%m-%d')
+        except ValueError:
+            return jsonify({'errors': {'pro_end_date': 'Invalid date format'}}), 400
+    
+    # Handle roles
+    if 'roles' in data:
+        for role_name in data['roles']:
+            role = Role.query.filter_by(name=role_name).first()
+            if role:
+                user.roles.append(role)
+    
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({'message': 'User created successfully'})
+
+@admin_bp.route('/users/edit/<int:id>', methods=['PUT'])
+@admin_required
+def edit_user(id):
+    return update_user(id)
+
+
+
+# Retailers routes
+@admin_bp.route('/retailers')
+@admin_required
+def retailers():
+    return render_template('admin/retailers.html')
+
+@admin_bp.route('/retailers/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def retailers_data():
+    try:
+        current_app.logger.debug(f"retailers_data called by user: {current_user.id if current_user.is_authenticated else 'Not authenticated'}")
+
+        # Get DataTables parameters
+        draw = request.args.get('draw', type=int)
+        start = request.args.get('start', type=int)
+        length = request.args.get('length', type=int)
+        search_value = request.args.get('search[value]', '')
+
+        current_app.logger.debug(f"DataTables params - draw: {draw}, start: {start}, length: {length}")
+
+        # Build the query
+        query = Retailer.query
+
+        # Apply search filter if provided
+        if search_value:
+            search = f"%{search_value}%"
+            query = query.filter(
+                (Retailer.retailer.ilike(search)) |
+                (Retailer.full_address.ilike(search)) |
+                (Retailer.phone_number.ilike(search)) |
+                (Retailer.retailer_type.ilike(search))
+            )
+
+        # Handle sorting
+        order_column = request.args.get('order[0][column]', type=int)
+        order_dir = request.args.get('order[0][dir]', 'asc')
+
+        # Define column mapping for sorting
+        column_map = {
+            0: Retailer.retailer,       # Name column
+            1: Retailer.full_address,   # Address column
+            2: Retailer.phone_number,   # Phone column
+            3: Retailer.retailer_type,  # Type column
+            4: Retailer.machine_count,  # Machine Count column
+            5: None                     # Actions column (not sortable)
+        }
+
+        if order_column is not None and order_column in column_map and column_map[order_column] is not None:
+            sort_column = column_map[order_column]
+            if order_dir == 'desc':
+                sort_column = sort_column.desc()
+            query = query.order_by(sort_column)
+        else:
+            # Default sorting by name
+            query = query.order_by(Retailer.retailer)
+
+        total_records = query.count()
+        current_app.logger.debug(f"Total records found: {total_records}")
+
+        retailers = query.offset(start).limit(length).all()
+        current_app.logger.debug(f"Retrieved {len(retailers)} retailers for this page")
+
+        data = []
+        for retailer in retailers:
+            data.append({
+                'id': retailer.id,
+                'name': retailer.retailer,
+                'address': retailer.full_address,
+                'phone': retailer.phone_number or '',
+                'retailer_type': retailer.retailer_type or '',
+                'machine_count': retailer.machine_count or 0,
+                'actions': f'''<button class="btn btn-sm btn-primary edit-retailer-btn" data-id="{retailer.id}">Edit</button> 
+                              <button class="btn btn-sm btn-danger delete-retailer-btn" data-id="{retailer.id}" data-name="{retailer.retailer or 'Unknown'}">Delete</button>'''
+            })
+
+        response_data = {
+            'draw': draw,
+            'recordsTotal': total_records,
+            'recordsFiltered': total_records,
+            'data': data
+        }
+
+        current_app.logger.debug(f"Returning response with {len(data)} records")
+        return jsonify(response_data)
+
+    except Exception as e:
+        current_app.logger.error(f"retailers_data route failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to load retailers data'}), 500
+
+@admin_bp.route('/retailers/<int:id>', methods=['GET'])
+@admin_required
+def get_retailer(id):
+    retailer = Retailer.query.get_or_404(id)
+    return jsonify({
+        'id': retailer.id,
+        'retailer': retailer.retailer,
+        'retailer_type': retailer.retailer_type,
+        'full_address': retailer.full_address,
+        'latitude': retailer.latitude,
+        'longitude': retailer.longitude,
+        'place_id': retailer.place_id,
+        'first_seen': retailer.first_seen.isoformat() if retailer.first_seen else None,
+        'phone_number': retailer.phone_number,
+        'website': retailer.website,
+        'opening_hours': retailer.opening_hours,
+        'rating': retailer.rating,
+        'last_api_update': retailer.last_api_update.isoformat() if retailer.last_api_update else None,
+        'machine_count': retailer.machine_count,
+        'previous_count': retailer.previous_count,
+        'status': retailer.status
+    })
+
+@admin_bp.route('/retailers/<int:id>', methods=['PUT'])
+@admin_required
+def update_retailer(id):
+    retailer = Retailer.query.get_or_404(id)
+    data = request.get_json()
+    
+    # Update allowed fields
+    allowed_fields = [
+        'retailer', 'retailer_type', 'full_address', 'latitude', 'longitude',
+        'place_id', 'phone_number', 'website', 'opening_hours', 'rating',
+        'machine_count', 'status'
+    ]
+    
+    for key, value in data.items():
+        if key in allowed_fields and hasattr(retailer, key):
+            # Convert numeric fields appropriately
+            if key in ['latitude', 'longitude', 'rating'] and value:
+                try:
+                    setattr(retailer, key, float(value))
+                except (ValueError, TypeError):
+                    setattr(retailer, key, None)
+            elif key in ['machine_count'] and value:
+                try:
+                    setattr(retailer, key, int(value))
+                except (ValueError, TypeError):
+                    setattr(retailer, key, 0)
+            else:
+                setattr(retailer, key, value if value else None)
+    
+    retailer.last_api_update = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'message': 'Retailer updated successfully'})
+
+@admin_bp.route('/retailers/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_retailer(id):
+    retailer = Retailer.query.get_or_404(id)
+    db.session.delete(retailer)
+    db.session.commit()
+    return jsonify({'message': 'Retailer deleted successfully'})
+
+@admin_bp.route('/retailers/add', methods=['POST'])
+@admin_required
+def add_retailer():
+    data = request.get_json()
+    
+    # Validate required fields
+    if not data.get('retailer'):
+        return jsonify({'message': 'Retailer name is required'}), 400
+    if not data.get('full_address'):
+        return jsonify({'message': 'Full address is required'}), 400
+    
+    try:
+        # Create new retailer with proper type conversion
+        retailer = Retailer(
+            retailer=data.get('retailer'),
+            retailer_type=data.get('retailer_type'),
+            full_address=data.get('full_address'),
+            latitude=float(data.get('latitude')) if data.get('latitude') else None,
+            longitude=float(data.get('longitude')) if data.get('longitude') else None,
+            place_id=data.get('place_id'),
+            phone_number=data.get('phone_number'),
+            website=data.get('website'),
+            opening_hours=data.get('opening_hours'),
+            rating=float(data.get('rating')) if data.get('rating') else None,
+            machine_count=int(data.get('machine_count', 0)),
+            status=data.get('status'),
+            first_seen=datetime.utcnow()
+        )
+        
+        db.session.add(retailer)
+        db.session.commit()
+        return jsonify({'message': 'Retailer created successfully', 'id': retailer.id})
+        
+    except ValueError as e:
+        return jsonify({'message': f'Invalid data format: {str(e)}'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': f'Error creating retailer: {str(e)}'}), 500
+
+@admin_bp.route('/retailers/edit/<int:id>', methods=['PUT'])
+@admin_required
+def edit_retailer(id):
+    return update_retailer(id)
+
+# Events routes
+@admin_bp.route('/events')
+@admin_required
+def events():
+    return render_template('admin/events.html')
+
+@admin_bp.route('/events/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def events_data():
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    future_only = request.args.get('future_only', 'false').lower() == 'true'
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'asc')
+    
+    # Column mapping for sorting (based on the template columns)
+    column_map = {
+        0: Event.event_title,  # Title
+        1: Event.full_address, # Address
+        2: Event.start_date,   # Start Date
+        3: Event.start_time,   # Start Time
+        4: Event.end_date,     # End Date
+        5: Event.end_time      # End Time
+        # Actions column (6) is not sortable
+    }
+    
+    query = Event.query
+    
+    # Apply future events filter if requested
+    if future_only:
+        today = datetime.utcnow().date()
+        query = query.filter(Event.start_date >= today)
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            (Event.event_title.ilike(search)) |
+            (Event.full_address.ilike(search)) |
+            (Event.email.ilike(search)) |
+            (Event.phone.ilike(search))
+        )
+    
+    # Apply sorting
+    if order_column is not None and order_column in column_map:
+        sort_column = column_map[order_column]
+        if order_dir == 'desc':
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
+    else:
+        query = query.order_by(Event.event_title.asc())  # Default sort by title ascending
+    
+    total_records = query.count()
+    events = query.offset(start).limit(length).all()
+    
+    data = []
+    for event in events:
+        data.append({
+            'id': event.id,
+            'event_title': event.event_title,
+            'full_address': event.full_address,
+            'start_date': event.start_date,
+            'start_time': event.start_time,
+            'end_date': event.end_date.strftime('%Y-%m-%d') if event.end_date else None,
+            'end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
+            'registration_url': event.registration_url,
+            'price': event.price,
+            'email': event.email,
+            'phone': event.phone,
+            'timestamp': event.timestamp.strftime('%Y-%m-%d %H:%M:%S') if event.timestamp else None,
+            'first_seen': event.first_seen,
+            'actions': f'''<button class="btn btn-sm btn-primary edit-event-btn" data-id="{event.id}">Edit</button> 
+                          <button class="btn btn-sm btn-danger delete-event-btn" data-id="{event.id}" data-name="{event.event_title or 'Unknown'}">Delete</button>'''
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/events/<int:id>', methods=['GET'])
+@admin_required
+def get_event(id):
+    """Get individual event data for editing."""
+    try:
+        event = Event.query.get_or_404(id)
+        return jsonify({
+            'id': event.id,
+            'event_title': event.event_title,
+            'full_address': event.full_address,
+            'start_date': event.start_date,
+            'start_time': event.start_time,
+            'end_date': event.end_date.strftime('%Y-%m-%d') if event.end_date else None,
+            'end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
+            'registration_url': event.registration_url,
+            'price': event.price,
+            'email': event.email,
+            'phone': event.phone
+        })
+    except Exception as e:
+
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/events/<int:id>', methods=['PUT'])
+@admin_required
+def update_event(id):
+    event = Event.query.get_or_404(id)
+    data = request.get_json()
+
+    try:
+        # Handle datetime fields specially
+        for key, value in data.items():
+            if hasattr(event, key):
+                if key == 'end_date':
+                    # Convert empty string or null to None for datetime fields
+                    if value is None or not value or (isinstance(value, str) and value.strip() == ''):
+                        setattr(event, key, None)
+                    else:
+                        try:
+                            # Try to parse as datetime
+                            parsed_date = datetime.strptime(value, '%Y-%m-%d')
+                            setattr(event, key, parsed_date)
+                        except ValueError:
+                            setattr(event, key, None)
+                elif key == 'end_time':
+                    # Convert empty string or null to None for time fields
+                    if value is None or not value or (isinstance(value, str) and value.strip() == ''):
+                        setattr(event, key, None)
+                    else:
+                        try:
+                            # Try to parse as time
+                            parsed_time = datetime.strptime(value, '%H:%M').time()
+                            setattr(event, key, parsed_time)
+                        except ValueError:
+                            setattr(event, key, None)
+                elif key == 'price':
+                    # Handle price field conversion
+                    if value is None or not value or (isinstance(value, str) and value.strip() == ''):
+                        setattr(event, key, None)
+                    else:
+                        try:
+                            setattr(event, key, float(value))
+                        except ValueError:
+                            setattr(event, key, None)
+                else:
+                    # Handle other fields normally, but convert empty strings to None for optional fields
+                    if key in ['registration_url', 'email', 'phone'] and (value is None or value == ''):
+                        setattr(event, key, None)
+                    else:
+                        setattr(event, key, value)
+        db.session.commit()
+        return jsonify({'message': 'Event updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating event {id}: {str(e)}")
+        return jsonify({'error': f'Failed to update event: {str(e)}'}), 500
+
+@admin_bp.route('/events/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_event(id):
+    event = Event.query.get_or_404(id)
+    db.session.delete(event)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@admin_bp.route('/events/add', methods=['POST'])
+@admin_required
+def add_event():
+    data = request.get_json()
+    
+    try:
+        # Parse end_date and end_time safely
+        end_date = None
+        end_time = None
+        
+        end_date_value = data.get('end_date')
+        if end_date_value is not None and str(end_date_value).strip():
+            try:
+                end_date = datetime.strptime(str(end_date_value), '%Y-%m-%d')
+            except ValueError:
+                end_date = None
+        
+        end_time_value = data.get('end_time')
+        if end_time_value is not None and str(end_time_value).strip():
+            try:
+                end_time = datetime.strptime(str(end_time_value), '%H:%M').time()
+            except ValueError:
+                end_time = None
+        
+        # Handle price field
+        price = None
+        price_value = data.get('price')
+        if price_value is not None and str(price_value).strip():
+            try:
+                price = float(price_value)
+            except ValueError:
+                price = None
+        
+        # Handle optional string fields
+        registration_url = data.get('registration_url')
+        if registration_url == '':
+            registration_url = None
+            
+        email = data.get('email')
+        if email == '':
+            email = None
+            
+        phone = data.get('phone')
+        if phone == '':
+            phone = None
+        
+        # Create new event
+        event = Event(
+            event_title=data.get('event_title'),
+            full_address=data.get('full_address'),
+            start_date=data.get('start_date'),
+            start_time=data.get('start_time'),
+            end_date=end_date,
+            end_time=end_time,
+            registration_url=registration_url,
+            price=price,
+            email=email,
+            phone=phone
+        )
+        
+        db.session.add(event)
+        db.session.commit()
+        return jsonify({'message': 'Event created successfully'})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error creating event: {str(e)}")
+        return jsonify({'error': 'Failed to create event'}), 500
+
+@admin_bp.route('/events/edit/<int:id>', methods=['PUT'])
+@admin_required
+def edit_event(id):
+    return update_event(id)
+
+@admin_bp.route('/events/stats')
+@admin_required
+def events_stats():
+    """Get statistics for future events."""
+    from app.admin_utils import get_future_events_stats
+    stats = get_future_events_stats()
+    return jsonify(stats)
+
+# Messages routes
+@admin_bp.route('/messages')
+@admin_required
+def messages():
+    return render_template('admin/messages.html')
+
+@admin_bp.route('/messages/data')
+@admin_required
+@rate_limit_data_tables(max_requests=50, window_seconds=60)
+def messages_data():
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'desc')
+    
+    # Column mapping for sorting (based on the template columns)
+    column_map = {
+        0: None,  # Checkbox column (not sortable)
+        1: Message.id,  # ID
+        2: Message.email,  # Email
+        3: Message.communication_type,  # Type
+        4: Message.subject,  # Subject
+        5: Message.body,  # Body
+        6: Message.timestamp,  # Timestamp
+        7: Message.read,  # Read
+        8: None  # Actions column (not sortable)
+    }
+    
+    query = Message.query
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            (Message.name.ilike(search)) |
+            (Message.email.ilike(search)) |
+            (Message.subject.ilike(search))
+        )
+    
+    # Apply sorting
+    if order_column is not None and order_column in column_map and column_map[order_column] is not None:
+        sort_column = column_map[order_column]
+        if order_dir == 'desc':
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
+    else:
+        # Default sorting by timestamp descending (newest first)
+        query = query.order_by(Message.timestamp.desc())
+    
+    total_records = query.count()
+    messages = query.offset(start).limit(length).all()
+    
+    data = []
+    for message in messages:
+        # Truncate subject and body to 40 characters for display
+        subject_display = message.subject[:40] + '...' if message.subject and len(message.subject) > 40 else message.subject
+        body_display = message.body[:40] + '...' if message.body and len(message.body) > 40 else message.body
+        
+        data.append({
+            'id': message.id,
+            'email': message.email,
+            'communication_type': message.communication_type,
+            'subject': subject_display,
+            'body': body_display,
+            'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S') if message.timestamp else None,
+            'read': 'Yes' if message.read else 'No',
+            'actions': f'<button class="btn btn-sm btn-primary edit-message-btn" data-id="{message.id}">Edit</button> <button class="btn btn-sm btn-danger delete-message-btn" data-id="{message.id}">Delete</button>'
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/messages/<int:id>', methods=['GET'])
+@admin_required
+def get_message(id):
+    message = Message.query.get_or_404(id)
+    sender_email = None
+    if message.sender_id:
+        user = User.query.get(message.sender_id)
+        if user:
+            sender_email = user.email
+    return jsonify({
+        'id': message.id,
+        'sender_email': sender_email or '',
+        'communication_type': message.communication_type,
+        'subject': message.subject,
+        'body': message.body,
+        'reported_address': message.reported_address,
+        'reported_phone': message.reported_phone,
+        'reported_website': message.reported_website,
+        'reported_hours': message.reported_hours,
+        'read': message.read,
+        'name': message.name,
+        'address': message.address,
+        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M') if message.timestamp else ''
+    })
+
+@admin_bp.route('/messages/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_message(id):
+    message = Message.query.get_or_404(id)
+    db.session.delete(message)
+    db.session.commit()
+    return jsonify({'message': 'Message deleted successfully'})
+
+@admin_bp.route('/messages/add', methods=['POST'])
+@admin_required
+def add_message():
+    data = request.get_json()
+    
+    message = Message(
+        sender_id=data.get('sender_id'),
+        recipient_id=data.get('recipient_id'),
+        communication_type=data.get('communication_type'),
+        subject=data.get('subject'),
+        body=data.get('body'),
+        reported_address=data.get('reported_address'),
+        reported_phone=data.get('reported_phone'),
+        reported_website=data.get('reported_website'),
+        reported_hours=data.get('reported_hours'),
+        read=data.get('read') == 'true',
+        name=data.get('name'),
+        address=data.get('address'),
+        email=data.get('email')
+    )
+    
+    db.session.add(message)
+    db.session.commit()
+    
+    return jsonify({'message': 'Message added successfully'})
+
+@admin_bp.route('/messages/edit/<int:id>', methods=['PUT'])
+@admin_required
+def edit_message(id):
+    message = Message.query.get_or_404(id)
+    data = request.get_json()
+    
+    # Update fields
+    if 'sender_id' in data:
+        message.sender_id = data['sender_id']
+    if 'recipient_id' in data:
+        message.recipient_id = data['recipient_id']
+    if 'communication_type' in data:
+        message.communication_type = data['communication_type']
+    if 'subject' in data:
+        message.subject = data['subject']
+    if 'body' in data:
+        message.body = data['body']
+    if 'reported_address' in data:
+        message.reported_address = data['reported_address']
+    if 'reported_phone' in data:
+        message.reported_phone = data['reported_phone']
+    if 'reported_website' in data:
+        message.reported_website = data['reported_website']
+    if 'reported_hours' in data:
+        message.reported_hours = data['reported_hours']
+    if 'read' in data:
+        message.read = data['read'] == 'true'
+    if 'name' in data:
+        message.name = data['name']
+    if 'address' in data:
+        message.address = data['address']
+    if 'email' in data:
+        message.email = data['email']
+    
+    db.session.commit()
+    return jsonify({'message': 'Message updated successfully'})
+
+@admin_bp.route('/messages/bulk-delete', methods=['POST'])
+@admin_required
+def bulk_delete_messages():
+    """Delete multiple messages at once"""
+    data = request.get_json()
+    ids = data.get('ids', [])
+    
+    if not ids:
+        return jsonify({'error': 'No message IDs provided'}), 400
+    
+    try:
+        # Delete messages with the specified IDs
+        deleted_count = db.session.query(Message).filter(Message.id.in_(ids)).delete(synchronize_session='fetch')
+        db.session.commit()
+        
+        current_app.logger.info(f"Bulk deleted {deleted_count} messages by admin user {current_user.email}")
+        
+        return jsonify({
+            'message': f'Successfully deleted {deleted_count} messages',
+            'deleted_count': deleted_count
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error in bulk delete messages: {e}")
+        return jsonify({'error': 'Failed to delete messages'}), 500
+
+@admin_bp.route('/messages/bulk-mark-read', methods=['POST'])
+@admin_required
+def bulk_mark_read_messages():
+    """Mark multiple messages as read (placeholder for future implementation)"""
+    data = request.get_json()
+    ids = data.get('ids', [])
+    
+    if not ids:
+        return jsonify({'error': 'No message IDs provided'}), 400
+    
+    try:
+        # Update messages to mark as read
+        updated_count = db.session.query(Message).filter(Message.id.in_(ids)).update(
+            {'read': True}, synchronize_session='fetch'
+        )
+        db.session.commit()
+        
+        current_app.logger.info(f"Bulk marked {updated_count} messages as read by admin user {current_user.email}")
+        
+        return jsonify({
+            'message': f'Successfully marked {updated_count} messages as read',
+            'updated_count': updated_count
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error in bulk mark read messages: {e}")
+        return jsonify({'error': 'Failed to mark messages as read'}), 500
+
+@admin_bp.route('/messages/bulk-archive', methods=['POST'])
+@admin_required
+def bulk_archive_messages():
+    """Archive multiple messages (placeholder for future implementation)"""
+    # Note: This would require adding an 'archived' column to the Message model
+    # For now, just return a placeholder response
+    return jsonify({'message': 'Archive functionality not yet implemented'}), 501
+
+# Pages routes
+@admin_bp.route('/pages')
+@admin_required
+def pages():
+    # Redirect to top_pages since Page table doesn't exist
+    return redirect(url_for('admin.top_pages'))
+
+@admin_bp.route('/pages/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def pages_data():
+    """Return top pages data in DataTables format"""
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    days = request.args.get('days', 30, type=int)
+    
+    # Validate days parameter
+    if days < 1 or days > 60:
+        days = 30
+    
+    # Apply days filter
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    # Get page visit data from VisitorLog model
+    query = db.session.query(
+        VisitorLog.path,
+        db.func.count(VisitorLog.id).label('visits')
+    ).filter(
+        VisitorLog.timestamp >= cutoff_date
+    ).group_by(VisitorLog.path)
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(VisitorLog.path.ilike(search))
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'desc')
+    
+    # Define column mapping for sorting
+    column_map = {
+        0: VisitorLog.path,  # Page Path column
+        1: db.func.count(VisitorLog.id)  # Visit Count column
+    }
+    
+    if order_column is not None and order_column in column_map:
+        sort_column = column_map[order_column]
+        if order_dir == 'desc':
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
+    else:
+        # Default sorting by visit count descending
+        query = query.order_by(db.func.count(VisitorLog.id).desc())
+    
+    total_records = query.count()
+    pages = query.offset(start).limit(length).all()
+    
+    data = []
+    for page in pages:
+        data.append({
+            'path': page.path,
+            'visits': page.visits
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/pages/<int:id>', methods=['GET'])
+@admin_required
+def get_page(id):
+    page = Page.query.get_or_404(id)
+    return jsonify({
+        'id': page.id,
+        'path': page.path,
+        'visits': page.visits,
+        'last_visit': page.last_visit.strftime('%Y-%m-%d %H:%M:%S') if page.last_visit else None
+    })
+
+@admin_bp.route('/pages/<int:id>', methods=['PUT'])
+@admin_required
+def update_page(id):
+    page = Page.query.get_or_404(id)
+    data = request.get_json()
+    
+    for key, value in data.items():
+        if hasattr(page, key):
+            setattr(page, key, value)
+    
+    db.session.commit()
+    return jsonify({'message': 'Page updated successfully'})
+
+@admin_bp.route('/pages/<int:id>', methods=['DELETE'])
+@admin_required
+def delete_page(id):
+    page = Page.query.get_or_404(id)
+    db.session.delete(page)
+    db.session.commit()
+    return jsonify({'message': 'Page deleted successfully'})
+
+# Referrers routes
+@admin_bp.route('/referrers')
+@admin_required
+def referrers():
+    # Redirect to top_referrers since Referrer table doesn't exist
+    return redirect(url_for('admin.top_referrers'))
+
+@admin_bp.route('/referrers/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def referrers_data():
+    """Return top referrers data in DataTables format"""
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    show_internal = request.args.get('show_internal', 'false').lower() == 'true'
+    days = request.args.get('days', 30, type=int)
+    
+    # Validate days parameter
+    if days < 1 or days > 60:
+        days = 30
+    
+    # Apply days filter
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    # Get referrer data from VisitorLog model
+    query = db.session.query(
+        VisitorLog.referrer,
+        db.func.count(VisitorLog.id).label('visits'),
+        db.func.max(VisitorLog.is_internal_referrer).label('is_internal')
+    ).filter(
+        VisitorLog.referrer.isnot(None),
+        VisitorLog.referrer != '',
+        VisitorLog.timestamp >= cutoff_date
+    ).group_by(VisitorLog.referrer)
+    
+    if not show_internal:
+        # Filter out internal referrers using the database flag
+        query = query.filter(VisitorLog.is_internal_referrer == False)
+        
+        # Additional filtering for localhost and private IP addresses
+        query = query.filter(
+            ~or_(
+                # Filter out localhost patterns (with and without protocol)
+                VisitorLog.referrer.ilike('%://127.%'),
+                VisitorLog.referrer.ilike('127.%'),
+                VisitorLog.referrer.ilike('%localhost%'),
+                # Filter out private IP ranges (with and without protocol)
+                VisitorLog.referrer.ilike('%://192.168.%'),
+                VisitorLog.referrer.ilike('192.168.%'),
+                VisitorLog.referrer.ilike('%://10.%'),
+                VisitorLog.referrer.ilike('10.%'),
+                VisitorLog.referrer.ilike('%://172.16.%'),
+                VisitorLog.referrer.ilike('172.16.%'),
+                VisitorLog.referrer.ilike('%://172.17.%'),
+                VisitorLog.referrer.ilike('172.17.%'),
+                VisitorLog.referrer.ilike('%://172.18.%'),
+                VisitorLog.referrer.ilike('172.18.%'),
+                VisitorLog.referrer.ilike('%://172.19.%'),
+                VisitorLog.referrer.ilike('172.19.%'),
+                VisitorLog.referrer.ilike('%://172.20.%'),
+                VisitorLog.referrer.ilike('172.20.%'),
+                VisitorLog.referrer.ilike('%://172.21.%'),
+                VisitorLog.referrer.ilike('172.21.%'),
+                VisitorLog.referrer.ilike('%://172.22.%'),
+                VisitorLog.referrer.ilike('172.22.%'),
+                VisitorLog.referrer.ilike('%://172.23.%'),
+                VisitorLog.referrer.ilike('172.23.%'),
+                VisitorLog.referrer.ilike('%://172.24.%'),
+                VisitorLog.referrer.ilike('172.24.%'),
+                VisitorLog.referrer.ilike('%://172.25.%'),
+                VisitorLog.referrer.ilike('172.25.%'),
+                VisitorLog.referrer.ilike('%://172.26.%'),
+                VisitorLog.referrer.ilike('172.26.%'),
+                VisitorLog.referrer.ilike('%://172.27.%'),
+                VisitorLog.referrer.ilike('172.27.%'),
+                VisitorLog.referrer.ilike('%://172.28.%'),
+                VisitorLog.referrer.ilike('172.28.%'),
+                VisitorLog.referrer.ilike('%://172.29.%'),
+                VisitorLog.referrer.ilike('172.29.%'),
+                VisitorLog.referrer.ilike('%://172.30.%'),
+                VisitorLog.referrer.ilike('172.30.%'),
+                VisitorLog.referrer.ilike('%://172.31.%'),
+                VisitorLog.referrer.ilike('172.31.%'),
+                # Filter out site's own domain
+                VisitorLog.referrer.ilike('%tamermap.com%'),
+                VisitorLog.referrer.ilike('%www.tamermap.com%')
+            )
+        )
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(VisitorLog.referrer.ilike(search))
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'desc')
+    
+    # For domain sorting, we need to extract domain in the query
+    if order_column == 0:  # Domain column
+        # Use a case-insensitive substring extraction for domain
+        if order_dir == 'desc':
+            query = query.order_by(db.func.lower(VisitorLog.referrer).desc())
+        else:
+            query = query.order_by(db.func.lower(VisitorLog.referrer).asc())
+    elif order_column == 1:  # Full URL column
+        if order_dir == 'desc':
+            query = query.order_by(VisitorLog.referrer.desc())
+        else:
+            query = query.order_by(VisitorLog.referrer.asc())
+    elif order_column == 2:  # Visit Count column
+        if order_dir == 'desc':
+            query = query.order_by(db.func.count(VisitorLog.id).desc())
+        else:
+            query = query.order_by(db.func.count(VisitorLog.id).asc())
+    else:
+        # Default sorting by visit count descending
+        query = query.order_by(db.func.count(VisitorLog.id).desc())
+    
+    total_records = query.count()
+    referrers = query.offset(start).limit(length).all()
+    
+    data = []
+    for referrer, count, is_internal in referrers:
+        # Extract domain from URL
+        domain = 'Unknown'
+        full_url = referrer or 'Direct'
+        
+        if full_url and full_url != 'Direct':
+            try:
+                from urllib.parse import urlparse
+                # Add protocol if missing
+                if not full_url.startswith(('http://', 'https://')):
+                    full_url = 'https://' + full_url
+                
+                parsed = urlparse(full_url)
+                domain = parsed.netloc
+                if not domain:
+                    domain = 'Unknown'
+            except Exception:
+                domain = 'Unknown'
+        
+        # Get location data (simplified - you might want to enhance this)
+        location_data = {
+            'city': None,
+            'region': None,
+            'country': None
+        }
+        
+        data.append({
+            'domain': domain,
+            'full_url': full_url,
+            'visits': count,
+            'is_internal': is_internal,
+            'location': location_data
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/visitors')
+@admin_required
+def visitors():
+    # Get query parameters
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    search = request.args.get('search', '')
+    sort = request.args.get('sort', 'timestamp')
+    order = request.args.get('order', 'desc')
+    
+    # Validate sort column
+    valid_sort_columns = ['timestamp', 'ip_address', 'path', 'referrer', 'location', 'ref_code']
+    if sort not in valid_sort_columns:
+        sort = 'timestamp'
+    
+    # Validate order
+    if order not in ['asc', 'desc']:
+        order = 'desc'
+    
+    # Build query
+    from .admin_utils import exclude_monitor_traffic
+    query = exclude_monitor_traffic(VisitorLog.query)
+    
+    # Apply search filter
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (VisitorLog.path.ilike(search_filter)) |
+            (VisitorLog.ip_address.ilike(search_filter)) |
+            (VisitorLog.referrer.ilike(search_filter)) |
+            (VisitorLog.city.ilike(search_filter)) |
+            (VisitorLog.region.ilike(search_filter)) |
+            (VisitorLog.country.ilike(search_filter)) |
+            (VisitorLog.ref_code.ilike(search_filter))
+        )
+    
+    # Apply sorting
+    if sort == 'location':
+        # Sort by city, then region, then country for location column
+        if order == 'desc':
+            query = query.order_by(VisitorLog.city.desc().nullslast(), 
+                                  VisitorLog.region.desc().nullslast(), 
+                                  VisitorLog.country.desc().nullslast())
+        else:
+            query = query.order_by(VisitorLog.city.asc().nullslast(), 
+                                  VisitorLog.region.asc().nullslast(), 
+                                  VisitorLog.country.asc().nullslast())
+    else:
+        # For other columns, use the standard approach
+        sort_column = getattr(VisitorLog, sort)
+        if order == 'desc':
+            query = query.order_by(sort_column.desc())
+        else:
+            query = query.order_by(sort_column.asc())
+    
+    # Get total count for pagination
+    total_visitors = query.count()
+    
+    # Apply pagination
+    visitors = query.offset((page - 1) * per_page).limit(per_page).all()
+    
+    # Calculate pagination info
+    total_pages = (total_visitors + per_page - 1) // per_page
+    
+    return render_template('admin/visitors.html', 
+                         visitors=visitors,
+                         page=page,
+                         per_page=per_page,
+                         total_visitors=total_visitors,
+                         total_pages=total_pages,
+                         search=search,
+                         sort=sort,
+                         order=order)
+
+@admin_bp.route('/visitors/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def visitors_data():
+    """Return visitor data in DataTables format"""
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    days = request.args.get('days', 30, type=int)
+    
+    # Validate days parameter
+    if days < 1 or days > 60:
+        days = 30
+    
+    # Build the query
+    from .admin_utils import exclude_monitor_traffic
+    query = exclude_monitor_traffic(VisitorLog.query)
+    
+    # Apply days filter
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    query = query.filter(VisitorLog.timestamp >= cutoff_date)
+    
+    # Apply search filter if provided
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            (VisitorLog.path.ilike(search)) |
+            (VisitorLog.ip_address.ilike(search)) |
+            (VisitorLog.referrer.ilike(search)) |
+            (VisitorLog.city.ilike(search)) |
+            (VisitorLog.region.ilike(search)) |
+            (VisitorLog.country.ilike(search)) |
+            (VisitorLog.ref_code.ilike(search))
+        )
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'desc')
+    
+    # Define column mapping for sorting
+    column_map = {
+        0: VisitorLog.timestamp,
+        1: VisitorLog.ip_address,
+        2: VisitorLog.path,
+        3: VisitorLog.referrer,
+        4: VisitorLog.city,  # We'll use city for location sorting
+        5: VisitorLog.ref_code
+    }
+    
+    if order_column is not None and order_column in column_map:
+        sort_column = column_map[order_column]
+        if order_dir == 'desc':
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
+    else:
+        # Default sorting by timestamp descending
+        query = query.order_by(VisitorLog.timestamp.desc())
+    
+    total_records = query.count()
+    visitors = query.offset(start).limit(length).all()
+    
+    data = []
+    for visitor in visitors:
+        # Format location
+        location_parts = []
+        if visitor.city:
+            location_parts.append(visitor.city)
+        if visitor.region:
+            location_parts.append(visitor.region)
+        if visitor.country:
+            location_parts.append(visitor.country)
+        location = ', '.join(location_parts) if location_parts else 'Unknown'
+        
+        data.append({
+            'timestamp': visitor.timestamp.strftime('%Y-%m-%d %H:%M:%S') if visitor.timestamp else '',
+            'ip_address': visitor.ip_address or '',
+            'path': visitor.path or '',
+            'referrer': visitor.referrer or 'Direct',
+            'location': location,
+            'ref_code': visitor.ref_code or 'N/A'
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/visitors/data/pages')
+@admin_required
+def visitors_pages_data():
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    
+    # Get page visit data from VisitorLog model
+    query = db.session.query(
+        VisitorLog.path,
+        db.func.count(VisitorLog.id).label('visits')
+    ).group_by(VisitorLog.path)
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(VisitorLog.path.ilike(search))
+    
+    total_records = query.count()
+    pages = query.order_by(db.func.count(VisitorLog.id).desc()).offset(start).limit(length).all()
+    
+    data = []
+    for page in pages:
+        data.append({
+            'path': page.path,
+            'visits': page.visits
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/visitors/data/codes')
+@admin_required
+def visitors_codes_data():
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    
+    # Get referral code data from VisitorLog model
+    query = db.session.query(
+        VisitorLog.ref_code,
+        db.func.count(VisitorLog.id).label('visits')
+    ).filter(
+        VisitorLog.ref_code.isnot(None),
+        VisitorLog.ref_code != ''
+    ).group_by(VisitorLog.ref_code)
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(VisitorLog.ref_code.ilike(search))
+    
+    total_records = query.count()
+    codes = query.order_by(db.func.count(VisitorLog.id).desc()).offset(start).limit(length).all()
+    
+    data = []
+    for code in codes:
+        data.append({
+            'ref_code': code.ref_code or 'None',
+            'visits': code.visits
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/visitors/data/locations')
+@admin_required
+def visitors_locations_data():
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    show_internal = request.args.get('show_internal', 'false').lower() == 'true'
+    
+    # Get location data from VisitorLog model
+    query = db.session.query(
+        VisitorLog.city,
+        VisitorLog.region,
+        VisitorLog.country,
+        db.func.count(VisitorLog.id).label('visits')
+    ).group_by(VisitorLog.city, VisitorLog.region, VisitorLog.country)
+    
+    if not show_internal:
+        query = query.filter(~VisitorLog.country.like('%internal%'))
+    
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            (VisitorLog.city.ilike(search)) |
+            (VisitorLog.region.ilike(search)) |
+            (VisitorLog.country.ilike(search))
+        )
+    
+    total_records = query.count()
+    locations = query.order_by(db.func.count(VisitorLog.id).desc()).offset(start).limit(length).all()
+    
+    data = []
+    for location in locations:
+        data.append({
+            'city': location.city or 'Unknown',
+            'region': location.region or 'Unknown',
+            'country': location.country or 'Unknown',
+            'visits': location.visits
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+# Analytics routes
+@admin_bp.route('/top_referrers')
+@admin_required
+def top_referrers():
+    """Shows the top website referrers."""
+    show_internal = request.args.get('show_internal', 'false').lower() == 'true'
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 25))
+    search = request.args.get('search', '').strip()
+    sort = request.args.get('sort', 'count')  # Default sort by count
+    order = request.args.get('order', 'desc')  # Default descending
+    
+    # Get referrers from the past 30 days
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    
+    # Main query for paginated results
+    query = (
+        db.session.query(
+            VisitorLog.referrer,
+            func.count().label('count'),
+            func.max(VisitorLog.country).label('country'),
+            func.max(VisitorLog.region).label('region'),
+            func.max(VisitorLog.city).label('city'),
+            func.max(VisitorLog.is_internal_referrer).label('is_internal')
+        )
+        .filter(
+            VisitorLog.referrer.isnot(None), 
+            VisitorLog.referrer != '',
+            VisitorLog.timestamp >= thirty_days_ago
+        )
+    )
+    if not show_internal:
+        # Filter out internal referrers using the database flag
+        query = query.filter(VisitorLog.is_internal_referrer == False)
+        
+        # Additional filtering for localhost and private IP addresses
+        query = query.filter(
+            ~or_(
+                # Filter out localhost patterns (with and without protocol)
+                VisitorLog.referrer.ilike('%://127.%'),
+                VisitorLog.referrer.ilike('127.%'),
+                VisitorLog.referrer.ilike('%localhost%'),
+                # Filter out private IP ranges (with and without protocol)
+                VisitorLog.referrer.ilike('%://192.168.%'),
+                VisitorLog.referrer.ilike('192.168.%'),
+                VisitorLog.referrer.ilike('%://10.%'),
+                VisitorLog.referrer.ilike('10.%'),
+                VisitorLog.referrer.ilike('%://172.16.%'),
+                VisitorLog.referrer.ilike('172.16.%'),
+                VisitorLog.referrer.ilike('%://172.17.%'),
+                VisitorLog.referrer.ilike('172.17.%'),
+                VisitorLog.referrer.ilike('%://172.18.%'),
+                VisitorLog.referrer.ilike('172.18.%'),
+                VisitorLog.referrer.ilike('%://172.19.%'),
+                VisitorLog.referrer.ilike('172.19.%'),
+                VisitorLog.referrer.ilike('%://172.20.%'),
+                VisitorLog.referrer.ilike('172.20.%'),
+                VisitorLog.referrer.ilike('%://172.21.%'),
+                VisitorLog.referrer.ilike('172.21.%'),
+                VisitorLog.referrer.ilike('%://172.22.%'),
+                VisitorLog.referrer.ilike('172.22.%'),
+                VisitorLog.referrer.ilike('%://172.23.%'),
+                VisitorLog.referrer.ilike('172.23.%'),
+                VisitorLog.referrer.ilike('%://172.24.%'),
+                VisitorLog.referrer.ilike('172.24.%'),
+                VisitorLog.referrer.ilike('%://172.25.%'),
+                VisitorLog.referrer.ilike('172.25.%'),
+                VisitorLog.referrer.ilike('%://172.26.%'),
+                VisitorLog.referrer.ilike('172.26.%'),
+                VisitorLog.referrer.ilike('%://172.27.%'),
+                VisitorLog.referrer.ilike('172.27.%'),
+                VisitorLog.referrer.ilike('%://172.28.%'),
+                VisitorLog.referrer.ilike('172.28.%'),
+                VisitorLog.referrer.ilike('%://172.29.%'),
+                VisitorLog.referrer.ilike('172.29.%'),
+                VisitorLog.referrer.ilike('%://172.30.%'),
+                VisitorLog.referrer.ilike('172.30.%'),
+                VisitorLog.referrer.ilike('%://172.31.%'),
+                VisitorLog.referrer.ilike('172.31.%'),
+                # Filter out site's own domain
+                VisitorLog.referrer.ilike('%tamermap.com%'),
+                VisitorLog.referrer.ilike('%www.tamermap.com%')
+            )
+        )
+    
+    # Apply search filter to main query
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(VisitorLog.referrer.ilike(search_term))
+    
+    # Apply grouping first to get the correct count
+    grouped_query = query.group_by(VisitorLog.referrer)
+    total_unique = grouped_query.count()
+    total_pages = max(1, (total_unique + per_page - 1) // per_page)
+    
+    # Apply sorting
+    if sort == 'count':
+        if order == 'asc':
+            grouped_query = grouped_query.order_by(func.count().asc())
+        else:
+            grouped_query = grouped_query.order_by(func.count().desc())
+    elif sort == 'domain':
+        if order == 'asc':
+            grouped_query = grouped_query.order_by(VisitorLog.referrer.asc())
+        else:
+            grouped_query = grouped_query.order_by(VisitorLog.referrer.desc())
+    elif sort == 'url':
+        if order == 'asc':
+            grouped_query = grouped_query.order_by(VisitorLog.referrer.asc())
+        else:
+            grouped_query = grouped_query.order_by(VisitorLog.referrer.desc())
+    elif sort == 'location':
+        if order == 'asc':
+            grouped_query = grouped_query.order_by(func.max(VisitorLog.city).asc())
+        else:
+            grouped_query = grouped_query.order_by(func.max(VisitorLog.city).desc())
+    else:  # Default sort by count descending
+        grouped_query = grouped_query.order_by(func.count().desc())
+    
+    top_referrers = (
+        grouped_query
+        .offset((page-1)*per_page)
+        .limit(per_page)
+        .all()
+    )
+    
+    # Process referrers for better display
+    processed_referrers = []
+    for referrer, count, country, region, city, is_internal in top_referrers:
+        try:
+            from urllib.parse import urlparse
+            parsed_url = urlparse(referrer)
+            domain = parsed_url.netloc
+            processed_referrers.append({
+                'domain': domain,
+                'full_url': referrer,
+                'count': count,
+                'country': country,
+                'region': region,
+                'city': city,
+                'is_internal': is_internal
+            })
+        except:
+            processed_referrers.append({
+                'domain': 'Unknown',
+                'full_url': referrer,
+                'count': count,
+                'country': country,
+                'region': region,
+                'city': city,
+                'is_internal': is_internal
+            })
+    
+    return render_template('admin/top_referrers.html', 
+                         top_referrers=processed_referrers,
+                         show_internal=show_internal,
+                         page=page,
+                         total_pages=total_pages,
+                         per_page=per_page,
+                         sort=sort,
+                         order=order,
+                         total_unique=total_unique,
+                         title='Referrers')
+
+@admin_bp.route('/top_pages')
+@admin_required
+def top_pages():
+    """Shows the top most visited paths with sorting and pagination."""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    sort = request.args.get('sort', 'count')
+    order = request.args.get('order', 'desc')
+    search = request.args.get('search', '').strip()
+
+    # Build the query
+    query = db.session.query(VisitorLog.path, func.count().label('count')) \
+        .group_by(VisitorLog.path)
+
+    # Apply search filter
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(VisitorLog.path.ilike(search_term))
+
+    # Sorting
+    if sort == 'path':
+        if order == 'asc':
+            query = query.order_by(VisitorLog.path.asc())
+        else:
+            query = query.order_by(VisitorLog.path.desc())
+    else:  # sort == 'count' or default
+        if order == 'asc':
+            query = query.order_by(func.count().asc())
+        else:
+            query = query.order_by(func.count().desc())
+
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template('admin/top_pages.html',
+                         top_paths=pagination.items,
+                         pagination=pagination,
+                         sort=sort,
+                         order=order,
+                         title='Top Pages')
+
+@admin_bp.route('/top_ref_codes')
+@admin_required
+def top_ref_codes():
+    """Shows the top referring codes with sorting and pagination."""
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    sort = request.args.get('sort', 'count')
+    order = request.args.get('order', 'desc')
+    search = request.args.get('search', '').strip()
+
+    # Build the query - include all ref_codes including None
+    query = db.session.query(VisitorLog.ref_code, func.count().label('count')) \
+        .group_by(VisitorLog.ref_code)
+
+    # Apply search filter
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(VisitorLog.ref_code.ilike(search_term))
+
+    # Sorting
+    if sort == 'code':
+        if order == 'asc':
+            query = query.order_by(VisitorLog.ref_code.asc().nullslast())
+        else:
+            query = query.order_by(VisitorLog.ref_code.desc().nullslast())
+    else:  # sort == 'count' or default
+        if order == 'asc':
+            query = query.order_by(func.count().asc())
+        else:
+            query = query.order_by(func.count().desc())
+
+    # Paginate
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template('admin/top_ref_codes.html',
+                         top_refs=pagination.items,
+                         pagination=pagination,
+                         sort=sort,
+                         order=order,
+                         title='Referral Codes')
+
+# Future Events routes have been consolidated into the main Events page
+
+@admin_bp.route('/ref_codes/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def ref_codes_data():
+    """Return referral codes data in DataTables format"""
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    days = request.args.get('days', 30, type=int)
+    
+    # Validate days parameter
+    if days < 1 or days > 60:
+        days = 30
+    
+    # Apply days filter
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    
+    # Get referral codes with usage count
+    query = db.session.query(
+        VisitorLog.ref_code,
+        func.count(VisitorLog.id).label('count')
+    ).filter(
+        VisitorLog.timestamp >= cutoff_date
+    ).group_by(VisitorLog.ref_code)
+    
+    # Apply search filter if provided
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(VisitorLog.ref_code.ilike(search))
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'desc')
+    
+    # Define column mapping for sorting
+    column_map = {
+        0: VisitorLog.ref_code,    # Referral Code column
+        1: func.count(VisitorLog.id),  # Usage Count column
+    }
+    
+    if order_column is not None and order_column in column_map:
+        sort_column = column_map[order_column]
+        if order_dir == 'desc':
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
+    else:
+        # Default sorting by count descending
+        query = query.order_by(func.count(VisitorLog.id).desc())
+    
+    total_records = query.count()
+    results = query.offset(start).limit(length).all()
+    
+    data = []
+    for ref_code, count in results:
+        data.append({
+            'code': ref_code,
+            'count': count
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
+@admin_bp.route('/setup-intents')
+@admin_required
+def setup_intents():
+    """Admin page to view and manage setup intents."""
+    # Check Stripe configuration
+    stripe.api_key = current_app.config.get("STRIPE_SECRET_KEY")
+    if not stripe.api_key:
+        flash("Warning: STRIPE_SECRET_KEY not configured", "warning")
+    else:
+        try:
+            # Test Stripe connection
+            test_list = stripe.SetupIntent.list(limit=1)
+            current_app.logger.info(f"Stripe connection test successful. Found {len(test_list.data)} setup intents")
+        except Exception as e:
+            current_app.logger.error(f"Stripe connection test failed: {e}")
+            flash(f"Warning: Stripe connection failed: {str(e)}", "warning")
+    
+    return render_template('admin/setup_intents.html')
+
+@admin_bp.route('/setup-intents/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def setup_intents_data():
+    """Get setup intents data for admin dashboard."""
+    try:
+        draw = request.args.get('draw', type=int)
+        start = request.args.get('start', type=int)
+        length = request.args.get('length', type=int)
+        search_value = request.args.get('search[value]', '')
+        
+        # Get setup intents from Stripe
+        stripe.api_key = current_app.config.get("STRIPE_SECRET_KEY")
+        
+        # Debug logging
+        current_app.logger.info(f"Fetching setup intents from Stripe with limit={length}")
+        
+        if not stripe.api_key:
+            current_app.logger.error("STRIPE_SECRET_KEY not configured")
+            return jsonify({'error': 'Stripe API key not configured'}), 500
+        
+        # Get setup intents with pagination
+        try:
+            # Fix pagination parameters - handle None values
+            limit_param = length if length is not None else 10
+            
+            # For now, just get all setup intents since Stripe pagination uses cursors, not offsets
+            # In a production app, you'd want to implement proper cursor-based pagination
+            setup_intents = stripe.SetupIntent.list(
+                limit=limit_param
+            )
+            current_app.logger.info(f"Retrieved {len(setup_intents.data)} setup intents from Stripe")
+            
+            # Log details of each setup intent for debugging
+            for i, si in enumerate(setup_intents.data):
+                current_app.logger.info(f"Setup Intent {i+1}: ID={si.id}, Status={si.status}, Customer={si.customer}, Created={si.created}")
+                
+        except stripe.error.StripeError as e:
+            current_app.logger.error(f"Stripe API error: {e}")
+            return jsonify({'error': f'Stripe API error: {str(e)}'}), 500
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error fetching setup intents: {e}")
+            return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+        
+        data = []
+        for si in setup_intents.data:
+            # Get user info if available
+            user = None
+            if si.customer:
+                user = User.query.filter_by(cust_id=si.customer).first()
+            
+            # Determine if retry button should be enabled
+            # Allow retry for 3D Secure issues and canceled setups that might need completion
+            can_retry = si.status in ['requires_action', 'canceled']
+            retry_button_class = "btn btn-sm btn-warning" if can_retry else "btn btn-sm btn-secondary"
+            retry_disabled = "" if can_retry else "disabled"
+            retry_text = "Retry" if can_retry else "N/A"
+            
+            data.append({
+                'id': si.id,
+                'status': si.status,
+                'customer_id': si.customer,
+                'user_email': user.email if user else 'Unknown',
+                'created': datetime.fromtimestamp(si.created).strftime('%Y-%m-%d %H:%M:%S'),
+                'payment_method_types': ', '.join(si.payment_method_types),
+                'usage': si.usage,
+                'actions': f'''
+                    <button class="btn btn-sm btn-info view-setup-intent" data-id="{si.id}">View</button>
+                    <button class="{retry_button_class} retry-setup-intent" data-id="{si.id}" {retry_disabled}>
+                        {retry_text}
+                    </button>
+                '''
+            })
+        
+        return jsonify({
+            'draw': draw,
+            'recordsTotal': len(setup_intents.data),
+            'recordsFiltered': len(setup_intents.data),
+            'data': data
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"setup_intents_data route failed: {e}")
+        return jsonify({'error': 'Failed to load setup intents data'}), 500
+
+@admin_bp.route('/setup-intents/<setup_intent_id>/retry', methods=['POST'])
+@admin_required
+def retry_setup_intent(setup_intent_id):
+    """Retry a setup intent that requires action."""
+    try:
+        stripe.api_key = current_app.config.get("STRIPE_SECRET_KEY")
+        
+        # Retrieve the setup intent
+        setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
+        
+        # Check if retry is allowed
+        if setup_intent.status not in ['requires_action', 'canceled']:
+            status_messages = {
+                'succeeded': 'This payment method has already been successfully set up.',
+                'processing': 'This setup is currently being processed.',
+                'requires_payment_method': 'This setup failed due to payment method issues. Customer should add a different payment method instead of retrying.'
+            }
+            message = status_messages.get(setup_intent.status, f'Setup intent status "{setup_intent.status}" does not allow retry.')
+            return jsonify({'error': message}), 400
+        
+        # Get user info for logging
+        user = None
+        customer_email = None
+        customer_name = None
+        
+        if setup_intent.customer:
+            # First try to find user in database
+            user = User.query.filter_by(cust_id=setup_intent.customer).first()
+            current_app.logger.info(f"DEBUG: Found user for customer {setup_intent.customer}: {user.email if user else 'Not found'}")
+            
+            if user:
+                current_app.logger.info(f"DEBUG: User details - ID: {user.id}, Email: {user.email}, First Name: {user.first_name}")
+            else:
+                # If user not in database, try to get customer info from Stripe
+                current_app.logger.info(f"DEBUG: No user found in database for customer ID: {setup_intent.customer}")
+                try:
+                    stripe_customer = stripe.Customer.retrieve(setup_intent.customer)
+                    customer_email = stripe_customer.email
+                    customer_name = stripe_customer.name
+                    current_app.logger.info(f"DEBUG: Found customer in Stripe - Email: {customer_email}, Name: {customer_name}")
+                except Exception as e:
+                    current_app.logger.error(f"DEBUG: Failed to retrieve customer from Stripe: {e}")
+        else:
+            current_app.logger.info(f"DEBUG: No customer associated with setup intent {setup_intent_id}")
+        
+        current_app.logger.info(f"Retrying setup intent {setup_intent_id} for user {user.email if user else 'unknown'}")
+        current_app.logger.info("DEBUG: CODE VERSION 2.0 - Customer email enhancements deployed")
+        
+        # Test email functionality
+        try:
+            current_app.logger.info("DEBUG: Testing email system...")
+            test_result = send_email_with_context(
+                subject="TEST EMAIL - Setup Intent Retry",
+                template="email/admin_message_notification",
+                recipient=current_app.config.get('ADMIN_EMAIL', 'mark@markdevore.com'),
+                communication_type="test",
+                name="Test User",
+                address="Test Address",
+                form_subject="Test Subject",
+                body="This is a test email to verify the email system is working.",
+                config=current_app.config
+            )
+            current_app.logger.info(f"DEBUG: Test email result: {test_result}")
+        except Exception as e:
+            current_app.logger.error(f"DEBUG: Test email failed: {e}")
+            current_app.logger.error(f"DEBUG: Test email exception details: {str(e)}", exc_info=True)
+        
+        # Create a new checkout session for this setup intent
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            mode='setup',
+            setup_intent_data={
+                'metadata': {
+                    'original_setup_intent': setup_intent_id,
+                    'retry_initiated_by': 'admin',
+                    'retry_timestamp': datetime.utcnow().isoformat()
+                }
+            },
+            success_url=url_for('auth.account', _external=True) + '?setup_intent={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('auth.account', _external=True)
+        )
+        
+        # Log the retry attempt
+        if user:
+            log_billing_event(
+                user=user,
+                event_type="setup_intent_retry_initiated",
+                event_data={
+                    "original_setup_intent_id": setup_intent_id,
+                    "new_session_id": session.id,
+                    "retry_reason": setup_intent.status,
+                    "admin_initiated": True
+                }
+            )
+        
+        # Send email notification to customer
+        customer_email_to_use = None
+        customer_name_to_use = None
+        
+        if user:
+            # Use user from database
+            customer_email_to_use = user.email
+            customer_name_to_use = user.first_name or user.email
+            current_app.logger.info(f"DEBUG: Using customer email from database: {customer_email_to_use}")
+        elif customer_email:
+            # Use customer info from Stripe
+            customer_email_to_use = customer_email
+            customer_name_to_use = customer_name or customer_email
+            current_app.logger.info(f"DEBUG: Using customer email from Stripe: {customer_email_to_use}")
+        else:
+            current_app.logger.info(f"DEBUG: No customer email available for setup intent {setup_intent_id}")
+        
+        if customer_email_to_use:
+            try:
+                retry_reason = setup_intent.status.replace('_', ' ')
+                if setup_intent.status == 'canceled':
+                    retry_reason = 'canceled (likely 3D Secure timeout)'
+                
+                current_app.logger.info(f"DEBUG: Attempting to send customer email to {customer_email_to_use}")
+                current_app.logger.info(f"DEBUG: Customer email template: email/setup_intent_retry_notification")
+                
+                # Create a minimal user object for the template
+                template_user = type('User', (), {
+                    'email': customer_email_to_use,
+                    'first_name': customer_name_to_use
+                })()
+                
+                send_email_with_context(
+                    subject="Payment Setup Retry - Complete Your Setup",
+                    template="email/setup_intent_retry_notification",
+                    recipient=customer_email_to_use,
+                    user=template_user,
+                    checkout_url=session.url,
+                    retry_reason=retry_reason,
+                    retry_timestamp=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+                )
+                current_app.logger.info(f"Sent retry notification email to customer {customer_email_to_use}")
+            except Exception as e:
+                current_app.logger.error(f"Failed to send retry notification email to customer {customer_email_to_use}: {e}")
+                current_app.logger.error(f"Exception details: {str(e)}", exc_info=True)
+        else:
+            current_app.logger.info(f"DEBUG: No customer email sent - no email available for setup intent {setup_intent_id}")
+        
+        # Send email notification to admin
+        try:
+            admin_url = url_for('admin.setup_intents', _external=True)
+            checkout_url = f"https://dashboard.stripe.com/sessions/{session.id}"
+            
+            # Debug logging
+            admin_email = current_app.config.get('ADMIN_EMAIL', 'admin@tamermap.com')
+            current_app.logger.info(f"DEBUG: Admin email config value: {admin_email}")
+            current_app.logger.info(f"DEBUG: All config keys: {list(current_app.config.keys())}")
+            current_app.logger.info(f"DEBUG: ADMIN_EMAIL in config: {current_app.config.get('ADMIN_EMAIL')}")
+            
+            current_app.logger.info(f"DEBUG: Attempting to send admin email to {admin_email}")
+            current_app.logger.info(f"DEBUG: Admin email template: email/admin_setup_intent_retry_notification")
+            
+            send_email_with_context(
+                subject="Setup Intent Retry Initiated - Admin Alert",
+                template="email/admin_setup_intent_retry_notification",
+                recipient=admin_email,
+                original_setup_intent_id=setup_intent_id,
+                new_session_id=session.id,
+                customer_email=user.email if user else 'Unknown',
+                customer_id=setup_intent.customer,
+                original_status=setup_intent.status,
+                retry_reason=setup_intent.status.replace('_', ' '),
+                admin_email=current_user.email,
+                retry_timestamp=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+                admin_url=admin_url,
+                checkout_url=checkout_url
+            )
+            current_app.logger.info(f"Sent admin notification email for setup intent retry")
+        except Exception as e:
+            current_app.logger.error(f"Failed to send admin notification email: {e}")
+            current_app.logger.error(f"Exception details: {str(e)}", exc_info=True)
+        
+        # Create appropriate message based on status
+        if setup_intent.status == 'canceled':
+            message = 'New checkout session created for canceled setup intent (likely 3D Secure timeout). Customer and admin notified.'
+        else:
+            message = f'New checkout session created for {setup_intent.status.replace("_", " ")} setup intent. Customer and admin notified.'
+        
+        return jsonify({
+            'success': True,
+            'checkout_url': session.url,
+            'message': message,
+            'setup_intent_status': setup_intent.status
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error retrying setup intent {setup_intent_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/setup-intents/<setup_intent_id>', methods=['GET'])
+@admin_required
+def get_setup_intent(setup_intent_id):
+    """Get detailed information about a setup intent."""
+    try:
+        stripe.api_key = current_app.config.get("STRIPE_SECRET_KEY")
+        setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
+        
+        # Get user info if available
+        user = None
+        if setup_intent.customer:
+            user = User.query.filter_by(cust_id=setup_intent.customer).first()
+        
+        return jsonify({
+            'id': setup_intent.id,
+            'status': setup_intent.status,
+            'customer_id': setup_intent.customer,
+            'user_email': user.email if user else 'Unknown',
+            'created': datetime.fromtimestamp(setup_intent.created).strftime('%Y-%m-%d %H:%M:%S'),
+            'payment_method_types': setup_intent.payment_method_types,
+            'usage': setup_intent.usage,
+            'next_action': setup_intent.next_action,
+            'last_setup_error': setup_intent.last_setup_error,
+            'client_secret': setup_intent.client_secret[:20] + "..." if setup_intent.client_secret else None
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error getting setup intent {setup_intent_id}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/checkout-sessions')
+@admin_required
+def checkout_sessions():
+    """Admin page to view checkout sessions."""
+    return render_template('admin/checkout_sessions.html')
+
+@admin_bp.route('/checkout-sessions/data')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def checkout_sessions_data():
+    """Get checkout sessions data for admin dashboard."""
+    try:
+        draw = request.args.get('draw', type=int)
+        start = request.args.get('start', type=int)
+        length = request.args.get('length', type=int)
+        search_value = request.args.get('search[value]', '')
+        
+        # Get checkout sessions from Stripe
+        stripe.api_key = current_app.config.get("STRIPE_SECRET_KEY")
+        
+        if not stripe.api_key:
+            current_app.logger.error("STRIPE_SECRET_KEY not configured")
+            return jsonify({'error': 'Stripe API key not configured'}), 500
+        
+        # Get checkout sessions
+        try:
+            limit_param = length if length is not None else 10
+            
+            checkout_sessions = stripe.checkout.Session.list(
+                limit=limit_param
+            )
+            current_app.logger.info(f"Retrieved {len(checkout_sessions.data)} checkout sessions from Stripe")
+            
+        except stripe.error.StripeError as e:
+            current_app.logger.error(f"Stripe API error: {e}")
+            return jsonify({'error': f'Stripe API error: {str(e)}'}), 500
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error fetching checkout sessions: {e}")
+            return jsonify({'error': f'Unexpected error: {str(e)}'}), 500
+        
+        data = []
+        for session in checkout_sessions.data:
+            # Get user info if available
+            user = None
+            if session.customer:
+                user = User.query.filter_by(cust_id=session.customer).first()
+            
+            # Format amount
+            amount_display = f"${session.amount_total / 100:.2f}" if session.amount_total else "N/A"
+            
+            # Determine status color
+            status_class = ''
+            if session.status == 'expired':
+                status_class = 'badge bg-warning'
+            elif session.status == 'complete':
+                status_class = 'badge bg-success'
+            elif session.status == 'open':
+                status_class = 'badge bg-info'
+            else:
+                status_class = 'badge bg-secondary'
+            
+            data.append({
+                'id': session.id,
+                'status': session.status,
+                'customer_id': session.customer,
+                'user_email': user.email if user else 'Unknown',
+                'created': datetime.fromtimestamp(session.created).strftime('%Y-%m-%d %H:%M:%S'),
+                'expires_at': datetime.fromtimestamp(session.expires_at).strftime('%Y-%m-%d %H:%M:%S') if session.expires_at else 'N/A',
+                'mode': session.mode,
+                'amount_total': amount_display,
+                'payment_status': session.payment_status,
+                'actions': f'''
+                    <button class="btn btn-sm btn-info view-checkout-session" data-id="{session.id}">View</button>
+                '''
+            })
+        
+        return jsonify({
+            'draw': draw,
+            'recordsTotal': len(checkout_sessions.data),
+            'recordsFiltered': len(checkout_sessions.data),
+            'data': data
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"checkout_sessions_data route failed: {e}")
+        return jsonify({'error': 'Failed to load checkout sessions data'}), 500 
+
+# ============================================================================
+# REFERRAL JOURNEY ANALYTICS ROUTES
+# ============================================================================
+
+@admin_bp.route('/referral-journeys')
+@admin_required
+def referral_journeys():
+    """Main referral journey analytics page."""
+    return render_template('admin/referral_journeys.html')
+
+@admin_bp.route('/api/analytics/referral-journeys')
+@admin_required
+def api_referral_journeys():
+    """Get top referral codes with journey data."""
+    days = request.args.get('days', 30, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    
+    try:
+        from app.admin_utils import get_referral_codes_with_journeys
+        data = get_referral_codes_with_journeys(days=days, limit=limit)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        current_app.logger.error(f"Error getting referral journeys: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/analytics/referral-funnel/<ref_code>')
+@admin_required
+def api_referral_funnel(ref_code):
+    """Get funnel data for a specific referral code."""
+    days = request.args.get('days', 30, type=int)
+    
+    try:
+        from app.admin_utils import get_referral_funnel_data
+        data = get_referral_funnel_data(ref_code, days=days)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        current_app.logger.error(f"Error getting referral funnel for {ref_code}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/analytics/referral-time/<ref_code>')
+@admin_required
+def api_referral_time_analysis(ref_code):
+    """Get time-based analysis for a referral code."""
+    days = request.args.get('days', 30, type=int)
+    
+    try:
+        from app.admin_utils import get_referral_time_analysis
+        data = get_referral_time_analysis(ref_code, days=days)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        current_app.logger.error(f"Error getting time analysis for {ref_code}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/analytics/referral-geographic/<ref_code>')
+@admin_required
+def api_referral_geographic(ref_code):
+    """Get geographic data for a referral code."""
+    days = request.args.get('days', 30, type=int)
+    
+    try:
+        from app.admin_utils import get_referral_geographic_data
+        data = get_referral_geographic_data(ref_code, days=days)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        current_app.logger.error(f"Error getting geographic data for {ref_code}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/analytics/referral-devices/<ref_code>')
+@admin_required
+def api_referral_devices(ref_code):
+    """Get device data for a referral code."""
+    days = request.args.get('days', 30, type=int)
+    
+    try:
+        from app.admin_utils import get_referral_device_data
+        data = get_referral_device_data(ref_code, days=days)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        current_app.logger.error(f"Error getting device data for {ref_code}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/referral-journey/<ref_code>')
+@admin_required
+def referral_journey_detail(ref_code):
+    """Detailed view for a specific referral code."""
+    days = request.args.get('days', 30, type=int)
+    
+    try:
+        from app.admin_utils import get_referral_journey_data, get_referral_funnel_data
+        journey_data = get_referral_journey_data(ref_code, days=days)
+        funnel_data = get_referral_funnel_data(ref_code, days=days)
+        
+        return render_template('admin/referral_journey_detail.html', 
+                             ref_code=ref_code, 
+                             journey_data=journey_data, 
+                             funnel_data=funnel_data,
+                             days=days)
+    except Exception as e:
+        current_app.logger.error(f"Error getting referral journey detail for {ref_code}: {e}")
+        flash(f"Error loading referral journey data: {str(e)}", 'error')
+        return redirect(url_for('admin.referral_journeys'))
