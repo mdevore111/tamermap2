@@ -274,6 +274,7 @@ class RoutePlanner {
      * Update route summary
      */
     updateRouteSummary() {
+        console.log('=== UPDATE ROUTE SUMMARY DEBUG ===');
         const summaryContent = document.getElementById('summary-content');
         
         if (!summaryContent) {
@@ -282,6 +283,7 @@ class RoutePlanner {
         }
 
         if (!window.userCoords) {
+            console.log('ERROR: No user coordinates available for route summary');
             summaryContent.innerHTML = 
                 '<small style="color: #dc3545;">Location access required for route planning.</small>';
             return;
@@ -291,8 +293,10 @@ class RoutePlanner {
         const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
         const openNow = document.getElementById('open-now-checkbox')?.checked || false;
         
+        console.log('1. Settings - roundTrip:', roundTrip, 'openNow:', openNow);
+        
         // Debug: Log available data sources
-        console.log('Route Summary Debug:');
+        console.log('2. Available data sources:');
         console.log('- userCoords:', window.userCoords);
         console.log('- allMarkers:', window.allMarkers?.length || 0);
         console.log('- markerManager:', window.markerManager ? 'exists' : 'missing');
@@ -300,14 +304,32 @@ class RoutePlanner {
         console.log('- dataService:', window.dataService ? 'exists' : 'missing');
         console.log('- dataService cache size:', window.dataService?.cache?.size || 0);
         
+        // Additional debugging for markerManager
+        if (window.markerManager) {
+            console.log('- markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
+            console.log('- markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
+        }
+        
+        // Additional debugging for dataService
+        if (window.dataService && window.dataService.cache) {
+            console.log('- dataService.cache entries:');
+            window.dataService.cache.forEach((value, key) => {
+                console.log(`  - ${key}:`, value);
+            });
+        }
+        
         // Get available locations and apply filters
+        console.log('3. Getting filtered locations...');
         const availableLocations = this.getFilteredLocations(openNow);
-        console.log('- availableLocations after filtering:', availableLocations.length);
+        console.log('4. availableLocations after filtering:', availableLocations.length);
+        console.log('5. availableLocations sample:', availableLocations.slice(0, 3));
         
         const optimalLocations = this.selectOptimalLocations(availableLocations);
-        console.log('- optimalLocations selected:', optimalLocations.length);
+        console.log('6. optimalLocations selected:', optimalLocations.length);
+        console.log('7. optimalLocations details:', optimalLocations);
         
         if (optimalLocations.length === 0) {
+            console.log('ERROR: No optimal locations found');
             // Provide more helpful feedback
             let message = 'No locations found matching your criteria.';
             if (availableLocations.length === 0) {
@@ -341,6 +363,7 @@ class RoutePlanner {
         console.log('=== GET FILTERED LOCATIONS DEBUG ===');
         console.log('1. openNow parameter:', openNow);
         console.log('2. userCoords available:', !!window.userCoords);
+        console.log('3. userCoords value:', window.userCoords);
         
         if (!window.userCoords) {
             console.log('ERROR: No user coordinates available');
@@ -351,42 +374,45 @@ class RoutePlanner {
         let locations = [];
         let dataSource = 'none';
         
-        console.log('3. Checking data sources...');
+        console.log('4. Checking data sources...');
         
         // First try window.allMarkers (from MarkerManager)
         if (window.allMarkers && window.allMarkers.length > 0) {
             locations = [...window.allMarkers];
             dataSource = 'allMarkers';
-            console.log(`4. SUCCESS: Using data source: allMarkers (${locations.length} locations)`);
-            console.log('5. Sample location:', locations[0]);
+            console.log(`5. SUCCESS: Using data source: allMarkers (${locations.length} locations)`);
+            console.log('6. Sample location:', locations[0]);
+            console.log('7. First 3 locations:', locations.slice(0, 3));
         }
         // Fallback to markerManager.markerCache if available
         else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
             const markerCache = Array.from(window.markerManager.markerCache.values());
             locations = markerCache.filter(marker => marker.retailer_type); // Only retailer markers
             dataSource = 'markerCache';
-            console.log(`4. SUCCESS: Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
-            console.log('5. Sample location:', locations[0]);
+            console.log(`5. SUCCESS: Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
+            console.log('6. Sample location:', locations[0]);
+            console.log('7. First 3 locations:', locations.slice(0, 3));
         }
         // Try dataService if available
         else if (window.dataService && window.dataService.cache && window.dataService.cache.size > 0) {
             // Extract retailer data from dataService cache
             const cacheKeys = Array.from(window.dataService.cache.keys());
-            console.log('4. DataService cache keys:', cacheKeys);
+            console.log('5. DataService cache keys:', cacheKeys);
             
             const retailerKeys = cacheKeys.filter(key => key.includes('retailers') || key.includes('map-data'));
-            console.log('5. Retailer keys found:', retailerKeys);
+            console.log('6. Retailer keys found:', retailerKeys);
             
             if (retailerKeys.length > 0) {
                 const cacheEntry = window.dataService.cache.get(retailerKeys[0]);
-                console.log('6. Cache entry:', cacheEntry);
+                console.log('7. Cache entry:', cacheEntry);
                 
                 if (cacheEntry && cacheEntry.data) {
                     locations = Array.isArray(cacheEntry.data) ? cacheEntry.data : 
                                (cacheEntry.data.retailers || []);
                     dataSource = 'dataService';
-                    console.log(`7. SUCCESS: Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
-                    console.log('8. Sample location:', locations[0]);
+                    console.log(`8. SUCCESS: Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
+                    console.log('9. Sample location:', locations[0]);
+                    console.log('10. First 3 locations:', locations.slice(0, 3));
                 }
             }
         }
@@ -394,8 +420,9 @@ class RoutePlanner {
         else if (window.markers && window.markers.length > 0) {
             locations = [...window.markers];
             dataSource = 'markers';
-            console.log(`4. SUCCESS: Using data source: markers (${locations.length} locations)`);
-            console.log('5. Sample location:', locations[0]);
+            console.log(`5. SUCCESS: Using data source: markers (${locations.length} locations)`);
+            console.log('6. Sample location:', locations[0]);
+            console.log('7. First 3 locations:', locations.slice(0, 3));
         }
         
         if (locations.length === 0) {
@@ -407,11 +434,26 @@ class RoutePlanner {
             console.log('- window.dataService:', window.dataService ? 'exists' : 'missing');
             console.log('- window.dataService.cache:', window.dataService?.cache?.size || 0);
             console.log('- window.markers:', window.markers?.length || 0);
+            
+            // Additional debugging for markerManager
+            if (window.markerManager) {
+                console.log('- markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
+                console.log('- markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
+            }
+            
+            // Additional debugging for dataService
+            if (window.dataService && window.dataService.cache) {
+                console.log('- dataService.cache entries:');
+                window.dataService.cache.forEach((value, key) => {
+                    console.log(`  - ${key}:`, value);
+                });
+            }
+            
             return [];
         }
 
-        console.log(`6. Initial locations found: ${locations.length}`);
-        console.log('7. Current maxDistance:', this.maxDistance);
+        console.log(`8. Initial locations found: ${locations.length}`);
+        console.log('9. Current maxDistance:', this.maxDistance);
 
         // Apply distance filter
         const beforeDistanceFilter = locations.length;
@@ -423,23 +465,35 @@ class RoutePlanner {
             location.distance = distance;
             return distance <= this.maxDistance;
         });
-        console.log(`8. After distance filter (${this.maxDistance} miles): ${locations.length} locations (was ${beforeDistanceFilter})`);
+        console.log(`10. After distance filter (${this.maxDistance} miles): ${locations.length} locations (was ${beforeDistanceFilter})`);
+        
+        if (locations.length > 0) {
+            console.log('11. Sample locations after distance filter:', locations.slice(0, 3));
+        }
 
         // Apply retailer type filters
         const beforeTypeFilter = locations.length;
         locations = this.applyRetailerTypeFilters(locations);
-        console.log(`9. After retailer type filter: ${locations.length} locations (was ${beforeTypeFilter})`);
+        console.log(`12. After retailer type filter: ${locations.length} locations (was ${beforeTypeFilter})`);
+        
+        if (locations.length > 0) {
+            console.log('13. Sample locations after type filter:', locations.slice(0, 3));
+        }
 
         // Apply opening hours filter
         if (openNow) {
             const beforeHoursFilter = locations.length;
             locations = this.filterByOpeningHours(locations);
-            console.log(`10. After opening hours filter: ${locations.length} locations (was ${beforeHoursFilter})`);
+            console.log(`14. After opening hours filter: ${locations.length} locations (was ${beforeHoursFilter})`);
+            
+            if (locations.length > 0) {
+                console.log('15. Sample locations after hours filter:', locations.slice(0, 3));
+            }
         } else {
-            console.log('10. Skipping opening hours filter (openNow = false)');
+            console.log('14. Skipping opening hours filter (openNow = false)');
         }
 
-        console.log(`11. FINAL: Returning ${locations.length} filtered locations`);
+        console.log(`16. FINAL: Returning ${locations.length} filtered locations`);
         return locations;
     }
 
@@ -614,8 +668,23 @@ class RoutePlanner {
             console.log('9. dataService cache keys:', Array.from(window.dataService.cache.keys()));
         }
         
+        // Additional debugging for markerManager
+        if (window.markerManager) {
+            console.log('10. markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
+            console.log('11. markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
+        }
+        
+        // Additional debugging for dataService
+        if (window.dataService && window.dataService.cache) {
+            console.log('12. dataService.cache entries:');
+            window.dataService.cache.forEach((value, key) => {
+                console.log(`  - ${key}:`, value);
+            });
+        }
+        
         // Check if basic requirements are met
         if (!window.userCoords) {
+            console.log('ERROR: No user coordinates available');
             Swal.fire({
                 title: 'Location Required',
                 text: 'Please allow location access to use route planning.',
@@ -631,7 +700,10 @@ class RoutePlanner {
                              (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) ||
                              (window.markers && window.markers.length > 0);
         
+        console.log('13. hasMarkerData:', hasMarkerData);
+        
         if (!hasMarkerData) {
+            console.log('ERROR: No marker data available');
             Swal.fire({
                 title: 'No Store Data',
                 text: 'Store data is still loading. Please try again in a moment.',
@@ -644,15 +716,18 @@ class RoutePlanner {
 
         // Get current route with default settings if modal isn't open
         const openNow = document.getElementById('open-now-checkbox')?.checked || false;
-        console.log('openNow filter:', openNow);
+        console.log('14. openNow filter:', openNow);
         
         const availableLocations = this.getFilteredLocations(openNow);
-        console.log('availableLocations:', availableLocations.length);
+        console.log('15. availableLocations:', availableLocations.length);
+        console.log('16. availableLocations sample:', availableLocations.slice(0, 3));
         
         this.selectedLocations = this.selectOptimalLocations(availableLocations);
-        console.log('selectedLocations:', this.selectedLocations.length);
+        console.log('17. selectedLocations:', this.selectedLocations.length);
+        console.log('18. selectedLocations details:', this.selectedLocations);
 
         if (this.selectedLocations.length === 0) {
+            console.log('ERROR: No locations selected after filtering');
             Swal.fire({
                 title: 'No Locations Found',
                 text: 'Could not find enough locations matching your criteria. Try adjusting your filters or opening the route planner first.',
