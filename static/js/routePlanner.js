@@ -201,6 +201,8 @@ class RoutePlanner {
         };
         
         const filterToggles = document.querySelectorAll('.route-filter-toggle');
+        let hasActiveFilter = false;
+        
         filterToggles.forEach(toggle => {
             // Get the filter type from the data attribute
             const filterType = toggle.getAttribute('data-filter');
@@ -209,6 +211,7 @@ class RoutePlanner {
             // Set initial state based on legend checkbox
             if (legendCheckbox && legendCheckbox.checked) {
                 toggle.classList.add('active');
+                hasActiveFilter = true;
             }
             
             // Add click handler that only updates route planner state
@@ -217,6 +220,12 @@ class RoutePlanner {
                 this.updateRouteSummary();
             });
         });
+        
+        // If no filters are active, activate the first one (kiosk) by default
+        if (!hasActiveFilter && filterToggles.length > 0) {
+            console.log('No filters active, activating kiosk filter by default');
+            filterToggles[0].classList.add('active');
+        }
 
         // Action buttons
         const previewBtn = document.getElementById('modal-preview-route-btn');
@@ -265,8 +274,15 @@ class RoutePlanner {
      * Update route summary
      */
     updateRouteSummary() {
+        const summaryContent = document.getElementById('summary-content');
+        
+        if (!summaryContent) {
+            console.warn('Summary content element not found');
+            return;
+        }
+
         if (!window.userCoords) {
-            document.getElementById('summary-content').innerHTML = 
+            summaryContent.innerHTML = 
                 '<small style="color: #dc3545;">Location access required for route planning.</small>';
             return;
         }
@@ -275,13 +291,31 @@ class RoutePlanner {
         const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
         const openNow = document.getElementById('open-now-checkbox')?.checked || false;
         
+        // Debug: Log available data sources
+        console.log('Route Summary Debug:');
+        console.log('- userCoords:', window.userCoords);
+        console.log('- allMarkers:', window.allMarkers?.length || 0);
+        console.log('- markerManager:', window.markerManager ? 'exists' : 'missing');
+        console.log('- markerCache size:', window.markerManager?.markerCache?.size || 0);
+        console.log('- dataService:', window.dataService ? 'exists' : 'missing');
+        console.log('- dataService cache size:', window.dataService?.cache?.size || 0);
+        
         // Get available locations and apply filters
         const availableLocations = this.getFilteredLocations(openNow);
-        const optimalLocations = this.selectOptimalLocations(availableLocations);
+        console.log('- availableLocations after filtering:', availableLocations.length);
         
-        const summaryContent = document.getElementById('summary-content');
+        const optimalLocations = this.selectOptimalLocations(availableLocations);
+        console.log('- optimalLocations selected:', optimalLocations.length);
+        
         if (optimalLocations.length === 0) {
-            summaryContent.innerHTML = '<small style="color: #dc3545;">No locations found matching your criteria.</small>';
+            // Provide more helpful feedback
+            let message = 'No locations found matching your criteria.';
+            if (availableLocations.length === 0) {
+                message += ' Try adjusting your distance or store type filters.';
+            } else {
+                message += ' Try increasing the number of stops.';
+            }
+            summaryContent.innerHTML = `<small style="color: #dc3545;">${message}</small>`;
             return;
         }
 
@@ -305,37 +339,49 @@ class RoutePlanner {
      */
     getFilteredLocations(openNow = false) {
         if (!window.userCoords) {
+            console.log('No user coordinates available');
             return [];
         }
 
         // Try different data sources in order of preference
         let locations = [];
+        let dataSource = 'none';
         
         // First try window.allMarkers (from MarkerManager)
         if (window.allMarkers && window.allMarkers.length > 0) {
             locations = [...window.allMarkers];
+            dataSource = 'allMarkers';
+            console.log(`Using data source: allMarkers (${locations.length} locations)`);
         }
         // Fallback to markerManager.markerCache if available
-        else if (window.markerManager && window.markerManager.markerCache) {
-            locations = Array.from(window.markerManager.markerCache.values())
-                .filter(marker => marker.retailer_type); // Only retailer markers
+        else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
+            const markerCache = Array.from(window.markerManager.markerCache.values());
+            locations = markerCache.filter(marker => marker.retailer_type); // Only retailer markers
+            dataSource = 'markerCache';
+            console.log(`Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
         }
         // Try dataService if available
-        else if (window.dataService && window.dataService.cache) {
+        else if (window.dataService && window.dataService.cache && window.dataService.cache.size > 0) {
             // Extract retailer data from dataService cache
             const cacheKeys = Array.from(window.dataService.cache.keys());
+            console.log('DataService cache keys:', cacheKeys);
+            
             const retailerKeys = cacheKeys.filter(key => key.includes('retailers') || key.includes('map-data'));
             if (retailerKeys.length > 0) {
                 const cacheEntry = window.dataService.cache.get(retailerKeys[0]);
                 if (cacheEntry && cacheEntry.data) {
                     locations = Array.isArray(cacheEntry.data) ? cacheEntry.data : 
                                (cacheEntry.data.retailers || []);
+                    dataSource = 'dataService';
+                    console.log(`Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
                 }
             }
         }
         // Last fallback to any global markers array
         else if (window.markers && window.markers.length > 0) {
             locations = [...window.markers];
+            dataSource = 'markers';
+            console.log(`Using data source: markers (${locations.length} locations)`);
         }
         
         if (locations.length === 0) {
@@ -385,15 +431,19 @@ class RoutePlanner {
             }
         });
 
-        // If no filters are active, return empty array
+        // If no filters are active, return all locations (don't filter)
         if (activeFilters.length === 0) {
-            return [];
+            console.log('No retailer type filters active, showing all location types');
+            return locations;
         }
 
-        return locations.filter(location => {
+        console.log('Applying retailer type filters:', activeFilters);
+        const filtered = locations.filter(location => {
             const retailerType = location.retailer_type || '';
             return activeFilters.includes(retailerType);
         });
+        console.log(`Filtered from ${locations.length} to ${filtered.length} locations`);
+        return filtered;
     }
 
     /**

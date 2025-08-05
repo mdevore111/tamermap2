@@ -405,6 +405,7 @@ function openRoutePanel() {
     html: window.routePlanner.createModalContent(),
     showConfirmButton: false,
     showCancelButton: false,
+    showCloseButton: true,
     customClass: {
       popup: 'swal2-route-planner'
     },
