@@ -5,8 +5,6 @@ from flask import request, current_app, abort
 
 def check_referrer():
     """
-    TEMPORARILY DISABLED FOR DEBUGGING
-    
     Validate the request's Referer header to ensure it originates from an allowed domain.
 
     Allowed domains include:
@@ -15,12 +13,6 @@ def check_referrer():
         - Server IPs for development and production
 
     Aborts the request with a 403 error if the Referer is missing or unauthorized.
-    """
-    # TEMPORARILY DISABLED - ALLOW ALL REQUESTS
-    current_app.logger.info(f"DEBUG: Security check disabled - allowing request to {request.path}")
-    return  # Allow all requests
-    
-    # Original code commented out below
     """
     referer = request.headers.get("Referer", "")
     
@@ -55,4 +47,3 @@ def check_referrer():
     ):
         current_app.logger.warning(f"Unauthorized access to {request.path} from referer: {referer}")
         abort(403)
-    """
