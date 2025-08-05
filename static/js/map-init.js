@@ -316,12 +316,21 @@ function renderMap() {
   // Initialize UI components (legend, search, filters)
   initUI();
 
-  // Load optimized data
-  loadOptimizedMapData();
-
   // Set up proper stacking immediately and on idle
   setupMapStacking();
   window.map.addListener('idle', setupMapStacking);
+
+  // Set up viewport change listeners for progressive loading
+  setupMapEventListeners();
+
+  // Wait for map to be properly initialized before loading data
+  window.map.addListener('idle', () => {
+    // Only load data on first idle event
+    if (!window.dataLoaded) {
+      window.dataLoaded = true;
+      loadOptimizedMapData();
+    }
+  });
 }
 
 /**
@@ -334,8 +343,20 @@ async function loadOptimizedMapData() {
     // Get initial viewport bounds for filtering
     const bounds = dataService.getMapBounds(window.map);
     
+    // If no bounds available, use a default viewport around user location
+    let effectiveBounds = bounds;
+    if (!bounds && window.userCoords) {
+      const defaultRadius = 0.1; // About 11km radius
+      effectiveBounds = {
+        north: window.userCoords.lat + defaultRadius,
+        south: window.userCoords.lat - defaultRadius,
+        east: window.userCoords.lng + defaultRadius,
+        west: window.userCoords.lng - defaultRadius
+      };
+    }
+    
     // Load combined data in a single request
-    const mapData = await dataService.loadMapData(bounds, {
+    const mapData = await dataService.loadMapData(effectiveBounds, {
       includeEvents: true,
       daysAhead: 30
     });
