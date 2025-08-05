@@ -25,6 +25,20 @@
     <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of kiosk locations.">
       <input type="checkbox" id="filter-kiosk" checked> 🤖 Kiosks
     </label><br>
+    
+    <!-- Route Planning Section -->
+    <div id="route-planning-section">
+      <button class="route-planning-btn{% if not is_pro %} pro-only{% endif %}" id="plan-route-btn" 
+              onclick="{% if is_pro %}openRoutePanel(){% else %}showProUpgradeModal(){% endif %}" 
+              data-bs-toggle="tooltip" 
+              data-bs-placement="right" 
+              title="{% if is_pro %}Plan a route to multiple locations{% else %}Upgrade to Pro to access route planning{% endif %}">
+        <i class="fas fa-route"></i>
+        <span>Route Planning</span>
+        <span class="pro-badge">Pro</span>
+      </button>
+    </div>
+    
     <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of retail store locations.">
       <input type="checkbox" id="filter-retail"
              {% if is_pro %}
@@ -90,19 +104,6 @@
              data-bs-toggle="tooltip" 
              data-bs-placement="right" 
              title="Filter events by days in the future">
-    </div>
-
-    <!-- Route Planning Section -->
-    <div id="route-planning-section">
-      <button class="route-planning-btn{% if not is_pro %} pro-only{% endif %}" id="plan-route-btn" 
-              onclick="{% if is_pro %}openRoutePanel(){% else %}showProUpgradeModal(){% endif %}" 
-              data-bs-toggle="tooltip" 
-              data-bs-placement="right" 
-              title="{% if is_pro %}Plan a route to multiple locations{% else %}Upgrade to Pro to access route planning{% endif %}">
-        <i class="fas fa-route"></i>
-        <span>Route Planning</span>
-        <span class="pro-badge">Pro</span>
-      </button>
     </div>
   </div>
 </div> 
