@@ -40,6 +40,7 @@ class RoutePlanner {
             html: this.createModalContent(),
             showConfirmButton: false,
             showCancelButton: false,
+            showCloseButton: true,
             customClass: {
                 popup: 'swal2-route-planner'
             },
@@ -127,7 +128,7 @@ class RoutePlanner {
                         <i class="fas fa-eye"></i> Preview
                     </button>
                     <button type="button" class="route-btn route-btn-primary" id="modal-open-in-maps-btn">
-                        <i class="fas fa-external-link-alt"></i> Go to Maps
+                        <i class="fas fa-external-link-alt"></i> Go!
                     </button>
                 </div>
 
@@ -303,11 +304,31 @@ class RoutePlanner {
      * Get filtered locations based on current settings
      */
     getFilteredLocations(openNow = false) {
-        if (!window.allMarkers || !window.userCoords) {
+        if (!window.userCoords) {
             return [];
         }
 
-        let locations = [...window.allMarkers];
+        // Try different data sources in order of preference
+        let locations = [];
+        
+        // First try window.allMarkers (from MarkerManager)
+        if (window.allMarkers && window.allMarkers.length > 0) {
+            locations = [...window.allMarkers];
+        }
+        // Fallback to markerManager.markerCache if available
+        else if (window.markerManager && window.markerManager.markerCache) {
+            locations = Array.from(window.markerManager.markerCache.values())
+                .filter(marker => marker.retailer_type); // Only retailer markers
+        }
+        // Last fallback to any global markers array
+        else if (window.markers && window.markers.length > 0) {
+            locations = [...window.markers];
+        }
+        
+        if (locations.length === 0) {
+            console.warn('No marker data available for route planning');
+            return [];
+        }
 
         // Apply distance filter
         locations = locations.filter(location => {
@@ -462,6 +483,9 @@ class RoutePlanner {
         console.log('showPreviewPins called');
         console.log('userCoords:', window.userCoords);
         console.log('allMarkers:', window.allMarkers?.length || 0);
+        console.log('markerManager:', window.markerManager ? 'exists' : 'missing');
+        console.log('markerCache size:', window.markerManager?.markerCache?.size || 0);
+        console.log('window.markers:', window.markers?.length || 0);
         
         // Check if basic requirements are met
         if (!window.userCoords) {
@@ -475,7 +499,12 @@ class RoutePlanner {
             return;
         }
 
-        if (!window.allMarkers || window.allMarkers.length === 0) {
+        // Check if we have any marker data available
+        const hasMarkerData = (window.allMarkers && window.allMarkers.length > 0) ||
+                             (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) ||
+                             (window.markers && window.markers.length > 0);
+        
+        if (!hasMarkerData) {
             Swal.fire({
                 title: 'No Store Data',
                 text: 'Store data is still loading. Please try again in a moment.',
