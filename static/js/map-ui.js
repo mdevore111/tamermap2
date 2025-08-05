@@ -359,6 +359,38 @@ function handleSearch(event) {
 window.handleSearch = handleSearch;
 
 /**
+ * Show pro upgrade modal for route planning
+ */
+function showProUpgradeModal() {
+  if (typeof Swal !== 'undefined') {
+    Swal.fire({
+      title: '<i class="fas fa-route"></i> Route Planning',
+      html: `
+        <div style="text-align: center; padding: 20px;">
+          <i class="fas fa-lock" style="font-size: 48px; color: #667eea; margin-bottom: 20px;"></i>
+          <h4>Pro Feature</h4>
+          <p>Route planning is available for Pro users only.</p>
+          <p>Upgrade to Pro to plan optimized routes to multiple locations.</p>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Go Pro',
+      cancelButtonText: 'Maybe Later',
+      confirmButtonColor: '#667eea',
+      customClass: {
+        popup: 'swal2-pro-upgrade'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = '/learn';
+      }
+    });
+  } else {
+    alert('Route planning is available for Pro users only. Visit /learn to upgrade.');
+  }
+}
+
+/**
  * Open route planner modal using SweetAlert2
  */
 function openRoutePanel() {
