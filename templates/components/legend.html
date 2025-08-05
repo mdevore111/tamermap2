@@ -94,13 +94,15 @@
 
     <!-- Route Planning Section -->
     <div id="route-planning-section">
-      <div class="route-planning-header">Route Planning</div>
-      <div class="route-planning-buttons">
-        <button class="route-planning-btn" id="plan-route-btn" onclick="openRoutePanel()" data-bs-toggle="tooltip" data-bs-placement="right" title="Plan a route to multiple locations">
-          <i class="fas fa-route"></i>
-          <span>Plan</span>
-        </button>
-      </div>
+      <button class="route-planning-btn{% if not is_pro %} pro-only{% endif %}" id="plan-route-btn" 
+              onclick="{% if is_pro %}openRoutePanel(){% else %}showProUpgradeModal(){% endif %}" 
+              data-bs-toggle="tooltip" 
+              data-bs-placement="right" 
+              title="{% if is_pro %}Plan a route to multiple locations{% else %}Upgrade to Pro to access route planning{% endif %}">
+        <i class="fas fa-route"></i>
+        <span>Route Planning</span>
+        <span class="pro-badge">Pro</span>
+      </button>
     </div>
   </div>
 </div> 
