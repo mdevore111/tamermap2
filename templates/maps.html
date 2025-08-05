@@ -104,15 +104,12 @@ Tamermap.com - Map
         if (!lastPopupTime || now - parseInt(lastPopupTime) > oneHour) {
           localStorage.setItem('lastPopupTime', now.toString());
 
-          const htmlContent = `
-            <div>
-              <img src="{{ url_for('static', filename='images/pro-compare.png') }}" alt="Retail shops map" style="width: 100%; height: auto;" />
-            </div>
-          `;
-
           Swal.fire({
             title: 'Find more even faster with Pro',
-            html: htmlContent,
+            imageUrl: "{{ url_for('static', filename='images/pro-compare.png') }}",
+            imageAlt: 'Retail shops map',
+            imageWidth: '100%',
+            imageHeight: 'auto',
             showCancelButton: true,
             confirmButtonText: 'Upgrade Now',
             cancelButtonText: 'Maybe Later',
