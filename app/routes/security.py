@@ -15,6 +15,10 @@ def check_referrer():
     Aborts the request with a 403 error if the Referer is missing or unauthorized.
     """
     referer = request.headers.get("Referer", "")
+    
+    # DEBUG: Log the referrer for troubleshooting
+    current_app.logger.info(f"DEBUG: Request to {request.path} from referer: '{referer}'")
+    
     allowed_pattern = re.compile(r"^(https?://(?:.+\.)?tamermap\.com)", re.IGNORECASE)
     allowed_locals = [
         "http://127.0.0.1:5000",
@@ -36,7 +40,7 @@ def check_referrer():
     ]
 
     # For development, also allow empty referer
-    if not referer or (
+    if referer and (
         not allowed_pattern.match(referer)
         and not any(referer.startswith(local) for local in allowed_locals)
         and not any(pattern.match(referer) for pattern in server_ip_patterns)
