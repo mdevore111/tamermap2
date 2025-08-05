@@ -320,6 +320,19 @@ class RoutePlanner {
             locations = Array.from(window.markerManager.markerCache.values())
                 .filter(marker => marker.retailer_type); // Only retailer markers
         }
+        // Try dataService if available
+        else if (window.dataService && window.dataService.cache) {
+            // Extract retailer data from dataService cache
+            const cacheKeys = Array.from(window.dataService.cache.keys());
+            const retailerKeys = cacheKeys.filter(key => key.includes('retailers') || key.includes('map-data'));
+            if (retailerKeys.length > 0) {
+                const cacheEntry = window.dataService.cache.get(retailerKeys[0]);
+                if (cacheEntry && cacheEntry.data) {
+                    locations = Array.isArray(cacheEntry.data) ? cacheEntry.data : 
+                               (cacheEntry.data.retailers || []);
+                }
+            }
+        }
         // Last fallback to any global markers array
         else if (window.markers && window.markers.length > 0) {
             locations = [...window.markers];
@@ -327,6 +340,13 @@ class RoutePlanner {
         
         if (locations.length === 0) {
             console.warn('No marker data available for route planning');
+            console.log('Debug - Available data sources:');
+            console.log('- window.allMarkers:', window.allMarkers?.length || 0);
+            console.log('- window.markerManager:', window.markerManager ? 'exists' : 'missing');
+            console.log('- window.markerManager.markerCache:', window.markerManager?.markerCache?.size || 0);
+            console.log('- window.dataService:', window.dataService ? 'exists' : 'missing');
+            console.log('- window.dataService.cache:', window.dataService?.cache?.size || 0);
+            console.log('- window.markers:', window.markers?.length || 0);
             return [];
         }
 
