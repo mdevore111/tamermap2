@@ -127,7 +127,7 @@ class RoutePlanner {
                         <i class="fas fa-eye"></i> Preview
                     </button>
                     <button type="button" class="route-btn route-btn-primary" id="modal-open-in-maps-btn">
-                        <i class="fas fa-external-link-alt"></i> Open in Maps
+                        <i class="fas fa-external-link-alt"></i> Go to Maps
                     </button>
                 </div>
 
@@ -303,11 +303,11 @@ class RoutePlanner {
      * Get filtered locations based on current settings
      */
     getFilteredLocations(openNow = false) {
-        if (!window.allLocations || !window.userCoords) {
+        if (!window.allMarkers || !window.userCoords) {
             return [];
         }
 
-        let locations = [...window.allLocations];
+        let locations = [...window.allMarkers];
 
         // Apply distance filter
         locations = locations.filter(location => {
@@ -461,7 +461,7 @@ class RoutePlanner {
         // Debug logging
         console.log('showPreviewPins called');
         console.log('userCoords:', window.userCoords);
-        console.log('allLocations:', window.allLocations?.length || 0);
+        console.log('allMarkers:', window.allMarkers?.length || 0);
         
         // Check if basic requirements are met
         if (!window.userCoords) {
@@ -475,7 +475,7 @@ class RoutePlanner {
             return;
         }
 
-        if (!window.allLocations || window.allLocations.length === 0) {
+        if (!window.allMarkers || window.allMarkers.length === 0) {
             Swal.fire({
                 title: 'No Store Data',
                 text: 'Store data is still loading. Please try again in a moment.',
@@ -519,7 +519,7 @@ class RoutePlanner {
         // Create preview pins
         this.createPreviewPins();
 
-        // Show success toast
+        // Show success toast with store count
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -585,12 +585,12 @@ class RoutePlanner {
         });
         this.previewPins.push(startPin);
 
-        // Create stop pins (blue)
-        this.selectedLocations.forEach((location, index) => {
+        // Create stop pins (blue) - no numbers since Google will optimize route
+        this.selectedLocations.forEach((location) => {
             const stopPin = new google.maps.Marker({
                 position: { lat: location.lat, lng: location.lng },
                 map: window.map,
-                title: `Stop ${index + 1}: ${location.retailer || 'Unknown'}`,
+                title: `${location.retailer || 'Unknown'} (${location.distance?.toFixed(1) || '?'} mi)`,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 8,
