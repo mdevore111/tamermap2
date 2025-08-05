@@ -206,15 +206,16 @@
 .route-planning-btn {
   flex: 1;
   min-width: 60px;
-  padding: 6px;
+  padding: 6px 8px;
   background: #f8f9fa;
   border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 6px;
   transition: all 0.2s ease;
 }
 
