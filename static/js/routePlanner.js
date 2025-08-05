@@ -338,8 +338,12 @@ class RoutePlanner {
      * Get filtered locations based on current settings
      */
     getFilteredLocations(openNow = false) {
+        console.log('=== GET FILTERED LOCATIONS DEBUG ===');
+        console.log('1. openNow parameter:', openNow);
+        console.log('2. userCoords available:', !!window.userCoords);
+        
         if (!window.userCoords) {
-            console.log('No user coordinates available');
+            console.log('ERROR: No user coordinates available');
             return [];
         }
 
@@ -347,33 +351,42 @@ class RoutePlanner {
         let locations = [];
         let dataSource = 'none';
         
+        console.log('3. Checking data sources...');
+        
         // First try window.allMarkers (from MarkerManager)
         if (window.allMarkers && window.allMarkers.length > 0) {
             locations = [...window.allMarkers];
             dataSource = 'allMarkers';
-            console.log(`Using data source: allMarkers (${locations.length} locations)`);
+            console.log(`4. SUCCESS: Using data source: allMarkers (${locations.length} locations)`);
+            console.log('5. Sample location:', locations[0]);
         }
         // Fallback to markerManager.markerCache if available
         else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
             const markerCache = Array.from(window.markerManager.markerCache.values());
             locations = markerCache.filter(marker => marker.retailer_type); // Only retailer markers
             dataSource = 'markerCache';
-            console.log(`Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
+            console.log(`4. SUCCESS: Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
+            console.log('5. Sample location:', locations[0]);
         }
         // Try dataService if available
         else if (window.dataService && window.dataService.cache && window.dataService.cache.size > 0) {
             // Extract retailer data from dataService cache
             const cacheKeys = Array.from(window.dataService.cache.keys());
-            console.log('DataService cache keys:', cacheKeys);
+            console.log('4. DataService cache keys:', cacheKeys);
             
             const retailerKeys = cacheKeys.filter(key => key.includes('retailers') || key.includes('map-data'));
+            console.log('5. Retailer keys found:', retailerKeys);
+            
             if (retailerKeys.length > 0) {
                 const cacheEntry = window.dataService.cache.get(retailerKeys[0]);
+                console.log('6. Cache entry:', cacheEntry);
+                
                 if (cacheEntry && cacheEntry.data) {
                     locations = Array.isArray(cacheEntry.data) ? cacheEntry.data : 
                                (cacheEntry.data.retailers || []);
                     dataSource = 'dataService';
-                    console.log(`Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
+                    console.log(`7. SUCCESS: Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
+                    console.log('8. Sample location:', locations[0]);
                 }
             }
         }
@@ -381,11 +394,12 @@ class RoutePlanner {
         else if (window.markers && window.markers.length > 0) {
             locations = [...window.markers];
             dataSource = 'markers';
-            console.log(`Using data source: markers (${locations.length} locations)`);
+            console.log(`4. SUCCESS: Using data source: markers (${locations.length} locations)`);
+            console.log('5. Sample location:', locations[0]);
         }
         
         if (locations.length === 0) {
-            console.warn('No marker data available for route planning');
+            console.log('ERROR: No marker data available for route planning');
             console.log('Debug - Available data sources:');
             console.log('- window.allMarkers:', window.allMarkers?.length || 0);
             console.log('- window.markerManager:', window.markerManager ? 'exists' : 'missing');
@@ -396,7 +410,11 @@ class RoutePlanner {
             return [];
         }
 
+        console.log(`6. Initial locations found: ${locations.length}`);
+        console.log('7. Current maxDistance:', this.maxDistance);
+
         // Apply distance filter
+        const beforeDistanceFilter = locations.length;
         locations = locations.filter(location => {
             const distance = this.calculateDistance(
                 window.userCoords.lat, window.userCoords.lng,
@@ -405,15 +423,23 @@ class RoutePlanner {
             location.distance = distance;
             return distance <= this.maxDistance;
         });
+        console.log(`8. After distance filter (${this.maxDistance} miles): ${locations.length} locations (was ${beforeDistanceFilter})`);
 
         // Apply retailer type filters
+        const beforeTypeFilter = locations.length;
         locations = this.applyRetailerTypeFilters(locations);
+        console.log(`9. After retailer type filter: ${locations.length} locations (was ${beforeTypeFilter})`);
 
         // Apply opening hours filter
         if (openNow) {
+            const beforeHoursFilter = locations.length;
             locations = this.filterByOpeningHours(locations);
+            console.log(`10. After opening hours filter: ${locations.length} locations (was ${beforeHoursFilter})`);
+        } else {
+            console.log('10. Skipping opening hours filter (openNow = false)');
         }
 
+        console.log(`11. FINAL: Returning ${locations.length} filtered locations`);
         return locations;
     }
 
@@ -421,28 +447,41 @@ class RoutePlanner {
      * Apply retailer type filters based on route planner toggles
      */
     applyRetailerTypeFilters(locations) {
+        console.log('=== APPLY RETAILER TYPE FILTERS DEBUG ===');
         const activeFilters = [];
         
         // Check which toggles are active in the route planner
         const toggles = document.querySelectorAll('.route-filter-toggle');
-        toggles.forEach(toggle => {
-            if (toggle.classList.contains('active')) {
-                activeFilters.push(toggle.getAttribute('data-filter'));
+        console.log('1. Found route filter toggles:', toggles.length);
+        
+        toggles.forEach((toggle, index) => {
+            const filterType = toggle.getAttribute('data-filter');
+            const isActive = toggle.classList.contains('active');
+            console.log(`2. Toggle ${index + 1}: ${filterType} - ${isActive ? 'ACTIVE' : 'inactive'}`);
+            
+            if (isActive) {
+                activeFilters.push(filterType);
             }
         });
 
+        console.log('3. Active filters:', activeFilters);
+
         // If no filters are active, return all locations (don't filter)
         if (activeFilters.length === 0) {
-            console.log('No retailer type filters active, showing all location types');
+            console.log('4. No retailer type filters active, showing all location types');
             return locations;
         }
 
-        console.log('Applying retailer type filters:', activeFilters);
-        const filtered = locations.filter(location => {
+        console.log('5. Applying retailer type filters:', activeFilters);
+        const filtered = locations.filter((location, index) => {
             const retailerType = location.retailer_type || '';
-            return activeFilters.includes(retailerType);
+            const matches = activeFilters.includes(retailerType);
+            if (index < 5) { // Log first 5 locations for debugging
+                console.log(`   Location ${index + 1}: ${location.retailer} (${retailerType}) - ${matches ? 'MATCHES' : 'no match'}`);
+            }
+            return matches;
         });
-        console.log(`Filtered from ${locations.length} to ${filtered.length} locations`);
+        console.log(`6. Filtered from ${locations.length} to ${filtered.length} locations`);
         return filtered;
     }
 
@@ -515,13 +554,26 @@ class RoutePlanner {
      * Select optimal locations for the route
      */
     selectOptimalLocations(locations) {
+        console.log('=== SELECT OPTIMAL LOCATIONS DEBUG ===');
+        console.log('1. Input locations:', locations?.length || 0);
+        console.log('2. Current maxStops:', this.maxStops);
+        
         if (!locations || locations.length === 0) {
+            console.log('3. ERROR: No locations provided');
             return [];
         }
 
         // Sort by distance and take the closest ones up to maxStops
         const sorted = locations.sort((a, b) => a.distance - b.distance);
-        return sorted.slice(0, this.maxStops);
+        const selected = sorted.slice(0, this.maxStops);
+        
+        console.log('4. Sorted locations by distance');
+        console.log('5. Selected locations:', selected.length);
+        console.log('6. Selected locations details:', selected.map((loc, i) => 
+            `${i + 1}. ${loc.retailer} (${loc.distance?.toFixed(1)} mi)`
+        ));
+        
+        return selected;
     }
 
     /**
@@ -549,13 +601,18 @@ class RoutePlanner {
      * Show preview pins on the map
      */
     showPreviewPins() {
-        // Debug logging
-        console.log('showPreviewPins called');
-        console.log('userCoords:', window.userCoords);
-        console.log('allMarkers:', window.allMarkers?.length || 0);
-        console.log('markerManager:', window.markerManager ? 'exists' : 'missing');
-        console.log('markerCache size:', window.markerManager?.markerCache?.size || 0);
-        console.log('window.markers:', window.markers?.length || 0);
+        console.log('=== ROUTE PLANNER PREVIEW DEBUG ===');
+        console.log('1. showPreviewPins called');
+        console.log('2. userCoords:', window.userCoords);
+        console.log('3. allMarkers:', window.allMarkers?.length || 0);
+        console.log('4. markerManager:', window.markerManager ? 'exists' : 'missing');
+        console.log('5. markerCache size:', window.markerManager?.markerCache?.size || 0);
+        console.log('6. window.markers:', window.markers?.length || 0);
+        console.log('7. dataService:', window.dataService ? 'exists' : 'missing');
+        console.log('8. dataService cache size:', window.dataService?.cache?.size || 0);
+        if (window.dataService?.cache) {
+            console.log('9. dataService cache keys:', Array.from(window.dataService.cache.keys()));
+        }
         
         // Check if basic requirements are met
         if (!window.userCoords) {
