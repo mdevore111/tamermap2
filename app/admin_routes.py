@@ -92,10 +92,7 @@ def admin_required(f):
 @admin_required
 def index():
     # Import admin utilities for analytics
-    from app.admin_utils import get_visitors_today, get_visitors_this_week, get_top_referrers, get_top_pages, get_top_ref_codes, get_system_stats, get_visit_trends_30d, get_total_retailers, get_kiosk_retailers, get_stores, get_card_shops, get_total_kiosks
-    
-    # Get system statistics with cross-platform support
-    system_stats = get_system_stats()
+    from app.admin_utils import get_visitors_today, get_visitors_this_week, get_top_referrers, get_top_pages, get_top_ref_codes, get_visit_trends_30d, get_total_retailers, get_kiosk_retailers, get_stores, get_card_shops, get_total_kiosks
     
     # Batch database queries for better performance
     def get_dashboard_counts():
@@ -246,7 +243,6 @@ def index():
         }
     
     return render_template('admin/dashboard.html', 
-                         system_stats=system_stats,
                          dashboard_groups=dashboard_groups,
                          chart_data=chart_data,
                          top_referrers=top_referrers,
@@ -352,6 +348,30 @@ def api_visit_trends():
         return jsonify({
             'success': False,
             'error': 'Failed to load visit trends data'
+        }), 500
+
+@admin_bp.route('/api/analytics/referral-code-trends')
+@admin_required
+def api_referral_code_trends():
+    """AJAX endpoint for referral code trends data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    try:
+        from app.admin_utils import get_referral_code_trends_30d
+        trends = get_referral_code_trends_30d(days=days)
+        
+        return jsonify({
+            'success': True,
+            'data': trends,
+            'days': days
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting referral code trends: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load referral code trends data'
         }), 500
 
 # Users routes
@@ -642,11 +662,12 @@ def retailers_data():
         # Define column mapping for sorting
         column_map = {
             0: Retailer.retailer,       # Name column
-            1: Retailer.full_address,   # Address column
-            2: Retailer.phone_number,   # Phone column
-            3: Retailer.retailer_type,  # Type column
+            1: Retailer.retailer_type,  # Type column
+            2: Retailer.full_address,   # Address column
+            3: Retailer.phone_number,   # Phone column
             4: Retailer.machine_count,  # Machine Count column
-            5: None                     # Actions column (not sortable)
+            5: Retailer.enabled,        # Enabled column
+            6: None                     # Actions column (not sortable)
         }
 
         if order_column is not None and order_column in column_map and column_map[order_column] is not None:
@@ -673,6 +694,7 @@ def retailers_data():
                 'phone': retailer.phone_number or '',
                 'retailer_type': retailer.retailer_type or '',
                 'machine_count': retailer.machine_count or 0,
+                'enabled': '✅ Enabled' if retailer.enabled else '❌ Disabled',
                 'actions': f'''<button class="btn btn-sm btn-primary edit-retailer-btn" data-id="{retailer.id}">Edit</button> 
                               <button class="btn btn-sm btn-danger delete-retailer-btn" data-id="{retailer.id}" data-name="{retailer.retailer or 'Unknown'}">Delete</button>'''
             })
@@ -713,7 +735,8 @@ def get_retailer(id):
         'last_api_update': retailer.last_api_update.isoformat() if retailer.last_api_update else None,
         'machine_count': retailer.machine_count,
         'previous_count': retailer.previous_count,
-        'status': retailer.status
+        'status': retailer.status,
+        'enabled': retailer.enabled
     })
 
 @admin_bp.route('/retailers/<int:id>', methods=['PUT'])
@@ -726,7 +749,7 @@ def update_retailer(id):
     allowed_fields = [
         'retailer', 'retailer_type', 'full_address', 'latitude', 'longitude',
         'place_id', 'phone_number', 'website', 'opening_hours', 'rating',
-        'machine_count', 'status'
+        'machine_count', 'status', 'enabled'
     ]
     
     for key, value in data.items():
@@ -742,6 +765,9 @@ def update_retailer(id):
                     setattr(retailer, key, int(value))
                 except (ValueError, TypeError):
                     setattr(retailer, key, 0)
+            elif key == 'enabled':
+                # Convert boolean field
+                setattr(retailer, key, bool(value))
             else:
                 setattr(retailer, key, value if value else None)
     
@@ -783,6 +809,7 @@ def add_retailer():
             rating=float(data.get('rating')) if data.get('rating') else None,
             machine_count=int(data.get('machine_count', 0)),
             status=data.get('status'),
+            enabled=data.get('enabled', True),  # Default to True for new retailers
             first_seen=datetime.utcnow()
         )
         
@@ -2681,3 +2708,30 @@ def referral_journey_detail(ref_code):
         current_app.logger.error(f"Error getting referral journey detail for {ref_code}: {e}")
         flash(f"Error loading referral journey data: {str(e)}", 'error')
         return redirect(url_for('admin.referral_journeys'))
+
+@admin_bp.route('/system')
+@admin_required
+def system():
+    # Get system statistics with cross-platform support
+    from app.admin_utils import get_system_stats
+    system_stats = get_system_stats()
+    
+    return render_template('admin/system.html', system_stats=system_stats)
+
+@admin_bp.route('/api/system/stats')
+@admin_required
+def api_system_stats():
+    try:
+        from app.admin_utils import get_system_stats
+        system_stats = get_system_stats()
+        
+        return jsonify({
+            'success': True,
+            'data': system_stats
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting system stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500

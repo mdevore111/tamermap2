@@ -184,7 +184,9 @@ def create_app(config_class=BaseConfig):
     def inject_template_variables():
         """Inject variables into template context."""
         context = {
-            'datetime': datetime
+            'datetime': datetime,
+            'flask_env': app.config.get('FLASK_ENV', 'development'),
+            'debug_mode': app.config.get('DEBUG', False)
         }
         
         if current_user.is_authenticated:
@@ -298,13 +300,17 @@ def create_app(config_class=BaseConfig):
             is_internal_ip = False
             if ip:
                 # Server IPs
-                if ip in ["137.184.244.37", "144.126.210.185", "50.106.23.189"]:
+                if ip in ["137.184.244.37", "144.126.210.185", "50.106.23.189", "10.48.0.2", "24.199.116.220"]:
                     is_internal_ip = True
                 # DigitalOcean IPs
                 elif re.match(r"^(144\.126\.\d+\.\d+|143\.198\.\d+\.\d+|134\.209\.\d+\.\d+)$", ip):
                     is_internal_ip = True
-                # Local development
-                elif ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost":
+                # Private IP ranges (RFC 1918) - all non-routable addresses
+                elif (ip.startswith("10.") or  # 10.0.0.0/8
+                      ip.startswith("192.168.") or  # 192.168.0.0/16
+                      ip.startswith("127.") or  # 127.0.0.0/8 (localhost)
+                      re.match(r"^172\.(1[6-9]|2[0-9]|3[0-1])\.", ip) or  # 172.16.0.0/12
+                      ip == "localhost"):
                     is_internal_ip = True
 
             # Check if referrer is internal
@@ -315,8 +321,11 @@ def create_app(config_class=BaseConfig):
             if is_internal_ip:
                 is_internal_referrer = True
             elif referrer:
-                # Domain pattern for tamermap.com
-                allowed_pattern = re.compile(r"^(https?://(?:.+\.)?tamermap\.com)", re.IGNORECASE)
+                # Domain patterns for internal sites (tamermap.com and sister sites)
+                internal_domain_patterns = [
+                    re.compile(r"^(https?://(?:.+\.)?tamermap\.com)", re.IGNORECASE),
+                    re.compile(r"^(https?://(?:.+\.)?bareista\.com)", re.IGNORECASE)
+                ]
                 
                 # Local development URLs - more comprehensive pattern
                 localhost_pattern = re.compile(r"^https?://(?:127\.0\.0\.1|localhost|0\.0\.0\.0)(?::\d+)?", re.IGNORECASE)
@@ -328,11 +337,16 @@ def create_app(config_class=BaseConfig):
                     re.compile(r"^https?://144\.126\.\d+\.\d+(?::\d+)?", re.IGNORECASE),  # DigitalOcean range
                     re.compile(r"^https?://143\.198\.\d+\.\d+(?::\d+)?", re.IGNORECASE),  # DigitalOcean range
                     re.compile(r"^https?://134\.209\.\d+\.\d+(?::\d+)?", re.IGNORECASE),  # DigitalOcean range
-                    re.compile(r"^https?://50\.106\.23\.189(?::\d+)?", re.IGNORECASE)     # Another server IP
+                    re.compile(r"^https?://50\.106\.23\.189(?::\d+)?", re.IGNORECASE),    # Another server IP
+                    re.compile(r"^https?://24\.199\.116\.220(?::\d+)?", re.IGNORECASE),   # Additional server IP
+                    # Private IP ranges (RFC 1918) - all non-routable addresses
+                    re.compile(r"^https?://10\.\d+\.\d+\.\d+(?::\d+)?", re.IGNORECASE),   # 10.0.0.0/8
+                    re.compile(r"^https?://192\.168\.\d+\.\d+(?::\d+)?", re.IGNORECASE),  # 192.168.0.0/16
+                    re.compile(r"^https?://172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+(?::\d+)?", re.IGNORECASE)  # 172.16.0.0/12
                 ]
                 
                 # Check if referrer matches any allowed patterns
-                if (allowed_pattern.match(referrer) or
+                if (any(pattern.match(referrer) for pattern in internal_domain_patterns) or
                     localhost_pattern.match(referrer) or
                     any(pattern.match(referrer) for pattern in server_ip_patterns)):
                     is_internal_referrer = True

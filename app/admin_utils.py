@@ -1,11 +1,15 @@
 import psutil
 from datetime import datetime, timedelta
 from sqlalchemy import func, desc, and_, or_, case
-from .models import User, VisitorLog, Event, Retailer, Message, Role
+from .models import User, VisitorLog, Event, Retailer, Message, Role, PinInteraction, BillingEvent
 
 def exclude_monitor_traffic(query):
     """Filter out monitor traffic from analytics queries"""
     return query.filter(~VisitorLog.user_agent.contains('Tamermap-Monitor'))
+
+def exclude_internal_traffic(query):
+    """Filter out internal traffic from analytics queries using the existing is_internal_referrer flag."""
+    return query.filter(VisitorLog.is_internal_referrer == False)
 from collections import defaultdict
 from urllib.parse import urlparse
 from app import db
@@ -332,22 +336,26 @@ def get_total_events():
     return db.session.query(func.count(Event.id)).scalar() or 0
 
 def get_visitors_today():
-    """Get number of unique visitors today (excluding monitor traffic)."""
+    """Get number of unique visitors today (excluding monitor and internal traffic)."""
     today = datetime.utcnow().date()
-    return exclude_monitor_traffic(
+    query = exclude_monitor_traffic(
         db.session.query(func.count(func.distinct(VisitorLog.ip_address)))
     ).filter(
         func.date(VisitorLog.timestamp) == today
-    ).scalar() or 0
+    )
+    query = exclude_internal_traffic(query)
+    return query.scalar() or 0
 
 def get_visitors_this_week():
-    """Get number of unique visitors this week (excluding monitor traffic)."""
+    """Get number of unique visitors this week (excluding monitor and internal traffic)."""
     week_ago = datetime.utcnow() - timedelta(days=7)
-    return exclude_monitor_traffic(
+    query = exclude_monitor_traffic(
         db.session.query(func.count(func.distinct(VisitorLog.ip_address)))
     ).filter(
         VisitorLog.timestamp >= week_ago
-    ).scalar() or 0
+    )
+    query = exclude_internal_traffic(query)
+    return query.scalar() or 0
 
 def get_top_referrers(limit=5, include_internal=False, days=None):
     """Get top referrers with count, domain, and full URL. Excludes internal referrers by default."""
@@ -457,7 +465,7 @@ def get_top_referrers(limit=5, include_internal=False, days=None):
     return processed_results
 
 def get_top_pages(limit=5, days=None):
-    """Get most visited pages with path and count."""
+    """Get most visited pages with path and count. Excludes internal traffic."""
     query = exclude_monitor_traffic(VisitorLog.query).with_entities(
         VisitorLog.path, 
         func.count(VisitorLog.id).label('visits')
@@ -467,6 +475,9 @@ def get_top_pages(limit=5, days=None):
     if days:
         since = datetime.utcnow() - timedelta(days=days)
         query = query.filter(VisitorLog.timestamp >= since)
+    
+    # Filter out internal traffic
+    query = exclude_internal_traffic(query)
     
     results = (
         query
@@ -478,7 +489,7 @@ def get_top_pages(limit=5, days=None):
     return [(r.path, r.visits) for r in results]
 
 def get_top_ref_codes(limit=5, days=None):
-    """Get most used referral codes with count."""
+    """Get most used referral codes with count. Excludes internal traffic."""
     query = exclude_monitor_traffic(VisitorLog.query).with_entities(
         VisitorLog.ref_code,
         func.count(VisitorLog.id).label('count')
@@ -491,6 +502,9 @@ def get_top_ref_codes(limit=5, days=None):
     if days:
         since = datetime.utcnow() - timedelta(days=days)
         query = query.filter(VisitorLog.timestamp >= since)
+    
+    # Filter out internal traffic
+    query = exclude_internal_traffic(query)
     
     results = (
         query
@@ -556,8 +570,10 @@ def get_avg_session_duration():
 
 def get_visits_per_unique_ip_30d():
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    total_visits = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= thirty_days_ago).count()
-    unique_ips = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= thirty_days_ago).distinct(VisitorLog.ip_address).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= thirty_days_ago)
+    query = exclude_internal_traffic(query)
+    total_visits = query.count()
+    unique_ips = query.distinct(VisitorLog.ip_address).count()
     if unique_ips == 0:
         return 0.0
     return round(total_visits / unique_ips, 1)
@@ -610,15 +626,21 @@ def get_kiosk_machines():
 
 def get_total_page_visits_30d():
     since = datetime.utcnow() - timedelta(days=30)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since)
+    query = exclude_internal_traffic(query)
+    return query.count()
 
 def get_pro_user_visits_30d():
     since = datetime.utcnow() - timedelta(days=30)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since, VisitorLog.user_id.isnot(None)).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since, VisitorLog.user_id.isnot(None))
+    query = exclude_internal_traffic(query)
+    return query.count()
 
 def get_guest_visits_30d():
     since = datetime.utcnow() - timedelta(days=30)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since, VisitorLog.user_id.is_(None)).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since, VisitorLog.user_id.is_(None))
+    query = exclude_internal_traffic(query)
+    return query.count()
 
 def get_guest_visit_share_30d():
     total = get_total_page_visits_30d()
@@ -628,20 +650,21 @@ def get_guest_visit_share_30d():
     return round(100 * guest / total, 1)
 
 def get_avg_visits_per_pro_user_30d():
-    """Get average number of visits per Pro user in the last 30 days."""
+    """Get average number of visits per Pro user in the last 30 days. Excludes internal traffic."""
     since = datetime.utcnow() - timedelta(days=30)
-    # Get Pro users who have visited in the last 30 days
-    active_pro_users = User.query.join(VisitorLog).filter(
-        User.pro_end_date > datetime.utcnow(),
-        VisitorLog.timestamp >= since
+    # Get Pro users who have visited in the last 30 days (excluding internal traffic)
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since)
+    query = exclude_internal_traffic(query)
+    
+    active_pro_users = User.query.join(query, User.id == query.c.user_id).filter(
+        User.pro_end_date > datetime.utcnow()
     ).distinct().all()
     
     if not active_pro_users:
         return 0.0
         
-    # Count total visits for these users
-    total_visits = VisitorLog.query.filter(
-        VisitorLog.timestamp >= since,
+    # Count total visits for these users (excluding internal traffic)
+    total_visits = query.filter(
         VisitorLog.user_id.in_([u.id for u in active_pro_users])
     ).count()
     
@@ -649,28 +672,40 @@ def get_avg_visits_per_pro_user_30d():
 
 def get_unique_ips_last_24h():
     since = datetime.utcnow() - timedelta(days=1)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since).distinct(VisitorLog.ip_address).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since)
+    query = exclude_internal_traffic(query)
+    return query.distinct(VisitorLog.ip_address).count()
 
 def get_unique_ips_last_7d():
     since = datetime.utcnow() - timedelta(days=7)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since).distinct(VisitorLog.ip_address).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since)
+    query = exclude_internal_traffic(query)
+    return query.distinct(VisitorLog.ip_address).count()
 
 def get_unique_ips_current_month():
     now = datetime.utcnow()
     start_of_month = datetime(now.year, now.month, 1)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= start_of_month).distinct(VisitorLog.ip_address).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= start_of_month)
+    query = exclude_internal_traffic(query)
+    return query.distinct(VisitorLog.ip_address).count()
 
 def get_visits_with_referrers_30d():
     since = datetime.utcnow() - timedelta(days=30)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since, VisitorLog.referrer.isnot(None), VisitorLog.referrer != '').count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since, VisitorLog.referrer.isnot(None), VisitorLog.referrer != '')
+    query = exclude_internal_traffic(query)
+    return query.count()
 
 def get_unique_referrers_30d():
     since = datetime.utcnow() - timedelta(days=30)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since, VisitorLog.referrer.isnot(None), VisitorLog.referrer != '').distinct(VisitorLog.referrer).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since, VisitorLog.referrer.isnot(None), VisitorLog.referrer != '')
+    query = exclude_internal_traffic(query)
+    return query.distinct(VisitorLog.referrer).count()
 
 def get_direct_visits_30d():
     since = datetime.utcnow() - timedelta(days=30)
-    return VisitorLog.query.filter(VisitorLog.timestamp >= since, (VisitorLog.referrer.is_(None) | (VisitorLog.referrer == ''))).count()
+    query = exclude_monitor_traffic(VisitorLog.query).filter(VisitorLog.timestamp >= since, (VisitorLog.referrer.is_(None) | (VisitorLog.referrer == '')))
+    query = exclude_internal_traffic(query)
+    return query.count()
 
 def get_direct_visit_percentage_30d():
     total = get_total_page_visits_30d()
@@ -698,9 +733,12 @@ def get_visit_trends_30d(days=30):
     current_app.logger.debug(f"Getting visit trends since {since}")
     
     # Query all visits in the last N days with user pro_end_date for historical accuracy
-    # Exclude monitor traffic and admin users
+    # Exclude monitor traffic, internal traffic, and admin users
+    query = exclude_monitor_traffic(VisitorLog.query)
+    query = exclude_internal_traffic(query)
+    
     logs = (
-        exclude_monitor_traffic(VisitorLog.query)
+        query
         .outerjoin(User, VisitorLog.user_id == User.id)
         .with_entities(
             func.date(VisitorLog.timestamp).label('date'),
@@ -776,6 +814,106 @@ def get_visit_trends_30d(days=30):
         item['moving_average'] = moving_averages[i]
     
     return result
+
+def get_referral_code_trends_30d(days=30):
+    """Return daily referral code trends for the last N days: top 3 codes per day.
+    
+    Args:
+        days (int): Number of days to look back (default: 30, max: 60)
+    """
+    if days < 1 or days > 60:
+        days = 30
+    
+    since = datetime.utcnow().date() - timedelta(days=days-1)
+    
+    # Debug logging
+    from flask import current_app
+    current_app.logger.debug(f"Getting referral code trends since {since}")
+    
+    # Query all visits in the last N days with referral codes (excluding internal traffic)
+    query = exclude_monitor_traffic(VisitorLog.query)
+    query = exclude_internal_traffic(query)
+    
+    logs = (
+        query
+        .with_entities(
+            func.date(VisitorLog.timestamp).label('date'),
+            VisitorLog.ref_code,
+            func.count(VisitorLog.id).label('count')
+        )
+        .filter(VisitorLog.timestamp >= since)
+        .group_by(func.date(VisitorLog.timestamp), VisitorLog.ref_code)
+        .order_by(func.date(VisitorLog.timestamp), func.count(VisitorLog.id).desc())
+        .all()
+    )
+    
+    current_app.logger.debug(f"Found {len(logs)} referral code records")
+    
+    # Group by date and get top 3 codes per day
+    daily_codes = defaultdict(list)
+    for log in logs:
+        date = str(log.date)
+        daily_codes[date].append({
+            'code': log.ref_code or 'None',
+            'count': log.count
+        })
+    
+    # Get top 3 codes per day
+    for date in daily_codes:
+        daily_codes[date] = daily_codes[date][:3]  # Keep only top 3
+    
+    # Get all unique codes that appear in top 3 (excluding None)
+    all_codes = set()
+    for codes in daily_codes.values():
+        for code_data in codes:
+            if code_data['code'] != 'None':  # Exclude None codes
+                all_codes.add(code_data['code'])
+    
+    # Convert to list for consistent ordering
+    all_codes = sorted(list(all_codes))
+    
+    # Fill in missing days and prepare data structure
+    result = []
+    for i in range(days):
+        day = since + timedelta(days=i)
+        day_str = day.strftime('%Y-%m-%d')
+        
+        # Get codes for this day
+        day_codes = daily_codes.get(day_str, [])
+        
+        # Create data structure for this day
+        day_data = {'date': day_str}
+        
+        # Add data for each code (0 if not in top 3 for this day)
+        for code in all_codes:
+            code_count = next((c['count'] for c in day_codes if c['code'] == code), 0)
+            day_data[code] = code_count
+        
+        result.append(day_data)
+    
+    # Calculate 7-day moving average for each code
+    for code in all_codes:
+        moving_averages = []
+        for i in range(len(result)):
+            # Get the 7 days ending at current day (or fewer if at the beginning)
+            start_idx = max(0, i - 6)  # 7-day window: current day + 6 previous days
+            window_data = result[start_idx:i+1]
+            
+            if len(window_data) > 0:
+                avg = sum(day.get(code, 0) for day in window_data) / len(window_data)
+                moving_averages.append(round(avg, 1))
+            else:
+                moving_averages.append(0)
+        
+        # Add moving average to each result
+        for i, item in enumerate(result):
+            item[f'{code}_avg'] = moving_averages[i]
+    
+    return {
+        'dates': [item['date'] for item in result],
+        'codes': all_codes,
+        'data': result
+    }
 
 def get_pro_users_by_date():
     """Get pro users grouped by date."""
@@ -870,7 +1008,7 @@ def get_referral_codes_with_journeys(days=30, limit=10):
     """Get top referral codes with their journey statistics."""
     since = datetime.utcnow() - timedelta(days=days)
     
-    # Get referral codes with visit counts
+    # Get referral codes with visit counts (excluding internal traffic)
     # Apply exclude_monitor_traffic before limit() to avoid SQLAlchemy error
     base_query = db.session.query(
         VisitorLog.ref_code,
@@ -882,8 +1020,10 @@ def get_referral_codes_with_journeys(days=30, limit=10):
         VisitorLog.timestamp >= since
     ).group_by(VisitorLog.ref_code).order_by(func.count(VisitorLog.id).desc())
     
-    # Apply monitor traffic exclusion first, then limit
-    ref_codes = exclude_monitor_traffic(base_query).limit(limit).all()
+    # Apply monitor traffic and internal traffic exclusion first, then limit
+    base_query = exclude_monitor_traffic(base_query)
+    base_query = exclude_internal_traffic(base_query)
+    ref_codes = base_query.limit(limit).all()
     
     # Get journey data for each referral code
     results = []
@@ -902,13 +1042,15 @@ def get_referral_journey_data(ref_code, days=30):
     """Get detailed journey data for a specific referral code."""
     since = datetime.utcnow() - timedelta(days=days)
     
-    # Get all visits that started with this referral code
-    initial_visits = exclude_monitor_traffic(
+    # Get all visits that started with this referral code (excluding internal traffic)
+    query = exclude_monitor_traffic(
         VisitorLog.query.filter(
             VisitorLog.ref_code == ref_code,
             VisitorLog.timestamp >= since
         ).order_by(VisitorLog.timestamp)
-    ).all()
+    )
+    query = exclude_internal_traffic(query)
+    initial_visits = query.all()
     
     if not initial_visits:
         return {
@@ -931,14 +1073,16 @@ def get_referral_journey_data(ref_code, days=30):
                     sessions[visit.session_id] = []
                 sessions[visit.session_id].append(visit)
         
-        # Get all visits for these sessions
+        # Get all visits for these sessions (excluding internal traffic)
         session_ids = list(sessions.keys())
-        all_visits = exclude_monitor_traffic(
+        query = exclude_monitor_traffic(
             VisitorLog.query.filter(
                 VisitorLog.session_id.in_(session_ids),
                 VisitorLog.timestamp >= since
             ).order_by(VisitorLog.session_id, VisitorLog.timestamp)
-        ).all()
+        )
+        query = exclude_internal_traffic(query)
+        all_visits = query.all()
         
         # Group all visits by session_id
         all_sessions = {}
@@ -956,14 +1100,16 @@ def get_referral_journey_data(ref_code, days=30):
                 sessions[session_key] = []
             sessions[session_key].append(visit)
         
-        # Get all visits for these sessions
+        # Get all visits for these sessions (excluding internal traffic)
         all_session_ips = list(set(visit.ip_address for visit in initial_visits))
-        all_visits = exclude_monitor_traffic(
+        query = exclude_monitor_traffic(
             VisitorLog.query.filter(
                 VisitorLog.ip_address.in_(all_session_ips),
                 VisitorLog.timestamp >= since
             ).order_by(VisitorLog.ip_address, VisitorLog.timestamp)
-        ).all()
+        )
+        query = exclude_internal_traffic(query)
+        all_visits = query.all()
         
         # Group all visits by IP + User Agent
         all_sessions = {}
@@ -1039,93 +1185,93 @@ def get_referral_journey_data(ref_code, days=30):
     }
 
 def get_referral_funnel_data(ref_code, days=30):
-    """Get funnel data for a specific referral code."""
+    """Get funnel data for a specific referral code using session tracking."""
     since = datetime.utcnow() - timedelta(days=days)
     
-    # Get all visits from this referral code
-    visits = exclude_monitor_traffic(
+    # Get all visits from this referral code (excluding internal traffic)
+    query = exclude_monitor_traffic(
         VisitorLog.query.filter(
             VisitorLog.ref_code == ref_code,
             VisitorLog.timestamp >= since
         ).order_by(VisitorLog.timestamp)
-    ).all()
+    )
+    query = exclude_internal_traffic(query)
+    initial_visits = query.all()
     
-    if not visits:
+    if not initial_visits:
         return []
     
-    # Use session_id if available, otherwise fallback to IP + User Agent
-    use_session_id = hasattr(VisitorLog, 'session_id') and any(v.session_id for v in visits)
+    # Get unique session IDs from this referral code
+    unique_session_ids = set()
+    for visit in initial_visits:
+        if visit.session_id:
+            unique_session_ids.add(visit.session_id)
     
-    if use_session_id:
-        # Group by session_id (more accurate)
-        sessions = {}
-        for visit in visits:
-            if visit.session_id:
-                if visit.session_id not in sessions:
-                    sessions[visit.session_id] = []
-                sessions[visit.session_id].append(visit)
-    else:
-        # Fallback to IP + User Agent grouping
-        sessions = {}
-        for visit in visits:
-            session_key = f"{visit.ip_address}_{visit.user_agent}"
-            if session_key not in sessions:
-                sessions[session_key] = []
-            sessions[session_key].append(visit)
+    # Get all visits for these sessions (not just the initial referral visits) - excluding internal traffic
+    all_session_visits = []
+    if unique_session_ids:
+        query = exclude_monitor_traffic(
+            VisitorLog.query.filter(
+                VisitorLog.session_id.in_(list(unique_session_ids)),
+                VisitorLog.timestamp >= since
+            ).order_by(VisitorLog.session_id, VisitorLog.timestamp)
+        )
+        query = exclude_internal_traffic(query)
+        all_session_visits = query.all()
     
     # Analyze funnel steps
     funnel_steps = {
-        'entry': len(sessions),
-        'first_page': 0,
-        'maps_page': 0,
-        'search_page': 0,
-        'pin_interaction': 0,
-        'signup': 0,
-        'pro_upgrade': 0
+        'entry': len(unique_session_ids),
+        'learn_page': 0,
+        'stripe_click': 0,
+        'checkout_started': 0,
+        'form_completed': 0,
+        'pro_user': 0
     }
     
-    for session_key, session_visits in sessions.items():
-        pages_visited = [v.path for v in session_visits]
-        user_ids = [v.user_id for v in session_visits if v.user_id is not None]
+    # Track behavior for each unique session
+    for session_id in unique_session_ids:
+        # Get all visits for this session
+        session_visits = [v for v in all_session_visits if v.session_id == session_id]
         
-        # Count funnel steps
-        if len(pages_visited) > 1:
-            funnel_steps['first_page'] += 1
+        if not session_visits:
+            continue
         
-        if any('/maps' in page for page in pages_visited):
-            funnel_steps['maps_page'] += 1
+        # Check if this session visited learn page
+        learn_visits = [v for v in session_visits if '/learn' in v.path]
+        if learn_visits:
+            funnel_steps['learn_page'] += 1
         
-        if any('/search' in page for page in pages_visited):
-            funnel_steps['search_page'] += 1
+        # Check if this session started checkout
+        checkout_visits = [v for v in session_visits if '/payment/create-checkout-session' in v.path]
+        if checkout_visits:
+            funnel_steps['checkout_started'] += 1
         
-        # Check for pin interactions
-        first_visit = session_visits[0]
-        if use_session_id:
-            # Use session_id for pin interaction matching
-            pin_interactions = PinInteraction.query.filter(
-                PinInteraction.session_id == first_visit.session_id
-            ).count()
-        else:
-            # Fallback to IP-based matching
-            pin_interactions = PinInteraction.query.filter(
-                PinInteraction.session_id.like(f"%{first_visit.ip_address}%")
-            ).count()
+        # Check for form completion (from BillingEvent) - only for registered users
+        user_ids_in_session = set(v.user_id for v in session_visits if v.user_id is not None)
+        if user_ids_in_session:
+            for user_id in user_ids_in_session:
+                checkout_events = BillingEvent.query.filter(
+                    BillingEvent.user_id == user_id,
+                    BillingEvent.event_type == 'checkout.session.completed',
+                    BillingEvent.event_timestamp >= since
+                ).count()
+                
+                if checkout_events > 0:
+                    funnel_steps['form_completed'] += 1
+                    break  # Only count once per session
         
-        if pin_interactions > 0:
-            funnel_steps['pin_interaction'] += 1
-        
-        # Check for signups
-        if user_ids:
-            funnel_steps['signup'] += 1
-            
-            # Check for pro upgrades
-            pro_users = User.query.filter(
-                User.id.in_(user_ids),
-                User.pro_end_date > datetime.utcnow()
-            ).count()
-            
-            if pro_users > 0:
-                funnel_steps['pro_upgrade'] += 1
+        # Check for pro user status - only for registered users
+        if user_ids_in_session:
+            for user_id in user_ids_in_session:
+                pro_user = User.query.filter(
+                    User.id == user_id,
+                    User.pro_end_date > datetime.utcnow()
+                ).first()
+                
+                if pro_user:
+                    funnel_steps['pro_user'] += 1
+                    break  # Only count once per session
     
     # Convert to funnel format
     funnel_data = []
@@ -1142,11 +1288,11 @@ def get_referral_funnel_data(ref_code, days=30):
     return funnel_data
 
 def get_referral_time_analysis(ref_code, days=30):
-    """Get time-based analysis for a referral code."""
+    """Get time-based analysis for a referral code. Excludes internal traffic."""
     since = datetime.utcnow() - timedelta(days=days)
     
-    # Get visits grouped by hour of day
-    hourly_visits = exclude_monitor_traffic(
+    # Get visits grouped by hour of day (excluding internal traffic)
+    query = exclude_monitor_traffic(
         db.session.query(
             func.extract('hour', VisitorLog.timestamp).label('hour'),
             func.count(VisitorLog.id).label('visits')
@@ -1155,10 +1301,12 @@ def get_referral_time_analysis(ref_code, days=30):
             VisitorLog.timestamp >= since
         ).group_by(func.extract('hour', VisitorLog.timestamp))
         .order_by(func.extract('hour', VisitorLog.timestamp))
-    ).all()
+    )
+    query = exclude_internal_traffic(query)
+    hourly_visits = query.all()
     
-    # Get visits grouped by day of week
-    daily_visits = exclude_monitor_traffic(
+    # Get visits grouped by day of week (excluding internal traffic)
+    query = exclude_monitor_traffic(
         db.session.query(
             func.extract('dow', VisitorLog.timestamp).label('day'),
             func.count(VisitorLog.id).label('visits')
@@ -1167,7 +1315,9 @@ def get_referral_time_analysis(ref_code, days=30):
             VisitorLog.timestamp >= since
         ).group_by(func.extract('dow', VisitorLog.timestamp))
         .order_by(func.extract('dow', VisitorLog.timestamp))
-    ).all()
+    )
+    query = exclude_internal_traffic(query)
+    daily_visits = query.all()
     
     return {
         'hourly': [{'hour': int(h), 'visits': v} for h, v in hourly_visits],
@@ -1175,11 +1325,11 @@ def get_referral_time_analysis(ref_code, days=30):
     }
 
 def get_referral_geographic_data(ref_code, days=30):
-    """Get geographic data for a referral code."""
+    """Get geographic data for a referral code. Excludes internal traffic."""
     since = datetime.utcnow() - timedelta(days=days)
     
-    # Get visits by location
-    location_data = exclude_monitor_traffic(
+    # Get visits by location (excluding internal traffic)
+    query = exclude_monitor_traffic(
         db.session.query(
             VisitorLog.city,
             VisitorLog.region,
@@ -1191,8 +1341,9 @@ def get_referral_geographic_data(ref_code, days=30):
             VisitorLog.city.isnot(None)
         ).group_by(VisitorLog.city, VisitorLog.region, VisitorLog.country)
         .order_by(func.count(VisitorLog.id).desc())
-        .limit(20)
-    ).all()
+    )
+    query = exclude_internal_traffic(query)
+    location_data = query.limit(20).all()
     
     return [{
         'city': city,
@@ -1202,11 +1353,11 @@ def get_referral_geographic_data(ref_code, days=30):
     } for city, region, country, visits in location_data]
 
 def get_referral_device_data(ref_code, days=30):
-    """Get device/browser data for a referral code."""
+    """Get device/browser data for a referral code. Excludes internal traffic."""
     since = datetime.utcnow() - timedelta(days=days)
     
-    # Get visits by user agent
-    device_data = exclude_monitor_traffic(
+    # Get visits by user agent (excluding internal traffic)
+    query = exclude_monitor_traffic(
         db.session.query(
             VisitorLog.user_agent,
             func.count(VisitorLog.id).label('visits')
@@ -1215,8 +1366,9 @@ def get_referral_device_data(ref_code, days=30):
             VisitorLog.timestamp >= since
         ).group_by(VisitorLog.user_agent)
         .order_by(func.count(VisitorLog.id).desc())
-        .limit(10)
-    ).all()
+    )
+    query = exclude_internal_traffic(query)
+    device_data = query.limit(10).all()
     
     # Parse user agents into device types
     device_types = defaultdict(int)

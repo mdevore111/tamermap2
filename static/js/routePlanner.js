@@ -21,6 +21,10 @@ class RoutePlanner {
         console.log('Initializing Route Planner...');
         this.initializeUI();
         this.isInitialized = true;
+        
+
+        
+
     }
 
     /**
@@ -106,6 +110,23 @@ class RoutePlanner {
                     </div>
                 </div>
 
+                <!-- Popularity Filters -->
+                <div class="route-control-group">
+                    <h4><i class="fas fa-chart-line"></i> Popularity</h4>
+                    <div class="route-checkbox-row">
+                        <label class="route-checkbox">
+                            <input type="checkbox" id="least-popular-checkbox">
+                            <span>Least Popular</span>
+                        </label>
+                        <label class="route-checkbox">
+                            <input type="checkbox" id="most-popular-checkbox">
+                            <span>Most Popular</span>
+                        </label>
+                    </div>
+                </div>
+
+
+
                 <!-- Store Type Filters -->
                 <div class="route-control-group">
                     <h4><i class="fas fa-filter"></i> Store Types</h4>
@@ -152,10 +173,16 @@ class RoutePlanner {
         const distanceValue = document.getElementById('distance-value');
         
         if (distanceSlider) {
+            let distanceTimeout;
             distanceSlider.addEventListener('input', (e) => {
                 this.maxDistance = parseInt(e.target.value);
                 distanceValue.textContent = `${this.maxDistance} miles`;
-                this.updateDistanceDisplay();
+                
+                // Debounce the update to prevent rapid recalculations
+                clearTimeout(distanceTimeout);
+                distanceTimeout = setTimeout(() => {
+                    this.updateDistanceDisplay();
+                }, 100);
             });
         }
 
@@ -164,10 +191,16 @@ class RoutePlanner {
         const stopsValue = document.getElementById('stops-value');
         
         if (stopsSlider) {
+            let stopsTimeout;
             stopsSlider.addEventListener('input', (e) => {
                 this.maxStops = parseInt(e.target.value);
                 stopsValue.textContent = this.maxStops;
-                this.updateStopsDisplay();
+                
+                // Debounce the update to prevent rapid recalculations
+                clearTimeout(stopsTimeout);
+                stopsTimeout = setTimeout(() => {
+                    this.updateStopsDisplay();
+                }, 100);
             });
         }
 
@@ -192,6 +225,32 @@ class RoutePlanner {
                 this.updateRouteSummary();
             });
         }
+
+        // Initialize popularity checkboxes
+        const leastPopularCheckbox = document.getElementById('least-popular-checkbox');
+        const mostPopularCheckbox = document.getElementById('most-popular-checkbox');
+        
+        if (leastPopularCheckbox) {
+            leastPopularCheckbox.addEventListener('change', () => {
+                // Ensure only one popularity filter is active at a time
+                if (leastPopularCheckbox.checked && mostPopularCheckbox) {
+                    mostPopularCheckbox.checked = false;
+                }
+                this.updateRouteSummary();
+            });
+        }
+        
+        if (mostPopularCheckbox) {
+            mostPopularCheckbox.addEventListener('change', () => {
+                // Ensure only one popularity filter is active at a time
+                if (mostPopularCheckbox.checked && leastPopularCheckbox) {
+                    leastPopularCheckbox.checked = false;
+                }
+                this.updateRouteSummary();
+            });
+        }
+
+
 
         // Initialize filter toggles based on legend state
         const filterMap = {
@@ -292,6 +351,8 @@ class RoutePlanner {
         // Get current settings
         const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
         const openNow = document.getElementById('open-now-checkbox')?.checked || false;
+        const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
+        const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
         
         console.log('1. Settings - roundTrip:', roundTrip, 'openNow:', openNow);
         
@@ -320,7 +381,7 @@ class RoutePlanner {
         
         // Get available locations and apply filters
         console.log('3. Getting filtered locations...');
-        const availableLocations = this.getFilteredLocations(openNow);
+        const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
         console.log('4. availableLocations after filtering:', availableLocations.length);
         console.log('5. availableLocations sample:', availableLocations.slice(0, 3));
         
@@ -345,11 +406,17 @@ class RoutePlanner {
             `• ${loc.retailer || 'Unknown'} (${loc.distance?.toFixed(1) || '?'} mi)`
         ).join('<br>');
 
+        // Build filter description
+        let filterDescription = '';
+        if (roundTrip) filterDescription += '<strong>Round trip</strong> back to start<br>';
+        if (openNow) filterDescription += '<strong>Open now</strong> only<br>';
+        if (leastPopular) filterDescription += '<strong>Least popular</strong> locations<br>';
+        if (mostPopular) filterDescription += '<strong>Most popular</strong> locations<br>';
+        
         summaryContent.innerHTML = `
             <div class="store-list">
                 <strong>${optimalLocations.length} stops</strong> within ${this.maxDistance} miles<br>
-                ${roundTrip ? '<strong>Round trip</strong> back to start<br>' : ''}
-                ${openNow ? '<strong>Open now</strong> only<br>' : ''}
+                ${filterDescription}
                 <br>
                 ${storeList}
             </div>
@@ -359,11 +426,13 @@ class RoutePlanner {
     /**
      * Get filtered locations based on current settings
      */
-    getFilteredLocations(openNow = false) {
+    getFilteredLocations(openNow = false, leastPopular = false, mostPopular = false) {
         console.log('=== GET FILTERED LOCATIONS DEBUG ===');
         console.log('1. openNow parameter:', openNow);
-        console.log('2. userCoords available:', !!window.userCoords);
-        console.log('3. userCoords value:', window.userCoords);
+        console.log('2. leastPopular parameter:', leastPopular);
+        console.log('3. mostPopular parameter:', mostPopular);
+        console.log('4. userCoords available:', !!window.userCoords);
+        console.log('5. userCoords value:', window.userCoords);
         
         if (!window.userCoords) {
             console.log('ERROR: No user coordinates available');
@@ -374,11 +443,23 @@ class RoutePlanner {
         let locations = [];
         let dataSource = 'none';
         
-        console.log('4. Checking data sources...');
+        console.log('6. Checking data sources...');
         
         // First try window.allMarkers (from MarkerManager)
         if (window.allMarkers && window.allMarkers.length > 0) {
-            locations = [...window.allMarkers];
+            // Convert Google Maps Marker objects to location data objects
+            locations = window.allMarkers.map(marker => {
+                const position = marker.getPosition();
+                return {
+                    lat: position.lat(),
+                    lng: position.lng(),
+                    retailer: marker.getTitle() || 'Unknown',
+                    retailer_type: marker.retailer_type || 'unknown',
+                    opening_hours: marker.opening_hours || null,
+                    address: marker.address || null,
+                    phone: marker.phone || null
+                };
+            });
             dataSource = 'allMarkers';
             console.log(`5. SUCCESS: Using data source: allMarkers (${locations.length} locations)`);
             console.log('6. Sample location:', locations[0]);
@@ -493,7 +574,20 @@ class RoutePlanner {
             console.log('14. Skipping opening hours filter (openNow = false)');
         }
 
-        console.log(`16. FINAL: Returning ${locations.length} filtered locations`);
+        // Apply popularity filter
+        if (leastPopular || mostPopular) {
+            const beforePopularityFilter = locations.length;
+            locations = this.filterByPopularity(locations, leastPopular, mostPopular);
+            console.log(`16. After popularity filter: ${locations.length} locations (was ${beforePopularityFilter})`);
+            
+            if (locations.length > 0) {
+                console.log('17. Sample locations after popularity filter:', locations.slice(0, 3));
+            }
+        } else {
+            console.log('16. Skipping popularity filter (no popularity filter selected)');
+        }
+
+        console.log(`18. FINAL: Returning ${locations.length} filtered locations`);
         return locations;
     }
 
@@ -527,11 +621,16 @@ class RoutePlanner {
         }
 
         console.log('5. Applying retailer type filters:', activeFilters);
+        
+        // Debug: Show all unique retailer types in the data
+        const uniqueTypes = [...new Set(locations.map(loc => loc.retailer_type).filter(Boolean))];
+        console.log('6. All unique retailer types in data:', uniqueTypes);
+        
         const filtered = locations.filter((location, index) => {
-            const retailerType = location.retailer_type || '';
+            const retailerType = (location.retailer_type || '').toLowerCase();
             const matches = activeFilters.includes(retailerType);
             if (index < 5) { // Log first 5 locations for debugging
-                console.log(`   Location ${index + 1}: ${location.retailer} (${retailerType}) - ${matches ? 'MATCHES' : 'no match'}`);
+                console.log(`   Location ${index + 1}: ${location.retailer} (${location.retailer_type || 'unknown'}) -> ${retailerType} - ${matches ? 'MATCHES' : 'no match'}`);
             }
             return matches;
         });
@@ -540,68 +639,71 @@ class RoutePlanner {
     }
 
     /**
-     * Filter locations by opening hours
+     * Filter locations by opening hours using the isOpenNow function from utils.js
      */
     filterByOpeningHours(locations) {
-        const now = new Date();
-        const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-        const currentTime = now.getHours() * 60 + now.getMinutes(); // minutes since midnight
+        // Import the isOpenNow function from utils.js
+        if (typeof window.isOpenNow !== 'function') {
+            console.warn('isOpenNow function not available, skipping opening hours filter');
+            return locations;
+        }
 
         return locations.filter(location => {
             const hours = location.opening_hours;
-            if (!hours || typeof hours !== 'object') {
+            if (!hours) {
                 return false; // Exclude if no opening hours data
             }
-
-            const todayHours = hours[currentDay];
-            if (!todayHours) {
-                return false; // Closed today
-            }
-
-            if (todayHours.toLowerCase() === 'closed') {
-                return false;
-            }
-
-            // Parse opening hours (e.g., "9:00 AM - 9:00 PM")
-            const match = todayHours.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-            if (!match) {
-                return false; // Can't parse, exclude
-            }
-
-            let [, openHour, openMin, openPeriod, closeHour, closeMin, closePeriod] = match;
             
-            // Convert to 24-hour format
-            openHour = parseInt(openHour);
-            closeHour = parseInt(closeHour);
-            
-            if (openPeriod && openPeriod.toUpperCase() === 'PM' && openHour !== 12) {
-                openHour += 12;
-            }
-            if (openPeriod && openPeriod.toUpperCase() === 'AM' && openHour === 12) {
-                openHour = 0;
-            }
-            
-            if (closePeriod && closePeriod.toUpperCase() === 'PM' && closeHour !== 12) {
-                closeHour += 12;
-            }
-            if (closePeriod && closePeriod.toUpperCase() === 'AM' && closeHour === 12) {
-                closeHour = 0;
-            }
-
-            const openTime = openHour * 60 + parseInt(openMin);
-            let closeTime = closeHour * 60 + parseInt(closeMin);
-
-            // Handle overnight hours (e.g., 10 PM - 2 AM)
-            if (closeTime < openTime) {
-                closeTime += 24 * 60; // Add 24 hours
-                // Check if current time is past midnight but before closing
-                if (currentTime < openTime) {
-                    return currentTime <= (closeTime - 24 * 60);
-                }
-            }
-
-            return currentTime >= openTime && currentTime <= closeTime;
+            // Use the isOpenNow function from utils.js
+            return window.isOpenNow(hours);
         });
+    }
+
+    /**
+     * Filter locations by popularity (heatmap data)
+     */
+    filterByPopularity(locations, leastPopular, mostPopular) {
+        if (!leastPopular && !mostPopular) {
+            return locations; // No popularity filter applied
+        }
+
+        // Get heatmap data if available
+        const heatmapData = window.heatmapData || [];
+        if (heatmapData.length === 0) {
+            console.warn('No heatmap data available for popularity filtering');
+            return locations;
+        }
+
+        // Create a map of location popularity scores
+        const popularityMap = new Map();
+        heatmapData.forEach(point => {
+            const key = `${point.lat},${point.lng}`;
+            const existing = popularityMap.get(key) || 0;
+            popularityMap.set(key, existing + (point.value || 1));
+        });
+
+        // Calculate popularity scores for each location
+        const locationsWithScores = locations.map(location => {
+            const key = `${location.lat},${location.lng}`;
+            const popularityScore = popularityMap.get(key) || 0;
+            return { ...location, popularityScore };
+        });
+
+        // Sort by popularity score
+        locationsWithScores.sort((a, b) => a.popularityScore - b.popularityScore);
+
+        // Filter based on selection
+        if (leastPopular) {
+            // Take the bottom 25% of locations (least popular)
+            const cutoffIndex = Math.floor(locationsWithScores.length * 0.25);
+            return locationsWithScores.slice(0, cutoffIndex);
+        } else if (mostPopular) {
+            // Take the top 25% of locations (most popular)
+            const cutoffIndex = Math.floor(locationsWithScores.length * 0.75);
+            return locationsWithScores.slice(cutoffIndex);
+        }
+
+        return locationsWithScores;
     }
 
     /**
@@ -716,15 +818,19 @@ class RoutePlanner {
 
         // Get current route with default settings if modal isn't open
         const openNow = document.getElementById('open-now-checkbox')?.checked || false;
+        const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
+        const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
         console.log('14. openNow filter:', openNow);
+        console.log('15. leastPopular filter:', leastPopular);
+        console.log('16. mostPopular filter:', mostPopular);
         
-        const availableLocations = this.getFilteredLocations(openNow);
-        console.log('15. availableLocations:', availableLocations.length);
-        console.log('16. availableLocations sample:', availableLocations.slice(0, 3));
+        const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+        console.log('17. availableLocations:', availableLocations.length);
+        console.log('18. availableLocations sample:', availableLocations.slice(0, 3));
         
         this.selectedLocations = this.selectOptimalLocations(availableLocations);
-        console.log('17. selectedLocations:', this.selectedLocations.length);
-        console.log('18. selectedLocations details:', this.selectedLocations);
+        console.log('19. selectedLocations:', this.selectedLocations.length);
+        console.log('20. selectedLocations details:', this.selectedLocations);
 
         if (this.selectedLocations.length === 0) {
             console.log('ERROR: No locations selected after filtering');
@@ -800,38 +906,77 @@ class RoutePlanner {
     createPreviewPins() {
         if (!window.userCoords || !this.selectedLocations.length) return;
 
-        // Create start pin (green)
+        // Collect all positions for auto-zoom
+        const allPositions = [
+            { lat: window.userCoords.lat, lng: window.userCoords.lng }
+        ];
+        console.log('Starting position collection. User coords:', window.userCoords);
+
+        // Create start pin (green) with shaded circle
         const startPin = new google.maps.Marker({
             position: { lat: window.userCoords.lat, lng: window.userCoords.lng },
             map: window.map,
             title: 'Start Location',
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
+                scale: 12,
                 fillColor: '#28a745',
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
-                strokeWeight: 2
+                strokeWeight: 3
             }
         });
         this.previewPins.push(startPin);
 
-        // Create stop pins (blue) - no numbers since Google will optimize route
+        // Create shaded circle around start pin
+        const startCircle = new google.maps.Circle({
+            strokeColor: '#28a745',
+            strokeOpacity: 0.3,
+            strokeWeight: 2,
+            fillColor: '#28a745',
+            fillOpacity: 0.1,
+            map: window.map,
+            center: { lat: window.userCoords.lat, lng: window.userCoords.lng },
+            radius: 500 // 500 meters radius
+        });
+        this.previewPins.push(startCircle);
+
+        // Create stop pins (orange) with shaded circles
         this.selectedLocations.forEach((location) => {
+            allPositions.push({ lat: location.lat, lng: location.lng });
+            console.log('Added location to positions:', location.retailer, location.lat, location.lng);
+            
+            // Create shaded circle around stop pin FIRST (so it appears below)
+            const stopCircle = new google.maps.Circle({
+                strokeColor: '#ff6b35',
+                strokeOpacity: 0.3,
+                strokeWeight: 2,
+                fillColor: '#ff6b35',
+                fillOpacity: 0.1,
+                map: window.map,
+                center: { lat: location.lat, lng: location.lng },
+                radius: 400 // 400 meters radius
+            });
+            this.previewPins.push(stopCircle);
+            
+            // Create stop pin (orange) with bouncing animation
             const stopPin = new google.maps.Marker({
                 position: { lat: location.lat, lng: location.lng },
                 map: window.map,
                 title: `${location.retailer || 'Unknown'} (${location.distance?.toFixed(1) || '?'} mi)`,
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
-                    scale: 8,
-                    fillColor: '#007bff',
+                    scale: 12,
+                    fillColor: '#ff6b35',
                     fillOpacity: 1,
                     strokeColor: '#ffffff',
-                    strokeWeight: 2
+                    strokeWeight: 3
                 }
             });
             this.previewPins.push(stopPin);
+            
+            // Add bouncing animation to the pin
+            this.addBouncingAnimation(stopPin);
         });
 
         // Create end pin (red) if round trip
@@ -843,15 +988,135 @@ class RoutePlanner {
                 title: 'End Location (Round Trip)',
                 icon: {
                     path: google.maps.SymbolPath.CIRCLE,
-                    scale: 8,
+                    scale: 12,
                     fillColor: '#dc3545',
                     fillOpacity: 1,
                     strokeColor: '#ffffff',
-                    strokeWeight: 2
+                    strokeWeight: 3
                 }
             });
             this.previewPins.push(endPin);
+
+            // Create shaded circle around end pin
+            const endCircle = new google.maps.Circle({
+                strokeColor: '#dc3545',
+                strokeOpacity: 0.3,
+                strokeWeight: 2,
+                fillColor: '#dc3545',
+                fillOpacity: 0.1,
+                map: window.map,
+                center: { lat: window.userCoords.lat, lng: window.userCoords.lng },
+                radius: 500 // 500 meters radius
+            });
+            this.previewPins.push(endCircle);
         }
+
+        // Auto-zoom to fit all preview points with padding
+        console.log('Final positions for zooming:', allPositions);
+        this.zoomToFitPreviewPoints(allPositions);
+    }
+
+    /**
+     * Add bouncing animation to a marker
+     */
+    addBouncingAnimation(marker) {
+        let bounceCount = 0;
+        const maxBounces = 3;
+        const bounceHeight = 10; // pixels
+        const bounceDuration = 600; // milliseconds
+        
+        const bounce = () => {
+            if (bounceCount >= maxBounces) return;
+            
+            // Get current position
+            const position = marker.getPosition();
+            const originalLat = position.lat();
+            const originalLng = position.lng();
+            
+            // Bounce up
+            const bounceUp = () => {
+                const newPosition = new google.maps.LatLng(
+                    originalLat + (bounceHeight / 100000), // Small lat offset for visual effect
+                    originalLng
+                );
+                marker.setPosition(newPosition);
+            };
+            
+            // Bounce down
+            const bounceDown = () => {
+                marker.setPosition(position);
+                bounceCount++;
+                
+                // Schedule next bounce
+                if (bounceCount < maxBounces) {
+                    setTimeout(bounce, 1000); // Wait 1 second between bounces
+                }
+            };
+            
+            // Execute bounce sequence
+            bounceUp();
+            setTimeout(bounceDown, bounceDuration);
+        };
+        
+        // Start bouncing after a short delay
+        setTimeout(bounce, 500);
+    }
+
+    /**
+     * Zoom map to fit all preview points with padding
+     */
+    zoomToFitPreviewPoints(positions) {
+        if (!positions || positions.length === 0) {
+            console.log('No positions to zoom to');
+            return;
+        }
+
+        console.log('Zooming to fit positions:', positions);
+
+        const bounds = new google.maps.LatLngBounds();
+        
+        // Add all positions to bounds
+        positions.forEach(pos => {
+            const latLng = new google.maps.LatLng(pos.lat, pos.lng);
+            bounds.extend(latLng);
+            console.log('Added position to bounds:', pos.lat, pos.lng);
+        });
+
+        // Add padding to bounds (expand by 20% for better visibility)
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        const latDiff = (ne.lat() - sw.lat()) * 0.2;
+        const lngDiff = (ne.lng() - sw.lng()) * 0.2;
+        
+        bounds.extend(new google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff));
+        bounds.extend(new google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff));
+
+        console.log('Bounds created:', {
+            north: bounds.getNorthEast().lat(),
+            east: bounds.getNorthEast().lng(),
+            south: bounds.getSouthWest().lat(),
+            west: bounds.getSouthWest().lng()
+        });
+
+        // Fit map to bounds with smooth animation
+        window.map.fitBounds(bounds);
+        
+        // Ensure reasonable zoom level and add a small delay for the animation
+        setTimeout(() => {
+            const currentZoom = window.map.getZoom();
+            console.log('Current zoom level:', currentZoom);
+            
+            // If zoomed out too far, set a reasonable zoom level
+            if (currentZoom < 10) {
+                window.map.setZoom(12);
+                console.log('Adjusted zoom to 12');
+            }
+            // If zoomed in too close, set a reasonable zoom level
+            else if (currentZoom > 16) {
+                window.map.setZoom(14);
+                console.log('Adjusted zoom to 14');
+            }
+        }, 500);
     }
 
     /**
@@ -887,8 +1152,10 @@ class RoutePlanner {
     openInGoogleMaps() {
         const openNow = document.getElementById('open-now-checkbox')?.checked || false;
         const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
+        const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
+        const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
         
-        const availableLocations = this.getFilteredLocations(openNow);
+        const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
         this.selectedLocations = this.selectOptimalLocations(availableLocations);
 
         if (this.selectedLocations.length < 2) {
@@ -919,7 +1186,9 @@ class RoutePlanner {
         // Ensure we have selected locations
         if (!this.selectedLocations || this.selectedLocations.length === 0) {
             const openNow = document.getElementById('open-now-checkbox')?.checked || false;
-            const availableLocations = this.getFilteredLocations(openNow);
+            const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
+            const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
+            const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
             this.selectedLocations = this.selectOptimalLocations(availableLocations);
         }
 

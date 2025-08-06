@@ -26,87 +26,69 @@
       <input type="checkbox" id="filter-kiosk" checked> 🤖 Kiosks
     </label><br>
     
-    <!-- Solid Bar Separator -->
-    <div style="border-top: 1px solid #ccc; margin: 10px 0;"></div>
-    
-    <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of retail store locations.">
-      <input type="checkbox" id="filter-retail"
-             {% if is_pro %}
-               checked
-             {% else %}
-               class="pro-only"
-             {% endif %}>
-       🏬 Retail Stores
-    </label><br>
-    <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of independent store locations.">
-      <input type="checkbox" id="filter-indie"
-             {% if is_pro %}
-               checked
-             {% else %}
-               class="pro-only"
-             {% endif %}>
-       🤓 Indie Stores
-    </label>
-    <br>
-    <label data-bs-toggle="tooltip" data-bs-placement="right" title="Only show locations that are currently open.">
-      <input type="checkbox" id="filter-open-now"
-             {% if not is_pro %}
-               class="pro-only"
-             {% endif %}>
-       ⏰ Open Now
-    </label>
-    <br>
-    <label data-bs-toggle="tooltip" data-bs-placement="right" title="Only show new kiosks or stores.">
-      <input type="checkbox" id="filter-new"
-             {% if not is_pro %}
-               class="pro-only"
-             {% endif %}>
-       🌟 New Locations
-    </label>
-    <br>
-    <label data-bs-toggle="tooltip" data-bs-placement="right" title="Show a heat map of popular locations.">
-      <input type="checkbox" id="filter-popular-areas"
-             {% if not is_pro %}
-               class="pro-only"
-             {% endif %}>
-      🔥 Popular Areas
-    </label>
-    <br>
-    <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle upcoming events">
-    <input type="checkbox" id="filter-events"
-           {% if not is_pro %}
-            class="pro-only"
-           {% endif %}>
-       📅 Events
-    </label>
-    
-    <!-- Events Day Range Slider - only visible when events checkbox is checked -->
-    <div id="event-days-slider-container" style="display: none; margin: 5px 0 8px 20px;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 12px; padding-right: 10px;">
-        <span>1 day</span>
-        <span id="event-days-value">30 days</span>
-        <span>60 days</span>
+    <!-- Pro Features Section with darker background -->
+    <div id="pro-features-section" style="background-color: #e9ecef; border-radius: 6px; padding: 4px 4px; margin: 2px 0; position: relative;" 
+         data-pro-section="true" data-is-pro="{{ is_pro|tojson }}">
+      <!-- Pro Badge in upper-right corner -->
+      <div style="position: absolute; top: 4px; right: 4px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px; z-index: 1;">Pro</div>
+      
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of retail store locations.">
+        <input type="checkbox" id="filter-retail"
+               {% if is_pro %}checked{% endif %}>
+         🏬 Retail Stores
+      </label><br>
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of independent store locations.">
+        <input type="checkbox" id="filter-indie"
+               {% if is_pro %}checked{% endif %}>
+         🤓 Indie Stores
+      </label>
+      <br>
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Only show locations that are currently open.">
+        <input type="checkbox" id="filter-open-now">
+         ⏰ Open Now
+      </label>
+      <br>
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Only show new kiosks or stores.">
+        <input type="checkbox" id="filter-new">
+         🌟 New Locations
+      </label>
+      <br>
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Show a heat map of popular locations.">
+        <input type="checkbox" id="filter-popular-areas">
+        🔥 Popular Areas
+      </label>
+      <br>
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle upcoming events">
+      <input type="checkbox" id="filter-events">
+         📅 Events
+      </label>
+      
+      <!-- Events Day Range Slider - only visible when events checkbox is checked -->
+      <div id="event-days-slider-container" style="display: none; margin: 5px 0 8px 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 12px; padding-right: 10px;">
+          <span>1 day</span>
+          <span id="event-days-value">30 days</span>
+          <span>60 days</span>
+        </div>
+        <input type="range" id="event-days-slider" 
+               min="1" max="60" value="30" step="1" 
+               class="form-range" 
+               style="width: 95%;"
+               data-bs-toggle="tooltip" 
+               data-bs-placement="right" 
+               title="Filter events by days in the future">
       </div>
-      <input type="range" id="event-days-slider" 
-             min="1" max="60" value="30" step="1" 
-             class="form-range{% if not is_pro %} pro-only{% endif %}" 
-             style="width: 95%;"
-             data-bs-toggle="tooltip" 
-             data-bs-placement="right" 
-             title="Filter events by days in the future">
-    </div>
 
-    <!-- Route Planning Section -->
-    <div id="route-planning-section">
-      <button class="route-planning-btn{% if not is_pro %} pro-only{% endif %}" id="plan-route-btn" 
-              onclick="{% if is_pro %}openRoutePanel(){% else %}showProUpgradeModal(){% endif %}" 
-              data-bs-toggle="tooltip" 
-              data-bs-placement="right" 
-              title="{% if is_pro %}Plan a route to multiple locations{% else %}Upgrade to Pro to access route planning{% endif %}">
-        <i class="fas fa-route"></i>
-        <span>Route Planning</span>
-        <span class="pro-badge">Pro</span>
-      </button>
+      <!-- Route Planning Section -->
+      <div id="route-planning-section">
+        <button class="route-planning-btn" id="plan-route-btn" 
+                data-bs-toggle="tooltip" 
+                data-bs-placement="right" 
+                title="{% if is_pro %}Plan a route to multiple locations{% else %}Upgrade to Pro to access route planning{% endif %}">
+          <i class="fas fa-route"></i>
+          <span>Route Planning</span>
+        </button>
+      </div>
     </div>
   </div>
 </div> 

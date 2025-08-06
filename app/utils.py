@@ -71,18 +71,18 @@ def get_retailer_locations(db, bounds=None, fields_only=True):
             # Only select fields needed for map rendering (reduces payload by ~60%)
             base_query = """
                 SELECT id, retailer, retailer_type, full_address, latitude, longitude, 
-                       place_id, phone_number, opening_hours, machine_count, status
+                       place_id, phone_number, opening_hours, machine_count, status, enabled
                 FROM retailers
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND enabled = 1
             """
         else:
             # Full query for admin or detailed views
             base_query = """
                 SELECT id, retailer, retailer_type, full_address, latitude, longitude, 
                        place_id, first_seen, phone_number, website, opening_hours, rating, 
-                       last_api_update, machine_count, previous_count, status
+                       last_api_update, machine_count, previous_count, status, enabled
                 FROM retailers
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND enabled = 1
             """
         
         # Add viewport filtering if bounds provided

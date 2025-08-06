@@ -16,23 +16,18 @@
   <div class="admin-sidebar">
     <h4>Admin Navigation</h4>
     <ul>
-      <li><a href="{{ url_for('admin.index') }}">Dashboard</a></li>
-      <li><a href="{{ url_for('admin.users') }}">Users</a></li>
-      <li><a href="{{ url_for('admin.retailers') }}">Retailers</a></li>
-      <li><a href="{{ url_for('admin.events') }}">Events</a></li>
-                      <!-- Future Events functionality has been consolidated into the main Events page -->
-      <li><a href="{{ url_for('admin.messages') }}">Messages</a></li>
-      <li><a href="{{ url_for('admin.visitors') }}">Visitors</a></li>
-      <li><a href="{{ url_for('admin.top_referrers') }}">Referrers</a></li>
-      <li><a href="{{ url_for('admin.top_pages') }}">Visited Pages</a></li>
-      <li><a href="{{ url_for('admin.top_ref_codes') }}">Referral Codes</a></li>
-      <li><a href="{{ url_for('admin.referral_journeys') }}">Referral Journeys</a></li>
-      
-      <!-- Payment Management Section -->
-      <li style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px;">
-        <strong style="color: #007bff;">💳 Manage Payments</strong>
-      </li>
-      <li><a href="{{ url_for('admin.setup_intents') }}">Payment Setup Management</a></li>
+      <li><a href="{{ url_for('admin.index') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+      <li><a href="{{ url_for('admin.system') }}"><i class="fas fa-cogs me-2"></i>System</a></li>
+      <li><a href="{{ url_for('admin.setup_intents') }}"><i class="fas fa-credit-card me-2"></i>Payments</a></li>
+      <li><a href="{{ url_for('admin.users') }}"><i class="fas fa-users me-2"></i>Users</a></li>
+      <li><a href="{{ url_for('admin.retailers') }}"><i class="fas fa-store me-2"></i>Retailers</a></li>
+      <li><a href="{{ url_for('admin.events') }}"><i class="fas fa-calendar me-2"></i>Events</a></li>
+      <li><a href="{{ url_for('admin.messages') }}"><i class="fas fa-envelope me-2"></i>Messages</a></li>
+      <li><a href="{{ url_for('admin.visitors') }}"><i class="fas fa-eye me-2"></i>Visitors</a></li>
+      <li><a href="{{ url_for('admin.top_referrers') }}"><i class="fas fa-external-link-alt me-2"></i>Referrers</a></li>
+      <li><a href="{{ url_for('admin.top_pages') }}"><i class="fas fa-file-alt me-2"></i>Visited Pages</a></li>
+      <li><a href="{{ url_for('admin.top_ref_codes') }}"><i class="fas fa-tags me-2"></i>Referral Codes</a></li>
+      <li><a href="{{ url_for('admin.referral_journeys') }}"><i class="fas fa-route me-2"></i>Referral Journeys</a></li>
     </ul>
   </div>
 

@@ -82,22 +82,7 @@ function initUI() {
   // Cache the text-search field
   DB.legendFilter        = document.getElementById('legend_filter');
 
-  // Restore saved filter states from localStorage
-  [
-    'filter-kiosk',
-    'filter-retail',
-    'filter-indie',
-    'filter-new',
-    'filter-open-now',
-    'filter-events',
-    'filter-popular-areas'
-  ].forEach(id => {
-    const el = document.getElementById(id);
-    const val = localStorage.getItem(`checkbox_${id}`);
-    if (el && val !== null) {
-      el.checked = (val === 'true');
-    }
-  });
+  // Checkbox states will be set up in setupCheckboxStates() based on pro status
   
   // Restore event days slider value from localStorage
   if (DB.eventDaysSlider) {
@@ -151,21 +136,37 @@ function initUI() {
         DB.legendFilter.value = '';
         localStorage.setItem('checkbox_legend_filter', '');
         
-        // Restore original checkbox states when clearing search
-        // You can customize this based on what the default state should be
+        // Always keep kiosk checked, others depend on pro status
         if (DB.filterKiosk) {
-          DB.filterKiosk.checked = localStorage.getItem('checkbox_filter-kiosk') === 'true' || true; // Default to checked
-          localStorage.setItem('checkbox_filter-kiosk', DB.filterKiosk.checked);
+          DB.filterKiosk.checked = true;
+          localStorage.setItem('checkbox_filter-kiosk', 'true');
         }
-        if (DB.filterRetail) {
-          DB.filterRetail.checked = localStorage.getItem('checkbox_filter-retail') === 'true' || true; // Default to checked
-          localStorage.setItem('checkbox_filter-retail', DB.filterRetail.checked);
+        
+        // Check pro status for other checkboxes
+        const proSection = document.getElementById('pro-features-section');
+        const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : false;
+        
+        if (isPro) {
+          // For pro users, restore saved states
+          if (DB.filterRetail) {
+            DB.filterRetail.checked = localStorage.getItem('checkbox_filter-retail') === 'true' || true;
+            localStorage.setItem('checkbox_filter-retail', DB.filterRetail.checked);
+          }
+          if (DB.filterIndie) {
+            DB.filterIndie.checked = localStorage.getItem('checkbox_filter-indie') === 'true' || false;
+            localStorage.setItem('checkbox_filter-indie', DB.filterIndie.checked);
+          }
+        } else {
+          // For non-pro users, uncheck pro checkboxes
+          if (DB.filterRetail) {
+            DB.filterRetail.checked = false;
+            localStorage.setItem('checkbox_filter-retail', 'false');
+          }
+          if (DB.filterIndie) {
+            DB.filterIndie.checked = false;
+            localStorage.setItem('checkbox_filter-indie', 'false');
+          }
         }
-        if (DB.filterIndie) {
-          DB.filterIndie.checked = localStorage.getItem('checkbox_filter-indie') === 'true' || false; // Default to unchecked
-          localStorage.setItem('checkbox_filter-indie', DB.filterIndie.checked);
-        }
-        // Don't restore events checkbox - it has its own logic
         
         window.applyFilters();
         // Hide the clear button after clearing
@@ -212,6 +213,117 @@ function initUI() {
     });
   }
 
+  // Add pro user check for pro-only section
+  function setupProSectionCheck() {
+    const proSection = document.getElementById('pro-features-section');
+    if (!proSection) return;
+    
+    const isPro = proSection.getAttribute('data-is-pro') === 'true';
+    
+    // Set up checkbox states based on pro status
+    setupCheckboxStates(isPro);
+    
+    // Add click handler to the entire pro section
+    proSection.addEventListener('click', (e) => {
+      if (!isPro) {
+        // Check if the click was on a checkbox or button within the section
+        const target = e.target;
+        if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('label')) {
+          e.preventDefault();
+          e.stopPropagation();
+          showProUpgradeToast();
+          return false;
+        }
+      }
+    });
+    
+    // Handle route planning button specifically
+    const routeBtn = document.getElementById('plan-route-btn');
+    if (routeBtn) {
+      routeBtn.addEventListener('click', (e) => {
+        if (!isPro) {
+          e.preventDefault();
+          e.stopPropagation();
+          showProUpgradeToast();
+          return false;
+        } else {
+          openRoutePanel();
+        }
+      });
+    }
+  }
+  
+  // Setup checkbox states based on pro status
+  function setupCheckboxStates(isPro) {
+    // Always keep kiosk checkbox checked
+    if (DB.filterKiosk) {
+      DB.filterKiosk.checked = true;
+      localStorage.setItem('checkbox_filter-kiosk', 'true');
+    }
+    
+    if (isPro) {
+      // For pro users, restore saved states or use defaults
+      if (DB.filterRetail) {
+        DB.filterRetail.checked = localStorage.getItem('checkbox_filter-retail') === 'true' || true;
+        localStorage.setItem('checkbox_filter-retail', DB.filterRetail.checked);
+      }
+      if (DB.filterIndie) {
+        DB.filterIndie.checked = localStorage.getItem('checkbox_filter-indie') === 'true' || false;
+        localStorage.setItem('checkbox_filter-indie', DB.filterIndie.checked);
+      }
+      if (DB.filterOpenNow) {
+        DB.filterOpenNow.checked = localStorage.getItem('checkbox_filter-open-now') === 'true' || false;
+        localStorage.setItem('checkbox_filter-open-now', DB.filterOpenNow.checked);
+      }
+      if (DB.filterNew) {
+        DB.filterNew.checked = localStorage.getItem('checkbox_filter-new') === 'true' || false;
+        localStorage.setItem('checkbox_filter-new', DB.filterNew.checked);
+      }
+      if (DB.filterPopularAreas) {
+        DB.filterPopularAreas.checked = localStorage.getItem('checkbox_filter-popular-areas') === 'true' || false;
+        localStorage.setItem('checkbox_filter-popular-areas', DB.filterPopularAreas.checked);
+      }
+      if (DB.filterEvents) {
+        DB.filterEvents.checked = localStorage.getItem('checkbox_filter-events') === 'true' || false;
+        localStorage.setItem('checkbox_filter-events', DB.filterEvents.checked);
+      }
+    } else {
+      // For non-pro users, uncheck all pro checkboxes
+      if (DB.filterRetail) {
+        DB.filterRetail.checked = false;
+        localStorage.setItem('checkbox_filter-retail', 'false');
+      }
+      if (DB.filterIndie) {
+        DB.filterIndie.checked = false;
+        localStorage.setItem('checkbox_filter-indie', 'false');
+      }
+      if (DB.filterOpenNow) {
+        DB.filterOpenNow.checked = false;
+        localStorage.setItem('checkbox_filter-open-now', 'false');
+      }
+      if (DB.filterNew) {
+        DB.filterNew.checked = false;
+        localStorage.setItem('checkbox_filter-new', 'false');
+      }
+      if (DB.filterPopularAreas) {
+        DB.filterPopularAreas.checked = false;
+        localStorage.setItem('checkbox_filter-popular-areas', 'false');
+      }
+      if (DB.filterEvents) {
+        DB.filterEvents.checked = false;
+        localStorage.setItem('checkbox_filter-events', 'false');
+      }
+    }
+    
+    // Apply filters after setting states
+    if (typeof window.applyFilters === 'function') {
+      window.applyFilters();
+    }
+  }
+  
+  // Setup pro section check
+  setupProSectionCheck();
+
   // Wire all checkboxes—including Popular Areas—to applyFilters and save state
   [
     DB.filterKiosk,
@@ -223,10 +335,12 @@ function initUI() {
     DB.filterPopularAreas
   ]
     .filter(cb => cb)
-    .forEach(cb => cb.addEventListener('change', () => {
-      localStorage.setItem(`checkbox_${cb.id}`, cb.checked);
-      window.applyFilters();
-    }));
+    .forEach(cb => {
+      cb.addEventListener('change', () => {
+        localStorage.setItem(`checkbox_${cb.id}`, cb.checked);
+        window.applyFilters();
+      });
+    });
 
 // Legend show/hide toggle (only body)
 if (DB.legendToggleBtn) {
@@ -359,26 +473,83 @@ function handleSearch(event) {
 window.handleSearch = handleSearch;
 
 /**
- * Show pro upgrade modal for route planning
+ * Show pro upgrade toast message
  */
-function showProUpgradeModal() {
+function showProUpgradeToast() {
   if (typeof Swal !== 'undefined') {
     Swal.fire({
-      title: '<i class="fas fa-route"></i> Route Planning',
-      html: `
-        <div style="text-align: center; padding: 20px;">
-          <i class="fas fa-lock" style="font-size: 48px; color: #667eea; margin-bottom: 20px;"></i>
-          <h4>Pro Feature</h4>
-          <p>Route planning is available for Pro users only.</p>
-          <p>Upgrade to Pro to plan optimized routes to multiple locations.</p>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Go Pro',
-      cancelButtonText: 'Maybe Later',
+      toast: true,
+      position: 'top-start',
+      icon: 'lock',
+      title: 'Pro Feature',
+      html: '<div style="font-size: 13px; margin: 6px 0; color: #6c757d;">Upgrade to access this feature</div>',
+      showConfirmButton: true,
+      confirmButtonText: 'Try Pro',
       confirmButtonColor: '#667eea',
+      showCancelButton: false,
+      timer: 5000,
+      timerProgressBar: true,
+      width: '270px',
+      background: '#ffffff',
       customClass: {
-        popup: 'swal2-pro-upgrade'
+        popup: 'swal2-toast-pro',
+        confirmButton: 'btn btn-sm btn-primary',
+        title: 'swal2-toast-title'
+      },
+      didOpen: (toast) => {
+        // Enhanced styling for better appearance
+        toast.style.fontSize = '12px';
+        toast.style.padding = '12px 16px';
+        toast.style.borderRadius = '10px';
+        toast.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.12)';
+        toast.style.border = '1px solid #dee2e6';
+        toast.style.background = 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)';
+        
+        // Style the title with pro badge
+        const title = toast.querySelector('.swal2-title');
+        if (title) {
+          title.innerHTML = 'Pro Feature <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px;">Pro</span>';
+          title.style.fontSize = '15px';
+          title.style.fontWeight = '600';
+          title.style.color = '#2c3e50';
+          title.style.marginBottom = '6px';
+          title.style.display = 'flex';
+          title.style.alignItems = 'center';
+        }
+        
+        // Style the message
+        const message = toast.querySelector('.swal2-html-container');
+        if (message) {
+          message.style.fontSize = '13px';
+          message.style.color = '#6c757d';
+          message.style.lineHeight = '1.4';
+        }
+        
+        // Style the button
+        const button = toast.querySelector('.swal2-confirm');
+        if (button) {
+          button.style.fontSize = '11px';
+          button.style.padding = '6px 14px';
+          button.style.borderRadius = '6px';
+          button.style.fontWeight = '600';
+          button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          button.style.border = 'none';
+          button.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+          button.style.transition = 'all 0.2s ease';
+        }
+        
+        // Add hover effect to button
+        const buttonElement = toast.querySelector('.swal2-confirm');
+        if (buttonElement) {
+          buttonElement.addEventListener('mouseenter', () => {
+            buttonElement.style.transform = 'translateY(-1px)';
+            buttonElement.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+          });
+          buttonElement.addEventListener('mouseleave', () => {
+            buttonElement.style.transform = 'translateY(0)';
+            buttonElement.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+          });
+        }
       }
     }).then((result) => {
       if (result.isConfirmed) {
@@ -386,7 +557,7 @@ function showProUpgradeModal() {
       }
     });
   } else {
-    alert('Route planning is available for Pro users only. Visit /learn to upgrade.');
+    alert('Pro Feature - Upgrade to access this feature.');
   }
 }
 
@@ -426,6 +597,7 @@ function closeRoutePanel() {
 // Expose functions globally
 window.openRoutePanel = openRoutePanel;
 window.closeRoutePanel = closeRoutePanel;
+window.showProUpgradeToast = showProUpgradeToast;
 window.initUI = initUI;
 
 // Don't auto-initialize - let map-init.js handle it

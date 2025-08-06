@@ -8,118 +8,9 @@
     </div>
   </div>
 
-  {# Quick Access Widgets for New Admin Views #}
-  <div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-primary shadow h-100 py-2">
-        <div class="card-body">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                Future Events
-              </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <a href="{{ url_for('admin.events') }}" class="text-decoration-none">
-                  View Events <i class="fas fa-arrow-right"></i>
-                </a>
-              </div>
-            </div>
-            <div class="col-auto">
-              <i class="fas fa-calendar-plus fa-2x text-gray-300"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-success shadow h-100 py-2">
-        <div class="card-body">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                Top Pages
-              </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <a href="{{ url_for('admin.top_pages') }}" class="text-decoration-none">
-                  View Pages <i class="fas fa-arrow-right"></i>
-                </a>
-              </div>
-            </div>
-            <div class="col-auto">
-              <i class="fas fa-file-alt fa-2x text-gray-300"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-info shadow h-100 py-2">
-        <div class="card-body">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                Top Referrers
-              </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <a href="{{ url_for('admin.top_referrers') }}" class="text-decoration-none">
-                  View Referrers <i class="fas fa-arrow-right"></i>
-                </a>
-              </div>
-            </div>
-            <div class="col-auto">
-              <i class="fas fa-external-link-alt fa-2x text-gray-300"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-warning shadow h-100 py-2">
-        <div class="card-body">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                Visitor Logs
-              </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <a href="{{ url_for('admin.visitors') }}" class="text-decoration-none">
-                  View Logs <i class="fas fa-arrow-right"></i>
-                </a>
-              </div>
-            </div>
-            <div class="col-auto">
-              <i class="fas fa-list fa-2x text-gray-300"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-      <div class="card border-left-danger shadow h-100 py-2">
-        <div class="card-body">
-          <div class="row no-gutters align-items-center">
-            <div class="col mr-2">
-              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                Setup Intents
-              </div>
-              <div class="h5 mb-0 font-weight-bold text-gray-800">
-                <a href="{{ url_for('admin.setup_intents') }}" class="text-decoration-none">
-                  Manage Payments <i class="fas fa-arrow-right"></i>
-                </a>
-              </div>
-            </div>
-            <div class="col-auto">
-              <i class="fas fa-credit-card fa-2x text-gray-300"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   {# Render each section of grouped tiles #}
   {% for section, tiles in dashboard_groups %}
@@ -139,40 +30,7 @@
     </div>
   {% endfor %}
 
-  {# System Resource Monitoring: progress bars #}
-  <div class="dashboard-section my-5">
-    <h3 class="dashboard-header">System Resource Monitoring</h3>
-    <hr>
-    <div class="row text-center">
-      <div class="col-12 col-sm-4 mb-3">
-        <h5>CPU Usage: {{ system_stats.cpu }}%</h5>
-        <div class="progress" style="height: 1.5rem;">
-          <div class="progress-bar {% if system_stats.cpu < 50 %}bg-success{% elif system_stats.cpu < 75 %}bg-warning{% else %}bg-danger{% endif %}"
-               role="progressbar" style="width: {{ system_stats.cpu }}%;"
-               aria-valuenow="{{ system_stats.cpu }}" aria-valuemin="0" aria-valuemax="100">
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-4 mb-3">
-        <h5>Memory Usage: {{ system_stats.memory }}% ({{ system_stats.memory_used }}GB / {{ system_stats.memory_total }}GB)</h5>
-        <div class="progress" style="height: 1.5rem;">
-          <div class="progress-bar {% if system_stats.memory < 50 %}bg-success{% elif system_stats.memory < 75 %}bg-warning{% else %}bg-danger{% endif %}"
-               role="progressbar" style="width: {{ system_stats.memory }}%;"
-               aria-valuenow="{{ system_stats.memory }}" aria-valuemin="0" aria-valuemax="100">
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-4 mb-3">
-        <h5>Disk Usage: {{ system_stats.disk }}% ({{ system_stats.disk_used }}GB / {{ system_stats.disk_total }}GB)</h5>
-        <div class="progress" style="height: 1.5rem;">
-          <div class="progress-bar {% if system_stats.disk < 50 %}bg-success{% elif system_stats.disk < 75 %}bg-warning{% else %}bg-danger{% endif %}"
-               role="progressbar" style="width: {{ system_stats.disk }}%;"
-               aria-valuenow="{{ system_stats.disk }}" aria-valuemin="0" aria-valuemax="100">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   {# Top Analytics Tables #}
   <div class="dashboard-section my-5">
@@ -194,6 +52,13 @@
     <h3 class="dashboard-header">Visit Trends (<span id="chart-days">{{ days_filter }}</span> Days)</h3>
     <hr>
     <canvas id="visitChart" class="w-100" style="height:40vh;"></canvas>
+  </div>
+
+  {# Referral Code Trends bar chart #}
+  <div class="dashboard-section my-5">
+    <h3 class="dashboard-header">Top Referral Codes (<span id="ref-chart-days">{{ days_filter }}</span> Days)</h3>
+    <hr>
+    <canvas id="referralCodeChart" class="w-100" style="height:40vh;"></canvas>
   </div>
 
   <div class="dashboard-section my-5" id="top-referrers-section">
@@ -326,6 +191,41 @@
     }
   });
 
+  // Referral Code Trends Chart
+  const refCtx = document.getElementById('referralCodeChart').getContext('2d');
+  let referralCodeChart = new Chart(refCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: { 
+      responsive: true, 
+      scales: { y: { beginAtZero: true } },
+      plugins: {
+        legend: {
+          labels: {
+            usePointStyle: true
+          }
+        }
+      }
+    }
+  });
+
+  // Initialize referral code chart
+  function initializeReferralCodeChart() {
+    fetch('/admin/api/analytics/referral-code-trends?days={{ days_filter }}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          updateReferralCodeChart(data.data);
+        }
+      })
+      .catch(error => {
+        console.error('Error loading referral code trends:', error);
+      });
+  }
+
   // Analytics slider functionality
   let updateTimeout;
   const daysSlider = document.getElementById('daysSlider');
@@ -352,12 +252,13 @@
     // Show loading state
     showLoadingState();
     
-    // Update all four analytics sections (including chart)
+    // Update all four analytics sections (including charts)
     Promise.all([
       updateTopReferrers(days),
       updateTopPages(days),
       updateTopRefCodes(days),
-      updateVisitTrends(days)
+      updateVisitTrends(days),
+      updateReferralCodeTrends(days)
     ]).finally(() => {
       hideLoadingState();
     });
@@ -512,12 +413,129 @@
         showError('Failed to update visit trends data');
       });
   }
+
+  // Update referral code trends chart
+  function updateReferralCodeTrends(days) {
+    return fetch(`/admin/api/analytics/referral-code-trends?days=${days}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const daysSpan = document.getElementById('ref-chart-days');
+          
+          // Update days display
+          daysSpan.textContent = days;
+          
+          // Update chart data
+          updateReferralCodeChart(data.data);
+        }
+      })
+      .catch(error => {
+        console.error('Error updating referral code trends:', error);
+        showError('Failed to update referral code trends data');
+      });
+  }
+
+  // Update referral code chart with new data
+  function updateReferralCodeChart(data) {
+    const colors = [
+      'rgba(54, 162, 235, 0.5)',
+      'rgba(255, 99, 132, 0.5)',
+      'rgba(75, 192, 192, 0.5)',
+      'rgba(255, 159, 64, 0.5)',
+      'rgba(153, 102, 255, 0.5)',
+      'rgba(255, 205, 86, 0.5)'
+    ];
+    
+    const lineColors = [
+      'rgba(54, 162, 235, 1)',
+      'rgba(255, 99, 132, 1)',
+      'rgba(75, 192, 192, 1)',
+      'rgba(255, 159, 64, 1)',
+      'rgba(153, 102, 255, 1)',
+      'rgba(255, 205, 86, 1)'
+    ];
+
+    // Clear existing datasets
+    referralCodeChart.data.labels = data.dates;
+    referralCodeChart.data.datasets = [];
+
+    // Add bar datasets for each code
+    data.codes.forEach((code, index) => {
+      const barData = data.data.map(day => day[code] || 0);
+      const avgData = data.data.map(day => day[`${code}_avg`] || 0);
+      
+      // Add bar dataset
+      referralCodeChart.data.datasets.push({
+        label: `Code: ${code}`,
+        data: barData,
+        backgroundColor: colors[index % colors.length],
+        borderColor: colors[index % colors.length].replace('0.5', '1'),
+        borderWidth: 1,
+        type: 'bar'
+      });
+      
+      // Add line dataset for moving average
+      referralCodeChart.data.datasets.push({
+        label: `${code} - 7-Day Avg`,
+        data: avgData,
+        borderColor: lineColors[index % lineColors.length],
+        backgroundColor: lineColors[index % lineColors.length].replace('1', '0.2'),
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        type: 'line'
+      });
+    });
+
+    // Update the chart
+    referralCodeChart.update();
+  }
   
   // Show error message
   function showError(message) {
     // You can implement a toast notification here
     console.error(message);
   }
+  
+  // Show toast notification
+  function showToast(message, type = 'info') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'toast-container';
+      toastContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+      document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show`;
+    toast.style.cssText = 'min-width: 300px; margin-bottom: 10px;';
+    toast.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 5000);
+  }
+
+  // Initialize charts on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeReferralCodeChart();
+  });
+  
+
 </script>
 {% endblock %}
 <!-- touch -->
