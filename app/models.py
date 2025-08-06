@@ -154,6 +154,7 @@ class Retailer(db.Model):
         machine_count (int): Number of machines at the retailer.
         previous_count (int): Previous machine count.
         status (str): Current status.
+        enabled (bool): Whether the retailer is enabled (default: True).
     """
     __tablename__ = "retailers"
     id = db.Column(db.Integer, primary_key=True)
@@ -172,6 +173,7 @@ class Retailer(db.Model):
     machine_count = db.Column(db.Integer, default=0)
     previous_count = db.Column(db.Integer, default=0)
     status = db.Column(db.String(100))
+    enabled = db.Column(db.Boolean, default=True)
 
 
 class Role(db.Model, RoleMixin):

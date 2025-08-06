@@ -4,11 +4,19 @@
 .swal2-route-planner {
     padding: 0 !important;
     background: #fff;
+    /* Prevent layout shifts */
+    transform: none !important;
+    transition: none !important;
 }
 
 .swal2-route-planner .swal2-popup {
     padding: 0 !important;
-    width: min(95vw, 400px) !important;
+    width: 500px !important;
+    max-width: 95vw !important;
+    /* Prevent layout shifts and animations */
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
 }
 
 .swal2-route-planner .swal2-title {
@@ -153,7 +161,7 @@
 /* Filter Toggles */
 .route-filter-toggles {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.35rem;
 }
 
@@ -265,15 +273,23 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .swal2-route-planner {
-        width: 95% !important;
+    .swal2-route-planner .swal2-popup {
+        width: 95vw !important;
+        max-width: 95vw !important;
         margin: 0.5rem !important;
     }
 
-    .route-planner-landscape {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 1rem;
+    .route-filter-toggles {
+        gap: 0.25rem;
+    }
+
+    .route-filter-toggle {
+        font-size: 0.65rem;
+        padding: 0.25rem;
+    }
+
+    .route-filter-toggle i {
+        font-size: 0.7rem;
     }
 
     .route-planner-header h3 {
@@ -290,21 +306,26 @@
     }
 }
 
-/* Orientation Detection */
-@media (orientation: landscape) and (min-width: 769px) {
-    .route-planner-portrait {
-        display: none;
-    }
-    .route-planner-landscape {
-        display: grid;
-    }
+/* Ensure filter toggles always stay in one row */
+.route-filter-toggles {
+    min-width: 0;
 }
 
-@media (orientation: portrait), (max-width: 768px) {
-    .route-planner-landscape {
-        display: none;
-    }
-    .route-planner-portrait {
-        display: flex;
-    }
+.route-filter-toggle {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Prevent SweetAlert2 animations that might cause flickering */
+.swal2-route-planner .swal2-popup {
+    animation: none !important;
+}
+
+.swal2-route-planner .swal2-backdrop-show {
+    animation: none !important;
+}
+
+.swal2-route-planner .swal2-show {
+    animation: none !important;
 }

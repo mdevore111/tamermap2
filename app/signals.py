@@ -7,6 +7,7 @@ from flask_security.signals import user_registered
 
 from .models import LoginEvent
 from .utils import trial_period
+from .session_middleware import link_session_to_user
 
 
 def register_signals(app, user_datastore, db):
@@ -35,6 +36,7 @@ def register_signals(app, user_datastore, db):
           2. Increments the 'login_count' field.
           3. Creates a new LoginEvent entry recording the login timestamp,
              the user's IP address, and the user agent.
+          4. Links the current session ID to the user account for funnel tracking.
 
         Args:
             sender: The sender of the signal (usually the Flask app).
@@ -60,6 +62,10 @@ def register_signals(app, user_datastore, db):
             user_agent=user_agent
         )
 
+        # Link the current session ID to the user account for funnel tracking
+        if 'visitor_session_id' in session:
+            link_session_to_user(session['visitor_session_id'], user.id)
+
         db.session.add(user)
         db.session.add(event)
         db.session.commit()
@@ -81,3 +87,20 @@ def register_signals(app, user_datastore, db):
 
     # Connect the signal listener to the user_logged_in signal
     user_logged_in.connect(on_user_logged_in)
+
+    @user_registered.connect_via(app)
+    def on_user_registered(sender, user, **extra):
+        """
+        Signal listener for when a user registers.
+
+        This function is triggered after a user successfully registers. It links
+        the current session ID to the user account for funnel tracking.
+
+        Args:
+            sender: The sender of the signal (usually the Flask app).
+            user (User): The user who has just registered.
+            **extra: Additional keyword arguments passed by the signal.
+        """
+        # Link the current session ID to the user account for funnel tracking
+        if 'visitor_session_id' in session:
+            link_session_to_user(session['visitor_session_id'], user.id)

@@ -78,3 +78,6 @@ export function isOpenNow(openingHours) {
   }
   return false;
 }
+
+// Make isOpenNow available globally for the route planner
+window.isOpenNow = isOpenNow;

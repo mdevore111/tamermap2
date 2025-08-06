@@ -67,9 +67,14 @@
                     <div class="row mb-4">
                         <div class="col-md-8">
                             <div class="card">
-                                <div class="card-header">
-                                    <h5 class="card-title">User Journey Funnel</h5>
-                                </div>
+                                                            <div class="card-header">
+                                <h5 class="card-title">User Journey Funnel</h5>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Entry counts unique visitors (sessions), not total visits. 
+                                    <a href="#" onclick="showFunnelInfo()" class="text-primary">Learn more</a>
+                                </small>
+                            </div>
                                 <div class="card-body">
                                     <canvas id="funnelChart" height="300"></canvas>
                                 </div>
@@ -133,8 +138,9 @@ let currentTimeRange = {{ days }};
 
 function setTimeRange(days) {
     currentTimeRange = days;
-    $('.btn-group .btn').removeClass('active');
-    $(event.target).addClass('active');
+    // Use vanilla JavaScript instead of jQuery
+    document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
     loadCharts();
 }
 
@@ -145,103 +151,170 @@ function loadCharts() {
 }
 
 function loadFunnelChart() {
+    console.log('Loading funnel chart...');
     fetch(`/admin/api/analytics/referral-funnel/{{ ref_code }}?days=${currentTimeRange}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Funnel response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Funnel data:', data);
             if (data.success) {
                 createFunnelChart(data.data);
+            } else {
+                console.error('Funnel API error:', data.error);
             }
         })
         .catch(error => console.error('Error loading funnel data:', error));
 }
 
 function loadHourlyChart() {
+    console.log('Loading hourly chart...');
     fetch(`/admin/api/analytics/referral-time/{{ ref_code }}?days=${currentTimeRange}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Hourly response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Hourly data:', data);
             if (data.success) {
                 createHourlyChart(data.data.hourly);
+            } else {
+                console.error('Hourly API error:', data.error);
             }
         })
         .catch(error => console.error('Error loading hourly data:', error));
 }
 
 function loadDeviceChart() {
+    console.log('Loading device chart...');
     fetch(`/admin/api/analytics/referral-devices/{{ ref_code }}?days=${currentTimeRange}`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Device response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Device data:', data);
             if (data.success) {
                 createDeviceChart(data.data);
+            } else {
+                console.error('Device API error:', data.error);
             }
         })
         .catch(error => console.error('Error loading device data:', error));
 }
 
 function createFunnelChart(funnelData) {
-    const ctx = document.getElementById('funnelChart').getContext('2d');
+    console.log('Creating funnel chart with data:', funnelData);
+    const canvas = document.getElementById('funnelChart');
+    if (!canvas) {
+        console.error('Funnel chart canvas not found');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
     
-    if (window.funnelChart) {
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    
+    // Destroy existing chart if it exists and has destroy method
+    if (window.funnelChart && typeof window.funnelChart.destroy === 'function') {
         window.funnelChart.destroy();
     }
     
     const labels = funnelData.map(item => {
         const stepNames = {
             'entry': 'Entry',
-            'first_page': 'First Page',
-            'maps_page': 'Maps Page',
-            'search_page': 'Search Page',
-            'pin_interaction': 'Pin Interaction',
-            'signup': 'Signup',
-            'pro_upgrade': 'Pro Upgrade'
+            'learn_page': 'Learn Page',
+            'stripe_click': 'Stripe Click',
+            'checkout_started': 'Checkout Started',
+            'form_completed': 'Form Completed',
+            'pro_user': 'Pro User'
         };
         return stepNames[item.step] || item.step;
     });
     
+    // Define tooltips for each step
+    const stepTooltips = {
+        'entry': 'Unique visitors who scanned the QR code or clicked a link with this referral code. This counts each person only once, even if they visit multiple times.',
+        'learn_page': 'Visitors who viewed the /learn page where the Pro subscription options are displayed.',
+        'stripe_click': 'Visitors who clicked one of the "Try Pro Now" buttons on the learn page.',
+        'checkout_started': 'Visitors who initiated the Stripe checkout process by clicking "Try Pro Now" (calls /payment/create-checkout-session).',
+        'form_completed': 'Visitors who successfully completed the Stripe payment form (includes both successful and failed payments).',
+        'pro_user': 'Visitors who currently have an active Pro subscription (successful payment + active subscription).'
+    };
+    
     const data = funnelData.map(item => item.count);
     const percentages = funnelData.map(item => item.percentage);
     
-    window.funnelChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Users',
-                data: data,
-                backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Users'
-                    }
-                }
+    try {
+        window.funnelChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Users',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
             },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        afterLabel: function(context) {
-                            const index = context.dataIndex;
-                            return `Conversion: ${percentages[index]}%`;
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Users'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const index = context.dataIndex;
+                                const step = funnelData[index].step;
+                                const tooltip = stepTooltips[step] || '';
+                                return [
+                                    `Conversion: ${percentages[index]}%`,
+                                    '',
+                                    tooltip
+                                ];
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+        console.log('Funnel chart created successfully');
+    } catch (error) {
+        console.error('Error creating funnel chart:', error);
+    }
 }
 
 function createHourlyChart(hourlyData) {
-    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    console.log('Creating hourly chart with data:', hourlyData);
+    const canvas = document.getElementById('hourlyChart');
+    if (!canvas) {
+        console.error('Hourly chart canvas not found');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
     
-    if (window.hourlyChart) {
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    
+    // Destroy existing chart if it exists and has destroy method
+    if (window.hourlyChart && typeof window.hourlyChart.destroy === 'function') {
         window.hourlyChart.destroy();
     }
     
@@ -251,44 +324,62 @@ function createHourlyChart(hourlyData) {
         return data ? data.visits : 0;
     });
     
-    window.hourlyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: hours.map(h => `${h}:00`),
-            datasets: [{
-                label: 'Visits',
-                data: visits,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Visits'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Hour of Day'
+    try {
+        window.hourlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours.map(h => `${h}:00`),
+                datasets: [{
+                    label: 'Visits',
+                    data: visits,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Visits'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hour of Day'
+                        }
                     }
                 }
             }
-        }
-    });
+        });
+        console.log('Hourly chart created successfully');
+    } catch (error) {
+        console.error('Error creating hourly chart:', error);
+    }
 }
 
 function createDeviceChart(deviceData) {
-    const ctx = document.getElementById('deviceChart').getContext('2d');
+    console.log('Creating device chart with data:', deviceData);
+    const canvas = document.getElementById('deviceChart');
+    if (!canvas) {
+        console.error('Device chart canvas not found');
+        return;
+    }
+    const ctx = canvas.getContext('2d');
     
-    if (window.deviceChart) {
+    // Check if Chart.js is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded');
+        return;
+    }
+    
+    // Destroy existing chart if it exists and has destroy method
+    if (window.deviceChart && typeof window.deviceChart.destroy === 'function') {
         window.deviceChart.destroy();
     }
     
@@ -296,42 +387,98 @@ function createDeviceChart(deviceData) {
     const data = deviceData.map(item => item.visits);
     const colors = ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 205, 86, 0.8)'];
     
-    window.deviceChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors,
-                borderWidth: 2,
-                borderColor: '#fff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+    try {
+        window.deviceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+        console.log('Device chart created successfully');
+    } catch (error) {
+        console.error('Error creating device chart:', error);
+    }
 }
 
 // Load charts on page load
-$(document).ready(function() {
-    loadCharts();
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded, waiting...');
+        setTimeout(function() {
+            if (typeof Chart !== 'undefined') {
+                console.log('Chart.js loaded, creating charts...');
+                loadCharts();
+            } else {
+                console.error('Chart.js still not available after retry');
+            }
+        }, 500);
+    } else {
+        console.log('Chart.js available, creating charts...');
+        loadCharts();
+    }
 });
+
+function showFunnelInfo() {
+    const info = `
+        <h6>Understanding the Funnel Data</h6>
+        <p><strong>QR Code Visits (161) vs Funnel Entry (33):</strong></p>
+        <ul>
+            <li><strong>QR Code Visits:</strong> Total number of page loads with this referral code (includes repeat visits)</li>
+            <li><strong>Funnel Entry:</strong> Unique visitors who used this referral code (counts each person only once)</li>
+        </ul>
+        <p><strong>Why the difference?</strong></p>
+        <ul>
+            <li>Some visits (90) don't have session tracking (older data)</li>
+            <li>Many visitors return multiple times (same session, multiple visits)</li>
+            <li>Funnel tracks unique people, not total page loads</li>
+        </ul>
+        <p><strong>Funnel Steps:</strong></p>
+        <ul>
+            <li><strong>Entry:</strong> Unique visitors from this referral code</li>
+            <li><strong>Learn Page:</strong> Viewed the Pro subscription page</li>
+            <li><strong>Checkout Started:</strong> Clicked "Try Pro Now" button</li>
+            <li><strong>Form Completed:</strong> Finished the Stripe payment form</li>
+            <li><strong>Pro User:</strong> Currently has an active Pro subscription</li>
+        </ul>
+    `;
+    
+    // Use SweetAlert2 if available, otherwise use alert
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Funnel Information',
+            html: info,
+            width: '600px',
+            confirmButtonText: 'Got it!'
+        });
+    } else {
+        alert(info.replace(/<[^>]*>/g, ''));
+    }
+}
 </script>
 
 <style>

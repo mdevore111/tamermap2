@@ -7,11 +7,13 @@ import { ENDPOINTS } from './config.js';
 const CACHE_CONFIG = {
   RETAILERS: {
     MEMORY_TTL: 5 * 60 * 1000, // 5 minutes in ms
-    LS_KEY: 'tamermap_retailers_cache'
+    LS_KEY: 'tamermap_retailers_cache',
+    VERSION: '1.0.0' // Cache version for invalidation
   },
   EVENTS: {
     MEMORY_TTL: 2 * 60 * 1000, // 2 minutes in ms
-    LS_KEY: 'tamermap_events_cache'
+    LS_KEY: 'tamermap_events_cache',
+    VERSION: '1.0.0' // Cache version for invalidation
   }
 };
 
@@ -38,12 +40,14 @@ function isCacheValid(cacheEntry, ttl) {
  * Save data to localStorage
  * @param {string} key The localStorage key
  * @param {Object} data The data to cache
+ * @param {string} version The cache version
  */
-function saveToLocalStorage(key, data) {
+function saveToLocalStorage(key, data, version = '1.0.0') {
   try {
     const cacheEntry = {
       timestamp: Date.now(),
-      data: data
+      data: data,
+      version: version
     };
     localStorage.setItem(key, JSON.stringify(cacheEntry));
   } catch (error) {
@@ -55,14 +59,22 @@ function saveToLocalStorage(key, data) {
  * Load data from localStorage
  * @param {string} key The localStorage key
  * @param {number} ttl Time-to-live in milliseconds
+ * @param {string} expectedVersion The expected cache version
  * @returns {Array|null} The cached data or null if invalid/expired
  */
-function loadFromLocalStorage(key, ttl) {
+function loadFromLocalStorage(key, ttl, expectedVersion = '1.0.0') {
   try {
     const cachedData = localStorage.getItem(key);
     if (!cachedData) return null;
     
     const cacheEntry = JSON.parse(cachedData);
+    
+    // Check if cache version matches
+    if (cacheEntry.version !== expectedVersion) {
+      console.log(`Cache version mismatch for ${key}: expected ${expectedVersion}, got ${cacheEntry.version}`);
+      return null;
+    }
+    
     return isCacheValid(cacheEntry, ttl) ? cacheEntry.data : null;
   } catch (error) {
     return null;
@@ -83,7 +95,11 @@ export async function fetchRetailers(forceRefresh = false) {
   
   // Then check localStorage cache if not forcing refresh
   if (!forceRefresh) {
-    const localData = loadFromLocalStorage(CACHE_CONFIG.RETAILERS.LS_KEY, CACHE_CONFIG.RETAILERS.MEMORY_TTL);
+    const localData = loadFromLocalStorage(
+      CACHE_CONFIG.RETAILERS.LS_KEY, 
+      CACHE_CONFIG.RETAILERS.MEMORY_TTL,
+      CACHE_CONFIG.RETAILERS.VERSION
+    );
     if (localData) {
       // Update memory cache
       memoryCache.retailers = {
@@ -109,7 +125,7 @@ export async function fetchRetailers(forceRefresh = false) {
       data: data
     };
     
-    saveToLocalStorage(CACHE_CONFIG.RETAILERS.LS_KEY, data);
+    saveToLocalStorage(CACHE_CONFIG.RETAILERS.LS_KEY, data, CACHE_CONFIG.RETAILERS.VERSION);
     
     return data;
   } catch (error) {
@@ -132,7 +148,11 @@ export async function fetchEvents(forceRefresh = false) {
   
   // Then check localStorage cache if not forcing refresh
   if (!forceRefresh) {
-    const localData = loadFromLocalStorage(CACHE_CONFIG.EVENTS.LS_KEY, CACHE_CONFIG.EVENTS.MEMORY_TTL);
+    const localData = loadFromLocalStorage(
+      CACHE_CONFIG.EVENTS.LS_KEY, 
+      CACHE_CONFIG.EVENTS.MEMORY_TTL,
+      CACHE_CONFIG.EVENTS.VERSION
+    );
     if (localData) {
       // Update memory cache
       memoryCache.events = {
@@ -158,7 +178,7 @@ export async function fetchEvents(forceRefresh = false) {
       data: data
     };
     
-    saveToLocalStorage(CACHE_CONFIG.EVENTS.LS_KEY, data);
+    saveToLocalStorage(CACHE_CONFIG.EVENTS.LS_KEY, data, CACHE_CONFIG.EVENTS.VERSION);
     
     return data;
   } catch (error) {

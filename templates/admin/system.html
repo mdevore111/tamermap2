@@ -1,0 +1,504 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<div class="container-fluid">
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">System Management</h1>
+    <div class="d-flex">
+      <span class="badge badge-primary">System Overview</span>
+    </div>
+  </div>
+
+  <!-- Cache Management Section -->
+  <div class="dashboard-section my-4">
+    <h3 class="dashboard-header">Cache Management</h3>
+    <hr>
+    <div class="row">
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-secondary shadow h-100 py-2">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                  Clear All Caches
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="clearAllCaches(event)">
+                    Clear Caches <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+                <small class="text-muted">Clears all client-side caches and reloads page</small>
+              </div>
+              <div class="col-auto">
+                <i class="fas fa-broom fa-2x text-gray-300"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                  Debug Cache
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="debugCache(event)">
+                    Show Stats <i class="fas fa-search"></i>
+                  </button>
+                </div>
+                <small class="text-muted">Shows cache statistics in browser console</small>
+              </div>
+              <div class="col-auto">
+                <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                  Route Planner Cache
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <button type="button" class="btn btn-link p-0 text-decoration-none" onclick="clearRoutePlannerCache(event)">
+                    Clear Route Cache <i class="fas fa-route"></i>
+                  </button>
+                </div>
+                <small class="text-muted">Clears route planner specific caches</small>
+              </div>
+              <div class="col-auto">
+                <i class="fas fa-map-marked-alt fa-2x text-gray-300"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+          <div class="card-body">
+            <div class="row no-gutters align-items-center">
+              <div class="col mr-2">
+                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                  Cache Status
+                </div>
+                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                  <span id="cache-status">Loading...</span>
+                </div>
+                <small class="text-muted">Current cache state</small>
+              </div>
+              <div class="col-auto">
+                <i class="fas fa-info-circle fa-2x text-gray-300"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Resource Monitoring Section -->
+  <div class="dashboard-section my-4">
+    <h3 class="dashboard-header">System Resource Monitoring</h3>
+    <hr>
+    <div class="row text-center">
+      <div class="col-12 col-sm-4 mb-3">
+        <h5>CPU Usage: <span id="cpu-usage">{{ system_stats.cpu }}%</span></h5>
+        <div class="progress" style="height: 1.5rem;">
+          <div class="progress-bar" id="cpu-progress" 
+               role="progressbar" style="width: {{ system_stats.cpu }}%;"
+               aria-valuenow="{{ system_stats.cpu }}" aria-valuemin="0" aria-valuemax="100">
+          </div>
+        </div>
+        <small class="text-muted">Last updated: <span id="cpu-updated">Now</span></small>
+      </div>
+      <div class="col-12 col-sm-4 mb-3">
+        <h5>Memory Usage: <span id="memory-usage">{{ system_stats.memory }}%</span> (<span id="memory-details">{{ system_stats.memory_used }}GB / {{ system_stats.memory_total }}GB</span>)</h5>
+        <div class="progress" style="height: 1.5rem;">
+          <div class="progress-bar" id="memory-progress"
+               role="progressbar" style="width: {{ system_stats.memory }}%;"
+               aria-valuenow="{{ system_stats.memory }}" aria-valuemin="0" aria-valuemax="100">
+          </div>
+        </div>
+        <small class="text-muted">Last updated: <span id="memory-updated">Now</span></small>
+      </div>
+      <div class="col-12 col-sm-4 mb-3">
+        <h5>Disk Usage: <span id="disk-usage">{{ system_stats.disk }}%</span> (<span id="disk-details">{{ system_stats.disk_used }}GB / {{ system_stats.disk_total }}GB</span>)</h5>
+        <div class="progress" style="height: 1.5rem;">
+          <div class="progress-bar" id="disk-progress"
+               role="progressbar" style="width: {{ system_stats.disk }}%;"
+               aria-valuenow="{{ system_stats.disk }}" aria-valuemin="0" aria-valuemax="100">
+          </div>
+        </div>
+        <small class="text-muted">Last updated: <span id="disk-updated">Now</span></small>
+      </div>
+    </div>
+    
+    <!-- Real-time monitoring controls -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Real-time Monitoring</h5>
+          </div>
+          <div class="card-body">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="auto-refresh-toggle">
+              <label class="form-check-label" for="auto-refresh-toggle">
+                Enable auto-refresh (every 30 seconds)
+              </label>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm mt-2" onclick="refreshSystemStats()">
+              <i class="fas fa-sync-alt"></i> Refresh Now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Logs Section -->
+  <div class="dashboard-section my-4">
+    <h3 class="dashboard-header">System Logs</h3>
+    <hr>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Recent System Logs</h5>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i>
+              System logs functionality will be implemented in a future update.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Section -->
+  <div class="dashboard-section my-4">
+    <h3 class="dashboard-header">Performance Metrics</h3>
+    <hr>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Application Performance</h5>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i>
+              Performance metrics functionality will be implemented in a future update.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.progress-bar {
+  transition: width 0.6s ease;
+}
+
+.progress-bar.bg-success {
+  background-color: #28a745 !important;
+}
+
+.progress-bar.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.progress-bar.bg-danger {
+  background-color: #dc3545 !important;
+}
+</style>
+
+<script>
+// Show toast notification
+function showToast(message, type = 'info') {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+    document.body.appendChild(toastContainer);
+  }
+  
+  const toast = document.createElement('div');
+  toast.className = `alert alert-${type} alert-dismissible fade show`;
+  toast.style.cssText = 'min-width: 300px; margin-bottom: 10px;';
+  toast.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  toastContainer.appendChild(toast);
+  
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.remove();
+    }
+  }, 5000);
+}
+
+// Cache Management Functions
+function clearAllCaches(event) {
+  console.log('🧹 Clearing all caches...');
+  
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+  button.disabled = true;
+    
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  if (window.dataService && window.dataService.cache) {
+    window.dataService.cache.clear();
+  }
+  
+  if (window.markerManager && window.markerManager.markerCache) {
+    window.markerManager.markerCache.clear();
+  }
+  
+  if (window.allMarkers) {
+    window.allMarkers.length = 0;
+  }
+  if (window.heatmapData) {
+    window.heatmapData = null;
+  }
+  
+  if (window.cacheManager) {
+    window.cacheManager.clearAllCaches();
+  }
+  
+  console.log('✅ All caches cleared');
+  
+  button.innerHTML = '<i class="fas fa-check"></i> Cleared!';
+  setTimeout(() => {
+    window.location.reload();
+  }, 1000);
+}
+
+function debugCache(event) {
+  console.log('🔍 Debugging cache state...');
+  
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+  button.disabled = true;
+  
+  let stats = {
+    localStorage: Object.keys(localStorage).length,
+    sessionStorage: Object.keys(sessionStorage).length,
+    dataService: window.dataService ? window.dataService.cache.size : 'not available',
+    markerManager: window.markerManager ? window.markerManager.markerCache.size : 'not available',
+    allMarkers: window.allMarkers ? window.allMarkers.length : 'not available',
+    heatmapData: window.heatmapData ? 'available' : 'not available'
+  };
+  
+  if (window.cacheManager) {
+    const cacheManagerStats = window.cacheManager.getCacheStats();
+    stats = { ...stats, ...cacheManagerStats };
+  }
+  
+  console.log('📊 Cache Statistics:', stats);
+  
+  updateCacheStatus(stats);
+  
+  button.innerHTML = '<i class="fas fa-check"></i> Done!';
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.disabled = false;
+  }, 2000);
+  
+  showToast('Cache analysis complete! Check browser console for details.', 'info');
+}
+
+function clearRoutePlannerCache(event) {
+  console.log('🧹 Clearing route planner caches...');
+  
+  const button = event.target;
+  const originalText = button.innerHTML;
+  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+  button.disabled = true;
+    
+  if (window.routePlanner) {
+    window.routePlanner.selectedLocations = [];
+    window.routePlanner.previewPins = [];
+  }
+  
+  if (window.cacheManager) {
+    window.cacheManager.clearAllCaches();
+  }
+  
+  console.log('✅ Route planner caches cleared');
+  
+  button.innerHTML = '<i class="fas fa-check"></i> Cleared!';
+  setTimeout(() => {
+    button.innerHTML = originalText;
+    button.disabled = false;
+  }, 2000);
+  
+  showToast('Route planner caches cleared successfully!', 'success');
+  
+  setTimeout(() => {
+    debugCache();
+  }, 500);
+}
+
+function updateCacheStatus(stats) {
+  const statusElement = document.getElementById('cache-status');
+  if (statusElement) {
+    const totalItems = stats.localStorage + stats.sessionStorage + 
+                      (typeof stats.dataService === 'number' ? stats.dataService : 0) +
+                      (typeof stats.markerManager === 'number' ? stats.markerManager : 0);
+    
+    if (totalItems > 0) {
+      statusElement.textContent = `${totalItems} items`;
+      statusElement.className = 'text-success';
+    } else {
+      statusElement.textContent = 'Empty';
+      statusElement.className = 'text-muted';
+    }
+  }
+}
+
+// System Resource Functions
+function refreshSystemStats() {
+  fetch('/admin/api/system/stats')
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        updateSystemStats(data.data);
+        showToast('System stats updated successfully!', 'success');
+      } else {
+        showToast('Failed to update system stats', 'danger');
+      }
+    })
+    .catch(error => {
+      console.error('Error updating system stats:', error);
+      showToast('Error updating system stats', 'danger');
+    });
+}
+
+function updateSystemStats(stats) {
+  // Update CPU
+  const cpuUsage = document.getElementById('cpu-usage');
+  const cpuProgress = document.getElementById('cpu-progress');
+  const cpuUpdated = document.getElementById('cpu-updated');
+  
+  cpuUsage.textContent = `${stats.cpu}%`;
+  cpuProgress.style.width = `${stats.cpu}%`;
+  cpuProgress.setAttribute('aria-valuenow', stats.cpu);
+  cpuUpdated.textContent = new Date().toLocaleTimeString();
+  
+  // Update progress bar color
+  if (stats.cpu < 50) {
+    cpuProgress.className = 'progress-bar bg-success';
+  } else if (stats.cpu < 75) {
+    cpuProgress.className = 'progress-bar bg-warning';
+  } else {
+    cpuProgress.className = 'progress-bar bg-danger';
+  }
+  
+  // Update Memory
+  const memoryUsage = document.getElementById('memory-usage');
+  const memoryDetails = document.getElementById('memory-details');
+  const memoryProgress = document.getElementById('memory-progress');
+  const memoryUpdated = document.getElementById('memory-updated');
+  
+  memoryUsage.textContent = `${stats.memory}%`;
+  memoryDetails.textContent = `${stats.memory_used}GB / ${stats.memory_total}GB`;
+  memoryProgress.style.width = `${stats.memory}%`;
+  memoryProgress.setAttribute('aria-valuenow', stats.memory);
+  memoryUpdated.textContent = new Date().toLocaleTimeString();
+  
+  if (stats.memory < 50) {
+    memoryProgress.className = 'progress-bar bg-success';
+  } else if (stats.memory < 75) {
+    memoryProgress.className = 'progress-bar bg-warning';
+  } else {
+    memoryProgress.className = 'progress-bar bg-danger';
+  }
+  
+  // Update Disk
+  const diskUsage = document.getElementById('disk-usage');
+  const diskDetails = document.getElementById('disk-details');
+  const diskProgress = document.getElementById('disk-progress');
+  const diskUpdated = document.getElementById('disk-updated');
+  
+  diskUsage.textContent = `${stats.disk}%`;
+  diskDetails.textContent = `${stats.disk_used}GB / ${stats.disk_total}GB`;
+  diskProgress.style.width = `${stats.disk}%`;
+  diskProgress.setAttribute('aria-valuenow', stats.disk);
+  diskUpdated.textContent = new Date().toLocaleTimeString();
+  
+  if (stats.disk < 50) {
+    diskProgress.className = 'progress-bar bg-success';
+  } else if (stats.disk < 75) {
+    diskProgress.className = 'progress-bar bg-warning';
+  } else {
+    diskProgress.className = 'progress-bar bg-danger';
+  }
+}
+
+// Auto-refresh functionality
+let autoRefreshInterval = null;
+
+document.getElementById('auto-refresh-toggle').addEventListener('change', function() {
+  if (this.checked) {
+    autoRefreshInterval = setInterval(refreshSystemStats, 30000); // 30 seconds
+    showToast('Auto-refresh enabled (30s intervals)', 'success');
+  } else {
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+      autoRefreshInterval = null;
+    }
+    showToast('Auto-refresh disabled', 'info');
+  }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize cache status
+  setTimeout(() => {
+    debugCache({ target: document.querySelector('[onclick*="debugCache"]') });
+  }, 1000);
+  
+  // Set initial progress bar colors
+  const cpuProgress = document.getElementById('cpu-progress');
+  const memoryProgress = document.getElementById('memory-progress');
+  const diskProgress = document.getElementById('disk-progress');
+  
+  const cpuValue = parseInt(cpuProgress.getAttribute('aria-valuenow'));
+  const memoryValue = parseInt(memoryProgress.getAttribute('aria-valuenow'));
+  const diskValue = parseInt(diskProgress.getAttribute('aria-valuenow'));
+  
+  if (cpuValue < 50) cpuProgress.classList.add('bg-success');
+  else if (cpuValue < 75) cpuProgress.classList.add('bg-warning');
+  else cpuProgress.classList.add('bg-danger');
+  
+  if (memoryValue < 50) memoryProgress.classList.add('bg-success');
+  else if (memoryValue < 75) memoryProgress.classList.add('bg-warning');
+  else memoryProgress.classList.add('bg-danger');
+  
+  if (diskValue < 50) diskProgress.classList.add('bg-success');
+  else if (diskValue < 75) diskProgress.classList.add('bg-warning');
+  else diskProgress.classList.add('bg-danger');
+});
+</script>
+{% endblock %} 
