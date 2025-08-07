@@ -57,12 +57,12 @@
                             Compress PDF
                         </label>
                     </div>
-                    <div class="form-check disabled" id="signatureOption" style="opacity: .5; pointer-events: none;">
-                        <input class="form-check-input" type="checkbox" id="addSignature" name="add_signature">
-                        <label class="form-check-label" for="addSignature" style="cursor: not-allowed;">
-                            Add Signature
-                        </label>
-                    </div>
+                                         <div class="form-check disabled" id="signatureOption" style="opacity: .5; pointer-events: none;">
+                         <input class="form-check-input" type="checkbox" id="addSignature" name="add_signature" unchecked>
+                         <label class="form-check-label" for="addSignature" style="cursor: not-allowed;">
+                             Add Signature
+                         </label>
+                     </div>
 
                     <div id="compressionStats" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 15px; border-radius: 8px; margin-top: 15px; display: none;">
                         <h6>Compression Results</h6>
@@ -70,19 +70,31 @@
                     </div>
 
                     <div id="signatureSection" style="background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-top: 15px; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <h5>Signature</h5>
+                        <h5>Signature Options</h5>
                         
-                        <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-size: 14px; color: #6c757d; margin-bottom: 10px;">Signature Type</div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="signatureType" id="drawnSignature" value="drawn" checked>
+                                <label class="form-check-label" for="drawnSignature">Draw Signature</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="signatureType" id="typedSignature" value="typed">
+                                <label class="form-check-label" for="typedSignature">Type Signature</label>
+                            </div>
+                        </div>
+                        
+                        <div id="drawnSignatureSection" style="text-align: center; margin-bottom: 20px;">
                             <h6>Draw your signature</h6>
                             <canvas id="signatureCanvas" width="300" height="150" style="border: 2px solid #dee2e6; border-radius: 8px; cursor: crosshair; background: white;"></canvas>
                             
-                            <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
                                 <button type="button" id="clearSignature" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; background: #dc3545; color: #fff;">Clear</button>
                                 <button type="button" id="undoSignature" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; background: #ffc107; color: #212529;">Undo</button>
                             </div>
                         </div>
 
-                        <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div id="typedSignatureSection" style="margin-bottom: 20px; display: none;">
                             <h6>Type your name</h6>
                             
                             <select id="fontSelect" class="form-control mb-3" style="width: 100%; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px;">
@@ -106,6 +118,12 @@
                             <input type="range" id="signatureSize" style="width: 100%; margin: 10px 0;" min="0.5" max="2" step="0.1" value="1">
                             <small class="text-muted">Scale: <span id="sizeValue">1.0</span>x</small>
                         </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <button type="button" id="addSignatureBox" style="width: 100%; padding: 10px; background: #28a745; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">
+                                <i class="fas fa-plus"></i> Add Signature Box
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary" id="processBtn" disabled style="width: 100%; padding: 15px; font-size: 16px; font-weight: 600; border-radius: 8px; margin-top: 20px;">
@@ -128,13 +146,18 @@ let canvas, ctx;
 let currentPage = 1;
 let totalPages = 1;
 let pdfDocument = null;
-let signatureOverlay = null;
+let signatureOverlays = [];
+let selectedFile = null;
+let signatureBoxCounter = 0;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initializeCanvas();
     setupEventListeners();
     setupFontSelection();
+    
+    // Restore state from session storage
+    restoreStateFromSession();
 });
 
 function initializeCanvas() {
@@ -224,6 +247,8 @@ function stopDrawing() {
         if (currentPath.length > 0) {
             signatureData.push([...currentPath]);
             signatureHistory.push([...currentPath]);
+            updateAllSignatureOverlays();
+            saveStateToSession();
         }
     }
 }
@@ -266,24 +291,85 @@ function setupEventListeners() {
             handleFileSelect(e.target.files[0]);
         }
     });
+    
+    // Compress checkbox
+    document.getElementById('compress').addEventListener('change', saveStateToSession);
 
     // Signature controls
     addSignatureCheckbox.addEventListener('change', () => {
         signatureSection.style.display = addSignatureCheckbox.checked ? 'block' : 'none';
-        if (addSignatureCheckbox.checked && signatureOverlay) {
+        if (addSignatureCheckbox.checked) {
             createSignatureOverlay();
-        } else if (signatureOverlay) {
-            signatureOverlay.remove();
-            signatureOverlay = null;
+        } else {
+            clearAllSignatureOverlays();
         }
+        saveStateToSession();
+    });
+    
+    // Signature type selection
+    document.getElementById('drawnSignature').addEventListener('change', function() {
+        console.log('Switching to drawn signature');
+        document.getElementById('drawnSignatureSection').style.display = 'block';
+        document.getElementById('typedSignatureSection').style.display = 'none';
+        updateAllSignatureOverlays();
+        saveStateToSession();
+    });
+    
+    document.getElementById('typedSignature').addEventListener('change', function() {
+        console.log('Switching to typed signature');
+        document.getElementById('drawnSignatureSection').style.display = 'none';
+        document.getElementById('typedSignatureSection').style.display = 'block';
+        updateAllSignatureOverlays();
+        saveStateToSession();
+    });
+    
+    // Also add click handlers as backup
+    document.getElementById('drawnSignature').addEventListener('click', function() {
+        console.log('Clicked drawn signature radio');
+        setTimeout(() => {
+            updateAllSignatureOverlays();
+            saveStateToSession();
+        }, 100);
+    });
+    
+    document.getElementById('typedSignature').addEventListener('click', function() {
+        console.log('Clicked typed signature radio');
+        setTimeout(() => {
+            updateAllSignatureOverlays();
+            saveStateToSession();
+        }, 100);
+    });
+    
+    // Add signature box button
+    document.getElementById('addSignatureBox').addEventListener('click', () => {
+        createSignatureOverlay();
+        saveStateToSession();
     });
 
-    clearBtn.addEventListener('click', clearCanvas);
-    undoBtn.addEventListener('click', undoSignature);
-    typeSignatureInput.addEventListener('input', updateTypeSignature);
-    signatureSize.addEventListener('input', updateSignatureSize);
-    prevPage.addEventListener('click', () => changePage(-1));
-    nextPage.addEventListener('click', () => changePage(1));
+    clearBtn.addEventListener('click', () => {
+        clearCanvas();
+        saveStateToSession();
+    });
+    undoBtn.addEventListener('click', () => {
+        undoSignature();
+        saveStateToSession();
+    });
+    typeSignatureInput.addEventListener('input', () => {
+        updateTypeSignature();
+        saveStateToSession();
+    });
+    signatureSize.addEventListener('input', () => {
+        updateSignatureSize();
+        saveStateToSession();
+    });
+    prevPage.addEventListener('click', () => {
+        changePage(-1);
+        saveStateToSession();
+    });
+    nextPage.addEventListener('click', () => {
+        changePage(1);
+        saveStateToSession();
+    });
 
     // Form submission
     form.addEventListener('submit', processForm);
@@ -294,6 +380,8 @@ function setupFontSelection() {
     fontSelect.addEventListener('change', () => {
         typeSignatureData.font = fontSelect.value;
         updateTypeSignature();
+        updateAllSignatureOverlays();
+        saveStateToSession();
     });
 }
 
@@ -303,6 +391,8 @@ function handleFileSelect(file) {
         return;
     }
 
+    selectedFile = file;
+    
     const dropZone = document.getElementById('dropZone');
     const dropContent = document.getElementById('dropContent');
     const processBtn = document.getElementById('processBtn');
@@ -324,6 +414,7 @@ function handleFileSelect(file) {
     processBtn.disabled = false;
     
     loadPdfPreview(file);
+    saveStateToSession();
 }
 
 function loadPdfPreview(file) {
@@ -396,7 +487,7 @@ function renderPage(pageNum) {
         
         page.render(renderContext).promise.then(function() {
             if (document.getElementById('addSignature').checked) {
-                createSignatureOverlay();
+                // Don't auto-create overlay, let user add manually
             }
         });
     }).catch(function(error) {
@@ -423,11 +514,10 @@ function changePage(delta) {
 }
 
 function createSignatureOverlay() {
-    if (signatureOverlay) {
-        signatureOverlay.remove();
-    }
+    signatureBoxCounter++;
     
-    signatureOverlay = document.createElement('div');
+    const signatureOverlay = document.createElement('div');
+    signatureOverlay.id = `signatureBox_${signatureBoxCounter}`;
     signatureOverlay.style.position = 'absolute';
     signatureOverlay.style.border = '2px dashed #007bff';
     signatureOverlay.style.background = 'rgba(0, 123, 255, 0.1)';
@@ -441,9 +531,18 @@ function createSignatureOverlay() {
     signatureOverlay.style.fontSize = '12px';
     signatureOverlay.style.fontWeight = '500';
     signatureOverlay.style.zIndex = '1000';
+    
+    // Get current signature preview
+    const signaturePreview = getCurrentSignaturePreview();
+    
     signatureOverlay.innerHTML = `
-        <div>Signature</div>
-        <div style="position: absolute; width: 8px; height: 8px; background: #007bff; border: 1px solid #fff; border-radius: 50%; cursor: se-resize; bottom: -4px; right: -4px; z-index: 1001;"></div>
+        <div style="position: relative; width: 100%; height: 100%; cursor: move;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 1;">
+                ${signaturePreview}
+            </div>
+            <div style="position: absolute; top: -8px; right: -8px; width: 16px; height: 16px; background: #dc3545; border: 1px solid #fff; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; z-index: 1002;" onclick="removeSignatureBox('${signatureOverlay.id}')">×</div>
+            <div style="position: absolute; width: 8px; height: 8px; background: #007bff; border: 1px solid #fff; border-radius: 50%; cursor: se-resize; bottom: -4px; right: -4px; z-index: 1001;"></div>
+        </div>
     `;
     
     const container = document.getElementById('pdfPreview');
@@ -456,6 +555,72 @@ function createSignatureOverlay() {
     
     makeDraggable(signatureOverlay);
     makeResizable(signatureOverlay);
+    
+    signatureOverlays.push(signatureOverlay);
+}
+
+function removeSignatureBox(boxId) {
+    const box = document.getElementById(boxId);
+    if (box) {
+        box.remove();
+        signatureOverlays = signatureOverlays.filter(overlay => overlay.id !== boxId);
+        saveStateToSession();
+    }
+}
+
+function clearAllSignatureOverlays() {
+    signatureOverlays.forEach(overlay => overlay.remove());
+    signatureOverlays = [];
+    saveStateToSession();
+}
+
+function getCurrentSignaturePreview() {
+    const signatureType = document.querySelector('input[name="signatureType"]:checked').value;
+    console.log('Current signature type:', signatureType);
+    console.log('Signature data length:', signatureData.length);
+    console.log('Type signature text:', typeSignatureData.text);
+    
+    if (signatureType === 'drawn') {
+        if (signatureData.length > 0) {
+            // Create a small canvas to show the drawn signature
+            const previewCanvas = document.createElement('canvas');
+            previewCanvas.width = 80;
+            previewCanvas.height = 40;
+            const previewCtx = previewCanvas.getContext('2d');
+            
+            // Set up the context
+            previewCtx.strokeStyle = '#000';
+            previewCtx.lineWidth = 1;
+            previewCtx.lineCap = 'round';
+            previewCtx.lineJoin = 'round';
+            
+            // Scale the signature to fit the preview
+            const scale = Math.min(80 / 300, 40 / 150);
+            previewCtx.scale(scale, scale);
+            
+            // Draw the signature
+            signatureData.forEach(path => {
+                if (path.length > 0) {
+                    previewCtx.beginPath();
+                    previewCtx.moveTo(path[0].x, path[0].y);
+                    path.forEach(point => {
+                        previewCtx.lineTo(point.x, point.y);
+                    });
+                    previewCtx.stroke();
+                }
+            });
+            
+            return `<img src="${previewCanvas.toDataURL()}" style="max-width: 100%; max-height: 100%; pointer-events: none;" />`;
+        } else {
+            return '<div style="color: #6c757d; font-size: 10px; pointer-events: none;">Draw signature</div>';
+        }
+    } else {
+        if (typeSignatureData.text) {
+            return `<span style="font-family: '${typeSignatureData.font}', cursive; font-size: 14px; color: #000; pointer-events: none;">${typeSignatureData.text}</span>`;
+        } else {
+            return '<div style="color: #6c757d; font-size: 10px; pointer-events: none;">Type signature</div>';
+        }
+    }
 }
 
 function makeDraggable(element) {
@@ -463,8 +628,26 @@ function makeDraggable(element) {
     let startX, startY, startLeft, startTop;
     
     element.addEventListener('mousedown', function(e) {
-        if (e.target.style.cursor === 'se-resize') return;
+        console.log('Mouse down on element:', e.target);
+        console.log('Target cursor:', e.target.style.cursor);
         
+        // Don't start dragging if clicking on resize handle or remove button
+        if (e.target.style.cursor === 'se-resize') {
+            console.log('Blocked by resize handle');
+            return;
+        }
+        if (e.target.onclick && e.target.onclick.toString().includes('removeSignatureBox')) {
+            console.log('Blocked by remove button');
+            return;
+        }
+        
+        // Only allow dragging from the main container div
+        if (e.target !== element && !element.contains(e.target)) {
+            console.log('Blocked - not clicking on draggable area');
+            return;
+        }
+        
+        console.log('Starting drag');
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
@@ -473,6 +656,7 @@ function makeDraggable(element) {
         
         element.style.cursor = 'grabbing';
         e.preventDefault();
+        e.stopPropagation();
     });
     
     document.addEventListener('mousemove', function(e) {
@@ -487,6 +671,7 @@ function makeDraggable(element) {
     
     document.addEventListener('mouseup', function() {
         if (isDragging) {
+            console.log('Ending drag');
             isDragging = false;
             element.style.cursor = 'move';
         }
@@ -531,6 +716,7 @@ function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     signatureData = [];
     signatureHistory = [];
+    updateAllSignatureOverlays();
 }
 
 function undoSignature() {
@@ -538,6 +724,7 @@ function undoSignature() {
         signatureHistory.pop();
         signatureData = [...signatureHistory];
         redrawCanvas();
+        updateAllSignatureOverlays();
     }
 }
 
@@ -559,6 +746,7 @@ function updateTypeSignature() {
     const text = document.getElementById('typeSignature').value;
     typeSignatureData.text = text;
     showSignaturePreview();
+    updateAllSignatureOverlays();
 }
 
 function showSignaturePreview() {
@@ -574,24 +762,35 @@ function updateSignatureSize() {
     const size = document.getElementById('signatureSize').value;
     document.getElementById('sizeValue').textContent = size;
     
-    if (signatureOverlay) {
+    signatureOverlays.forEach(overlay => {
         const scale = parseFloat(size);
-        signatureOverlay.style.transform = `scale(${scale})`;
-    }
+        overlay.style.transform = `scale(${scale})`;
+    });
+}
+
+function updateAllSignatureOverlays() {
+    console.log('Updating all signature overlays');
+    signatureOverlays.forEach(overlay => {
+        const previewContainer = overlay.querySelector('div:first-child > div:first-child');
+        if (previewContainer) {
+            const newPreview = getCurrentSignaturePreview();
+            console.log('New preview HTML:', newPreview);
+            previewContainer.innerHTML = newPreview;
+        }
+    });
 }
 
 function processForm(e) {
     e.preventDefault();
     
     const formData = new FormData();
-    const fileInput = document.getElementById('pdfFile');
     
-    if (!fileInput.files[0]) {
+    if (!selectedFile) {
         showMessage('Please select a PDF file.', 'error');
         return;
     }
     
-    formData.append('pdf_file', fileInput.files[0]);
+    formData.append('pdf_file', selectedFile);
     
     if (document.getElementById('compress').checked) {
         formData.append('compress', '1');
@@ -600,24 +799,44 @@ function processForm(e) {
     if (document.getElementById('addSignature').checked) {
         formData.append('add_signature', '1');
         
-        if (signatureData.length === 0 && !typeSignatureData.text) {
-            showMessage('Please draw or type a signature.', 'error');
+        const signatureType = document.querySelector('input[name="signatureType"]:checked').value;
+        
+        if (signatureType === 'drawn' && signatureData.length === 0) {
+            showMessage('Please draw a signature.', 'error');
             return;
         }
         
+        if (signatureType === 'typed' && !typeSignatureData.text) {
+            showMessage('Please type a signature.', 'error');
+            return;
+        }
+        
+        if (signatureOverlays.length === 0) {
+            showMessage('Please add at least one signature box.', 'error');
+            return;
+        }
+        
+        const signatureBoxes = signatureOverlays.map(overlay => {
+            const container = document.getElementById('pdfPreview');
+            const containerRect = container.getBoundingClientRect();
+            const overlayRect = overlay.getBoundingClientRect();
+            
+            return {
+                x: overlayRect.left - containerRect.left,
+                y: overlayRect.top - containerRect.top,
+                width: overlay.offsetWidth,
+                height: overlay.offsetHeight
+            };
+        });
+        
         const signatureDataObj = {
-            type: signatureData.length > 0 ? 'drawn' : 'typed',
+            type: signatureType,
             page: currentPage,
-            position: {
-                x: parseInt(signatureOverlay.style.left) || 0,
-                y: parseInt(signatureOverlay.style.top) || 0,
-                width: signatureOverlay.offsetWidth,
-                height: signatureOverlay.offsetHeight
-            },
+            positions: signatureBoxes,
             size: parseFloat(document.getElementById('signatureSize').value)
         };
         
-        if (signatureData.length > 0) {
+        if (signatureType === 'drawn') {
             signatureDataObj.paths = signatureData;
         } else {
             signatureDataObj.text = typeSignatureData.text;
@@ -632,7 +851,7 @@ function processForm(e) {
     processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     processBtn.disabled = true;
     
-    fetch('/admin/pdf-tool/process', {
+    fetch('/admin/pdf-tool-v2/process', {
         method: 'POST',
         body: formData
     })
@@ -640,9 +859,15 @@ function processForm(e) {
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
-        return response.blob();
+        
+        // Store compression stats before converting to blob
+        const compressionStats = response.headers.get('X-Compression-Stats');
+        
+        return response.blob().then(blob => {
+            return { blob, compressionStats };
+        });
     })
-    .then(blob => {
+    .then(({ blob, compressionStats }) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -657,7 +882,6 @@ function processForm(e) {
         
         showMessage('PDF processed successfully!', 'success');
         
-        const compressionStats = response.headers.get('X-Compression-Stats');
         if (compressionStats) {
             try {
                 const stats = JSON.parse(compressionStats);
@@ -695,6 +919,191 @@ function formatFileSize(bytes) {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function saveStateToSession() {
+    const state = {
+        fileName: selectedFile ? selectedFile.name : null,
+        fileSize: selectedFile ? selectedFile.size : null,
+        compressChecked: document.getElementById('compress').checked,
+        addSignatureChecked: document.getElementById('addSignature').checked,
+        signatureType: document.querySelector('input[name="signatureType"]:checked')?.value || 'drawn',
+        typeSignatureText: typeSignatureData.text,
+        typeSignatureFont: typeSignatureData.font,
+        signatureSize: document.getElementById('signatureSize').value,
+        currentPage: currentPage,
+        totalPages: totalPages,
+        signatureData: signatureData,
+        signatureOverlays: signatureOverlays.map(overlay => ({
+            id: overlay.id,
+            left: overlay.style.left,
+            top: overlay.style.top,
+            width: overlay.style.width,
+            height: overlay.style.height
+        }))
+    };
+    
+    sessionStorage.setItem('pdfToolV2State', JSON.stringify(state));
+}
+
+function restoreStateFromSession() {
+    const savedState = sessionStorage.getItem('pdfToolV2State');
+    if (!savedState) return;
+    
+    try {
+        const state = JSON.parse(savedState);
+        
+        // Restore file info if we had a file
+        if (state.fileName && state.fileSize) {
+            // Create a mock file object for display purposes
+            const mockFile = {
+                name: state.fileName,
+                size: state.fileSize,
+                type: 'application/pdf'
+            };
+            
+            // Update the UI to show the file was uploaded
+            const dropZone = document.getElementById('dropZone');
+            const dropContent = document.getElementById('dropContent');
+            const processBtn = document.getElementById('processBtn');
+            
+            dropZone.style.borderColor = '#28a745';
+            dropZone.style.background = '#d4edda';
+            dropContent.innerHTML = `
+                <div style="font-size: 48px; color: #6c757d; margin-bottom: 15px;">
+                    <i class="fas fa-file-pdf text-success"></i>
+                </div>
+                <h5>${state.fileName}</h5>
+                <div style="margin-top: 10px; font-size: 14px; color: #6c757d;">${formatFileSize(state.fileSize)}</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #6c757d;">
+                    <i class="fas fa-info-circle"></i> File will need to be re-uploaded for processing
+                </div>
+            `;
+            
+            document.getElementById('compressOption').style.opacity = '1';
+            document.getElementById('compressOption').style.pointerEvents = 'auto';
+            document.getElementById('signatureOption').style.opacity = '1';
+            document.getElementById('signatureOption').style.pointerEvents = 'auto';
+            processBtn.disabled = false;
+            
+            // Show PDF preview area
+            document.getElementById('dropZone').style.display = 'none';
+            document.getElementById('pdfPreviewArea').style.display = 'block';
+            
+            // Restore page navigation
+            if (state.totalPages) {
+                totalPages = state.totalPages;
+                currentPage = state.currentPage || 1;
+                updatePageNavigation();
+            }
+        }
+        
+        // Restore form state
+        if (state.compressChecked) {
+            document.getElementById('compress').checked = true;
+        }
+        
+        if (state.addSignatureChecked) {
+            document.getElementById('addSignature').checked = true;
+            document.getElementById('signatureSection').style.display = 'block';
+        }
+        
+        // Restore signature type
+        if (state.signatureType) {
+            document.querySelector(`input[name="signatureType"][value="${state.signatureType}"]`).checked = true;
+            if (state.signatureType === 'drawn') {
+                document.getElementById('drawnSignatureSection').style.display = 'block';
+                document.getElementById('typedSignatureSection').style.display = 'none';
+            } else {
+                document.getElementById('drawnSignatureSection').style.display = 'none';
+                document.getElementById('typedSignatureSection').style.display = 'block';
+            }
+        }
+        
+        // Restore typed signature data
+        if (state.typeSignatureText) {
+            typeSignatureData.text = state.typeSignatureText;
+            document.getElementById('typeSignature').value = state.typeSignatureText;
+            showSignaturePreview();
+        }
+        
+        if (state.typeSignatureFont) {
+            typeSignatureData.font = state.typeSignatureFont;
+            document.getElementById('fontSelect').value = state.typeSignatureFont;
+        }
+        
+        // Restore signature size
+        if (state.signatureSize) {
+            document.getElementById('signatureSize').value = state.signatureSize;
+            document.getElementById('sizeValue').textContent = state.signatureSize;
+        }
+        
+        // Restore drawn signature data
+        if (state.signatureData && state.signatureData.length > 0) {
+            signatureData = state.signatureData;
+            signatureHistory = [...state.signatureData];
+            redrawCanvas();
+        }
+        
+        // Restore signature overlays
+        if (state.signatureOverlays && state.signatureOverlays.length > 0) {
+            state.signatureOverlays.forEach(overlayData => {
+                createSignatureOverlayFromData(overlayData);
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error restoring state:', error);
+        // Clear corrupted state
+        sessionStorage.removeItem('pdfToolV2State');
+    }
+}
+
+function createSignatureOverlayFromData(overlayData) {
+    signatureBoxCounter++;
+    
+    const signatureOverlay = document.createElement('div');
+    signatureOverlay.id = overlayData.id || `signatureBox_${signatureBoxCounter}`;
+    signatureOverlay.style.position = 'absolute';
+    signatureOverlay.style.border = '2px dashed #007bff';
+    signatureOverlay.style.background = 'rgba(0, 123, 255, 0.1)';
+    signatureOverlay.style.cursor = 'move';
+    signatureOverlay.style.minWidth = '100px';
+    signatureOverlay.style.minHeight = '50px';
+    signatureOverlay.style.display = 'flex';
+    signatureOverlay.style.alignItems = 'center';
+    signatureOverlay.style.justifyContent = 'center';
+    signatureOverlay.style.color = '#007bff';
+    signatureOverlay.style.fontSize = '12px';
+    signatureOverlay.style.fontWeight = '500';
+    signatureOverlay.style.zIndex = '1000';
+    
+    // Restore position and size
+    if (overlayData.left) signatureOverlay.style.left = overlayData.left;
+    if (overlayData.top) signatureOverlay.style.top = overlayData.top;
+    if (overlayData.width) signatureOverlay.style.width = overlayData.width;
+    if (overlayData.height) signatureOverlay.style.height = overlayData.height;
+    
+    // Get current signature preview
+    const signaturePreview = getCurrentSignaturePreview();
+    
+    signatureOverlay.innerHTML = `
+        <div style="position: relative; width: 100%; height: 100%; cursor: move;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 1;">
+                ${signaturePreview}
+            </div>
+            <div style="position: absolute; top: -8px; right: -8px; width: 16px; height: 16px; background: #dc3545; border: 1px solid #fff; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; z-index: 1002;" onclick="removeSignatureBox('${signatureOverlay.id}')">×</div>
+            <div style="position: absolute; width: 8px; height: 8px; background: #007bff; border: 1px solid #fff; border-radius: 50%; cursor: se-resize; bottom: -4px; right: -4px; z-index: 1001;"></div>
+        </div>
+    `;
+    
+    const container = document.getElementById('pdfPreview');
+    container.appendChild(signatureOverlay);
+    
+    makeDraggable(signatureOverlay);
+    makeResizable(signatureOverlay);
+    
+    signatureOverlays.push(signatureOverlay);
 }
 
 function showMessage(message, type) {
