@@ -2970,11 +2970,7 @@ def detect_signature_fields(pdf, page_index):
         print(f"Warning: Could not detect signature fields: {e}")
         return []
 
-@admin_bp.route('/pdf-tool')
-@admin_required
-def pdf_tool():
-    """PDF Tool page - compress and/or sign PDFs"""
-    return render_template('admin/pdf_tool.html', signer_available=_SIGNER is not None)
+
 
 @admin_bp.route('/pdf-tool-v2')
 @admin_required
@@ -2982,71 +2978,9 @@ def pdf_tool_v2():
     """PDF Tool v2 page - improved interface with drag-and-drop signature placement"""
     return render_template('admin/pdf_tool_v2.html')
 
-@admin_bp.route('/pdf-tool-v3')
-@admin_required
-def pdf_tool_v3():
-    """PDF Tool v3 page - simple upload, compress, download"""
-    return render_template('admin/pdf_tool_v3.html')
 
-@admin_bp.route('/pdf-tool/process', methods=['POST'])
-@admin_required
-def pdf_tool_process():
-    """Process uploaded PDF - compress and/or sign"""
-    uploaded = request.files.get("pdf_file")
-    if not uploaded or not uploaded.filename.lower().endswith(".pdf"):
-        return jsonify({"error": "Please upload a PDF file."}), 400
-    
-    original_data = uploaded.read()
-    original_size = len(original_data)
-    pdf_data = original_data
-    
-    compression_stats = None
-    
-    # Apply compression if requested & possible
-    if "compress" in request.form:
-        try:
-            pdf_data = compress_pdf(pdf_data)
-            compressed_size = len(pdf_data)
-            reduction = ((original_size - compressed_size) / original_size) * 100
-            compression_stats = {
-                'original_size': original_size,
-                'compressed_size': compressed_size,
-                'reduction_percent': round(reduction, 1)
-            }
-        except Exception as exc:
-            return jsonify({"error": f"Compression failed: {exc}"}), 400
-    
-    # Apply drawn signature if requested
-    if "add_signature" in request.form:
-        signature_data_str = request.form.get('signature_data')
-        if signature_data_str:
-            try:
-                signature_data = json.loads(signature_data_str)
-                pdf_data = add_signature_to_pdf(pdf_data, signature_data)
-            except Exception as exc:
-                return jsonify({"error": f"Signature addition failed: {exc}"}), 400
-    
-    # Apply digital certificate signature if requested & possible
-    if "digital_sign" in request.form:
-        if _SIGNER is None:
-            return jsonify({"error": "Digital signing not configured on server."}), 400
-        try:
-            pdf_data = sign_pdf(pdf_data)
-        except Exception as exc:
-            return jsonify({"error": f"Digital signing failed: {exc}"}), 400
-    
-    # Create response with compression stats if available
-    response = send_file(
-        BytesIO(pdf_data),
-        as_attachment=True,
-        download_name=f"{os.path.splitext(uploaded.filename)[0]}_processed.pdf",
-        mimetype="application/pdf"
-    )
-    
-    if compression_stats:
-        response.headers['X-Compression-Stats'] = json.dumps(compression_stats)
-    
-    return response
+
+
 
 @admin_bp.route('/pdf-tool-v2/process', methods=['POST'])
 @admin_required
@@ -3108,52 +3042,3 @@ def pdf_tool_v2_process():
     
     return response
 
-@admin_bp.route('/pdf-tool-v3/process', methods=['POST'])
-@admin_required
-def pdf_tool_v3_process():
-    """Process uploaded PDF - simple compress and/or sign based on the provided script"""
-    uploaded = request.files.get("pdf_file")
-    if not uploaded or not uploaded.filename.lower().endswith(".pdf"):
-        return jsonify({"error": "Please upload a PDF file."}), 400
-    
-    original_data = uploaded.read()
-    original_size = len(original_data)
-    pdf_data = original_data
-    
-    compression_stats = None
-    
-    # Apply compression if requested & possible
-    if "compress" in request.form:
-        try:
-            pdf_data = compress_pdf(pdf_data)
-            compressed_size = len(pdf_data)
-            reduction = ((original_size - compressed_size) / original_size) * 100
-            compression_stats = {
-                'original_size': original_size,
-                'compressed_size': compressed_size,
-                'reduction_percentage': round(reduction, 1)
-            }
-        except Exception as exc:
-            return jsonify({"error": f"Compression failed: {exc}"}), 400
-    
-    # Apply digital signature if requested & possible
-    if "sign" in request.form:
-        if _SIGNER is None:
-            return jsonify({"error": "Digital signing not configured on server."}), 400
-        try:
-            pdf_data = sign_pdf(pdf_data)
-        except Exception as exc:
-            return jsonify({"error": f"Digital signing failed: {exc}"}), 400
-    
-    # Create response with compression stats if available
-    response = send_file(
-        BytesIO(pdf_data),
-        as_attachment=True,
-        download_name=f"{os.path.splitext(uploaded.filename)[0]}_processed.pdf",
-        mimetype="application/pdf"
-    )
-    
-    if compression_stats:
-        response.headers['X-Compression-Stats'] = json.dumps(compression_stats)
-    
-    return response
