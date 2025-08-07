@@ -90,6 +90,7 @@ def get_pin_heatmap_data():
 
     Joins PinInteraction with Retailer to match coordinates using Google Places IDs,
     aggregating the number of clicks for data within the last 30 days.
+    This endpoint is for heatmap display only - coordinates are rounded to 2 decimals.
 
     Returns:
         A JSON response with a list of objects containing 'lat', 'lng', and 'weight'.
@@ -99,6 +100,7 @@ def get_pin_heatmap_data():
     recent_cutoff = datetime.utcnow() - timedelta(days=30)
 
     # Join PinInteraction with Retailer on matching (trimmed, case-insensitive) IDs
+    # Round coordinates for heatmap display only
     data = db.session.query(
         func.round(Retailer.latitude, 2).label("lat"),
         func.round(Retailer.longitude, 2).label("lng"),
@@ -112,6 +114,59 @@ def get_pin_heatmap_data():
 
     heatmap = [[lat, lng, weight] for lat, lng, weight in data]
     return jsonify(heatmap)
+
+
+@map_bp.route("/api/individual-popularity-data", methods=["GET"])
+@cache.cached(timeout=300)  # cache for 5 minutes
+@limiter.limit("30/minute")
+def get_individual_popularity_data():
+    """
+    Retrieve individual location popularity data with full precision.
+
+    Joins PinInteraction with Retailer to match coordinates using Google Places IDs,
+    providing individual location popularity for routing and filtering.
+    This endpoint maintains full coordinate precision for individual location targeting.
+
+    Returns:
+        A JSON response with a list of objects containing 'lat', 'lng', 'weight', 'place_id', and 'retailer_name'.
+    """
+    check_referrer()
+
+    recent_cutoff = datetime.utcnow() - timedelta(days=30)
+
+    # Join PinInteraction with Retailer on matching IDs
+    # Use full precision coordinates for individual location targeting
+    data = db.session.query(
+        Retailer.latitude.label("lat"),
+        Retailer.longitude.label("lng"),
+        func.count().label("weight"),
+        Retailer.place_id,
+        Retailer.retailer.label("retailer_name")
+    ).select_from(PinInteraction).join(
+        Retailer,
+        Retailer.place_id == PinInteraction.marker_id
+    ).filter(
+        PinInteraction.timestamp >= recent_cutoff
+    ).group_by(
+        Retailer.latitude,
+        Retailer.longitude,
+        Retailer.place_id,
+        Retailer.retailer
+    ).all()
+
+    # Convert to list of dictionaries for easier frontend consumption
+    individual_data = [
+        {
+            "lat": float(lat),
+            "lng": float(lng),
+            "weight": weight,
+            "place_id": place_id,
+            "retailer_name": retailer_name
+        }
+        for lat, lng, weight, place_id, retailer_name in data
+    ]
+    
+    return jsonify(individual_data)
 
 
 @map_bp.route("/api/heatmap-data", methods=["GET"])

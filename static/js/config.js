@@ -20,7 +20,8 @@ export const ENDPOINTS = {
   retailers:    '/api/retailers',
   events:       '/api/events',
   heatmap1:     '/api/heatmap-data',
-  popularAreas: '/api/pin-heatmap-data',   // renamed here
+  popularAreas: '/api/pin-heatmap-data',   // for heatmap display (rounded coordinates)
+  individualPopularity: '/api/individual-popularity-data', // for routing (full precision)
   trackMap:     '/track/map',
   trackPin:     '/track/pin'
 };

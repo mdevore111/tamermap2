@@ -66,3 +66,6 @@ flask-migrate~=4.1.0
 selenium~=4.18.1
 webdriver-manager~=4.0.1
 schedule~=1.2.0
+pyhanko~=1.12.0
+pikepdf~=10.0.0
+reportlab~=4.1.0
