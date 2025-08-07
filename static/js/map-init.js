@@ -201,11 +201,11 @@ function renderMap() {
     if (legend) legend.classList.remove('has-active-infowindow');
   });
 
-  // Fetch and build Popular Areas heatmap layer
+  // Fetch and build Popular Areas heatmap layer (for display)
   fetch(ENDPOINTS.popularAreas)
     .then(res => { if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); return res.json(); })
     .then(points => {
-      // Convert array format [lat, lng, weight] to LatLng objects with weight
+      // Convert array format [lat, lng, weight] to LatLng objects with weight for Google Maps
       const heatmapData = points.map(point => ({
         location: new google.maps.LatLng(point[0], point[1]),
         weight: point[2]
@@ -254,6 +254,19 @@ function renderMap() {
       document.body.appendChild(toast);
       const bsToast = new bootstrap.Toast(toast);
       bsToast.show();
+    });
+
+  // Fetch individual popularity data (for routing with full precision)
+  fetch(ENDPOINTS.individualPopularity)
+    .then(res => { if (!res.ok) throw new Error(`Individual popularity fetch failed: ${res.status}`); return res.json(); })
+    .then(data => {
+      // Store individual popularity data for route planner to use
+      window.individualPopularityData = data;
+      console.log('Loaded individual popularity data for', data.length, 'locations');
+    })
+    .catch(err => {
+      console.error('Error fetching individual popularity data:', err);
+      window.individualPopularityData = [];
     });
 
   // Places Autocomplete (#pac-input)

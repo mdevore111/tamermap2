@@ -1,6 +1,7 @@
 /**
  * Route Planner Module
  * Handles route planning functionality with SweetAlert2 modal interface
+ * Now supports wizard-style flow: Planning -> Preview -> Execute
  */
 
 class RoutePlanner {
@@ -10,6 +11,8 @@ class RoutePlanner {
         this.maxDistance = 50; // miles
         this.maxStops = 5;
         this.isInitialized = false;
+        this.currentStep = 'planning'; // 'planning', 'preview', 'execute'
+        this.sessionKey = 'routePlannerSession';
     }
 
     /**
@@ -20,11 +23,83 @@ class RoutePlanner {
         
         console.log('Initializing Route Planner...');
         this.initializeUI();
+        this.loadSessionData();
         this.isInitialized = true;
-        
+    }
 
-        
+    /**
+     * Load session data from sessionStorage
+     */
+    loadSessionData() {
+        try {
+            console.log('=== LOADING SESSION DATA ===');
+            const sessionData = sessionStorage.getItem(this.sessionKey);
+            console.log('Raw session data from storage:', sessionData);
+            
+            if (sessionData) {
+                const data = JSON.parse(sessionData);
+                this.maxDistance = data.maxDistance || 50;
+                this.maxStops = data.maxStops || 5;
+                this.sessionCheckboxStates = data.checkboxStates || {};
+                console.log('Parsed session data:', data);
+                console.log('this.sessionCheckboxStates set to:', this.sessionCheckboxStates);
+            } else {
+                console.log('No session data found in storage');
+                this.sessionCheckboxStates = {};
+            }
+        } catch (error) {
+            console.warn('Failed to load route planner session data:', error);
+            this.sessionCheckboxStates = {};
+        }
+    }
 
+    /**
+     * Save session data to sessionStorage
+     */
+    saveSessionData() {
+        try {
+            const checkboxStates = this.getCurrentCheckboxStates();
+            console.log('=== SAVING SESSION DATA ===');
+            console.log('checkboxStates being saved:', checkboxStates);
+            
+            const sessionData = {
+                maxDistance: this.maxDistance,
+                maxStops: this.maxStops,
+                checkboxStates: checkboxStates,
+                timestamp: Date.now()
+            };
+            console.log('Full session data being saved:', sessionData);
+            sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
+            console.log('Session data saved successfully');
+        } catch (error) {
+            console.warn('Failed to save route planner session data:', error);
+        }
+    }
+
+    /**
+     * Get current checkbox states
+     */
+    getCurrentCheckboxStates() {
+        return {
+            roundTrip: document.getElementById('round-trip-checkbox')?.checked || false,
+            openNow: document.getElementById('open-now-checkbox')?.checked || false,
+            leastPopular: document.getElementById('least-popular-checkbox')?.checked || false,
+            mostPopular: document.getElementById('most-popular-checkbox')?.checked || false,
+            kiosk: document.querySelector('.route-filter-toggle[data-filter="kiosk"]')?.classList.contains('active') || false,
+            retail: document.querySelector('.route-filter-toggle[data-filter="retail"]')?.classList.contains('active') || false,
+            indie: document.querySelector('.route-filter-toggle[data-filter="indie"]')?.classList.contains('active') || false
+        };
+    }
+
+    /**
+     * Clear session data
+     */
+    clearSessionData() {
+        try {
+            sessionStorage.removeItem(this.sessionKey);
+        } catch (error) {
+            console.warn('Failed to clear route planner session data:', error);
+        }
     }
 
     /**
@@ -48,12 +123,14 @@ class RoutePlanner {
             customClass: {
                 popup: 'swal2-route-planner'
             },
-            width: 'auto',
+            width: '650px',
             didOpen: () => {
                 this.initializeModalControls();
             },
             willClose: () => {
-                // Clean up any event listeners if needed
+                // Clear session data when modal is closed
+                this.clearSessionData();
+                this.currentStep = 'planning';
             }
         };
     }
@@ -73,7 +150,7 @@ class RoutePlanner {
             <div class="route-planner-container">
                 <!-- Distance Control -->
                 <div class="route-control-group">
-                    <h4><i class="fas fa-road"></i> Distance</h4>
+                    <h4><i class="fas fa-road"></i> Distance from Start</h4>
                     <div class="route-slider-container">
                         <label for="distance-slider">
                             Max Distance: <span id="distance-value">${this.maxDistance} miles</span>
@@ -107,13 +184,6 @@ class RoutePlanner {
                             <input type="checkbox" id="open-now-checkbox">
                             <span>Open Now</span>
                         </label>
-                    </div>
-                </div>
-
-                <!-- Popularity Filters -->
-                <div class="route-control-group">
-                    <h4><i class="fas fa-chart-line"></i> Popularity</h4>
-                    <div class="route-checkbox-row">
                         <label class="route-checkbox">
                             <input type="checkbox" id="least-popular-checkbox">
                             <span>Least Popular</span>
@@ -124,8 +194,6 @@ class RoutePlanner {
                         </label>
                     </div>
                 </div>
-
-
 
                 <!-- Store Type Filters -->
                 <div class="route-control-group">
@@ -143,20 +211,20 @@ class RoutePlanner {
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
+                <!-- Wizard Navigation Buttons -->
                 <div class="route-actions">
-                    <button type="button" class="route-btn route-btn-secondary" id="modal-preview-route-btn">
-                        <i class="fas fa-eye"></i> Preview
+                    <button type="button" class="route-btn route-btn-secondary" id="modal-back-to-map-btn">
+                        <i class="fas fa-chevron-left"></i> Map
                     </button>
-                    <button type="button" class="route-btn route-btn-primary" id="modal-open-in-maps-btn">
-                        <i class="fas fa-external-link-alt"></i> Go!
+                    <button type="button" class="route-btn route-btn-primary" id="modal-preview-route-btn">
+                        Preview <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
 
                 <!-- Route Summary -->
                 <div class="route-summary" id="route-summary">
                     <h4>Route Summary</h4>
-                    <div id="summary-content">
+                    <div id="summary-content" style="max-height: 200px; overflow-y: auto; padding-right: 8px;">
                         <small>Configure your preferences above to see route details.</small>
                     </div>
                 </div>
@@ -204,31 +272,58 @@ class RoutePlanner {
             });
         }
 
-        // Initialize checkboxes
+        // Initialize checkboxes with session data restoration
         const roundTripCheckbox = document.getElementById('round-trip-checkbox');
         const openNowCheckbox = document.getElementById('open-now-checkbox');
+        const leastPopularCheckbox = document.getElementById('least-popular-checkbox');
+        const mostPopularCheckbox = document.getElementById('most-popular-checkbox');
         
-        // Sync Open Now with legend state initially, then work independently
-        const legendOpenNowCheckbox = document.getElementById('filter-open-now');
-        if (openNowCheckbox && legendOpenNowCheckbox) {
-            // Set initial state from legend, but then work independently
-            openNowCheckbox.checked = legendOpenNowCheckbox.checked;
-            
-            // Route planner's Open Now only affects route planning
-            openNowCheckbox.addEventListener('change', () => {
-                this.updateRouteSummary();
-            });
+        // Restore checkbox states from session data if available
+        console.log('=== SESSION DATA RESTORATION DEBUG ===');
+        console.log('this.sessionCheckboxStates:', this.sessionCheckboxStates);
+        
+        if (this.sessionCheckboxStates) {
+            console.log('Restoring checkbox states from session data...');
+            if (roundTripCheckbox && 'roundTrip' in this.sessionCheckboxStates) {
+                roundTripCheckbox.checked = this.sessionCheckboxStates.roundTrip;
+                console.log('roundTripCheckbox.checked set to:', roundTripCheckbox.checked);
+            }
+            if (openNowCheckbox && 'openNow' in this.sessionCheckboxStates) {
+                openNowCheckbox.checked = this.sessionCheckboxStates.openNow;
+                console.log('openNowCheckbox.checked set to:', openNowCheckbox.checked);
+            }
+            if (leastPopularCheckbox && 'leastPopular' in this.sessionCheckboxStates) {
+                leastPopularCheckbox.checked = this.sessionCheckboxStates.leastPopular;
+                console.log('leastPopularCheckbox.checked set to:', leastPopularCheckbox.checked);
+            }
+            if (mostPopularCheckbox && 'mostPopular' in this.sessionCheckboxStates) {
+                mostPopularCheckbox.checked = this.sessionCheckboxStates.mostPopular;
+                console.log('mostPopularCheckbox.checked set to:', mostPopularCheckbox.checked);
+            }
         }
-
+        
+        // Fallback to legend state for Open Now if no session data for it
+        if (!this.sessionCheckboxStates || !('openNow' in this.sessionCheckboxStates)) {
+            console.log('No session data for openNow, using legend fallback...');
+            const legendOpenNowCheckbox = document.getElementById('filter-open-now');
+            if (openNowCheckbox && legendOpenNowCheckbox) {
+                openNowCheckbox.checked = legendOpenNowCheckbox.checked;
+                console.log('openNowCheckbox.checked set to legend state:', openNowCheckbox.checked);
+            }
+        }
+        
+        // Add event listeners
         if (roundTripCheckbox) {
             roundTripCheckbox.addEventListener('change', () => {
                 this.updateRouteSummary();
             });
         }
-
-        // Initialize popularity checkboxes
-        const leastPopularCheckbox = document.getElementById('least-popular-checkbox');
-        const mostPopularCheckbox = document.getElementById('most-popular-checkbox');
+        
+        if (openNowCheckbox) {
+            openNowCheckbox.addEventListener('change', () => {
+                this.updateRouteSummary();
+            });
+        }
         
         if (leastPopularCheckbox) {
             leastPopularCheckbox.addEventListener('change', () => {
@@ -252,25 +347,43 @@ class RoutePlanner {
 
 
 
-        // Initialize filter toggles based on legend state
-        const filterMap = {
-            'kiosk': document.getElementById('filter-kiosk'),
-            'retail': document.getElementById('filter-retail'),
-            'indie': document.getElementById('filter-indie')
-        };
-        
+        // Initialize filter toggles with session data restoration
         const filterToggles = document.querySelectorAll('.route-filter-toggle');
         let hasActiveFilter = false;
         
         filterToggles.forEach(toggle => {
             // Get the filter type from the data attribute
             const filterType = toggle.getAttribute('data-filter');
-            const legendCheckbox = filterMap[filterType];
+            console.log(`Processing filter toggle: ${filterType}`);
             
-            // Set initial state based on legend checkbox
-            if (legendCheckbox && legendCheckbox.checked) {
-                toggle.classList.add('active');
-                hasActiveFilter = true;
+            // Restore state from session data if available
+            if (this.sessionCheckboxStates && filterType in this.sessionCheckboxStates) {
+                // Session data exists for this filter type - use it regardless of true/false
+                const shouldBeActive = this.sessionCheckboxStates[filterType];
+                console.log(`Restoring ${filterType} filter to ${shouldBeActive ? 'active' : 'inactive'} from session data`);
+                if (shouldBeActive) {
+                    toggle.classList.add('active');
+                    hasActiveFilter = true;
+                } else {
+                    toggle.classList.remove('active');
+                }
+            } else {
+                console.log(`No session data for ${filterType}, checking legend state...`);
+                // Fallback to legend state if no session data
+                const filterMap = {
+                    'kiosk': document.getElementById('filter-kiosk'),
+                    'retail': document.getElementById('filter-retail'),
+                    'indie': document.getElementById('filter-indie')
+                };
+                const legendCheckbox = filterMap[filterType];
+                
+                if (legendCheckbox && legendCheckbox.checked) {
+                    console.log(`Setting ${filterType} filter to active from legend state`);
+                    toggle.classList.add('active');
+                    hasActiveFilter = true;
+                } else {
+                    console.log(`Filter ${filterType} remains inactive`);
+                }
             }
             
             // Add click handler that only updates route planner state
@@ -286,16 +399,22 @@ class RoutePlanner {
             filterToggles[0].classList.add('active');
         }
 
-        // Action buttons
+        // Wizard Navigation Buttons
+        const backToMapBtn = document.getElementById('modal-back-to-map-btn');
         const previewBtn = document.getElementById('modal-preview-route-btn');
-        const openMapsBtn = document.getElementById('modal-open-in-maps-btn');
 
-        if (previewBtn) {
-            previewBtn.addEventListener('click', () => this.showPreviewPins());
+        if (backToMapBtn) {
+            backToMapBtn.addEventListener('click', () => {
+                this.saveSessionData();
+                Swal.close();
+            });
         }
 
-        if (openMapsBtn) {
-            openMapsBtn.addEventListener('click', () => this.openInGoogleMaps());
+        if (previewBtn) {
+            previewBtn.addEventListener('click', () => {
+                this.saveSessionData();
+                this.showPreviewPins();
+            });
         }
 
         // Update layout based on orientation
@@ -335,16 +454,32 @@ class RoutePlanner {
     updateRouteSummary() {
         console.log('=== UPDATE ROUTE SUMMARY DEBUG ===');
         const summaryContent = document.getElementById('summary-content');
+        const routeSummary = document.getElementById('route-summary');
         
         if (!summaryContent) {
             console.warn('Summary content element not found');
             return;
         }
 
+        // Always show the route summary container to maintain consistent width
+        if (routeSummary) {
+            routeSummary.style.display = 'block';
+        }
+
+        // Check if any store type filters are active
+        const toggles = document.querySelectorAll('.route-filter-toggle');
+        const activeFilters = Array.from(toggles).filter(toggle => toggle.classList.contains('active'));
+        
+        if (activeFilters.length === 0) {
+            console.log('No store type filters active, showing empty route summary');
+            summaryContent.innerHTML = '<div style="min-height: 60px; display: flex; align-items: center;"><small style="color: #6c757d;">Select store types to see route details.</small></div>';
+            return;
+        }
+
         if (!window.userCoords) {
             console.log('ERROR: No user coordinates available for route summary');
             summaryContent.innerHTML = 
-                '<small style="color: #dc3545;">Location access required for route planning.</small>';
+                '<div style="min-height: 60px; display: flex; align-items: center;"><small style="color: #dc3545;">Location access required for route planning.</small></div>';
             return;
         }
 
@@ -398,13 +533,15 @@ class RoutePlanner {
             } else {
                 message += ' Try increasing the number of stops.';
             }
-            summaryContent.innerHTML = `<small style="color: #dc3545;">${message}</small>`;
+            summaryContent.innerHTML = `<div style="min-height: 60px; display: flex; align-items: center;"><small style="color: #dc3545;">${message}</small></div>`;
             return;
         }
 
-        const storeList = optimalLocations.map(loc => 
-            `• ${loc.retailer || 'Unknown'} (${loc.distance?.toFixed(1) || '?'} mi)`
-        ).join('<br>');
+        const storeList = optimalLocations.map(loc => {
+            // Format retailer name with type and city in parentheses
+            const formattedName = this.cleanRetailerName(loc.retailer || 'Unknown', loc.retailer_type, loc.address);
+            return `- ${formattedName} (${loc.distance?.toFixed(1) || '?'} mi)`;
+        }).join('<br>');
 
         // Build filter description
         let filterDescription = '';
@@ -464,6 +601,14 @@ class RoutePlanner {
             console.log(`5. SUCCESS: Using data source: allMarkers (${locations.length} locations)`);
             console.log('6. Sample location:', locations[0]);
             console.log('7. First 3 locations:', locations.slice(0, 3));
+            
+            // Debug: Show retailer type distribution
+            const typeCounts = {};
+            locations.forEach(loc => {
+                const type = loc.retailer_type || 'unknown';
+                typeCounts[type] = (typeCounts[type] || 0) + 1;
+            });
+            console.log('8. Retailer type distribution:', typeCounts);
         }
         // Fallback to markerManager.markerCache if available
         else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
@@ -614,7 +759,7 @@ class RoutePlanner {
 
         console.log('3. Active filters:', activeFilters);
 
-        // If no filters are active, return all locations (don't filter)
+        // If no filters are active, return all locations
         if (activeFilters.length === 0) {
             console.log('4. No retailer type filters active, showing all location types');
             return locations;
@@ -626,15 +771,38 @@ class RoutePlanner {
         const uniqueTypes = [...new Set(locations.map(loc => loc.retailer_type).filter(Boolean))];
         console.log('6. All unique retailer types in data:', uniqueTypes);
         
+        // Additional debugging: Show sample locations with their types
+        console.log('7. Sample locations with types:');
+        locations.slice(0, 10).forEach((loc, index) => {
+            console.log(`   ${index + 1}. ${loc.retailer} -> type: "${loc.retailer_type || 'unknown'}"`);
+        });
+        
         const filtered = locations.filter((location, index) => {
             const retailerType = (location.retailer_type || '').toLowerCase();
-            const matches = activeFilters.includes(retailerType);
+            
+            // Exact matching for your specific database types
+            let matches = false;
+            for (const filter of activeFilters) {
+                if (filter === 'retail') {
+                    // Match "Store" (Retail Stores)
+                    matches = retailerType === 'store';
+                } else if (filter === 'kiosk') {
+                    // Match "Kiosk"
+                    matches = retailerType === 'kiosk';
+                } else if (filter === 'indie') {
+                    // Match "Card Shop" (Indie)
+                    matches = retailerType === 'card shop';
+                }
+                
+                if (matches) break; // Found a match, no need to check other filters
+            }
+            
             if (index < 5) { // Log first 5 locations for debugging
                 console.log(`   Location ${index + 1}: ${location.retailer} (${location.retailer_type || 'unknown'}) -> ${retailerType} - ${matches ? 'MATCHES' : 'no match'}`);
             }
             return matches;
         });
-        console.log(`6. Filtered from ${locations.length} to ${filtered.length} locations`);
+        console.log(`7. Filtered from ${locations.length} to ${filtered.length} locations`);
         return filtered;
     }
 
@@ -667,40 +835,69 @@ class RoutePlanner {
             return locations; // No popularity filter applied
         }
 
-        // Get heatmap data if available
-        const heatmapData = window.heatmapData || [];
-        if (heatmapData.length === 0) {
-            console.warn('No heatmap data available for popularity filtering');
+        // Get individual popularity data if available
+        const individualData = window.individualPopularityData || [];
+        console.log('=== POPULARITY FILTER DEBUG ===');
+        console.log('1. Individual popularity data available:', individualData.length, 'locations');
+        
+        if (individualData.length === 0) {
+            console.warn('No individual popularity data available for popularity filtering');
             return locations;
         }
 
-        // Create a map of location popularity scores
+        // Create a map of location popularity scores using full precision coordinates
         const popularityMap = new Map();
-        heatmapData.forEach(point => {
-            const key = `${point.lat},${point.lng}`;
-            const existing = popularityMap.get(key) || 0;
-            popularityMap.set(key, existing + (point.value || 1));
+        individualData.forEach(item => {
+            // Use full precision coordinates for exact location matching
+            const key = `${item.lat},${item.lng}`;
+            popularityMap.set(key, item.weight || 0);
         });
 
-        // Calculate popularity scores for each location
+        console.log('2. Popularity map created with', popularityMap.size, 'unique locations');
+
+        // Calculate popularity scores for each location using full precision matching
         const locationsWithScores = locations.map(location => {
+            // Use full precision coordinates for exact location matching
             const key = `${location.lat},${location.lng}`;
             const popularityScore = popularityMap.get(key) || 0;
             return { ...location, popularityScore };
         });
 
-        // Sort by popularity score
+        console.log('3. Locations with scores:', locationsWithScores.length);
+        console.log('4. Sample locations with scores:', locationsWithScores.slice(0, 3).map(loc => 
+            `${loc.retailer}: ${loc.popularityScore}`
+        ));
+
+        // Sort by popularity score first
         locationsWithScores.sort((a, b) => a.popularityScore - b.popularityScore);
 
         // Filter based on selection
         if (leastPopular) {
             // Take the bottom 25% of locations (least popular)
             const cutoffIndex = Math.floor(locationsWithScores.length * 0.25);
-            return locationsWithScores.slice(0, cutoffIndex);
+            const leastPopularLocations = locationsWithScores.slice(0, cutoffIndex);
+            
+            // Then sort by distance within the least popular group to prioritize closer locations
+            leastPopularLocations.sort((a, b) => a.distance - b.distance);
+            
+            console.log('5. Least popular filter: selected', leastPopularLocations.length, 'locations (bottom 25% by popularity, then sorted by distance)');
+            console.log('6. Sample least popular locations:', leastPopularLocations.slice(0, 3).map(loc => 
+                `${loc.retailer}: popularity=${loc.popularityScore}, distance=${loc.distance?.toFixed(1)}mi`
+            ));
+            return leastPopularLocations;
         } else if (mostPopular) {
             // Take the top 25% of locations (most popular)
             const cutoffIndex = Math.floor(locationsWithScores.length * 0.75);
-            return locationsWithScores.slice(cutoffIndex);
+            const mostPopularLocations = locationsWithScores.slice(cutoffIndex);
+            
+            // Then sort by distance within the most popular group to prioritize closer locations
+            mostPopularLocations.sort((a, b) => a.distance - b.distance);
+            
+            console.log('5. Most popular filter: selected', mostPopularLocations.length, 'locations (top 25% by popularity, then sorted by distance)');
+            console.log('6. Sample most popular locations:', mostPopularLocations.slice(0, 3).map(loc => 
+                `${loc.retailer}: popularity=${loc.popularityScore}, distance=${loc.distance?.toFixed(1)}mi`
+            ));
+            return mostPopularLocations;
         }
 
         return locationsWithScores;
@@ -736,7 +933,7 @@ class RoutePlanner {
      * Calculate distance between two coordinates (Haversine formula)
      */
     calculateDistance(lat1, lng1, lat2, lng2) {
-        const R = 3959; // Earth's radius in miles
+        const R = 3959; // Earth radius in miles
         const dLat = this.toRadians(lat2 - lat1);
         const dLng = this.toRadians(lng2 - lng1);
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -754,9 +951,116 @@ class RoutePlanner {
     }
 
     /**
+     * Increment popularity for selected locations by calling the track pin API
+     */
+    incrementLocationPopularity(locations) {
+        console.log('=== INCREMENT POPULARITY DEBUG ===');
+        console.log('1. Incrementing popularity for', locations.length, 'locations');
+        
+        // Call the track pin API for each location to increment popularity
+        locations.forEach(location => {
+            // Find the marker ID from the location data
+            let markerId = location.place_id || location.marker_id;
+            
+            // If we dont have a place_id, try to find it from the marker data
+            if (!markerId && window.allMarkers) {
+                const marker = window.allMarkers.find(m => 
+                    m.getPosition().lat() === location.lat && 
+                    m.getPosition().lng() === location.lng
+                );
+                if (marker) {
+                    markerId = marker.getTitle() || marker.place_id;
+                }
+            }
+            
+            if (markerId) {
+                console.log('2. Incrementing popularity for:', location.retailer, 'ID:', markerId);
+                
+                // Call the track pin API
+                fetch('/track/pin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        marker_id: markerId,
+                        lat: location.lat,
+                        lng: location.lng
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('3. Successfully incremented popularity for:', location.retailer);
+                    } else {
+                        console.warn('4. Failed to increment popularity for:', location.retailer);
+                    }
+                }).catch(error => {
+                    console.error('5. Error incrementing popularity for:', location.retailer, error);
+                });
+            } else {
+                console.warn('6. Could not find marker ID for location:', location.retailer);
+            }
+        });
+    }
+
+    /**
+     * Format retailer name with type and city in parentheses
+     */
+    cleanRetailerName(retailerName, retailerType = null, address = null) {
+        if (!retailerName || retailerName === 'Unknown') {
+            return retailerName;
+        }
+        
+        // Extract base name and city
+        let baseName = retailerName;
+        let city = '';
+        
+        // First check if there is a city suffix in the retailer name (e.g., " - Lynnwood", " - Seattle")
+        const citySuffixPattern = /\s*-\s*([A-Za-z\s]+(?:,\s*[A-Z]{2})?)$/;
+        const cityMatch = retailerName.match(citySuffixPattern);
+        
+        if (cityMatch) {
+            baseName = retailerName.replace(citySuffixPattern, '').trim();
+            city = cityMatch[1].trim();
+        }
+        // If no city suffix in retailer name, try to extract from address
+        else if (address) {
+            // Try to extract city from address (common patterns)
+            // Look for patterns like "City, State" or "City, ST"
+            const addressCityPattern = /([A-Za-z\s]+),\s*[A-Z]{2}\s*\d{5}/; // "City, ST 12345"
+            const addressCityMatch = address.match(addressCityPattern);
+            
+            if (addressCityMatch) {
+                city = addressCityMatch[1].trim();
+            } else {
+                // Try simpler pattern for "City, State"
+                const simpleCityPattern = /([A-Za-z\s]+),\s*[A-Z]{2}/; // "City, ST"
+                const simpleCityMatch = address.match(simpleCityPattern);
+                
+                if (simpleCityMatch) {
+                    city = simpleCityMatch[1].trim();
+                }
+            }
+        }
+        
+        // Format: "Base Name (Type - City)" or "Base Name (Type)" if no city
+        if (retailerType && city) {
+            return `${baseName} (${retailerType} - ${city})`;
+        } else if (retailerType) {
+            return `${baseName} (${retailerType})`;
+        } else if (city) {
+            return `${baseName} (${city})`;
+        } else {
+            return baseName;
+        }
+    }
+
+    /**
      * Show preview pins on the map
      */
     showPreviewPins() {
+        // Save current session data before going to preview
+        this.saveSessionData();
+        
         console.log('=== ROUTE PLANNER PREVIEW DEBUG ===');
         console.log('1. showPreviewPins called');
         console.log('2. userCoords:', window.userCoords);
@@ -856,6 +1160,12 @@ class RoutePlanner {
         // Create preview pins
         this.createPreviewPins();
 
+        // Set current step to preview
+        this.currentStep = 'preview';
+
+        // Create floating menu for preview step
+        this.createFloatingMenu();
+
         // Show success toast with store count
         const Toast = Swal.mixin({
             toast: true,
@@ -869,9 +1179,223 @@ class RoutePlanner {
             icon: 'success',
             title: `Showing ${this.selectedLocations.length} locations in your route`
         });
+    }
 
-        // Update preview button state
-        this.updatePreviewButtonState();
+    /**
+     * Create floating menu for preview step
+     */
+    createFloatingMenu() {
+        // Remove existing floating menu if it exists
+        const existingMenu = document.getElementById('route-planner-floating-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // Create floating menu container
+        const floatingMenu = document.createElement('div');
+        floatingMenu.id = 'route-planner-floating-menu';
+        floatingMenu.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 16px 24px;
+            z-index: 1000;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            border: 1px solid #e9ecef;
+            font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif;
+        `;
+
+        // Create navigation buttons
+        const backToPlanningBtn = document.createElement('button');
+        backToPlanningBtn.innerHTML = '<i class="fas fa-chevron-left"></i> Route Planning';
+        backToPlanningBtn.style.cssText = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        `;
+        backToPlanningBtn.addEventListener('mouseenter', () => {
+            backToPlanningBtn.style.background = '#5a6268';
+        });
+        backToPlanningBtn.addEventListener('mouseleave', () => {
+            backToPlanningBtn.style.background = '#6c757d';
+        });
+        backToPlanningBtn.addEventListener('click', () => {
+            this.backToPlanning();
+        });
+
+        const goBtn = document.createElement('button');
+        goBtn.innerHTML = 'Go! <i class="fas fa-chevron-right"></i>';
+        goBtn.style.cssText = `
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        `;
+        goBtn.addEventListener('mouseenter', () => {
+            goBtn.style.transform = 'translateY(-1px)';
+            goBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+        });
+        goBtn.addEventListener('mouseleave', () => {
+            goBtn.style.transform = 'translateY(0)';
+            goBtn.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+        });
+        goBtn.addEventListener('click', () => {
+            this.executeRoute();
+        });
+
+        const exitBtn = document.createElement('button');
+        exitBtn.innerHTML = '<i class="fas fa-times"></i> Exit';
+        exitBtn.style.cssText = `
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        `;
+        exitBtn.addEventListener('mouseenter', () => {
+            exitBtn.style.background = '#c82333';
+        });
+        exitBtn.addEventListener('mouseleave', () => {
+            exitBtn.style.background = '#dc3545';
+        });
+        exitBtn.addEventListener('click', () => {
+            this.exitPreview();
+        });
+
+        // Add buttons to menu
+        floatingMenu.appendChild(backToPlanningBtn);
+        floatingMenu.appendChild(goBtn);
+        floatingMenu.appendChild(exitBtn);
+
+        // Add menu to page
+        document.body.appendChild(floatingMenu);
+    }
+
+    /**
+     * Remove floating menu
+     */
+    removeFloatingMenu() {
+        const floatingMenu = document.getElementById('route-planner-floating-menu');
+        if (floatingMenu) {
+            floatingMenu.remove();
+        }
+    }
+
+    /**
+     * Back to planning step
+     */
+    backToPlanning() {
+        // Save current session data before switching back to planning
+        // We need to capture the checkbox states BEFORE closing the modal
+        const currentCheckboxStates = this.getCurrentCheckboxStates();
+        console.log('=== BACK TO PLANNING DEBUG ===');
+        console.log('Captured checkbox states before modal close:', currentCheckboxStates);
+        
+        // Store the states temporarily so we can restore them
+        this.sessionCheckboxStates = currentCheckboxStates;
+        
+        this.currentStep = 'planning';
+        this.removeFloatingMenu();
+        this.clearPreviewPins();
+        this.showRegularMarkers();
+        
+        // Reopen the planning modal
+        this.openPlanningModal();
+    }
+
+    /**
+     * Execute the route
+     */
+    executeRoute() {
+        this.currentStep = 'execute';
+        this.removeFloatingMenu();
+        
+        // Increment popularity for selected locations
+        this.incrementLocationPopularity(this.selectedLocations);
+        
+        // Generate and open the route
+        const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
+        this.generateRoute(roundTrip);
+        
+        // Clear preview and return to normal state
+        this.clearPreviewPins();
+        this.showRegularMarkers();
+        this.clearSessionData();
+    }
+
+    /**
+     * Exit preview and return to map
+     */
+    exitPreview() {
+        this.currentStep = 'planning';
+        this.removeFloatingMenu();
+        this.clearPreviewPins();
+        this.showRegularMarkers();
+        // Don't clear session data here - it should be preserved for planning transitions
+        // this.clearSessionData();
+    }
+
+    /**
+     * Open planning modal
+     */
+    openPlanningModal() {
+        // Use the SweetAlert2 configuration from routePlanner
+        Swal.fire({
+            title: '<i class="fas fa-route"></i> Route Planner',
+            html: this.createModalContent(),
+            showConfirmButton: false,
+            showCancelButton: false,
+            showCloseButton: true,
+            customClass: {
+                popup: 'swal2-route-planner'
+            },
+            width: '650px',
+            didOpen: () => {
+                // Initialize controls - session data is already loaded in this.sessionCheckboxStates
+                console.log('=== OPEN PLANNING MODAL DEBUG ===');
+                console.log('this.sessionCheckboxStates available:', this.sessionCheckboxStates);
+                this.initializeModalControls();
+            },
+            willClose: () => {
+                // Only clear session data if we're exiting the workflow entirely
+                // (not when navigating between planning and preview)
+                if (this.currentStep === 'planning') {
+                    this.clearSessionData();
+                }
+                this.currentStep = 'planning';
+            }
+        });
     }
 
     /**
@@ -1119,12 +1643,7 @@ class RoutePlanner {
         }, 500);
     }
 
-    /**
-     * Update preview button state
-     */
-    updatePreviewButtonState() {
-        // This could be used to update UI elements showing preview state
-    }
+
 
     /**
      * Clear preview and optionally skip reopening modal
@@ -1137,38 +1656,19 @@ class RoutePlanner {
         // Show regular markers again
         this.showRegularMarkers();
         
-        // Update button state
-        this.updatePreviewButtonState();
+        // Remove floating menu if in preview step
+        this.removeFloatingMenu();
+        
+        // Reset to planning step
+        this.currentStep = 'planning';
         
         // Show the route planner modal again only if not skipped
         if (!skipReopenModal) {
-            openRoutePanel();
+            this.openPlanningModal();
         }
     }
 
-    /**
-     * Generate route and open in Google Maps
-     */
-    openInGoogleMaps() {
-        const openNow = document.getElementById('open-now-checkbox')?.checked || false;
-        const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
-        const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
-        const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
-        
-        const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-        this.selectedLocations = this.selectOptimalLocations(availableLocations);
 
-        if (this.selectedLocations.length < 2) {
-            Swal.fire({
-                title: 'Not Enough Locations',
-                text: 'Could not find enough locations matching your criteria for routing.',
-                icon: 'warning'
-            });
-            return;
-        }
-
-        this.generateRoute(roundTrip);
-    }
 
     /**
      * Generate route with current selections
@@ -1201,12 +1701,12 @@ class RoutePlanner {
             return;
         }
 
+        // Increment popularity for all selected locations
+        this.incrementLocationPopularity(this.selectedLocations);
+
         // Generate Google Maps URL and open
         const mapsUrl = this.generateGoogleMapsURL(this.selectedLocations, window.userCoords, roundTrip);
         window.open(mapsUrl, '_blank');
-        
-        // Close the modal
-        Swal.close();
     }
 
     /**

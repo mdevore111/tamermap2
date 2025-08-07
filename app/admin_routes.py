@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, jsonify, request, flash, redirect, url_for, current_app, send_file
 from flask_login import login_required, current_user
 from flask_authorize import Authorize
 from flask_security import utils
@@ -13,6 +13,33 @@ import stripe
 from app.payment.stripe_webhooks import log_billing_event
 from app.custom_email import send_email_with_context
 from app.admin_utils import get_top_referrers, get_top_pages, get_top_ref_codes
+import os
+from io import BytesIO
+from typing import Optional
+
+# Optional imports for PDF functionality
+SIGNING_AVAILABLE: bool
+try:
+    from pyhanko.sign import signers
+    from pyhanko.sign.signers import PdfSigner, PdfSignatureMetadata
+    SIGNING_AVAILABLE = True
+except ImportError:
+    SIGNING_AVAILABLE = False
+
+try:
+    import pikepdf
+except ImportError:
+    pikepdf = None
+
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.units import inch
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 
 admin_bp = Blueprint('admin', __name__)
 authorize = Authorize()
@@ -2735,3 +2762,286 @@ def api_system_stats():
             'success': False,
             'error': str(e)
         }), 500
+
+# Initialize signer once (if cert path provided and pyHanko installed)
+_SIGNER: Optional[object] = None
+if SIGNING_AVAILABLE:
+    if (cert_path := os.environ.get("SIGN_CERT")):
+        pw = os.environ.get("SIGN_CERT_PASSWORD", "").encode()
+        try:
+            with open(cert_path, "rb") as fp:
+                _SIGNER = signers.SimpleSigner.load_pkcs12(fp.read(), pw)
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"[WARN] Cannot load signing cert: {exc}. Signing disabled.")
+            _SIGNER = None
+    else:
+        print("[INFO] No signing certificate configured; signing disabled.")
+else:
+    print("[INFO] pyHanko not installed; signing disabled.")
+
+def compress_pdf(data: bytes) -> bytes:
+    """Compress/optimise PDF using pikepdf (object streams + garbage collect)."""
+    if pikepdf is None:
+        raise RuntimeError("pikepdf not installed – cannot compress")
+    pdf = pikepdf.open(BytesIO(data))
+    out = BytesIO()
+    pdf.save(out, object_stream_mode=pikepdf.ObjectStreamMode.generate, compress_streams=True)
+    return out.getvalue()
+
+def sign_pdf(data: bytes) -> bytes:
+    """Sign PDF using pyHanko if signer configured."""
+    if _SIGNER is None:
+        raise RuntimeError("Signer unavailable – missing cert or pyHanko")
+    meta = PdfSignatureMetadata(field_name="Signature1")
+    signer = PdfSigner(meta, _SIGNER)
+    return signer.sign_pdf(BytesIO(data))
+
+def add_signature_to_pdf(pdf_data: bytes, signature_data: dict) -> bytes:
+    """Add signature to PDF using reportlab."""
+    if not REPORTLAB_AVAILABLE:
+        raise RuntimeError("ReportLab not available – cannot add signature")
+    
+    try:
+        # Open the PDF with pikepdf
+        pdf = pikepdf.open(BytesIO(pdf_data))
+        
+        # Get the target page
+        page_num = signature_data.get('page', 1)
+        if page_num == 'last':
+            target_page = len(pdf.pages) - 1
+        else:
+            target_page = int(page_num) - 1
+        
+        if target_page >= len(pdf.pages):
+            target_page = len(pdf.pages) - 1
+        
+        page = pdf.pages[target_page]
+        
+        # Get page dimensions
+        page_width = float(page.mediabox[2])
+        page_height = float(page.mediabox[3])
+        
+        # Calculate signature position
+        position = signature_data.get('position', 'bottom-right')
+        signature_width = 2 * inch  # 2 inches wide
+        signature_height = 0.5 * inch  # 0.5 inches tall
+        
+        # Auto-detect signature fields if requested
+        if position == 'auto-detect':
+            signature_fields = detect_signature_fields(pdf, target_page)
+            if signature_fields:
+                # Use the first detected signature field
+                field = signature_fields[0]
+                x = field['x']
+                y = field['y']
+                signature_width = field['width']
+                signature_height = field['height']
+            else:
+                # Fallback to bottom-right if no fields detected
+                x = page_width - signature_width - 0.5 * inch
+                y = 0.5 * inch
+        else:
+            # Manual positioning
+            if position == 'bottom-right':
+                x = page_width - signature_width - 0.5 * inch
+                y = 0.5 * inch
+            elif position == 'bottom-left':
+                x = 0.5 * inch
+                y = 0.5 * inch
+            elif position == 'center':
+                x = (page_width - signature_width) / 2
+                y = (page_height - signature_height) / 2
+            elif position == 'top-right':
+                x = page_width - signature_width - 0.5 * inch
+                y = page_height - signature_height - 0.5 * inch
+            elif position == 'top-left':
+                x = 0.5 * inch
+                y = page_height - signature_height - 0.5 * inch
+            else:
+                x = page_width - signature_width - 0.5 * inch
+                y = 0.5 * inch
+        
+        # Create a temporary PDF with the signature
+        temp_pdf = BytesIO()
+        c = canvas.Canvas(temp_pdf, pagesize=(page_width, page_height))
+        
+        signature_type = signature_data.get('type', 'drawn')
+        
+        if signature_type == 'drawn':
+            # Draw the signature paths
+            paths = signature_data.get('paths', [])
+            if paths:
+                # Scale the signature to fit the allocated space
+                canvas_width = 600  # Original canvas width
+                canvas_height = 200  # Original canvas height
+                scale_x = signature_width / canvas_width
+                scale_y = signature_height / canvas_height
+                scale = min(scale_x, scale_y)
+                
+                c.setStrokeColorRGB(0, 0, 0)  # Black color
+                c.setLineWidth(2 * scale)
+                
+                for path in paths:
+                    if len(path) > 1:
+                        c.moveTo(x + path[0]['x'] * scale, y + signature_height - path[0]['y'] * scale)
+                        for point in path[1:]:
+                            c.lineTo(x + point['x'] * scale, y + signature_height - point['y'] * scale)
+                        c.stroke()
+        
+        elif signature_type == 'typed':
+            # Add typed signature
+            text = signature_data.get('text', '')
+            font_name = signature_data.get('font', 'Dancing Script')
+            
+            # Set font and color
+            c.setFont(font_name, 14)
+            c.setFillColorRGB(0, 0, 0)  # Black color
+            
+            # Calculate text position (center in the signature area)
+            text_width = c.stringWidth(text, font_name, 14)
+            text_x = x + (signature_width - text_width) / 2
+            text_y = y + signature_height / 2 + 5  # Center vertically with slight offset
+            
+            c.drawString(text_x, text_y, text)
+        
+        c.save()
+        temp_pdf.seek(0)
+        
+        # Overlay the signature on the original PDF
+        signature_pdf = pikepdf.open(temp_pdf)
+        signature_page = signature_pdf.pages[0]
+        
+        # Add the signature page as an overlay
+        page.add_overlay(signature_page, pikepdf.Rectangle(x, y, x + signature_width, y + signature_height))
+        
+        # Save the result
+        output = BytesIO()
+        pdf.save(output)
+        output.seek(0)
+        
+        return output.getvalue()
+        
+    except Exception as e:
+        raise RuntimeError(f"Failed to add signature to PDF: {str(e)}")
+
+def detect_signature_fields(pdf, page_index):
+    """Detect signature fields in PDF forms."""
+    try:
+        page = pdf.pages[page_index]
+        signature_fields = []
+        
+        # Look for form fields that might be signature fields
+        if hasattr(page, 'annotations'):
+            for annotation in page.annotations:
+                if hasattr(annotation, 'subtype') and annotation.subtype == '/Widget':
+                    # Check if it's a signature field
+                    if hasattr(annotation, 'ft') and annotation.ft == '/Sig':
+                        # Get field coordinates
+                        rect = annotation.rect
+                        if rect:
+                            signature_fields.append({
+                                'x': float(rect[0]),
+                                'y': float(rect[1]),
+                                'width': float(rect[2]) - float(rect[0]),
+                                'height': float(rect[3]) - float(rect[1])
+                            })
+        
+        # Also look for text fields that might be signature fields
+        if hasattr(page, 'annotations'):
+            for annotation in page.annotations:
+                if hasattr(annotation, 'subtype') and annotation.subtype == '/Widget':
+                    if hasattr(annotation, 'ft') and annotation.ft == '/Tx':
+                        # Check field name for signature-related keywords
+                        field_name = getattr(annotation, 't', '').lower()
+                        if any(keyword in field_name for keyword in ['signature', 'sign', 'sig', 'name']):
+                            rect = annotation.rect
+                            if rect:
+                                signature_fields.append({
+                                    'x': float(rect[0]),
+                                    'y': float(rect[1]),
+                                    'width': float(rect[2]) - float(rect[0]),
+                                    'height': float(rect[3]) - float(rect[1])
+                                })
+        
+        return signature_fields
+        
+    except Exception as e:
+        print(f"Warning: Could not detect signature fields: {e}")
+        return []
+
+@admin_bp.route('/pdf-tool')
+@admin_required
+def pdf_tool():
+    """PDF Tool page - compress and/or sign PDFs"""
+    return render_template('admin/pdf_tool.html', signer_available=_SIGNER is not None)
+
+@admin_bp.route('/pdf-tool-v2')
+@admin_required
+def pdf_tool_v2():
+    """PDF Tool v2 page - improved interface with drag-and-drop signature placement"""
+    return render_template('admin/pdf_tool_v2.html')
+
+@admin_bp.route('/pdf-tool/process', methods=['POST'])
+@admin_required
+def pdf_tool_process():
+    """Process uploaded PDF - compress and/or sign"""
+    uploaded = request.files.get("pdf")
+    if not uploaded or not uploaded.filename.lower().endswith(".pdf"):
+        flash("Please upload a PDF file.")
+        return redirect(url_for('admin.pdf_tool'))
+    
+    original_data = uploaded.read()
+    original_size = len(original_data)
+    pdf_data = original_data
+    
+    compression_stats = None
+    
+    # Apply compression if requested & possible
+    if "compress" in request.form:
+        try:
+            pdf_data = compress_pdf(pdf_data)
+            compressed_size = len(pdf_data)
+            reduction = ((original_size - compressed_size) / original_size) * 100
+            compression_stats = {
+                'original_size': original_size,
+                'compressed_size': compressed_size,
+                'reduction_percent': round(reduction, 1)
+            }
+        except Exception as exc:
+            flash(f"Compression failed: {exc}")
+            return redirect(url_for('admin.pdf_tool'))
+    
+    # Apply drawn signature if requested
+    if "add_signature" in request.form:
+        signature_data_str = request.form.get('signature_data')
+        if signature_data_str:
+            try:
+                signature_data = json.loads(signature_data_str)
+                pdf_data = add_signature_to_pdf(pdf_data, signature_data)
+            except Exception as exc:
+                flash(f"Signature addition failed: {exc}")
+                return redirect(url_for('admin.pdf_tool'))
+    
+    # Apply digital certificate signature if requested & possible
+    if "digital_sign" in request.form:
+        if _SIGNER is None:
+            flash("Digital signing not configured on server.")
+            return redirect(url_for('admin.pdf_tool'))
+        try:
+            pdf_data = sign_pdf(pdf_data)
+        except Exception as exc:
+            flash(f"Digital signing failed: {exc}")
+            return redirect(url_for('admin.pdf_tool'))
+    
+    out_stream = BytesIO(pdf_data)
+    out_stream.seek(0)
+    suffix = "_processed.pdf"
+    base = os.path.splitext(uploaded.filename)[0]
+    
+    response = send_file(out_stream, as_attachment=True, download_name=base + suffix, mimetype="application/pdf")
+    
+    # Add compression stats to response headers if available
+    if compression_stats:
+        response.headers['X-Compression-Stats'] = jsonify(compression_stats).get_data(as_text=True)
+    
+    return response

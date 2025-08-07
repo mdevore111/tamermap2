@@ -570,33 +570,28 @@ function openRoutePanel() {
     return;
   }
 
-  // Use the SweetAlert2 configuration from routePlanner
-  Swal.fire({
-    title: '<i class="fas fa-route"></i> Route Planner',
-    html: window.routePlanner.createModalContent(),
-    showConfirmButton: false,
-    showCancelButton: false,
-    showCloseButton: true,
-    customClass: {
-      popup: 'swal2-route-planner'
-    },
-    width: 'auto',
-    didOpen: () => {
-      window.routePlanner.initializeModalControls();
-    }
-  });
+  // If we're in preview mode, save session data and exit preview (same as floating menu behavior)
+  if (window.routePlanner.currentStep === 'preview') {
+    // Save current session data before switching back to planning
+    // We need to capture the checkbox states BEFORE exiting preview
+    const currentCheckboxStates = window.routePlanner.getCurrentCheckboxStates();
+    console.log('=== ROUTE PLANNING FROM LEGEND DEBUG ===');
+    console.log('Captured checkbox states before exiting preview:', currentCheckboxStates);
+    
+    // Store the states temporarily so we can restore them
+    window.routePlanner.sessionCheckboxStates = currentCheckboxStates;
+    
+    window.routePlanner.exitPreview();
+  }
+
+  // Use the new wizard-style modal
+  window.routePlanner.openPlanningModal();
 }
 
-/**
- * Close route planner modal
- */
-function closeRoutePanel() {
-  Swal.close();
-}
+
 
 // Expose functions globally
 window.openRoutePanel = openRoutePanel;
-window.closeRoutePanel = closeRoutePanel;
 window.showProUpgradeToast = showProUpgradeToast;
 window.initUI = initUI;
 
