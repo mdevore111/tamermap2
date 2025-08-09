@@ -570,17 +570,12 @@ function openRoutePanel() {
     return;
   }
 
-  // If we're in preview mode, save session data and exit preview (same as floating menu behavior)
+  // If we're in preview mode, persist preferences and exit preview
   if (window.routePlanner.currentStep === 'preview') {
-    // Save current session data before switching back to planning
-    // We need to capture the checkbox states BEFORE exiting preview
-    const currentCheckboxStates = window.routePlanner.getCurrentCheckboxStates();
-    console.log('=== ROUTE PLANNING FROM LEGEND DEBUG ===');
-    console.log('Captured checkbox states before exiting preview:', currentCheckboxStates);
-    
-    // Store the states temporarily so we can restore them
-    window.routePlanner.sessionCheckboxStates = currentCheckboxStates;
-    
+    // Ensure preferences are saved (in-memory state is the source of truth)
+    if (typeof window.routePlanner.savePreferences === 'function') {
+      window.routePlanner.savePreferences();
+    }
     window.routePlanner.exitPreview();
   }
 
