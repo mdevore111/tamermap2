@@ -2822,45 +2822,50 @@ def add_signature_to_pdf(pdf_data: bytes, signature_data: dict) -> bytes:
         page_width = float(page.mediabox[2])
         page_height = float(page.mediabox[3])
         
-        # Calculate signature position
-        position = signature_data.get('position', 'bottom-right')
-        signature_width = 2 * inch  # 2 inches wide
-        signature_height = 0.5 * inch  # 0.5 inches tall
-        
-        # Auto-detect signature fields if requested
-        if position == 'auto-detect':
-            signature_fields = detect_signature_fields(pdf, target_page)
-            if signature_fields:
-                # Use the first detected signature field
-                field = signature_fields[0]
-                x = field['x']
-                y = field['y']
-                signature_width = field['width']
-                signature_height = field['height']
+        # Get signature positions from the new format
+        positions = signature_data.get('positions', [])
+        if not positions:
+            # Fallback to old format for backward compatibility
+            position = signature_data.get('position', 'bottom-right')
+            signature_width = 2 * inch  # 2 inches wide
+            signature_height = 0.5 * inch  # 0.5 inches tall
+            
+            # Auto-detect signature fields if requested
+            if position == 'auto-detect':
+                signature_fields = detect_signature_fields(pdf, target_page)
+                if signature_fields:
+                    # Use the first detected signature field
+                    field = signature_fields[0]
+                    x = field['x']
+                    y = field['y']
+                    signature_width = field['width']
+                    signature_height = field['height']
+                else:
+                    # Fallback to bottom-right if no fields detected
+                    x = page_width - signature_width - 0.5 * inch
+                    y = 0.5 * inch
             else:
-                # Fallback to bottom-right if no fields detected
-                x = page_width - signature_width - 0.5 * inch
-                y = 0.5 * inch
-        else:
-            # Manual positioning
-            if position == 'bottom-right':
-                x = page_width - signature_width - 0.5 * inch
-                y = 0.5 * inch
-            elif position == 'bottom-left':
-                x = 0.5 * inch
-                y = 0.5 * inch
-            elif position == 'center':
-                x = (page_width - signature_width) / 2
-                y = (page_height - signature_height) / 2
-            elif position == 'top-right':
-                x = page_width - signature_width - 0.5 * inch
-                y = page_height - signature_height - 0.5 * inch
-            elif position == 'top-left':
-                x = 0.5 * inch
-                y = page_height - signature_height - 0.5 * inch
-            else:
-                x = page_width - signature_width - 0.5 * inch
-                y = 0.5 * inch
+                # Manual positioning
+                if position == 'bottom-right':
+                    x = page_width - signature_width - 0.5 * inch
+                    y = 0.5 * inch
+                elif position == 'bottom-left':
+                    x = 0.5 * inch
+                    y = 0.5 * inch
+                elif position == 'center':
+                    x = (page_width - signature_width) / 2
+                    y = (page_height - signature_height) / 2
+                elif position == 'top-right':
+                    x = page_width - signature_width - 0.5 * inch
+                    y = page_height - signature_height - 0.5 * inch
+                elif position == 'top-left':
+                    x = 0.5 * inch
+                    y = page_height - signature_height - 0.5 * inch
+                else:
+                    x = page_width - signature_width - 0.5 * inch
+                    y = 0.5 * inch
+            
+            positions = [{'x': x, 'y': y, 'width': signature_width, 'height': signature_height}]
         
         # Create a temporary PDF with the signature
         temp_pdf = BytesIO()
@@ -2868,42 +2873,75 @@ def add_signature_to_pdf(pdf_data: bytes, signature_data: dict) -> bytes:
         
         signature_type = signature_data.get('type', 'drawn')
         
-        if signature_type == 'drawn':
-            # Draw the signature paths
-            paths = signature_data.get('paths', [])
-            if paths:
-                # Scale the signature to fit the allocated space
-                canvas_width = 600  # Original canvas width
-                canvas_height = 200  # Original canvas height
-                scale_x = signature_width / canvas_width
-                scale_y = signature_height / canvas_height
-                scale = min(scale_x, scale_y)
+        # Process each signature position
+        for pos in positions:
+            x = pos['x']
+            y = pos['y']
+            signature_width = pos['width']
+            signature_height = pos['height']
+            
+            if signature_type == 'drawn':
+                # Draw the signature paths
+                paths = signature_data.get('paths', [])
+                if paths:
+                    # Scale the signature to fit the allocated space
+                    canvas_width = 600  # Original canvas width
+                    canvas_height = 200  # Original canvas height
+                    scale_x = signature_width / canvas_width
+                    scale_y = signature_height / canvas_height
+                    scale = min(scale_x, scale_y)
+                    
+                    c.setStrokeColorRGB(0, 0, 0)  # Black color
+                    c.setLineWidth(2 * scale)
+                    
+                    for path in paths:
+                        if len(path) > 1:
+                            c.moveTo(x + path[0]['x'] * scale, y + signature_height - path[0]['y'] * scale)
+                            for point in path[1:]:
+                                c.lineTo(x + point['x'] * scale, y + signature_height - point['y'] * scale)
+                            c.stroke()
+            
+            elif signature_type == 'typed':
+                # Add typed signature
+                text = signature_data.get('text', '')
+                font_name = signature_data.get('font', 'Dancing Script')
+                font_size = signature_data.get('size', 14)
                 
-                c.setStrokeColorRGB(0, 0, 0)  # Black color
-                c.setLineWidth(2 * scale)
-                
-                for path in paths:
-                    if len(path) > 1:
-                        c.moveTo(x + path[0]['x'] * scale, y + signature_height - path[0]['y'] * scale)
-                        for point in path[1:]:
-                            c.lineTo(x + point['x'] * scale, y + signature_height - point['y'] * scale)
-                        c.stroke()
-        
-        elif signature_type == 'typed':
-            # Add typed signature
-            text = signature_data.get('text', '')
-            font_name = signature_data.get('font', 'Dancing Script')
-            
-            # Set font and color
-            c.setFont(font_name, 14)
-            c.setFillColorRGB(0, 0, 0)  # Black color
-            
-            # Calculate text position (center in the signature area)
-            text_width = c.stringWidth(text, font_name, 14)
-            text_x = x + (signature_width - text_width) / 2
-            text_y = y + signature_height / 2 + 5  # Center vertically with slight offset
-            
-            c.drawString(text_x, text_y, text)
+                # Try to register the font if it's a custom font
+                try:
+                    if font_name == 'Dancing Script':
+                        # Try to register Dancing Script font
+                        try:
+                            pdfmetrics.registerFont(TTFont('Dancing Script', 'static/fonts/DancingScript-Regular.ttf'))
+                            actual_font_name = 'Dancing Script'
+                        except Exception as font_reg_error:
+                            # Fallback to a standard font if Dancing Script is not available
+                            actual_font_name = 'Helvetica'
+                    else:
+                        actual_font_name = font_name
+                    
+                    # Set font and color
+                    c.setFont(actual_font_name, font_size)
+                    c.setFillColorRGB(0, 0, 0)  # Black color
+                    
+                    # Calculate text position (center in the signature area)
+                    text_width = c.stringWidth(text, actual_font_name, font_size)
+                    text_x = x + (signature_width - text_width) / 2
+                    text_y = y + signature_height / 2 + 5  # Center vertically with slight offset
+                    
+                    c.drawString(text_x, text_y, text)
+                    
+                except Exception as font_error:
+                    # Fallback to Helvetica if any font error occurs
+                    c.setFont('Helvetica', font_size)
+                    c.setFillColorRGB(0, 0, 0)  # Black color
+                    
+                    # Calculate text position (center in the signature area)
+                    text_width = c.stringWidth(text, 'Helvetica', font_size)
+                    text_x = x + (signature_width - text_width) / 2
+                    text_y = y + signature_height / 2 + 5  # Center vertically with slight offset
+                    
+                    c.drawString(text_x, text_y, text)
         
         c.save()
         temp_pdf.seek(0)
@@ -2912,8 +2950,13 @@ def add_signature_to_pdf(pdf_data: bytes, signature_data: dict) -> bytes:
         signature_pdf = pikepdf.open(temp_pdf)
         signature_page = signature_pdf.pages[0]
         
-        # Add the signature page as an overlay
-        page.add_overlay(signature_page, pikepdf.Rectangle(x, y, x + signature_width, y + signature_height))
+        # Add the signature page as an overlay for each position
+        for pos in positions:
+            x = pos['x']
+            y = pos['y']
+            signature_width = pos['width']
+            signature_height = pos['height']
+            page.add_overlay(signature_page, pikepdf.Rectangle(x, y, x + signature_width, y + signature_height))
         
         # Save the result
         output = BytesIO()
@@ -2972,20 +3015,20 @@ def detect_signature_fields(pdf, page_index):
 
 
 
-@admin_bp.route('/pdf-tool-v2')
+@admin_bp.route('/pdf-tool')
 @admin_required
-def pdf_tool_v2():
-    """PDF Tool v2 page - improved interface with drag-and-drop signature placement"""
-    return render_template('admin/pdf_tool_v2.html')
+def pdf_tool():
+    """PDF Tool page - improved interface with drag-and-drop signature placement"""
+    return render_template('admin/pdf_tool.html')
 
 
 
 
 
-@admin_bp.route('/pdf-tool-v2/process', methods=['POST'])
+@admin_bp.route('/pdf-tool/process', methods=['POST'])
 @admin_required
-def pdf_tool_v2_process():
-    """Process uploaded PDF for v2 tool - compress and/or sign"""
+def pdf_tool_process():
+    """Process uploaded PDF - compress and/or sign"""
     uploaded = request.files.get("pdf_file")
     if not uploaded or not uploaded.filename.lower().endswith(".pdf"):
         return jsonify({"error": "Please upload a PDF file."}), 400

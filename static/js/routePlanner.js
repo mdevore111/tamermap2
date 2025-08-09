@@ -8,11 +8,22 @@ class RoutePlanner {
     constructor() {
         this.selectedLocations = [];
         this.previewPins = [];
-        this.maxDistance = 50; // miles
+        this.maxDistance = 25; // default miles (max 50)
         this.maxStops = 5;
         this.isInitialized = false;
         this.currentStep = 'planning'; // 'planning', 'preview', 'execute'
-        this.sessionKey = 'routePlannerSession';
+        // Use localStorage to persist preferences across sessions
+        this.sessionKey = 'routePlannerPreferences';
+        // Store all checkbox/toggle preferences here
+        this.sessionCheckboxStates = {
+            roundTrip: false,
+            openNow: false,
+            leastPopular: false,
+            mostPopular: false,
+            kiosk: true,
+            retail: true,
+            indie: false
+        };
     }
 
     /**
@@ -23,56 +34,70 @@ class RoutePlanner {
         
         console.log('Initializing Route Planner...');
         this.initializeUI();
-        this.loadSessionData();
+        this.loadPreferences();
         this.isInitialized = true;
     }
 
     /**
-     * Load session data from sessionStorage
+     * Load preferences from localStorage
      */
-    loadSessionData() {
+    loadPreferences() {
         try {
-            console.log('=== LOADING SESSION DATA ===');
-            const sessionData = sessionStorage.getItem(this.sessionKey);
-            console.log('Raw session data from storage:', sessionData);
-            
-            if (sessionData) {
-                const data = JSON.parse(sessionData);
-                this.maxDistance = data.maxDistance || 50;
-                this.maxStops = data.maxStops || 5;
-                this.sessionCheckboxStates = data.checkboxStates || {};
-                console.log('Parsed session data:', data);
-                console.log('this.sessionCheckboxStates set to:', this.sessionCheckboxStates);
+            console.log('=== LOADING ROUTE PLANNER PREFERENCES ===');
+            const raw = localStorage.getItem(this.sessionKey);
+            console.log('Raw prefs from storage:', raw);
+            if (raw) {
+                const data = JSON.parse(raw);
+                this.maxDistance = Number.isFinite(data.maxDistance) ? data.maxDistance : 25;
+                this.maxStops = Number.isInteger(data.maxStops) ? data.maxStops : 5;
+                this.sessionCheckboxStates = {
+                    roundTrip: !!data.checkboxStates?.roundTrip,
+                    openNow: !!data.checkboxStates?.openNow,
+                    leastPopular: !!data.checkboxStates?.leastPopular,
+                    mostPopular: !!data.checkboxStates?.mostPopular,
+                    kiosk: data.checkboxStates?.kiosk !== undefined ? !!data.checkboxStates.kiosk : true,
+                    retail: data.checkboxStates?.retail !== undefined ? !!data.checkboxStates.retail : true,
+                    indie: data.checkboxStates?.indie !== undefined ? !!data.checkboxStates.indie : false
+                };
+                console.log('Loaded preferences:', {
+                    maxDistance: this.maxDistance,
+                    maxStops: this.maxStops,
+                    checkboxStates: this.sessionCheckboxStates
+                });
             } else {
-                console.log('No session data found in storage');
-                this.sessionCheckboxStates = {};
+                console.log('No stored preferences found; using defaults');
+                this.maxDistance = 25;
+                this.maxStops = 5;
+                this.sessionCheckboxStates = {
+                    roundTrip: false,
+                    openNow: false,
+                    leastPopular: false,
+                    mostPopular: false,
+                    kiosk: true,
+                    retail: true,
+                    indie: false
+                };
             }
         } catch (error) {
-            console.warn('Failed to load route planner session data:', error);
-            this.sessionCheckboxStates = {};
+            console.warn('Failed to load route planner preferences:', error);
         }
     }
 
     /**
-     * Save session data to sessionStorage
+     * Save preferences to localStorage
      */
-    saveSessionData() {
+    savePreferences() {
         try {
-            const checkboxStates = this.getCurrentCheckboxStates();
-            console.log('=== SAVING SESSION DATA ===');
-            console.log('checkboxStates being saved:', checkboxStates);
-            
             const sessionData = {
                 maxDistance: this.maxDistance,
                 maxStops: this.maxStops,
-                checkboxStates: checkboxStates,
+                checkboxStates: this.sessionCheckboxStates,
                 timestamp: Date.now()
             };
-            console.log('Full session data being saved:', sessionData);
-            sessionStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
-            console.log('Session data saved successfully');
+            console.log('=== SAVING ROUTE PLANNER PREFERENCES ===', sessionData);
+            localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
         } catch (error) {
-            console.warn('Failed to save route planner session data:', error);
+            console.warn('Failed to save route planner preferences:', error);
         }
     }
 
@@ -80,25 +105,18 @@ class RoutePlanner {
      * Get current checkbox states
      */
     getCurrentCheckboxStates() {
-        return {
-            roundTrip: document.getElementById('round-trip-checkbox')?.checked || false,
-            openNow: document.getElementById('open-now-checkbox')?.checked || false,
-            leastPopular: document.getElementById('least-popular-checkbox')?.checked || false,
-            mostPopular: document.getElementById('most-popular-checkbox')?.checked || false,
-            kiosk: document.querySelector('.route-filter-toggle[data-filter="kiosk"]')?.classList.contains('active') || false,
-            retail: document.querySelector('.route-filter-toggle[data-filter="retail"]')?.classList.contains('active') || false,
-            indie: document.querySelector('.route-filter-toggle[data-filter="indie"]')?.classList.contains('active') || false
-        };
+        // Return in-memory state to avoid DOM dependency
+        return { ...this.sessionCheckboxStates };
     }
 
     /**
-     * Clear session data
+     * Clear preferences (Reset to Defaults handler will call this)
      */
     clearSessionData() {
         try {
-            sessionStorage.removeItem(this.sessionKey);
+            localStorage.removeItem(this.sessionKey);
         } catch (error) {
-            console.warn('Failed to clear route planner session data:', error);
+            console.warn('Failed to clear route planner preferences:', error);
         }
     }
 
@@ -123,13 +141,12 @@ class RoutePlanner {
             customClass: {
                 popup: 'swal2-route-planner'
             },
-            width: '650px',
+            width: '560px',
             didOpen: () => {
                 this.initializeModalControls();
             },
             willClose: () => {
-                // Clear session data when modal is closed
-                this.clearSessionData();
+                // Do not clear preferences on close; persist across sessions
                 this.currentStep = 'planning';
             }
         };
@@ -147,85 +164,99 @@ class RoutePlanner {
      */
     createControlsHTML() {
         return `
-            <div class="route-planner-container">
+            <div class="route-planner-container" style="font-size:13px; padding:6px 8px;">
                 <!-- Distance Control -->
-                <div class="route-control-group">
-                    <h4><i class="fas fa-road"></i> Distance from Start</h4>
-                    <div class="route-slider-container">
-                        <label for="distance-slider">
-                            Max Distance: <span id="distance-value">${this.maxDistance} miles</span>
-                        </label>
-                        <input type="range" id="distance-slider" class="route-slider" 
-                               min="5" max="100" value="${this.maxDistance}" step="5">
+                <div class="route-control-group" style="margin:6px 0;">
+                    <div style="display:flex; align-items:center; justify-content: space-between; margin-bottom:4px;">
+                        <div style="font-weight:600;"><i class="fas fa-road"></i> Distance</div>
+                        <div id="distance-value" style="color:#6c757d;">${this.maxDistance} miles</div>
+                    </div>
+                    <div class="route-slider-container" style="padding:0 2px;">
+                        <label for="distance-slider" style="display:none">Max Distance</label>
+                        <input type="range" id="distance-slider" class="route-slider" min="5" max="50" value="${this.maxDistance}" step="5" data-bs-toggle="tooltip" data-bs-placement="top" title="Limit the farthest store distance">
                     </div>
                 </div>
 
                 <!-- Stops Control -->
-                <div class="route-control-group">
-                    <h4><i class="fas fa-map-marker-alt"></i> Stops</h4>
-                    <div class="route-slider-container">
-                        <label for="stops-slider">
-                            Max Stops: <span id="stops-value">${this.maxStops}</span>
-                        </label>
-                        <input type="range" id="stops-slider" class="route-slider" 
-                               min="2" max="10" value="${this.maxStops}" step="1">
+                <div class="route-control-group" style="margin:6px 0;">
+                    <div style="display:flex; align-items:center; justify-content: space-between; margin-bottom:4px;">
+                        <div style="font-weight:600;"><i class="fas fa-map-marker-alt"></i> Stops</div>
+                        <div id="stops-value" style="color:#6c757d;">${this.maxStops}</div>
+                    </div>
+                    <div class="route-slider-container" style="padding:0 2px;">
+                        <label for="stops-slider" style="display:none">Max Stops</label>
+                        <input type="range" id="stops-slider" class="route-slider" min="2" max="10" value="${this.maxStops}" step="1" data-bs-toggle="tooltip" data-bs-placement="top" title="Number of stops to include">
                     </div>
                 </div>
 
-                <!-- Route Options -->
-                <div class="route-control-group">
-                    <h4><i class="fas fa-cog"></i> Options</h4>
-                    <div class="route-checkbox-row">
-                        <label class="route-checkbox">
-                            <input type="checkbox" id="round-trip-checkbox">
-                            <span>Round Trip</span>
-                        </label>
-                        <label class="route-checkbox">
-                            <input type="checkbox" id="open-now-checkbox">
-                            <span>Open Now</span>
-                        </label>
-                        <label class="route-checkbox">
-                            <input type="checkbox" id="least-popular-checkbox">
-                            <span>Least Popular</span>
-                        </label>
-                        <label class="route-checkbox">
-                            <input type="checkbox" id="most-popular-checkbox">
-                            <span>Most Popular</span>
-                        </label>
+                <!-- Route Options + Popularity Segmented -->
+                <div class="route-control-group" style="margin:8px 0;">
+                    <div style="font-weight:600; margin-bottom:6px;"><i class="fas fa-cog"></i> Options</div>
+                    <div style="display:flex; align-items:center; justify-content: space-between; gap:12px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="min-width:70px; color:#6c757d;">Popularity</div>
+                            <div id="popularity-segment" style="display:inline-flex; border:1px solid #ced4da; border-radius:8px; overflow:hidden;" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose popularity filter">
+                                <button type="button" id="popularity-off" style="padding:6px 10px; border:none; background:#f8f9fa; cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="top" title="No popularity filter">Off</button>
+                                <button type="button" id="popularity-least" style="padding:6px 10px; border:none; background:#f8f9fa; cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="top" title="Prefer least popular">Least</button>
+                                <button type="button" id="popularity-most" style="padding:6px 10px; border:none; background:#f8f9fa; cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="top" title="Prefer most popular">Most</button>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Return to your start location at the end">
+                                <input type="checkbox" id="round-trip-checkbox">
+                                <span>Round Trip</span>
+                            </label>
+                            <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Only include locations currently open">
+                                <input type="checkbox" id="open-now-checkbox">
+                                <span>Open Now</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Store Type Filters -->
-                <div class="route-control-group">
-                    <h4><i class="fas fa-filter"></i> Store Types</h4>
-                    <div class="route-filter-toggles">
-                        <div class="route-filter-toggle" data-filter="kiosk">
+                <div class="route-control-group" style="margin:8px 0;">
+                    <div style="font-weight:600; margin-bottom:6px; text-align:center;"><i class="fas fa-filter"></i> Store Types</div>
+                    <div class="route-filter-toggles" style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+                        <div class="route-filter-toggle" data-filter="kiosk" style="padding:6px 10px; border:1px solid #667eea; border-radius:8px; cursor:pointer; background:#ffffff; color:#667eea;" data-bs-toggle="tooltip" data-bs-placement="top" title="Include kiosks">
                             <i class="fas fa-robot"></i> Kiosk
                         </div>
-                        <div class="route-filter-toggle" data-filter="retail">
+                        <div class="route-filter-toggle" data-filter="retail" style="padding:6px 10px; border:1px solid #667eea; border-radius:8px; cursor:pointer; background:#ffffff; color:#667eea;" data-bs-toggle="tooltip" data-bs-placement="top" title="Include retail stores">
                             <i class="fas fa-store"></i> Retail
                         </div>
-                        <div class="route-filter-toggle" data-filter="indie">
+                        <div class="route-filter-toggle" data-filter="indie" style="padding:6px 10px; border:1px solid #667eea; border-radius:8px; cursor:pointer; background:#ffffff; color:#667eea;" data-bs-toggle="tooltip" data-bs-placement="top" title="Include indie/card shops">
                             <i class="fas fa-heart"></i> Indie
                         </div>
                     </div>
                 </div>
 
+                <!-- Quick Picks -->
+                <div class="route-control-group" style="margin:6px 0;">
+                    <div style="font-weight:600; margin-bottom:6px; text-align:center;"><i class="fas fa-bolt"></i> Quick Picks</div>
+                    <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px;">
+                        <button type="button" class="route-quick-pick" data-pick="kiosk5" style="padding:6px 10px; background:#eef2ff; color:#3b5bdb; border:none; border-radius:8px; cursor:pointer;">Nearest 5 Kiosks</button>
+                        <button type="button" class="route-quick-pick" data-pick="retail5" style="padding:6px 10px; background:#e6fcf5; color:#087f5b; border:none; border-radius:8px; cursor:pointer;">Nearest 5 Stores</button>
+                        <button type="button" class="route-quick-pick" data-pick="balanced5" style="padding:6px 10px; background:#fff4e6; color:#d9480f; border:none; border-radius:8px; cursor:pointer;">Balanced 5</button>
+                    </div>
+                </div>
+
                 <!-- Wizard Navigation Buttons -->
-                <div class="route-actions">
-                    <button type="button" class="route-btn route-btn-secondary" id="modal-back-to-map-btn">
+                <div class="route-actions" style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                    <button type="button" class="route-btn route-btn-secondary" id="modal-back-to-map-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Close planner and return to map">
                         <i class="fas fa-chevron-left"></i> Map
                     </button>
-                    <button type="button" class="route-btn route-btn-primary" id="modal-preview-route-btn">
+                    <button type="button" class="route-btn route-btn-primary" id="modal-preview-route-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Preview your stops on the map" style="background:#667eea; color:#fff; border:none; padding:8px 14px; border-radius:8px;">
                         Preview <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button type="button" class="route-btn route-btn-secondary" id="modal-reset-route-btn" style="margin-left:auto;" data-bs-toggle="tooltip" data-bs-placement="top" title="Reset all preferences to defaults">
+                        Reset
                     </button>
                 </div>
 
                 <!-- Route Summary -->
-                <div class="route-summary" id="route-summary">
-                    <h4>Route Summary</h4>
-                    <div id="summary-content" style="max-height: 200px; overflow-y: auto; padding-right: 8px;">
-                        <small>Configure your preferences above to see route details.</small>
+                <div class="route-summary" id="route-summary" style="margin-top:8px;">
+                    <div id="summary-content" style="max-height: 180px; overflow-y: auto; padding-right: 6px; color:#2c3e50;">
+                        <small style="color:#6c757d;">Configure your preferences above to see route details.</small>
                     </div>
                 </div>
             </div>
@@ -272,78 +303,76 @@ class RoutePlanner {
             });
         }
 
-        // Initialize checkboxes with session data restoration
+        // Initialize option controls
         const roundTripCheckbox = document.getElementById('round-trip-checkbox');
         const openNowCheckbox = document.getElementById('open-now-checkbox');
-        const leastPopularCheckbox = document.getElementById('least-popular-checkbox');
-        const mostPopularCheckbox = document.getElementById('most-popular-checkbox');
+        const popularityOffBtn = document.getElementById('popularity-off');
+        const popularityLeastBtn = document.getElementById('popularity-least');
+        const popularityMostBtn = document.getElementById('popularity-most');
         
         // Restore checkbox states from session data if available
         console.log('=== SESSION DATA RESTORATION DEBUG ===');
         console.log('this.sessionCheckboxStates:', this.sessionCheckboxStates);
         
         if (this.sessionCheckboxStates) {
-            console.log('Restoring checkbox states from session data...');
-            if (roundTripCheckbox && 'roundTrip' in this.sessionCheckboxStates) {
-                roundTripCheckbox.checked = this.sessionCheckboxStates.roundTrip;
-                console.log('roundTripCheckbox.checked set to:', roundTripCheckbox.checked);
-            }
-            if (openNowCheckbox && 'openNow' in this.sessionCheckboxStates) {
-                openNowCheckbox.checked = this.sessionCheckboxStates.openNow;
-                console.log('openNowCheckbox.checked set to:', openNowCheckbox.checked);
-            }
-            if (leastPopularCheckbox && 'leastPopular' in this.sessionCheckboxStates) {
-                leastPopularCheckbox.checked = this.sessionCheckboxStates.leastPopular;
-                console.log('leastPopularCheckbox.checked set to:', leastPopularCheckbox.checked);
-            }
-            if (mostPopularCheckbox && 'mostPopular' in this.sessionCheckboxStates) {
-                mostPopularCheckbox.checked = this.sessionCheckboxStates.mostPopular;
-                console.log('mostPopularCheckbox.checked set to:', mostPopularCheckbox.checked);
-            }
+            console.log('Restoring option states from preferences...');
+            if (roundTripCheckbox) roundTripCheckbox.checked = !!this.sessionCheckboxStates.roundTrip;
+            if (openNowCheckbox) openNowCheckbox.checked = !!this.sessionCheckboxStates.openNow;
+            // Set segmented control selection
+            const mode = this.sessionCheckboxStates.mostPopular
+                ? 'most'
+                : this.sessionCheckboxStates.leastPopular
+                ? 'least'
+                : 'off';
+            const setSegActive = (btn, active) => {
+                if (!btn) return;
+                btn.style.background = active ? '#667eea' : '#f8f9fa';
+                btn.style.color = active ? '#fff' : '#212529';
+                btn.style.border = active ? '1px solid #667eea' : '1px solid transparent';
+            };
+            setSegActive(popularityOffBtn, mode === 'off');
+            setSegActive(popularityLeastBtn, mode === 'least');
+            setSegActive(popularityMostBtn, mode === 'most');
         }
         
-        // Fallback to legend state for Open Now if no session data for it
-        if (!this.sessionCheckboxStates || !('openNow' in this.sessionCheckboxStates)) {
-            console.log('No session data for openNow, using legend fallback...');
-            const legendOpenNowCheckbox = document.getElementById('filter-open-now');
-            if (openNowCheckbox && legendOpenNowCheckbox) {
-                openNowCheckbox.checked = legendOpenNowCheckbox.checked;
-                console.log('openNowCheckbox.checked set to legend state:', openNowCheckbox.checked);
-            }
-        }
-        
+        // No legend fallback: planner is legend-agnostic
+            
         // Add event listeners
         if (roundTripCheckbox) {
             roundTripCheckbox.addEventListener('change', () => {
+                this.sessionCheckboxStates.roundTrip = !!roundTripCheckbox.checked;
+                this.savePreferences();
                 this.updateRouteSummary();
             });
         }
-        
+
         if (openNowCheckbox) {
             openNowCheckbox.addEventListener('change', () => {
+                this.sessionCheckboxStates.openNow = !!openNowCheckbox.checked;
+                this.savePreferences();
                 this.updateRouteSummary();
             });
         }
         
-        if (leastPopularCheckbox) {
-            leastPopularCheckbox.addEventListener('change', () => {
-                // Ensure only one popularity filter is active at a time
-                if (leastPopularCheckbox.checked && mostPopularCheckbox) {
-                    mostPopularCheckbox.checked = false;
-                }
-                this.updateRouteSummary();
-            });
-        }
-        
-        if (mostPopularCheckbox) {
-            mostPopularCheckbox.addEventListener('change', () => {
-                // Ensure only one popularity filter is active at a time
-                if (mostPopularCheckbox.checked && leastPopularCheckbox) {
-                    leastPopularCheckbox.checked = false;
-                }
-                this.updateRouteSummary();
-            });
-        }
+        // Popularity segmented control handlers
+        const setPopularityMode = (mode) => {
+            this.sessionCheckboxStates.leastPopular = mode === 'least';
+            this.sessionCheckboxStates.mostPopular = mode === 'most';
+            const setSegActive = (btn, active) => {
+                if (!btn) return;
+                btn.style.background = active ? '#667eea' : '#f8f9fa';
+                btn.style.color = active ? '#fff' : '#212529';
+                btn.style.border = active ? '1px solid #667eea' : '1px solid transparent';
+            };
+            setSegActive(popularityOffBtn, mode === 'off');
+            setSegActive(popularityLeastBtn, mode === 'least');
+            setSegActive(popularityMostBtn, mode === 'most');
+            this.savePreferences();
+            this.updateRouteSummary();
+        };
+        if (popularityOffBtn) popularityOffBtn.addEventListener('click', () => setPopularityMode('off'));
+        if (popularityLeastBtn) popularityLeastBtn.addEventListener('click', () => setPopularityMode('least'));
+        if (popularityMostBtn) popularityMostBtn.addEventListener('click', () => setPopularityMode('most'));
 
 
 
@@ -356,64 +385,157 @@ class RoutePlanner {
             const filterType = toggle.getAttribute('data-filter');
             console.log(`Processing filter toggle: ${filterType}`);
             
-            // Restore state from session data if available
+            // Restore state from preferences if available
             if (this.sessionCheckboxStates && filterType in this.sessionCheckboxStates) {
                 // Session data exists for this filter type - use it regardless of true/false
                 const shouldBeActive = this.sessionCheckboxStates[filterType];
                 console.log(`Restoring ${filterType} filter to ${shouldBeActive ? 'active' : 'inactive'} from session data`);
                 if (shouldBeActive) {
                     toggle.classList.add('active');
+                    toggle.style.background = '#667eea';
+                    toggle.style.color = '#fff';
+                    toggle.style.border = '1px solid #667eea';
                     hasActiveFilter = true;
                 } else {
                     toggle.classList.remove('active');
+                    toggle.style.background = '#ffffff';
+                    toggle.style.color = '#667eea';
+                    toggle.style.border = '1px solid #667eea';
                 }
             } else {
-                console.log(`No session data for ${filterType}, checking legend state...`);
-                // Fallback to legend state if no session data
-                const filterMap = {
-                    'kiosk': document.getElementById('filter-kiosk'),
-                    'retail': document.getElementById('filter-retail'),
-                    'indie': document.getElementById('filter-indie')
-                };
-                const legendCheckbox = filterMap[filterType];
-                
-                if (legendCheckbox && legendCheckbox.checked) {
-                    console.log(`Setting ${filterType} filter to active from legend state`);
+                // No legend fallback; rely on defaults if not present in prefs
+                console.log(`No stored state for ${filterType}; using default`);
+                const defaultActive = (filterType === 'kiosk' || filterType === 'retail');
+                if (defaultActive) {
                     toggle.classList.add('active');
+                    toggle.style.background = '#667eea';
+                    toggle.style.color = '#fff';
+                    toggle.style.border = '1px solid #667eea';
                     hasActiveFilter = true;
+                    this.sessionCheckboxStates[filterType] = true;
                 } else {
-                    console.log(`Filter ${filterType} remains inactive`);
+                    toggle.classList.remove('active');
+                    toggle.style.background = '#ffffff';
+                    toggle.style.color = '#667eea';
+                    toggle.style.border = '1px solid #667eea';
+                    this.sessionCheckboxStates[filterType] = false;
                 }
             }
             
             // Add click handler that only updates route planner state
             toggle.addEventListener('click', () => {
+                const willBeActive = !toggle.classList.contains('active');
                 toggle.classList.toggle('active');
+                this.sessionCheckboxStates[filterType] = willBeActive;
+                // Apply visual theme
+                if (willBeActive) {
+                    toggle.style.background = '#667eea';
+                    toggle.style.color = '#fff';
+                    toggle.style.border = '1px solid #667eea';
+                } else {
+                    toggle.style.background = '#ffffff';
+                    toggle.style.color = '#667eea';
+                    toggle.style.border = '1px solid #667eea';
+                }
+                this.savePreferences();
                 this.updateRouteSummary();
             });
         });
         
         // If no filters are active, activate the first one (kiosk) by default
         if (!hasActiveFilter && filterToggles.length > 0) {
-            console.log('No filters active, activating kiosk filter by default');
-            filterToggles[0].classList.add('active');
+            console.log('No store type filters active, activating kiosk by default');
+            const kioskToggle = Array.from(filterToggles).find(t => t.getAttribute('data-filter') === 'kiosk');
+            if (kioskToggle) {
+                kioskToggle.classList.add('active');
+                this.sessionCheckboxStates.kiosk = true;
+            }
+        }
+
+        // Reset button: clear preferences to defaults and re-render controls
+        const resetBtn = document.getElementById('modal-reset-route-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.maxDistance = 25;
+                this.maxStops = 5;
+                this.sessionCheckboxStates = {
+                    roundTrip: false,
+                    openNow: false,
+                    leastPopular: false,
+                    mostPopular: false,
+                    kiosk: true,
+                    retail: true,
+                    indie: false
+                };
+                this.savePreferences();
+                // Re-render the modal content to reflect defaults
+                Swal.update({ html: this.createModalContent() });
+                // Re-init controls and summary after update
+                this.initializeModalControls();
+            });
         }
 
         // Wizard Navigation Buttons
         const backToMapBtn = document.getElementById('modal-back-to-map-btn');
         const previewBtn = document.getElementById('modal-preview-route-btn');
+        // Quick Picks
+        const quickPickButtons = document.querySelectorAll('.route-quick-pick');
 
         if (backToMapBtn) {
             backToMapBtn.addEventListener('click', () => {
-                this.saveSessionData();
+                this.savePreferences();
                 Swal.close();
             });
         }
 
         if (previewBtn) {
             previewBtn.addEventListener('click', () => {
-                this.saveSessionData();
+                this.savePreferences();
                 this.showPreviewPins();
+            });
+        }
+
+        if (quickPickButtons && quickPickButtons.length > 0) {
+            quickPickButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const pick = btn.getAttribute('data-pick');
+                    if (pick === 'kiosk5') {
+                        this.maxStops = 5;
+                        this.maxDistance = 25;
+                        this.sessionCheckboxStates.kiosk = true;
+                        this.sessionCheckboxStates.retail = false;
+                        this.sessionCheckboxStates.indie = false;
+                        this.sessionCheckboxStates.roundTrip = false;
+                        this.sessionCheckboxStates.openNow = false;
+                        this.sessionCheckboxStates.leastPopular = false;
+                        this.sessionCheckboxStates.mostPopular = false;
+                    } else if (pick === 'retail5') {
+                        this.maxStops = 5;
+                        this.maxDistance = 25;
+                        this.sessionCheckboxStates.kiosk = false;
+                        this.sessionCheckboxStates.retail = true;
+                        this.sessionCheckboxStates.indie = false;
+                        this.sessionCheckboxStates.roundTrip = false;
+                        this.sessionCheckboxStates.openNow = false;
+                        this.sessionCheckboxStates.leastPopular = false;
+                        this.sessionCheckboxStates.mostPopular = false;
+                    } else if (pick === 'balanced5') {
+                        this.maxStops = 5;
+                        this.maxDistance = 25;
+                        this.sessionCheckboxStates.kiosk = true;
+                        this.sessionCheckboxStates.retail = true;
+                        this.sessionCheckboxStates.indie = false;
+                        this.sessionCheckboxStates.roundTrip = false;
+                        this.sessionCheckboxStates.openNow = false;
+                        this.sessionCheckboxStates.leastPopular = false;
+                        this.sessionCheckboxStates.mostPopular = false;
+                    } else if (pick === 'roundtrip') {
+                        this.sessionCheckboxStates.roundTrip = true;
+                    }
+                    this.savePreferences();
+                    Swal.update({ html: this.createModalContent() });
+                    this.initializeModalControls();
+                });
             });
         }
 
@@ -436,6 +558,7 @@ class RoutePlanner {
      * Update distance display (with debounced preview clear)
      */
     updateDistanceDisplay() {
+        this.savePreferences();
         this.clearPreview(true); // Skip reopening modal to prevent bouncing
         this.updateRouteSummary();
     }
@@ -444,6 +567,7 @@ class RoutePlanner {
      * Update stops display (with debounced preview clear)
      */
     updateStopsDisplay() {
+        this.savePreferences();
         this.clearPreview(true); // Skip reopening modal to prevent bouncing
         this.updateRouteSummary();
     }
@@ -484,10 +608,10 @@ class RoutePlanner {
         }
 
         // Get current settings
-        const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
-        const openNow = document.getElementById('open-now-checkbox')?.checked || false;
-        const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
-        const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
+        const roundTrip = !!this.sessionCheckboxStates.roundTrip;
+        const openNow = !!this.sessionCheckboxStates.openNow;
+        const leastPopular = !!this.sessionCheckboxStates.leastPopular;
+        const mostPopular = !!this.sessionCheckboxStates.mostPopular;
         
         console.log('1. Settings - roundTrip:', roundTrip, 'openNow:', openNow);
         
@@ -1058,8 +1182,8 @@ class RoutePlanner {
      * Show preview pins on the map
      */
     showPreviewPins() {
-        // Save current session data before going to preview
-        this.saveSessionData();
+        // Persist preferences before going to preview
+        this.savePreferences();
         
         console.log('=== ROUTE PLANNER PREVIEW DEBUG ===');
         console.log('1. showPreviewPins called');
@@ -1121,9 +1245,9 @@ class RoutePlanner {
         }
 
         // Get current route with default settings if modal isn't open
-        const openNow = document.getElementById('open-now-checkbox')?.checked || false;
-        const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
-        const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
+        const openNow = !!this.sessionCheckboxStates.openNow;
+        const leastPopular = !!this.sessionCheckboxStates.leastPopular;
+        const mostPopular = !!this.sessionCheckboxStates.mostPopular;
         console.log('14. openNow filter:', openNow);
         console.log('15. leastPopular filter:', leastPopular);
         console.log('16. mostPopular filter:', mostPopular);
@@ -1345,7 +1469,7 @@ class RoutePlanner {
         this.incrementLocationPopularity(this.selectedLocations);
         
         // Generate and open the route
-        const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
+        const roundTrip = !!this.sessionCheckboxStates.roundTrip;
         this.generateRoute(roundTrip);
         
         // Clear preview and return to normal state
@@ -1504,7 +1628,7 @@ class RoutePlanner {
         });
 
         // Create end pin (red) if round trip
-        const roundTrip = document.getElementById('round-trip-checkbox')?.checked || false;
+        const roundTrip = !!this.sessionCheckboxStates.roundTrip;
         if (roundTrip) {
             const endPin = new google.maps.Marker({
                 position: { lat: window.userCoords.lat, lng: window.userCoords.lng },
@@ -1544,46 +1668,21 @@ class RoutePlanner {
      * Add bouncing animation to a marker
      */
     addBouncingAnimation(marker) {
-        let bounceCount = 0;
-        const maxBounces = 3;
-        const bounceHeight = 10; // pixels
-        const bounceDuration = 600; // milliseconds
-        
-        const bounce = () => {
-            if (bounceCount >= maxBounces) return;
-            
-            // Get current position
-            const position = marker.getPosition();
-            const originalLat = position.lat();
-            const originalLng = position.lng();
-            
-            // Bounce up
-            const bounceUp = () => {
-                const newPosition = new google.maps.LatLng(
-                    originalLat + (bounceHeight / 100000), // Small lat offset for visual effect
-                    originalLng
-                );
-                marker.setPosition(newPosition);
-            };
-            
-            // Bounce down
-            const bounceDown = () => {
-                marker.setPosition(position);
-                bounceCount++;
-                
-                // Schedule next bounce
-                if (bounceCount < maxBounces) {
-                    setTimeout(bounce, 1000); // Wait 1 second between bounces
-                }
-            };
-            
-            // Execute bounce sequence
-            bounceUp();
-            setTimeout(bounceDown, bounceDuration);
-        };
-        
-        // Start bouncing after a short delay
-        setTimeout(bounce, 500);
+        // Prefer built-in Google Maps bounce animation to avoid map reflows/flicker
+        try {
+            if (google && google.maps && google.maps.Animation && marker.setAnimation) {
+                marker.setAnimation(google.maps.Animation.BOUNCE);
+                // Stop bounce after ~1.8s (~3 cycles visually)
+                setTimeout(() => {
+                    marker.setAnimation(null);
+                }, 1800);
+                return;
+            }
+        } catch (e) {
+            // fall through to no-op fallback
+        }
+        // Fallback: no movement to avoid flicker on some devices
+        // Optionally could implement a subtle icon scale using custom overlays; omitted to keep stable
     }
 
     /**
@@ -1685,9 +1784,9 @@ class RoutePlanner {
 
         // Ensure we have selected locations
         if (!this.selectedLocations || this.selectedLocations.length === 0) {
-            const openNow = document.getElementById('open-now-checkbox')?.checked || false;
-            const leastPopular = document.getElementById('least-popular-checkbox')?.checked || false;
-            const mostPopular = document.getElementById('most-popular-checkbox')?.checked || false;
+            const openNow = !!this.sessionCheckboxStates.openNow;
+            const leastPopular = !!this.sessionCheckboxStates.leastPopular;
+            const mostPopular = !!this.sessionCheckboxStates.mostPopular;
             const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
             this.selectedLocations = this.selectOptimalLocations(availableLocations);
         }
