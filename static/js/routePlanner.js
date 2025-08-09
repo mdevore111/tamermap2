@@ -10,6 +10,8 @@ class RoutePlanner {
         this.previewPins = [];
         this.maxDistance = 25; // default miles (max 50)
         this.maxStops = 5;
+        this.mergeThresholdMeters = 60; // base merge radius in meters (nearby duplicates)
+        this.mergeSameNameBoostMeters = 250; // looser radius when names match (big-footprint venues)
         this.isInitialized = false;
         this.currentStep = 'planning'; // 'planning', 'preview', 'execute'
         // Use localStorage to persist preferences across sessions
@@ -24,6 +26,179 @@ class RoutePlanner {
             retail: true,
             indie: false
         };
+    }
+
+    /**
+     * Merge nearby duplicate locations (same venue kiosk + retail, minor coord differences)
+     * Returns a new array with merged representatives.
+     */
+    mergeNearbyLocations(locations, thresholdMeters = 60) {
+        if (!Array.isArray(locations) || locations.length <= 1) return locations || [];
+
+        const degPerMeter = 1 / 111320; // rough conversion at mid-latitude
+        const cellSizeDeg = thresholdMeters * degPerMeter;
+
+        const normalizeName = (name = '') => {
+            const base = (name || '').toLowerCase().trim()
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+-\s+[a-z\s,]*$/i, '')
+                .replace(/\s+/g, ' ');
+            // Keep first two tokens to collapse variants like "fred meyer fuel center"
+            const tokens = base.split(' ').filter(Boolean);
+            return tokens.slice(0, 2).join(' ');
+        };
+
+        const normalizeStreet = (addr = '') => {
+            if (!addr) return '';
+            const firstLine = addr.toLowerCase().split(',')[0];
+            // Remove unit/suite
+            let s = firstLine.replace(/\b(ste|suite|unit|bldg|building)\b\s*[^\s]+/g, '')
+                             .replace(/#/g, ' ');
+            // Normalize common abbreviations
+            const reps = [
+                [/\bst\.?\b/g, ' street'],
+                [/\brd\.?\b/g, ' road'],
+                [/\bave\.?\b/g, ' avenue'],
+                [/\bblvd\.?\b/g, ' boulevard'],
+                [/\bpkwy\.?\b/g, ' parkway'],
+                [/\bhwy\.?\b/g, ' highway'],
+                [/\bctr\.?\b/g, ' center']
+            ];
+            reps.forEach(([re, to]) => { s = s.replace(re, to); });
+            s = s.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            return s;
+        };
+
+        // Precompute quick-identity keys
+        const nameStreetKey = new Map();
+        const placeIdGroups = new Map();
+        locations.forEach((loc, i) => {
+            const nk = normalizeName(loc.retailer);
+            const sk = normalizeStreet(loc.address);
+            if (nk && sk) {
+                const key = `${nk}|${sk}`;
+                if (!nameStreetKey.has(key)) nameStreetKey.set(key, []);
+                nameStreetKey.get(key).push(i);
+            }
+            if (loc.place_id) {
+                const pid = String(loc.place_id);
+                if (!placeIdGroups.has(pid)) placeIdGroups.set(pid, []);
+                placeIdGroups.get(pid).push(i);
+            }
+        });
+
+        // Union by identical place_id first
+        const parent = new Array(locations.length).fill(0).map((_, i) => i);
+        const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+        const union = (i, j) => { const pi = find(i), pj = find(j); if (pi !== pj) parent[pi] = pj; };
+        placeIdGroups.forEach(indices => { if (indices.length > 1) { const head = indices[0]; indices.slice(1).forEach(j => union(head, j)); } });
+
+        // Union by identical (normalized name, normalized street)
+        nameStreetKey.forEach(indices => { if (indices.length > 1) { const head = indices[0]; indices.slice(1).forEach(j => union(head, j)); } });
+
+        // Bucket by geocell to limit pair checks (proximity-based union)
+        const buckets = new Map();
+        locations.forEach((loc, idx) => {
+            const cellX = Math.floor(loc.lng / cellSizeDeg);
+            const cellY = Math.floor(loc.lat / cellSizeDeg);
+            const key = `${cellX}:${cellY}`;
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push({ loc, idx });
+        });
+
+        const haversineMeters = (a, b) => {
+            const R = 6371000; // meters
+            const toRad = (d) => d * Math.PI / 180;
+            const dLat = toRad(b.lat - a.lat);
+            const dLng = toRad(b.lng - a.lng);
+            const lat1 = toRad(a.lat);
+            const lat2 = toRad(b.lat);
+            const h = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng/2)**2;
+            return 2 * R * Math.asin(Math.sqrt(h));
+        };
+
+        const getNeighbors = (cellX, cellY) => {
+            const arr = [];
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const key = `${cellX+dx}:${cellY+dy}`;
+                    if (buckets.has(key)) arr.push(...buckets.get(key));
+                }
+            }
+            return arr;
+        };
+
+        // Union duplicates within threshold and with similar venue identity
+        buckets.forEach((items, key) => {
+            const [xStr, yStr] = key.split(':');
+            const cx = parseInt(xStr, 10), cy = parseInt(yStr, 10);
+            const candidates = getNeighbors(cx, cy);
+            items.forEach(({ loc, idx }) => {
+                const baseName = normalizeName(loc.retailer);
+                candidates.forEach(({ loc: other, idx: j }) => {
+                    if (idx === j) return;
+                    const dist = haversineMeters({ lat: loc.lat, lng: loc.lng }, { lat: other.lat, lng: other.lng });
+                    const otherName = normalizeName(other.retailer);
+                    const sameName = baseName && baseName === otherName;
+                    const samePlace = loc.place_id && other.place_id && (loc.place_id === other.place_id);
+                    const addrA = (loc.address || '').toLowerCase();
+                    const addrB = (other.address || '').toLowerCase();
+                    const streetA = addrA.split(',')[0].trim();
+                    const streetB = addrB.split(',')[0].trim();
+                    const similarAddress = streetA && streetA === streetB;
+
+                    // Dynamic threshold: allow larger radius for strong identity matches (same name or place)
+                    const dynamicThreshold = (sameName || samePlace || similarAddress) ? Math.max(thresholdMeters, this.mergeSameNameBoostMeters) : thresholdMeters;
+                    if (dist <= dynamicThreshold && (sameName || samePlace || similarAddress)) {
+                        union(idx, j);
+                    }
+                });
+            });
+        });
+
+        // Group by parent and build representatives
+        const groups = new Map();
+        locations.forEach((loc, i) => {
+            const p = find(i);
+            if (!groups.has(p)) groups.set(p, []);
+            groups.get(p).push(loc);
+        });
+
+        const representativeOf = (group) => {
+            // Prefer with opening hours; else prefer retail over kiosk; else nearest to user; else first
+            const preferScore = (g) => {
+                let score = 0;
+                if (g.opening_hours) score += 3;
+                const type = (g.retailer_type || '').toLowerCase();
+                if (type.includes('store')) score += 2; else if (type.includes('kiosk')) score += 1;
+                if (window.userCoords && typeof g.distance === 'number') score += Math.max(0, 1 - (g.distance / 100));
+                return score;
+            };
+            let best = group[0];
+            let bestScore = -Infinity;
+            group.forEach(g => { const s = preferScore(g); if (s > bestScore) { best = g; bestScore = s; } });
+            const types = [...new Set(group.flatMap(g => String(g.retailer_type || '').split('+').map(t => t.trim())).filter(Boolean))];
+            return {
+                ...best,
+                retailer_type: types.join(' + '),
+                mergedFrom: group
+            };
+        };
+
+        const merged = [];
+        groups.forEach((group) => {
+            if (group.length === 1) { merged.push(group[0]); }
+            else { merged.push(representativeOf(group)); }
+        });
+
+        // Recompute distance for merged representatives because we may have chosen coords from a member
+        if (window.userCoords) {
+            merged.forEach(m => {
+                m.distance = this.calculateDistance(window.userCoords.lat, window.userCoords.lng, m.lat, m.lng);
+            });
+        }
+
+        return merged;
     }
 
     /**
@@ -640,7 +815,9 @@ class RoutePlanner {
         
         // Get available locations and apply filters
         console.log('3. Getting filtered locations...');
-        const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+        let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+        // Merge nearby duplicates (e.g., kiosk + retail within the same venue)
+        availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
         console.log('4. availableLocations after filtering:', availableLocations.length);
         console.log('5. availableLocations sample:', availableLocations.slice(0, 3));
         
@@ -902,27 +1079,20 @@ class RoutePlanner {
         });
         
         const filtered = locations.filter((location, index) => {
-            const retailerType = (location.retailer_type || '').toLowerCase();
-            
-            // Exact matching for your specific database types
+            const retailerTypeRaw = (location.retailer_type || '').toLowerCase();
+            const hasRetail = retailerTypeRaw.includes('store');
+            const hasKiosk = retailerTypeRaw.includes('kiosk');
+            const hasIndie = retailerTypeRaw.includes('card shop');
+
             let matches = false;
             for (const filter of activeFilters) {
-                if (filter === 'retail') {
-                    // Match "Store" (Retail Stores)
-                    matches = retailerType === 'store';
-                } else if (filter === 'kiosk') {
-                    // Match "Kiosk"
-                    matches = retailerType === 'kiosk';
-                } else if (filter === 'indie') {
-                    // Match "Card Shop" (Indie)
-                    matches = retailerType === 'card shop';
-                }
-                
-                if (matches) break; // Found a match, no need to check other filters
+                if (filter === 'retail' && hasRetail) { matches = true; break; }
+                if (filter === 'kiosk' && hasKiosk) { matches = true; break; }
+                if (filter === 'indie' && hasIndie) { matches = true; break; }
             }
-            
-            if (index < 5) { // Log first 5 locations for debugging
-                console.log(`   Location ${index + 1}: ${location.retailer} (${location.retailer_type || 'unknown'}) -> ${retailerType} - ${matches ? 'MATCHES' : 'no match'}`);
+
+            if (index < 5) {
+                console.log(`   Location ${index + 1}: ${location.retailer} (${location.retailer_type || 'unknown'}) -> match=${matches}`);
             }
             return matches;
         });
@@ -1041,7 +1211,7 @@ class RoutePlanner {
         }
 
         // Sort by distance and take the closest ones up to maxStops
-        const sorted = locations.sort((a, b) => a.distance - b.distance);
+        const sorted = [...locations].sort((a, b) => a.distance - b.distance);
         const selected = sorted.slice(0, this.maxStops);
         
         console.log('4. Sorted locations by distance');
@@ -1252,7 +1422,8 @@ class RoutePlanner {
         console.log('15. leastPopular filter:', leastPopular);
         console.log('16. mostPopular filter:', mostPopular);
         
-        const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+        let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+        availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
         console.log('17. availableLocations:', availableLocations.length);
         console.log('18. availableLocations sample:', availableLocations.slice(0, 3));
         
@@ -1272,10 +1443,8 @@ class RoutePlanner {
             return;
         }
 
-        // Close the route planner modal
-        Swal.close();
-
-        // Hide regular markers
+        // Prepare preview efficiently and then update UI to avoid flicker
+        // Hide regular markers first
         this.hideRegularMarkers();
 
         // Clear any existing preview pins
@@ -1283,6 +1452,9 @@ class RoutePlanner {
 
         // Create preview pins
         this.createPreviewPins();
+
+        // Close the planner modal after pins are on the map to reduce visual pop
+        Swal.close();
 
         // Set current step to preview
         this.currentStep = 'preview';
@@ -1572,7 +1744,8 @@ class RoutePlanner {
                 fillOpacity: 1,
                 strokeColor: '#ffffff',
                 strokeWeight: 3
-            }
+            },
+            zIndex: 1000
         });
         this.previewPins.push(startPin);
 
@@ -1585,7 +1758,8 @@ class RoutePlanner {
             fillOpacity: 0.1,
             map: window.map,
             center: { lat: window.userCoords.lat, lng: window.userCoords.lng },
-            radius: 500 // 500 meters radius
+            radius: 500, // 500 meters radius
+            zIndex: 1
         });
         this.previewPins.push(startCircle);
 
@@ -1603,7 +1777,8 @@ class RoutePlanner {
                 fillOpacity: 0.1,
                 map: window.map,
                 center: { lat: location.lat, lng: location.lng },
-                radius: 400 // 400 meters radius
+                radius: 400, // 400 meters radius
+                zIndex: 1
             });
             this.previewPins.push(stopCircle);
             
@@ -1619,7 +1794,8 @@ class RoutePlanner {
                     fillOpacity: 1,
                     strokeColor: '#ffffff',
                     strokeWeight: 3
-                }
+                },
+                zIndex: 1001
             });
             this.previewPins.push(stopPin);
             
@@ -1641,7 +1817,8 @@ class RoutePlanner {
                     fillOpacity: 1,
                     strokeColor: '#ffffff',
                     strokeWeight: 3
-                }
+                },
+                zIndex: 1000
             });
             this.previewPins.push(endPin);
 
@@ -1654,14 +1831,15 @@ class RoutePlanner {
                 fillOpacity: 0.1,
                 map: window.map,
                 center: { lat: window.userCoords.lat, lng: window.userCoords.lng },
-                radius: 500 // 500 meters radius
+                radius: 500, // 500 meters radius
+                zIndex: 1
             });
             this.previewPins.push(endCircle);
         }
 
-        // Auto-zoom to fit all preview points with padding
+        // Auto-zoom to fit all preview points with padding (slight delay to ensure markers drawn)
         console.log('Final positions for zooming:', allPositions);
-        this.zoomToFitPreviewPoints(allPositions);
+        setTimeout(() => this.zoomToFitPreviewPoints(allPositions), 50);
     }
 
     /**
@@ -1787,7 +1965,8 @@ class RoutePlanner {
             const openNow = !!this.sessionCheckboxStates.openNow;
             const leastPopular = !!this.sessionCheckboxStates.leastPopular;
             const mostPopular = !!this.sessionCheckboxStates.mostPopular;
-            const availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+            let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
+            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
             this.selectedLocations = this.selectOptimalLocations(availableLocations);
         }
 
