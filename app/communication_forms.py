@@ -26,7 +26,8 @@ class MessageForm(FlaskForm):
             ('suggestion', 'Suggestion / Site Improvement'),
             ('contact', 'Let\'s Connect'),
             ('report', 'Report Missing or Incorrect Vendor Data'),
-            ('support', 'Customer Support')
+            ('support', 'Customer Support'),
+            ('business', 'Business Inquiry')
         ],
         default='contact',
         validators=[DataRequired()]
@@ -41,6 +42,24 @@ class MessageForm(FlaskForm):
 
     # Single body field for everything; label gets overridden in the template for reports
     body = TextAreaField('Message', validators=[DataRequired()])
+
+    # Optional, category-specific fields (stored inline in message body by server)
+    # Support
+    support_topic = SelectField('Support Topic', choices=[
+        ('account', 'Account / Login'),
+        ('billing', 'Billing / Payments'),
+        ('pro', 'Pro Features'),
+        ('bug', 'Bug Report'),
+        ('other', 'Other')
+    ], validators=[Optional()])
+    order_number = StringField('Order Number', validators=[Optional(), Length(max=255)])
+
+    # Business
+    company_name = StringField('Company Name', validators=[Optional(), Length(max=255)])
+    company_website = StringField('Company Website', validators=[Optional(), Length(max=255)])
+    company_size = SelectField('Company Size', choices=[
+        ('1-10', '1-10'), ('11-50', '11-50'), ('51-200', '51-200'), ('200+', '200+')
+    ], validators=[Optional()])
 
     reported_address = StringField('Reported Address', validators=[Optional()])
     reported_phone   = StringField('Reported Phone',   validators=[Optional()])

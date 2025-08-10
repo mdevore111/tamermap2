@@ -113,11 +113,7 @@ export function createRetailerMarker(map, retailer) {
     }).catch(err => console.error('Error sending pin click data:', err));
   });
 
-  // Bounce animation for new locations (non-blank status field)
-  if (retailer.status && retailer.status.trim() !== '') {
-    marker.setAnimation(google.maps.Animation.BOUNCE);
-    setTimeout(() => marker.setAnimation(null), 5000);
-  }
+  // Do not auto-bounce on create; preview handles bounce for selected stops only
 
   return marker;
 }

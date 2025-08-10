@@ -294,6 +294,7 @@ export class MarkerManager {
             }
             
             if (shouldShow && expandedBounds.contains(marker.getPosition())) {
+                // Muted style for disabled (should not reach due to earlier check), or normal
                 this.visibleMarkers.add(marker);
                 marker.setMap(this.map);
                 shown++;
@@ -342,6 +343,10 @@ export class MarkerManager {
     shouldShowRetailer(marker, filters) {
         // Implement retailer filtering logic
         const type = (marker.retailer_type || '').toLowerCase();
+        const status = (marker.retailer_data?.status || marker.status || '').toLowerCase();
+        if (status === 'disabled') {
+            return false;
+        }
         const showKiosk = filters.showKiosk !== false;
         const showRetail = filters.showRetail !== false;
         const showIndie = filters.showIndie !== false;

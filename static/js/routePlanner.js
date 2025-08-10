@@ -901,6 +901,7 @@ class RoutePlanner {
                 <div style="margin-bottom:6px;">
                     <strong>${optimalLocations.length} stops</strong> within ${this.maxDistance} miles
                 </div>
+                <div style="margin:-2px 0 8px; color:#6c757d;"><small>Note: Stops may be reordered for an optimal route.</small></div>
                 <div style="margin-bottom:6px;">${filterDescription || ''}</div>
                 ${mergeNotice}
                 <ol style="padding-left:18px; margin:6px 0;">${storeItems}</ol>
@@ -2231,9 +2232,9 @@ class RoutePlanner {
             stops.pop();
         }
 
-        // Use lat,lng for waypoints to avoid any place_id parsing errors in Maps UI
+        // Use lat,lng for waypoints and enable Google optimization of stop order
         const waypointVals = stops.map(loc => `${loc.lat},${loc.lng}`);
-        const waypointsParam = waypointVals.length > 0 ? `waypoints=${waypointVals.join('|')}` : '';
+        const waypointsParam = waypointVals.length > 0 ? `waypoints=optimize:true|${waypointVals.join('|')}` : '';
 
         const params = [
             'api=1',
