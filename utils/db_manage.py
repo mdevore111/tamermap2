@@ -62,8 +62,44 @@ def get_default_db_path() -> str:
         logger.error("→ Tried: %s", os.path.abspath(path))
     sys.exit(1)
 
+def _sqlite_supports(conn: sqlite3.Connection, feature: str) -> bool:
+    try:
+        cur = conn.execute("select 1")
+        cur.fetchall()
+        if feature == "vacuum_into":
+            # Best-effort probe – run VACUUM INTO on a temp file
+            tmp_path = os.path.join(INSTANCE_DIR, "__vacuum_probe__.db")
+            try:
+                conn.execute(f"VACUUM INTO '{tmp_path}'")
+                return True
+            except sqlite3.OperationalError:
+                return False
+            finally:
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
+    except Exception:
+        return False
+    return False
+
+def integrity_check(db_path: Optional[str] = None) -> bool:
+    """Run PRAGMA integrity_check and return True if ok."""
+    db = db_path or DB_PATH
+    conn = sqlite3.connect(db)
+    try:
+        row = conn.execute("PRAGMA integrity_check").fetchone()
+        ok = row and row[0].lower() == "ok"
+        if ok:
+            logger.info("Integrity check: ok (%s)", db)
+        else:
+            logger.error("Integrity check FAILED: %s", row[0] if row else "unknown")
+        return bool(ok)
+    finally:
+        conn.close()
+
 def backup_database() -> Optional[str]:
-    """Create a timestamped backup of the database."""
+    """Create a timestamped, integrity-checked backup using VACUUM INTO/.backup."""
     if not os.path.exists(DB_PATH):
         logger.error("Database file '%s' does not exist!", DB_PATH)
         return None
@@ -71,7 +107,35 @@ def backup_database() -> Optional[str]:
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_name = f"tamermap_data_backup_{timestamp}.db"
     backup_path = os.path.join(INSTANCE_DIR, backup_name)
-    shutil.copy2(DB_PATH, backup_path)
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        # Ensure WAL checkpoint to flush pages
+        try:
+            conn.execute("PRAGMA wal_checkpoint(FULL)")
+        except Exception:
+            pass
+
+        if _sqlite_supports(conn, "vacuum_into"):
+            logger.info("Using VACUUM INTO for consistent snapshot ...")
+            conn.execute(f"VACUUM INTO '{backup_path}'")
+        else:
+            logger.info("Using .backup fallback for snapshot ...")
+            # Use sqlite backup API for safe copy
+            with sqlite3.connect(backup_path) as dst:
+                conn.backup(dst)
+
+    finally:
+        conn.close()
+
+    # Verify backup integrity
+    if not integrity_check(backup_path):
+        logger.error("Backup failed integrity check. Removing %s", backup_path)
+        try:
+            os.remove(backup_path)
+        except Exception:
+            pass
+        return None
 
     logger.info("Backup created: %s", backup_path)
     return backup_path
@@ -181,14 +245,18 @@ def reset_schema():
 
 def main():
     parser = argparse.ArgumentParser(description="Database management utilities")
-    parser.add_argument("command", choices=["backup", "schema", "reset"],
+    parser.add_argument("command", choices=["backup", "schema", "reset", "verify"],
                       help="Command to execute")
+    parser.add_argument("--db", dest="db", help="Path to DB for verify (optional)")
     args = parser.parse_args()
 
     if args.command == "backup":
         backup_database()
     elif args.command == "schema":
         list_schema()
+    elif args.command == "verify":
+        ok = integrity_check(args.db)
+        sys.exit(0 if ok else 2)
     else:  # reset
         reset_schema()
 
