@@ -1,0 +1,78 @@
+{% extends 'admin/base.html' %}
+{% block title %}Engagement Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mt-3">Engagement Analytics</h2>
+  <p class="text-muted">Last {{ days }} days</p>
+
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted">Route Planner Opens (sessions)</div>
+          <div class="h4 mb-0">{{ sessions_open }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted">Route Planner Completed (sessions)</div>
+          <div class="h4 mb-0">{{ sessions_go }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted">Completion Rate</div>
+          <div class="h4 mb-0">{{ (completion_rate * 100)|round(1) }}%</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted">Route Events</div>
+          <div class="small">open: {{ route_totals.get('open', 0) }}, preview: {{ route_totals.get('preview', 0) }}, go: {{ route_totals.get('go', 0) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <div class="card-header">Legend Clicks (Top 10, Pro vs Non‑Pro)</div>
+    <div class="card-body">
+      <canvas id="legendBar" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const legendData = {{ legend_data|tojson }};
+const labels = legendData.map(r => r.control_id);
+const pro = legendData.map(r => r.pro);
+const nonPro = legendData.map(r => r.non_pro);
+
+const ctx = document.getElementById('legendBar').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Pro', data: pro, backgroundColor: 'rgba(59, 91, 219, 0.7)' },
+      { label: 'Non‑Pro', data: nonPro, backgroundColor: 'rgba(233, 236, 239, 0.9)', borderColor:'#adb5bd', borderWidth:1 }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
+    plugins: { legend: { position: 'top' } }
+  }
+});
+</script>
+{% endblock %}
+
+

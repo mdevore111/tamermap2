@@ -1,0 +1,96 @@
+{% extends 'admin/base.html' %}
+{% block title %}Duplicate Place IDs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mt-3">Duplicate Locations by Place ID</h2>
+  <p class="text-muted">Review groups of retailers sharing the same Google Place ID. Merge will keep the most complete row and remove others.</p>
+
+  {% if not groups %}
+    <div class="alert alert-success">No duplicates found.</div>
+  {% else %}
+    {% for g in groups %}
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Place ID:</strong> <code>{{ g.place_id }}</code>
+            <span class="badge bg-warning text-dark ms-2">{{ g.count }} entries</span>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="mergeGroup('{{ g.place_id }}', this)">Merge Group</button>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Address</th>
+                  <th>Lat</th>
+                  <th>Lng</th>
+                  <th>Phone</th>
+                  <th>Website</th>
+                  <th>Hours</th>
+                  <th>Last API Update</th>
+                  <th>Enabled</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in g.members %}
+                <tr>
+                  <td>{{ r.id }}</td>
+                  <td>{{ r.retailer or '—' }}</td>
+                  <td>{{ r.retailer_type or '—' }}</td>
+                  <td>{{ r.full_address or '—' }}</td>
+                  <td>{{ '%.5f'|format(r.latitude) if r.latitude is not none else '—' }}</td>
+                  <td>{{ '%.5f'|format(r.longitude) if r.longitude is not none else '—' }}</td>
+                  <td>{{ r.phone_number or '—' }}</td>
+                  <td>
+                    {% if r.website %}
+                      <a href="{{ r.website }}" target="_blank">link</a>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td>{{ '✓' if r.opening_hours else '—' }}</td>
+                  <td>{{ r.last_api_update.strftime('%Y-%m-%d %H:%M') if r.last_api_update else '—' }}</td>
+                  <td>{{ 'Yes' if r.enabled else 'No' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+async function mergeGroup(placeId, btn) {
+  if (!confirm('Merge all entries for this place_id?')) return;
+  btn.disabled = true;
+  btn.textContent = 'Merging...';
+  try {
+    const resp = await fetch('/admin/duplicates/place-id/merge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ place_id: placeId })
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      alert('Merge failed: ' + t);
+    } else {
+      location.reload();
+    }
+  } catch (e) {
+    alert('Merge error: ' + e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}
+
+

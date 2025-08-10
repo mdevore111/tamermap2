@@ -339,6 +339,18 @@ function initUI() {
       cb.addEventListener('change', () => {
         localStorage.setItem(`checkbox_${cb.id}`, cb.checked);
         window.applyFilters();
+        // Track legend interaction (except search)
+        try {
+          const center = window.map && window.map.getCenter ? window.map.getCenter() : null;
+          const payload = {
+            control_id: cb.id,
+            path: location.pathname,
+            zoom: window.map && window.map.getZoom ? window.map.getZoom() : undefined,
+            center_lat: center ? center.lat() : undefined,
+            center_lng: center ? center.lng() : undefined
+          };
+          fetch('/track/legend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+        } catch {}
       });
     });
 
@@ -379,6 +391,18 @@ if (DB.legendToggleBtn) {
       
       // Store the collapsed state
       localStorage.setItem('legend_collapsed', !isCollapsed);
+      // Track legend toggle
+      try {
+        const center = window.map && window.map.getCenter ? window.map.getCenter() : null;
+        const payload = {
+          control_id: 'legend-toggle',
+          path: location.pathname,
+          zoom: window.map && window.map.getZoom ? window.map.getZoom() : undefined,
+          center_lat: center ? center.lat() : undefined,
+          center_lng: center ? center.lng() : undefined
+        };
+        fetch('/track/legend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
+      } catch {}
     } else {
       
     }

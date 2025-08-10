@@ -3,10 +3,12 @@ import json
 from flask_login import login_required, current_user
 from flask_authorize import Authorize
 from flask_security import utils
-from app.models import User, Retailer, Event, Message, Role, VisitorLog  # Removed Location import since table doesn't exist
+from app.models import User, Retailer, Event, Message, Role, VisitorLog, OutboundMessage, BulkEmailJob, BulkEmailRecipient  # Removed Location import since table doesn't exist
 from app import db
+from sqlalchemy import func
+from datetime import datetime
 from datetime import datetime, timedelta
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc, func, or_, case
 from functools import wraps
 import time
 from collections import defaultdict
@@ -17,6 +19,7 @@ from app.admin_utils import get_top_referrers, get_top_pages, get_top_ref_codes
 import os
 from io import BytesIO
 from typing import Optional
+from app.models import RouteEvent, LegendClick
 
 # Optional imports for PDF functionality
 SIGNING_AVAILABLE: bool
@@ -407,6 +410,176 @@ def api_referral_code_trends():
 @admin_required
 def users():
     return render_template('admin/users.html')
+@admin_bp.route('/messages/reply', methods=['POST'])
+@admin_required
+def reply_message():
+    data = request.get_json() or {}
+    msg_id = data.get('message_id')
+    to_email = data.get('to')
+    subject = data.get('subject')
+    body = data.get('body')
+    if not (msg_id and to_email and subject and body):
+        return jsonify({'message': 'Missing fields'}), 400
+    
+    # Get the original message for context
+    original_message = Message.query.get(msg_id)
+    if not original_message:
+        return jsonify({'message': 'Original message not found'}), 404
+    
+    # Clean the reply body if it accidentally contains an inline original message
+    def strip_inline_original(text: str) -> str:
+        if not text:
+            return ''
+        markers = [
+            '--- Original Message ---',
+            'Original Message',
+            '\nOn ',
+        ]
+        for marker in markers:
+            idx = text.find(marker)
+            if idx != -1:
+                return text[:idx].rstrip()
+        return text
+
+    clean_body = strip_inline_original(body)
+
+    # Format the email with proper structure
+    formatted_body_html = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+  <p>Thank you for your message.</p>
+  <p>{clean_body.replace('\n', '<br>')}</p>
+  <p>Thank you,<br>Tamermap.com Staff</p>
+  <p style="color: #666; font-size: 12px;"><em>Note: This is an automated response. Please do not reply to this email as replies will not be received.</em></p>
+  <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;">
+  <h4>Original Message</h4>
+  <p><strong>From:</strong> {original_message.name or 'Unknown'}<br>
+  <strong>Subject:</strong> {original_message.subject}<br>
+  <strong>Message:</strong> {original_message.body}</p>
+</div>"""
+
+    # Plain text version with proper line breaks
+    formatted_body_text = f"""Thank you for your message.
+
+{clean_body}
+
+Thank you,
+Tamermap.com Staff
+
+Note: This is an automated response. Please do not reply to this email as replies will not be received.
+
+________________________________________
+Original Message
+From: {original_message.name or 'Unknown'}
+Subject: {original_message.subject}
+Message: {original_message.body}"""
+    
+    # Send email
+    ok = send_email_with_context(subject=subject, template='email/generic', recipient=to_email, body_html=formatted_body_html, body_text=formatted_body_text)
+    db.session.add(OutboundMessage(parent_message_id=msg_id, to_email=to_email, subject=subject, body=formatted_body_html, sent_by_user_id=current_user.id))
+    db.session.commit()
+    return jsonify({'success': bool(ok)})
+
+@admin_bp.route('/users/bulk-email', methods=['POST'])
+@admin_required
+def users_bulk_email():
+    data = request.get_json() or {}
+    subject = data.get('subject')
+    body = data.get('body')
+    signature = (data.get('signature') or '').strip()
+    emails = data.get('emails') or []
+    if not (subject and body and emails):
+        return jsonify({'message': 'Missing fields'}), 400
+    job = BulkEmailJob(subject=subject, body=body, created_by_user_id=current_user.id, total_recipients=len(emails))
+    db.session.add(job)
+    db.session.flush()
+    sent = 0
+    failed = 0
+    for e in emails:
+        rec = BulkEmailRecipient(job_id=job.id, email=e)
+        db.session.add(rec)
+        try:
+            # Compose with optional signature
+            body_text = body + ("\n\n" + signature if signature else '')
+            # Simple HTML with preserved newlines
+            body_html = f"<div style=\"font-family: Arial, sans-serif; line-height:1.6;\">{body.replace('\n','<br>')}" + (f"<br><br>{signature.replace('\n','<br>')}" if signature else '') + "</div>"
+            ok = send_email_with_context(subject=subject, template='email/generic', recipient=e, body_html=body_html, body_text=body_text)
+            rec.status = 'sent' if ok else 'failed'
+            rec.sent_at = datetime.utcnow()
+            if ok:
+                sent += 1
+            else:
+                failed += 1
+        except Exception as ex:
+            rec.status = 'failed'
+            rec.error = str(ex)
+            failed += 1
+    job.sent_count = sent
+    job.failed_count = failed
+    db.session.commit()
+    return jsonify({'success': True, 'job_id': job.id, 'sent': sent, 'failed': failed})
+
+
+@admin_bp.route('/engagement')
+@admin_required
+def engagement():
+    days = request.args.get('days', 30, type=int)
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+    # Route planner metrics
+    totals_rows = db.session.query(RouteEvent.event, func.count()).filter(RouteEvent.created_at >= cutoff).group_by(RouteEvent.event).all()
+    totals = {k: v for k, v in totals_rows}
+    sessions_open = db.session.query(func.count(func.distinct(RouteEvent.session_id))).filter(RouteEvent.created_at >= cutoff, RouteEvent.event == 'open').scalar() or 0
+    sessions_go = db.session.query(func.count(func.distinct(RouteEvent.session_id))).filter(RouteEvent.created_at >= cutoff, RouteEvent.event == 'go').scalar() or 0
+    completion_rate = (sessions_go / sessions_open) if sessions_open else 0
+
+    # Legend clicks by control (top 10)
+    legend_rows = db.session.query(
+        LegendClick.control_id,
+        func.sum(case((LegendClick.is_pro == True, 1), else_=0)).label('pro'),
+        func.sum(case((LegendClick.is_pro == False, 1), else_=0)).label('non_pro'),
+        func.count().label('total')
+    ).filter(
+        LegendClick.created_at >= cutoff
+    ).group_by(LegendClick.control_id).order_by(func.count().desc()).limit(10).all()
+
+    legend_data = [
+        {
+            'control_id': cid,
+            'pro': int(pro or 0),
+            'non_pro': int(non_pro or 0)
+        } for cid, pro, non_pro in legend_rows
+    ]
+
+    return render_template('admin/engagement.html',
+                           days=days,
+                           route_totals=totals,
+                           sessions_open=sessions_open,
+                           sessions_go=sessions_go,
+                           completion_rate=completion_rate,
+                           legend_data=legend_data)
+
+
+# ---------- Duplicates (place_id) admin UI ----------
+@admin_bp.route('/duplicates/place-id/ui')
+@admin_required
+def duplicates_place_id_ui():
+    """Render a simple UI to review and merge duplicate retailers by place_id."""
+    dup_rows = db.session.query(
+        Retailer.place_id, func.count(Retailer.id).label('count')
+    ).filter(
+        Retailer.place_id.isnot(None),
+        Retailer.place_id.notin_(['not_found', 'api_error', 'none'])
+    ).group_by(Retailer.place_id).having(func.count(Retailer.id) > 1).all()
+
+    groups = []
+    for pid, cnt in dup_rows:
+        # SQLite-safe ordering: handle NULLs by coalescing to epoch
+        try:
+            members = Retailer.query.filter_by(place_id=pid).order_by(Retailer.last_api_update.desc()).all()
+        except Exception:
+            members = Retailer.query.filter_by(place_id=pid).all()
+        groups.append({'place_id': pid, 'count': cnt, 'members': members})
+
+    return render_template('admin/duplicates_place_id.html', groups=groups)
 
 @admin_bp.route('/roles')
 @admin_required
@@ -856,6 +1029,106 @@ def add_retailer():
 def edit_retailer(id):
     return update_retailer(id)
 
+
+# -------------------- Place ID duplicate tools --------------------
+
+@admin_bp.route('/duplicates/place-id', methods=['GET'])
+@admin_required
+def list_place_id_duplicates():
+    """List duplicate retailers grouped by place_id (excluding placeholders)."""
+    rows = db.session.query(
+        Retailer.place_id, func.count(Retailer.id).label('count')
+    ).filter(
+        Retailer.place_id.isnot(None),
+        Retailer.place_id.notin_(['not_found', 'api_error', 'none'])
+    ).group_by(Retailer.place_id).having(func.count(Retailer.id) > 1).all()
+
+    result = []
+    for pid, cnt in rows:
+        members = Retailer.query.filter_by(place_id=pid).all()
+        result.append({
+            'place_id': pid,
+            'count': cnt,
+            'members': [
+                {
+                    'id': r.id,
+                    'retailer': r.retailer,
+                    'retailer_type': r.retailer_type,
+                    'full_address': r.full_address,
+                    'latitude': r.latitude,
+                    'longitude': r.longitude,
+                    'opening_hours': bool(r.opening_hours),
+                    'phone_number': bool(r.phone_number),
+                    'website': bool(r.website),
+                    'last_api_update': r.last_api_update.isoformat() if r.last_api_update else None,
+                    'enabled': r.enabled,
+                } for r in members
+            ]
+        })
+
+    return jsonify(result)
+
+
+@admin_bp.route('/duplicates/place-id/merge', methods=['POST'])
+@admin_required
+def merge_place_id_duplicates():
+    """Merge kiosk/store duplicates sharing the same place_id.
+
+    Body: { place_id: "..." }
+    """
+    data = request.get_json(silent=True) or {}
+    pid = (data.get('place_id') or '').strip()
+    if not pid:
+        return jsonify({'message': 'place_id is required'}), 400
+
+    members = Retailer.query.filter_by(place_id=pid).all()
+    if len(members) <= 1:
+        return jsonify({'message': 'No duplicates to merge', 'place_id': pid, 'kept_id': members[0].id if members else None})
+
+    # Pick the best row to keep
+    def score(r: Retailer) -> int:
+        s = 0
+        if r.opening_hours: s += 4
+        if r.latitude is not None and r.longitude is not None: s += 3
+        if r.phone_number: s += 2
+        if r.website: s += 1
+        if r.last_api_update: s += 1
+        return s
+
+    keep = max(members, key=score)
+    to_delete = [m for m in members if m.id != keep.id]
+
+    # Merge retailer_type
+    types = set()
+    for r in members:
+        if r.retailer_type:
+            for t in str(r.retailer_type).lower().split('+'):
+                t = t.strip()
+                if t:
+                    types.add(t)
+    if types:
+        keep.retailer_type = ' + '.join(sorted(types))
+
+    # Merge other fields conservatively
+    keep.machine_count = max([m.machine_count or 0 for m in members])
+    keep.enabled = any([m.enabled for m in members])
+    if not keep.phone_number:
+        keep.phone_number = next((m.phone_number for m in to_delete if m.phone_number), keep.phone_number)
+    if not keep.website:
+        keep.website = next((m.website for m in to_delete if m.website), keep.website)
+    if not keep.opening_hours:
+        keep.opening_hours = next((m.opening_hours for m in to_delete if m.opening_hours), keep.opening_hours)
+    keep.first_seen = min([m.first_seen for m in members if m.first_seen] or [datetime.utcnow()])
+
+    deleted_ids = []
+    for m in to_delete:
+        deleted_ids.append(m.id)
+        db.session.delete(m)
+
+    db.session.commit()
+
+    return jsonify({'message': 'merged', 'place_id': pid, 'kept_id': keep.id, 'deleted_ids': deleted_ids})
+
 # Events routes
 @admin_bp.route('/events')
 @admin_required
@@ -1177,7 +1450,11 @@ def messages_data():
             'body': body_display,
             'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S') if message.timestamp else None,
             'read': 'Yes' if message.read else 'No',
-            'actions': f'<button class="btn btn-sm btn-primary edit-message-btn" data-id="{message.id}">Edit</button> <button class="btn btn-sm btn-danger delete-message-btn" data-id="{message.id}">Delete</button>'
+            'actions': (
+                f'<button class="btn btn-sm btn-secondary reply-message-btn me-1" data-id="{message.id}">Reply</button>'
+                f'<button class="btn btn-sm btn-primary edit-message-btn me-1" data-id="{message.id}">Edit</button>'
+                f'<button class="btn btn-sm btn-danger delete-message-btn" data-id="{message.id}">Delete</button>'
+            )
         })
     
     return jsonify({

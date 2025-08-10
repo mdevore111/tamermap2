@@ -5,7 +5,7 @@
             {% set tooltip = 'All registered users. Columns include email, names, status, roles, and actions.' %}
             {% set table_id = 'users-table' %}
     {% set columns = ['Email', 'Name', 'Active', 'Last Login', 'Roles', 'Pro', 'Admin', 'Actions'] %}
-            {% set extra_header = '<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button>' %}
+            {% set extra_header = '<div class="d-flex gap-2"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button><button class="btn btn-primary" id="bulkEmailBtn">Email Selected</button></div>' %}
             {% include 'admin/_datatable_card.html' %}
 
             <!-- Add User Modal -->
@@ -106,6 +106,92 @@ $(document).ready(function() {
         { data: 'is_admin', orderable: false },
         { data: 'actions', orderable: false, searchable: false }
     ]);
+
+    // Add a Select All checkbox to the header of the first column (Email)
+    function renderSelectAllHeader() {
+        const th = $('#users-table thead th').eq(0);
+        if (!th.find('#selectAllUsers').length) {
+            th.html('<input type="checkbox" id="selectAllUsers" class="form-check-input me-2"> Email');
+            $('#selectAllUsers').on('change', function(){
+                const isChecked = $(this).is(':checked');
+                $('#users-table tbody .user-select').prop('checked', isChecked);
+            });
+        }
+    }
+    renderSelectAllHeader();
+
+    // Inject selection checkboxes for bulk email
+    $('#users-table').on('draw.dt', function(){
+        // Ensure header select-all exists and reset its state on redraw
+        renderSelectAllHeader();
+        const selectAll = document.getElementById('selectAllUsers');
+        if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+        $('#users-table tbody tr').each(function(){
+            const row = $(this);
+            const first = row.find('td').eq(0);
+            const email = first.text().trim();
+            if (email && !first.find('input.user-select').length) {
+                first.html(`<input type="checkbox" class="form-check-input user-select me-2"> ${email}`);
+            }
+        });
+    });
+
+    // Update header checkbox state when individual checkboxes change
+    $(document).on('change', '#users-table tbody .user-select', function(){
+        const all = $('#users-table tbody .user-select');
+        const checked = $('#users-table tbody .user-select:checked');
+        const selectAll = document.getElementById('selectAllUsers');
+        if (!selectAll) return;
+        if (all.length === 0) { selectAll.checked = false; selectAll.indeterminate = false; return; }
+        selectAll.checked = checked.length === all.length;
+        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+    });
+
+    // Bulk email action
+    $(document).on('click', '#bulkEmailBtn', function(){
+        const emails = [];
+        $('#users-table tbody tr').each(function(){
+            const cb = $(this).find('input.user-select');
+            if (cb.length && cb.is(':checked')) {
+                const email = $(this).find('td').eq(0).text().trim();
+                if (email) emails.push(email);
+            }
+        });
+        if (emails.length === 0) { Swal.fire({ icon: 'info', title: 'No users selected' }); return; }
+        const defaultSignature = 'Thank you,\nTamermap.com Staff\n\nNote: This is an automated response. Please do not reply to this email as replies will not be received.';
+        Swal.fire({
+            title: 'Email Selected Users',
+            width: 700,
+            html: `
+                <input id="bulkSubject" class="swal2-input" placeholder="Subject">
+                <div class="swal2-textarea" style="padding:0;border:none">
+                  <textarea id="bulkBody" class="form-control" placeholder="Message" rows="8"></textarea>
+                </div>
+                <label class="mt-2 fw-semibold">Signature</label>
+                <div class="swal2-textarea" style="padding:0;border:none">
+                  <textarea id="bulkSignature" class="form-control" rows="4">${defaultSignature}</textarea>
+                </div>
+            `,
+            showCancelButton: true,
+            preConfirm: () => {
+                const subject = document.getElementById('bulkSubject').value.trim();
+                const body = document.getElementById('bulkBody').value.trim();
+                const signature = document.getElementById('bulkSignature').value.trim();
+                if (!subject || !body) { Swal.showValidationMessage('Subject and body are required'); return false; }
+                return { subject, body, signature };
+            }
+        }).then(res => {
+            if (res.isConfirmed) {
+                fetch('/admin/users/bulk-email', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject: res.value.subject, body: res.value.body, signature: res.value.signature, emails })
+                }).then(r => r.json()).then(resp => {
+                    if (resp.success) Swal.fire({ icon: 'success', title: `Sent: ${resp.sent} · Failed: ${resp.failed}` });
+                    else Swal.fire({ icon: 'error', title: 'Failed' });
+                }).catch(() => Swal.fire({ icon: 'error', title: 'Failed' }));
+            }
+        });
+    });
 
     // Add User Modal: Render form fields
     $('#addUserModal').on('show.bs.modal', function() {

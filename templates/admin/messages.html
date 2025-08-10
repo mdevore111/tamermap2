@@ -45,6 +45,39 @@
                 </div>
             </div>
 
+            <!-- Reply Modal -->
+            <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <form id="replyForm">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Reply to Message</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <input type="hidden" name="message_id" id="reply_message_id">
+                      <div class="mb-3">
+                        <label>To</label>
+                        <input id="reply_to" name="to" class="form-control" type="email" required>
+                      </div>
+                      <div class="mb-3">
+                        <label>Subject</label>
+                        <input id="reply_subject" name="subject" class="form-control" required>
+                      </div>
+                      <div class="mb-3">
+                        <label>Body</label>
+                        <textarea id="reply_body" name="body" class="form-control" rows="8" required></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Send</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
             <!-- Add Message Modal -->
             <div class="modal fade" id="addMessageModal" tabindex="-1" aria-labelledby="addMessageModalLabel" aria-hidden="true">
               <div class="modal-dialog">
@@ -187,7 +220,7 @@ $(document).ready(function() {
             { data: 'body' },
             { data: 'timestamp' },
             { data: 'read' },
-            { data: 'actions', orderable: false, searchable: false }
+             { data: 'actions', orderable: false, searchable: false }
         ]
     });
 
@@ -222,6 +255,40 @@ $(document).ready(function() {
             error: function(xhr) {
                 alert('Error: ' + (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : 'Unknown error'));
             }
+        });
+    });
+
+    // Reply button
+    $(document).on('click', '.reply-message-btn', function() {
+        var id = $(this).data('id');
+        $.get('/admin/messages/' + id, function(data) {
+            $('#reply_message_id').val(data.id);
+            $('#reply_to').val(data.email || data.address || '');
+            $('#reply_subject').val('Re: ' + (data.subject || 'Message'));
+            // Keep reply body clean; do NOT inject original message here
+            $('#reply_body').val('');
+            $('#replyModal').modal('show');
+        });
+    });
+
+    $('#replyForm').on('submit', function(e) {
+        e.preventDefault();
+        const payload = {
+            message_id: $('#reply_message_id').val(),
+            to: $('#reply_to').val(),
+            subject: $('#reply_subject').val(),
+            body: $('#reply_body').val()
+        };
+        $.ajax({
+            url: '/admin/messages/reply',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload)
+        }).done(function(){
+            $('#replyModal').modal('hide');
+            Swal.fire({ icon: 'success', title: 'Sent' });
+        }).fail(function(xhr){
+            Swal.fire({ icon: 'error', title: 'Error', text: xhr.responseText || 'Failed to send' });
         });
     });
 

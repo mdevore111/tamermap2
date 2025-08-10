@@ -312,14 +312,82 @@ class MapUsage(db.Model):
     timestamp = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
 
 
+class LegendClick(db.Model):
+    __tablename__ = 'legend_clicks'
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, index=True)
+    session_id = db.Column(db.String(100), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    is_pro = db.Column(db.Boolean, default=False)
+    control_id = db.Column(db.String(100), nullable=False, index=True)
+    path = db.Column(db.String(500))
+    zoom = db.Column(db.Integer)
+    center_lat = db.Column(db.Float)
+    center_lng = db.Column(db.Float)
+
+
+class RouteEvent(db.Model):
+    __tablename__ = 'route_events'
+    id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, index=True)
+    session_id = db.Column(db.String(100), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    is_pro = db.Column(db.Boolean, default=False)
+    event = db.Column(db.String(20), nullable=False, index=True)  # open | preview | go
+    max_distance = db.Column(db.Integer)
+    max_stops = db.Column(db.Integer)
+    options_json = db.Column(db.Text)  # JSON-encoded options snapshot
+
+
+class OutboundMessage(db.Model):
+    __tablename__ = 'outbound_messages'
+    id = db.Column(db.Integer, primary_key=True)
+    parent_message_id = db.Column(db.Integer, db.ForeignKey('message.id'), nullable=True)
+    to_email = db.Column(db.String(255), nullable=False)
+    subject = db.Column(db.String(255), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    sent_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sent_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, index=True)
+
+
+class BulkEmailJob(db.Model):
+    __tablename__ = 'bulk_email_jobs'
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(255), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
+    total_recipients = db.Column(db.Integer, default=0)
+    sent_count = db.Column(db.Integer, default=0)
+    failed_count = db.Column(db.Integer, default=0)
+
+class BulkEmailRecipient(db.Model):
+    __tablename__ = 'bulk_email_recipients'
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey('bulk_email_jobs.id'), nullable=False, index=True)
+    email = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), default='pending')  # pending | sent | failed
+    error = db.Column(db.Text)
+    sent_at = db.Column(db.DateTime)
 class PinInteraction(db.Model):
     __tablename__ = 'pin_interactions'
     id = db.Column(db.Integer, primary_key=True)
+    # Canonical identity: place_id when available
     marker_id = db.Column(db.String(100), nullable=False)
+    place_id = db.Column(db.String(100), nullable=True, index=True)
     session_id = db.Column(db.String(100), nullable=False)
     lat = db.Column(db.Float)
     lng = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
+
+
+class PinPopularity(db.Model):
+    __tablename__ = 'pin_popularity'
+    place_id = db.Column(db.String(100), primary_key=True)
+    total_clicks = db.Column(db.Integer, nullable=False, default=0)
+    last_clicked_at = db.Column(db.DateTime)
+    last_lat = db.Column(db.Float)
+    last_lng = db.Column(db.Float)
 
 
 class Message(db.Model):

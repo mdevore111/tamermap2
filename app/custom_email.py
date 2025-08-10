@@ -110,9 +110,11 @@ def send_email_with_context(subject, template, recipient, **kwargs):
             **kwargs
         }
 
-        # Render both HTML and text versions
-        html_content = render_template(f"{template}.html", **context)
-        text_content = render_template(f"{template}.txt", **context)
+        # Render both HTML and text versions; allow raw body overrides
+        body_html_override = kwargs.get('body_html')
+        body_text_override = kwargs.get('body_text')
+        html_content = body_html_override or render_template(f"{template}.html", **context)
+        text_content = body_text_override or render_template(f"{template}.txt", **context)
 
         # Create message
         msg = Message(

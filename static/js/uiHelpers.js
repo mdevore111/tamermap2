@@ -90,14 +90,32 @@ function wrapInfoWindow(innerHtml, iconUrl, titleText, titleSize = 26) {
  * Generate the display string for retailer type and machine count.
  */
 function displayType(retailer, isPro) {
-  const type = (retailer.retailer_type || 'N/A').toLowerCase().trim();
-  if (type === 'kiosk') {
-    return isPro
-      ? `Kiosk, ${retailer.machine_count || 0} Machine${retailer.machine_count === 1 ? '' : 's'}`
-      : 'Kiosk (Pro Only)';
+  const typeRaw = (retailer.retailer_type || 'N/A').toLowerCase().trim();
+  const parts = typeRaw.split('+').map(t => t.trim()).filter(Boolean);
+  const hasStore = parts.some(p => p === 'store' || p === 'retail');
+  // Prefer aggregated kiosk_count if provided by marker layer; fallback to machine_count
+  const kioskCount = (Number.isFinite(retailer.kiosk_count) ? retailer.kiosk_count : (retailer.machine_count || 0));
+
+  // Singular cases
+  if (parts.length === 1) {
+    const t = parts[0];
+    if (t === 'kiosk') {
+      if (!isPro) return 'Kiosk (Pro Only)';
+      const label = kioskCount === 1 ? '1 Kiosk' : `${kioskCount} Kiosks`;
+      return label;
+    }
+    if (t === 'store' || t === 'retail') return 'Retail Store';
+    if (t === 'card shop') return 'Indie Store';
+    return retailer.retailer_type || 'N/A';
   }
-  if (type === 'store') return 'Retail Store';
-  if (type === 'card shop') return 'Indie Store';
+
+  // Combined cases like "store + kiosk"
+  if (hasStore && parts.some(p => p === 'kiosk')) {
+    const label = kioskCount === 1 ? 'Kiosk' : 'Kiosks';
+    return `Store + ${kioskCount} ${label}`;
+  }
+
+  // Fallback to original
   return retailer.retailer_type || 'N/A';
 }
 

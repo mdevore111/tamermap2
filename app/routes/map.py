@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request, session
 from sqlalchemy import func
 
 from app.extensions import cache, limiter, db
-from app.models import MapUsage, PinInteraction, Retailer
+from app.models import MapUsage, PinInteraction, Retailer, PinPopularity, LegendClick, RouteEvent
 from app.routes.security import check_referrer
 
 map_bp = Blueprint("map", __name__)
@@ -68,15 +68,34 @@ def track_pin_click():
 
     lat = data.get("lat")
     lng = data.get("lng")
+    place_id = (data.get("place_id") or marker_id).strip()
 
     click = PinInteraction(
         session_id=session.get("user_id", request.remote_addr),
         marker_id=marker_id,
+        place_id=place_id,
         lat=lat,
         lng=lng
     )
 
     db.session.add(click)
+    # Upsert into PinPopularity by place_id
+    existing = PinPopularity.query.get(place_id)
+    now = datetime.utcnow()
+    if existing:
+        existing.total_clicks = (existing.total_clicks or 0) + 1
+        existing.last_clicked_at = now
+        if lat is not None and lng is not None:
+            existing.last_lat = lat
+            existing.last_lng = lng
+    else:
+        db.session.add(PinPopularity(
+            place_id=place_id,
+            total_clicks=1,
+            last_clicked_at=now,
+            last_lat=lat,
+            last_lng=lng
+        ))
     db.session.commit()
     return jsonify(success=True), 200
 
@@ -99,18 +118,29 @@ def get_pin_heatmap_data():
 
     recent_cutoff = datetime.utcnow() - timedelta(days=30)
 
-    # Join PinInteraction with Retailer on matching (trimmed, case-insensitive) IDs
-    # Round coordinates for heatmap display only
-    data = db.session.query(
-        func.round(Retailer.latitude, 2).label("lat"),
-        func.round(Retailer.longitude, 2).label("lng"),
-        func.count().label("weight")
-    ).select_from(PinInteraction).join(
-        Retailer,
-        Retailer.place_id == PinInteraction.marker_id
-    ).filter(
-        PinInteraction.timestamp >= recent_cutoff
-    ).group_by("lat", "lng").all()
+    # Prefer aggregated popularity by place_id; fallback to recent clicks if popularity empty
+    pop_rows = db.session.query(
+        func.round(func.coalesce(PinPopularity.last_lat, Retailer.latitude), 2).label("lat"),
+        func.round(func.coalesce(PinPopularity.last_lng, Retailer.longitude), 2).label("lng"),
+        PinPopularity.total_clicks.label("weight")
+    ).select_from(PinPopularity).join(
+        Retailer, Retailer.place_id == PinPopularity.place_id
+    ).all()
+
+    if pop_rows:
+        data = pop_rows
+    else:
+        # Fallback: aggregate recent clicks by retailer.place_id
+        data = db.session.query(
+            func.round(Retailer.latitude, 2).label("lat"),
+            func.round(Retailer.longitude, 2).label("lng"),
+            func.count().label("weight")
+        ).select_from(PinInteraction).join(
+            Retailer,
+            Retailer.place_id == PinInteraction.marker_id
+        ).filter(
+            PinInteraction.timestamp >= recent_cutoff
+        ).group_by("lat", "lng").all()
 
     heatmap = [[lat, lng, weight] for lat, lng, weight in data]
     return jsonify(heatmap)
@@ -208,10 +238,102 @@ def get_pin_interaction_counts():
     """
     check_referrer()
 
+    # Prefer place_id popularity totals
     data = db.session.query(
-        PinInteraction.marker_id,
-        func.count().label("clicks")
-    ).group_by(PinInteraction.marker_id).all()
+        PinPopularity.place_id,
+        PinPopularity.total_clicks
+    ).all()
 
-    result = [{"marker_id": marker_id, "clicks": clicks} for marker_id, clicks in data]
+    result = [{"place_id": pid, "clicks": clicks} for pid, clicks in data]
     return jsonify(result)
+
+
+@map_bp.route('/track/legend', methods=['POST'])
+@limiter.limit("120/minute")
+def track_legend_click():
+    check_referrer()
+    data = request.get_json(silent=True) or {}
+    control_id = (data.get('control_id') or '').strip()
+    if not control_id:
+        return jsonify(success=False, error='control_id required'), 400
+
+    sess_id = session.get('visitor_session_id') or session.get('user_id') or request.remote_addr
+    user_id = session.get('user_id') if isinstance(session.get('user_id'), int) else None
+    is_pro = bool(session.get('is_pro'))
+
+    click = LegendClick(
+        session_id=sess_id,
+        user_id=user_id,
+        is_pro=is_pro,
+        control_id=control_id,
+        path=data.get('path'),
+        zoom=data.get('zoom'),
+        center_lat=data.get('center_lat'),
+        center_lng=data.get('center_lng')
+    )
+    db.session.add(click)
+    db.session.commit()
+    return jsonify(success=True)
+
+
+@map_bp.route('/track/route', methods=['POST'])
+@limiter.limit("120/minute")
+def track_route_event():
+    check_referrer()
+    data = request.get_json(silent=True) or {}
+    event = (data.get('event') or '').strip().lower()
+    if event not in ('open', 'preview', 'go'):
+        return jsonify(success=False, error='invalid event'), 400
+
+    sess_id = session.get('visitor_session_id') or session.get('user_id') or request.remote_addr
+    user_id = session.get('user_id') if isinstance(session.get('user_id'), int) else None
+    is_pro = bool(session.get('is_pro'))
+
+    re = RouteEvent(
+        session_id=sess_id,
+        user_id=user_id,
+        is_pro=is_pro,
+        event=event,
+        max_distance=data.get('max_distance'),
+        max_stops=data.get('max_stops'),
+        options_json=data.get('options_json')
+    )
+    db.session.add(re)
+    db.session.commit()
+    return jsonify(success=True)
+
+
+@map_bp.route('/api/admin/engagement/legend', methods=['GET'])
+def engagement_legend():
+    days = int(request.args.get('days', 30))
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    rows = db.session.query(
+        LegendClick.control_id,
+        LegendClick.is_pro,
+        func.count().label('cnt')
+    ).filter(
+        LegendClick.created_at >= cutoff
+    ).group_by(LegendClick.control_id, LegendClick.is_pro).all()
+    result = {}
+    for control_id, is_pro, cnt in rows:
+        bucket = result.setdefault(control_id, {"pro": 0, "non_pro": 0})
+        bucket['pro' if is_pro else 'non_pro'] += cnt
+    return jsonify(result)
+
+
+@map_bp.route('/api/admin/engagement/route', methods=['GET'])
+def engagement_route():
+    days = int(request.args.get('days', 30))
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    # Totals per event
+    totals = dict(db.session.query(RouteEvent.event, func.count()).filter(RouteEvent.created_at >= cutoff).group_by(RouteEvent.event).all())
+    # Unique sessions that opened
+    open_sessions = db.session.query(func.count(func.distinct(RouteEvent.session_id))).filter(RouteEvent.created_at >= cutoff, RouteEvent.event == 'open').scalar() or 0
+    go_sessions = db.session.query(func.count(func.distinct(RouteEvent.session_id))).filter(RouteEvent.created_at >= cutoff, RouteEvent.event == 'go').scalar() or 0
+    completion_rate = (go_sessions / open_sessions) if open_sessions else 0
+    return jsonify({
+        'totals': totals,
+        'sessions_open': open_sessions,
+        'sessions_go': go_sessions,
+        'completion_rate': completion_rate
+    })

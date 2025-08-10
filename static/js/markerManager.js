@@ -139,9 +139,71 @@ export class MarkerManager {
             
             // Process batch
             for (const item of batch) {
+                const key = this.getMarkerKey(item, type);
+                // De-duplicate by place_id-first key for retailers
+                if (type === 'retailer' && this.markerCache.has(key)) {
+                    // Merge retailer_type and kiosk counts onto existing marker for combined filtering
+                    const existing = this.markerCache.get(key);
+                    try {
+                        const existingType = (existing.retailer_type || '').toLowerCase();
+                        const incomingType = (item.retailer_type || '').toLowerCase();
+                        const isKioskOnly = (t) => {
+                            const parts = (t || '').split('+').map(p => p.trim()).filter(Boolean);
+                            const hasKiosk = parts.includes('kiosk');
+                            const hasStore = parts.includes('store') || parts.includes('retail') || parts.includes('card shop');
+                            return hasKiosk && !hasStore;
+                        };
+
+                        // If both are kiosk-only and we collided via fallback key (no place_id),
+                        // keep them separate to avoid collapsing distinct kiosk locations.
+                        if (isKioskOnly(existingType) && isKioskOnly(incomingType)) {
+                            const altKey = `${key}|kiosk-${item.place_id || item.id || item.full_address || Math.random()}`;
+                            const altMarker = this.createMarker(item, type);
+                            if (altMarker) {
+                                this.markerCache.set(altKey, altMarker);
+                            }
+                            continue;
+                        }
+                        const parts = new Set();
+                        if (existingType) existingType.split('+').forEach(t => parts.add(t.trim()));
+                        if (incomingType) incomingType.split('+').forEach(t => parts.add(t.trim()));
+                        const mergedType = Array.from(parts).filter(Boolean).join(' + ');
+                        existing.retailer_type = mergedType;
+                        if (existing.retailer_data) {
+                            existing.retailer_data.retailer_type = mergedType;
+                        }
+
+                        // Aggregate kiosk count across duplicates (use max to avoid double counting)
+                        const hasKiosk = (t) => t && t.split('+').some(p => p.trim() === 'kiosk');
+                        const existingHasKiosk = hasKiosk(existingType);
+                        const incomingHasKiosk = hasKiosk(incomingType);
+
+                        // Initialize from existing data if undefined
+                        if (typeof existing.kiosk_count === 'undefined') {
+                            let base = 0;
+                            if (existingHasKiosk && existing.retailer_data) {
+                                const kd = existing.retailer_data;
+                                base = (kd.kiosk_count ?? kd.machine_count ?? 1) || 0;
+                            }
+                            existing.kiosk_count = base;
+                            if (existing.retailer_data) existing.retailer_data.kiosk_count = base;
+                        }
+                        // Add incoming kiosk machines if applicable
+                        if (incomingHasKiosk) {
+                            const incomingCount = (item.kiosk_count ?? item.machine_count ?? 1) || 0;
+                            const nextVal = Math.max(existing.kiosk_count || 0, incomingCount);
+                            existing.kiosk_count = nextVal;
+                            if (existing.retailer_data) {
+                                existing.retailer_data.kiosk_count = nextVal;
+                            }
+                        }
+                    } catch (e) {
+                        // Safe fallback: do nothing if merge fails
+                    }
+                    continue; // Skip creating a duplicate marker
+                }
                 const marker = this.createMarker(item, type);
                 if (marker) {
-                    const key = this.getMarkerKey(item, type);
                     this.markerCache.set(key, marker);
                 }
             }
@@ -180,7 +242,13 @@ export class MarkerManager {
     
     getMarkerKey(data, type) {
         if (type === 'retailer') {
-            return `retailer_${data.id || data.place_id}`;
+            // Prefer place_id for stable de-duplication
+            const pid = data.place_id || (data.retailer_data && data.retailer_data.place_id);
+            if (pid) return `retailer_${pid}`;
+            // Fallbacks to avoid duplicates when place_id missing
+            const addr = (data.full_address || data.address || '').toLowerCase();
+            const name = (data.retailer || data.name || '').toLowerCase();
+            return `retailer_${name}|${addr}`;
         } else if (type === 'event') {
             return `event_${data.id}`;
         }
