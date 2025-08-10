@@ -24,7 +24,8 @@ class RoutePlanner {
             mostPopular: false,
             kiosk: true,
             retail: true,
-            indie: false
+            indie: false,
+            mergeNearby: true
         };
     }
 
@@ -232,7 +233,8 @@ class RoutePlanner {
                     mostPopular: !!data.checkboxStates?.mostPopular,
                     kiosk: data.checkboxStates?.kiosk !== undefined ? !!data.checkboxStates.kiosk : true,
                     retail: data.checkboxStates?.retail !== undefined ? !!data.checkboxStates.retail : true,
-                    indie: data.checkboxStates?.indie !== undefined ? !!data.checkboxStates.indie : false
+                    indie: data.checkboxStates?.indie !== undefined ? !!data.checkboxStates.indie : false,
+                    mergeNearby: data.checkboxStates?.mergeNearby !== undefined ? !!data.checkboxStates.mergeNearby : true
                 };
                 console.log('Loaded preferences:', {
                     maxDistance: this.maxDistance,
@@ -250,7 +252,8 @@ class RoutePlanner {
                     mostPopular: false,
                     kiosk: true,
                     retail: true,
-                    indie: false
+                    indie: false,
+                    mergeNearby: true
                 };
             }
         } catch (error) {
@@ -385,6 +388,10 @@ class RoutePlanner {
                                 <input type="checkbox" id="open-now-checkbox">
                                 <span>Open Now</span>
                             </label>
+                            <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Merge multiple stops that are very close to each other into a single location">
+                                <input type="checkbox" id="merge-nearby-checkbox">
+                                <span>Merge Nearby</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -484,6 +491,7 @@ class RoutePlanner {
         const popularityOffBtn = document.getElementById('popularity-off');
         const popularityLeastBtn = document.getElementById('popularity-least');
         const popularityMostBtn = document.getElementById('popularity-most');
+        const mergeNearbyCheckbox = document.getElementById('merge-nearby-checkbox');
         
         // Restore checkbox states from session data if available
         console.log('=== SESSION DATA RESTORATION DEBUG ===');
@@ -493,6 +501,7 @@ class RoutePlanner {
             console.log('Restoring option states from preferences...');
             if (roundTripCheckbox) roundTripCheckbox.checked = !!this.sessionCheckboxStates.roundTrip;
             if (openNowCheckbox) openNowCheckbox.checked = !!this.sessionCheckboxStates.openNow;
+            if (mergeNearbyCheckbox) mergeNearbyCheckbox.checked = !!this.sessionCheckboxStates.mergeNearby;
             // Set segmented control selection
             const mode = this.sessionCheckboxStates.mostPopular
                 ? 'most'
@@ -524,6 +533,13 @@ class RoutePlanner {
         if (openNowCheckbox) {
             openNowCheckbox.addEventListener('change', () => {
                 this.sessionCheckboxStates.openNow = !!openNowCheckbox.checked;
+                this.savePreferences();
+                this.updateRouteSummary();
+            });
+        }
+        if (mergeNearbyCheckbox) {
+            mergeNearbyCheckbox.addEventListener('change', () => {
+                this.sessionCheckboxStates.mergeNearby = !!mergeNearbyCheckbox.checked;
                 this.savePreferences();
                 this.updateRouteSummary();
             });
@@ -815,9 +831,14 @@ class RoutePlanner {
         
         // Get available locations and apply filters
         console.log('3. Getting filtered locations...');
+        // Capture pre-merge count for UI notice
+        const beforeMergeCount = this.getFilteredLocations(openNow, leastPopular, mostPopular).length;
         let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-        // Merge nearby duplicates (e.g., kiosk + retail within the same venue)
-        availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
+        // Merge nearby duplicates when enabled (e.g., kiosk + retail within the same venue)
+        if (this.sessionCheckboxStates.mergeNearby) {
+            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
+        }
+        const afterMergeCount = availableLocations.length;
         console.log('4. availableLocations after filtering:', availableLocations.length);
         console.log('5. availableLocations sample:', availableLocations.slice(0, 3));
         
@@ -838,25 +859,51 @@ class RoutePlanner {
             return;
         }
 
-        const storeList = optimalLocations.map(loc => {
-            // Format retailer name with type and city in parentheses
-            const formattedName = this.cleanRetailerName(loc.retailer || 'Unknown', loc.retailer_type, loc.address);
-            return `- ${formattedName} (${loc.distance?.toFixed(1) || '?'} mi)`;
-        }).join('<br>');
+        const storeItems = optimalLocations.map(loc => {
+            const openNow = (typeof window.isOpenNow === 'function') && window.isOpenNow(loc.opening_hours);
+            return `<li style="margin:6px 0;">
+                ${this.formatStopLine(loc, openNow)}
+            </li>`;
+        }).join('');
 
-        // Build filter description
-        let filterDescription = '';
-        if (roundTrip) filterDescription += '<strong>Round trip</strong> back to start<br>';
-        if (openNow) filterDescription += '<strong>Open now</strong> only<br>';
-        if (leastPopular) filterDescription += '<strong>Least popular</strong> locations<br>';
-        if (mostPopular) filterDescription += '<strong>Most popular</strong> locations<br>';
+        // Build compact filter badges
+        const pills = [];
+        if (roundTrip) pills.push('<span style="display:inline-block; padding:2px 8px; border-radius:12px; background:#eef2ff; color:#3b5bdb; font-size:12px; margin-right:6px;">Round trip</span>');
+        if (openNow) pills.push('<span style="display:inline-block; padding:2px 8px; border-radius:12px; background:#e6fcf5; color:#087f5b; font-size:12px; margin-right:6px;">Open now only</span>');
+        if (leastPopular) pills.push('<span style="display:inline-block; padding:2px 8px; border-radius:12px; background:#fff4e6; color:#d9480f; font-size:12px; margin-right:6px;">Least popular</span>');
+        if (mostPopular) pills.push('<span style="display:inline-block; padding:2px 8px; border-radius:12px; background:#ffe8cc; color:#d9480f; font-size:12px; margin-right:6px;">Most popular</span>');
+        const filterDescription = pills.join('');
+        // Merge notice (optional transparency)
+        let mergeNotice = '';
+        if (this.sessionCheckboxStates.mergeNearby && beforeMergeCount > afterMergeCount) {
+            const mergedGroups = availableLocations.filter(l => Array.isArray(l.mergedFrom) && l.mergedFrom.length > 1);
+            const mergedCount = beforeMergeCount - afterMergeCount;
+            if (mergedCount > 0 && mergedGroups.length > 0) {
+                const details = mergedGroups.slice(0, 5).map(g => {
+                    const title = this.cleanRetailerName(g.retailer || 'Unknown', g.retailer_type, g.address);
+                    const members = g.mergedFrom.map(m => this.cleanRetailerName(m.retailer || 'Unknown', m.retailer_type, m.address)).join(', ');
+                    return `<div style=\"margin:2px 0;\"><em>${title}</em><br><small style=\"color:#6c757d;\">${members}</small></div>`;
+                }).join('');
+                mergeNotice = `
+                    <div style=\"margin:6px 0 4px; color:#495057;\">
+                        <small><strong>Merged ${mergedCount} nearby entries</strong> to avoid duplicates.</small>
+                        <details style=\"margin-top:2px;\">
+                            <summary style=\"cursor:pointer; color:#667eea;\">View merged</summary>
+                            ${details}
+                        </details>
+                    </div>
+                `;
+            }
+        }
         
         summaryContent.innerHTML = `
-            <div class="store-list">
-                <strong>${optimalLocations.length} stops</strong> within ${this.maxDistance} miles<br>
-                ${filterDescription}
-                <br>
-                ${storeList}
+            <div>
+                <div style="margin-bottom:6px;">
+                    <strong>${optimalLocations.length} stops</strong> within ${this.maxDistance} miles
+                </div>
+                <div style="margin-bottom:6px;">${filterDescription || ''}</div>
+                ${mergeNotice}
+                <ol style="padding-left:18px; margin:6px 0;">${storeItems}</ol>
             </div>
         `;
     }
@@ -895,7 +942,8 @@ class RoutePlanner {
                     retailer_type: marker.retailer_type || 'unknown',
                     opening_hours: marker.opening_hours || null,
                     address: marker.address || null,
-                    phone: marker.phone || null
+                    phone: marker.phone || null,
+                    place_id: marker.place_id || null
                 };
             });
             dataSource = 'allMarkers';
@@ -914,7 +962,24 @@ class RoutePlanner {
         // Fallback to markerManager.markerCache if available
         else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
             const markerCache = Array.from(window.markerManager.markerCache.values());
-            locations = markerCache.filter(marker => marker.retailer_type); // Only retailer markers
+            // Normalize markers → plain location objects with lat/lng
+            locations = markerCache
+                .filter(marker => marker.retailer_type) // Only retailer markers
+                .map(marker => {
+                    const pos = marker.getPosition && marker.getPosition();
+                    const rd = marker.retailer_data || {};
+                    return {
+                        lat: pos ? pos.lat() : parseFloat(rd.latitude),
+                        lng: pos ? pos.lng() : parseFloat(rd.longitude),
+                        retailer: rd.retailer || marker.getTitle?.() || 'Unknown',
+                        retailer_type: (marker.retailer_type || rd.retailer_type || 'unknown'),
+                        opening_hours: rd.opening_hours || marker.opening_hours || null,
+                        address: rd.full_address || marker.address || null,
+                        phone: rd.phone_number || marker.phone || null,
+                        place_id: rd.place_id || marker.place_id || null
+                    };
+                })
+                .filter(loc => Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
             dataSource = 'markerCache';
             console.log(`5. SUCCESS: Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
             console.log('6. Sample location:', locations[0]);
@@ -934,8 +999,18 @@ class RoutePlanner {
                 console.log('7. Cache entry:', cacheEntry);
                 
                 if (cacheEntry && cacheEntry.data) {
-                    locations = Array.isArray(cacheEntry.data) ? cacheEntry.data : 
-                               (cacheEntry.data.retailers || []);
+                    const raw = Array.isArray(cacheEntry.data) ? cacheEntry.data : (cacheEntry.data.retailers || []);
+                    // Normalize {latitude,longitude} → {lat,lng}
+                    locations = raw.map(r => ({
+                        lat: parseFloat(r.lat ?? r.latitude),
+                        lng: parseFloat(r.lng ?? r.longitude),
+                        retailer: r.retailer || 'Unknown',
+                        retailer_type: r.retailer_type || 'unknown',
+                        opening_hours: r.opening_hours || null,
+                        address: r.full_address || r.address || null,
+                        phone: r.phone_number || r.phone || null,
+                        place_id: r.place_id || null
+                    })).filter(loc => Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
                     dataSource = 'dataService';
                     console.log(`8. SUCCESS: Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
                     console.log('9. Sample location:', locations[0]);
@@ -945,7 +1020,20 @@ class RoutePlanner {
         }
         // Last fallback to any global markers array
         else if (window.markers && window.markers.length > 0) {
-            locations = [...window.markers];
+            // Normalize generic markers → plain objects
+            locations = window.markers.map(marker => {
+                const pos = marker.getPosition && marker.getPosition();
+                return {
+                    lat: pos ? pos.lat() : parseFloat(marker.lat ?? marker.latitude),
+                    lng: pos ? pos.lng() : parseFloat(marker.lng ?? marker.longitude),
+                    retailer: marker.getTitle?.() || marker.retailer || 'Unknown',
+                    retailer_type: marker.retailer_type || 'unknown',
+                    opening_hours: marker.opening_hours || null,
+                    address: marker.address || marker.full_address || null,
+                    phone: marker.phone || marker.phone_number || null,
+                    place_id: marker.place_id || null
+                };
+            }).filter(loc => Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
             dataSource = 'markers';
             console.log(`5. SUCCESS: Using data source: markers (${locations.length} locations)`);
             console.log('6. Sample location:', locations[0]);
@@ -998,9 +1086,15 @@ class RoutePlanner {
             console.log('11. Sample locations after distance filter:', locations.slice(0, 3));
         }
 
-        // Apply retailer type filters
-        const beforeTypeFilter = locations.length;
-        locations = this.applyRetailerTypeFilters(locations);
+        // Apply retailer type filters only if at least one type toggle is active
+        const toggles = document.querySelectorAll('.route-filter-toggle');
+        const anyActive = Array.from(toggles || []).some(t => t.classList.contains('active'));
+        let beforeTypeFilter = locations.length;
+        if (anyActive) {
+            locations = this.applyRetailerTypeFilters(locations);
+        } else {
+            console.log('12. No retailer type toggles active, skipping type filter');
+        }
         console.log(`12. After retailer type filter: ${locations.length} locations (was ${beforeTypeFilter})`);
         
         if (locations.length > 0) {
@@ -1008,7 +1102,7 @@ class RoutePlanner {
         }
 
         // Apply opening hours filter
-        if (openNow) {
+        if (openNow === true) {
             const beforeHoursFilter = locations.length;
             locations = this.filterByOpeningHours(locations);
             console.log(`14. After opening hours filter: ${locations.length} locations (was ${beforeHoursFilter})`);
@@ -1021,7 +1115,7 @@ class RoutePlanner {
         }
 
         // Apply popularity filter
-        if (leastPopular || mostPopular) {
+        if (leastPopular === true || mostPopular === true) {
             const beforePopularityFilter = locations.length;
             locations = this.filterByPopularity(locations, leastPopular, mostPopular);
             console.log(`16. After popularity filter: ${locations.length} locations (was ${beforePopularityFilter})`);
@@ -1336,16 +1430,99 @@ class RoutePlanner {
             }
         }
         
-        // Format: "Base Name (Type - City)" or "Base Name (Type)" if no city
-        if (retailerType && city) {
-            return `${baseName} (${retailerType} - ${city})`;
-        } else if (retailerType) {
-            return `${baseName} (${retailerType})`;
-        } else if (city) {
-            return `${baseName} (${city})`;
-        } else {
-            return baseName;
+        // Maintain original behavior for other callers
+        if (retailerType && city) return `${baseName} (${retailerType} - ${city})`;
+        if (retailerType)         return `${baseName} (${retailerType})`;
+        if (city)                 return `${baseName} (${city})`;
+        return baseName;
+    }
+
+    // New: Format a stop line as "Name (Store + Kiosk) City 1.3 mi — Open until 9:00 PM"
+    formatStopLine(loc, isOpen) {
+        const name = (loc.retailer || 'Unknown').trim();
+        const type = this.formatTypeSentenceCase(loc.retailer_type);
+        const city = this.extractCity(loc.address) || '';
+        const dist = (typeof loc.distance === 'number') ? `${loc.distance.toFixed(1)} mi` : '';
+        const openTxtRaw = isOpen ? this.formatOpenUntil(loc.opening_hours) : 'Closed now';
+        const openTxt = this.normalizeTimeLabel(openTxtRaw);
+        const typePill = type ? `<span style="display:inline-block; padding:0 6px; border-radius:10px; border:1px solid #ced4da; font-size:12px; color:#495057; margin-left:6px;">${type}</span>` : '';
+        const meta = [city, dist, openTxt].filter(Boolean).join(' · ');
+        return `<span style="font-weight:600;">${name}</span>${typePill} <span style="color:#6c757d; font-size:12px;">${meta}</span>`;
+    }
+
+    normalizeTimeLabel(label) {
+        if (!label) return '';
+        // Convert patterns like "12 00 AM" → "12:00 AM" and ensure spaces
+        try {
+            return String(label)
+                .replace(/(\d{1,2})\s(\d{2})\s*(AM|PM)/gi, '$1:$2 $3')
+                .replace(/\s+/g, ' ')
+                .trim();
+        } catch {
+            return label;
         }
+    }
+
+    formatTypeSentenceCase(retailerType) {
+        if (!retailerType) return '';
+        // Split on '+' and convert each to Title Case with known mappings
+        const parts = String(retailerType).split('+').map(p => p.trim().toLowerCase()).filter(Boolean);
+        const title = parts.map(p => {
+            if (p === 'card shop') return 'Card Shop';
+            if (p === 'retail' || p === 'store') return 'Store';
+            if (p === 'kiosk') return 'Kiosk';
+            // Fallback title case
+            return p.replace(/\b\w/g, c => c.toUpperCase());
+        }).join(' + ');
+        return title;
+    }
+
+    extractCity(address) {
+        if (!address) return '';
+        // Prefer "City, ST" pattern
+        const m1 = address.match(/([A-Za-z\s]+),\s*[A-Z]{2}\b/);
+        if (m1) return m1[1].trim();
+        // Fallback: last token before ZIP
+        const m2 = address.match(/,\s*([A-Za-z\s]+)\s*,?\s*[A-Z]{2}\s*\d{5}/);
+        if (m2) return m2[1].trim();
+        return '';
+    }
+
+    formatOpenUntil(opening_hours) {
+        if (!opening_hours || typeof window.isOpenNow !== 'function') return '';
+        // If today is listed as "Open 24 hours"
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const todayFull = days[new Date().getDay()];
+        const lines = String(opening_hours).split(/\r?\n/).map(l => l.trim());
+        const todayLine = lines.find(l => l.toLowerCase().startsWith(`${todayFull.toLowerCase()}:`));
+        if (todayLine && /open\s*24/i.test(todayLine)) return 'Open 24 hours';
+
+        const open = window.isOpenNow(opening_hours);
+        if (!open) return '';
+
+        // Try to extract today's closing time from the raw line first
+        try {
+            if (todayLine) {
+                // Split on dash variants: –, —, -
+                const parts = todayLine.split(/[:,]\s*/).slice(1).join(' ').split(/[\u2013\u2014\-–]/);
+                const endStr = (parts[1] || '').trim();
+                if (endStr) return `Open until ${endStr}`;
+            }
+        } catch {}
+
+        // Fallback: use formatted HTML if available
+        try {
+            if (typeof window.formatHours === 'function') {
+                const html = window.formatHours(opening_hours) || '';
+                const todayShort = new Date().toLocaleString(undefined, { weekday: 'short' }); // Mon
+                const re = new RegExp(`${todayShort}[^\n]*?[\u2013\u2014\-–]\s*([^<]+)`, 'i');
+                const match = html.match(re);
+                const closing = match && match[1] ? match[1].trim() : '';
+                if (closing) return `Open until ${closing}`;
+            }
+        } catch {}
+
+        return 'Open now';
     }
 
     /**
@@ -1423,13 +1600,29 @@ class RoutePlanner {
         console.log('16. mostPopular filter:', mostPopular);
         
         let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-        availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
+        if (this.sessionCheckboxStates.mergeNearby) {
+            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
+        }
         console.log('17. availableLocations:', availableLocations.length);
         console.log('18. availableLocations sample:', availableLocations.slice(0, 3));
         
         this.selectedLocations = this.selectOptimalLocations(availableLocations);
         console.log('19. selectedLocations:', this.selectedLocations.length);
         console.log('20. selectedLocations details:', this.selectedLocations);
+
+        // Track route planner preview
+        try {
+            fetch('/track/route', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event: 'preview',
+                    max_distance: this.maxDistance,
+                    max_stops: this.maxStops,
+                    options_json: JSON.stringify(this.sessionCheckboxStates || {})
+                })
+            }).catch(() => {});
+        } catch {}
 
         if (this.selectedLocations.length === 0) {
             console.log('ERROR: No locations selected after filtering');
@@ -1639,6 +1832,19 @@ class RoutePlanner {
         
         // Increment popularity for selected locations
         this.incrementLocationPopularity(this.selectedLocations);
+        // Track route planner go
+        try {
+            fetch('/track/route', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event: 'go',
+                    max_distance: this.maxDistance,
+                    max_stops: this.maxStops,
+                    options_json: JSON.stringify(this.sessionCheckboxStates || {})
+                })
+            }).catch(() => {});
+        } catch {}
         
         // Generate and open the route
         const roundTrip = !!this.sessionCheckboxStates.roundTrip;
@@ -1682,6 +1888,19 @@ class RoutePlanner {
                 console.log('=== OPEN PLANNING MODAL DEBUG ===');
                 console.log('this.sessionCheckboxStates available:', this.sessionCheckboxStates);
                 this.initializeModalControls();
+                // Track route planner open
+                try {
+                    fetch('/track/route', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event: 'open',
+                            max_distance: this.maxDistance,
+                            max_stops: this.maxStops,
+                            options_json: JSON.stringify(this.sessionCheckboxStates || {})
+                        })
+                    }).catch(() => {});
+                } catch {}
             },
             willClose: () => {
                 // Only clear session data if we're exiting the workflow entirely
@@ -1966,7 +2185,9 @@ class RoutePlanner {
             const leastPopular = !!this.sessionCheckboxStates.leastPopular;
             const mostPopular = !!this.sessionCheckboxStates.mostPopular;
             let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
+            if (this.sessionCheckboxStates.mergeNearby) {
+                availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
+            }
             this.selectedLocations = this.selectOptimalLocations(availableLocations);
         }
 
@@ -1991,40 +2212,40 @@ class RoutePlanner {
      * Generate Google Maps URL for the route
      */
     generateGoogleMapsURL(locations, userCoords, roundTrip = false) {
-        let waypoints = [];
-        
-        // Add start coordinates
-        const startPoint = `${userCoords.lat},${userCoords.lng}`;
-        waypoints.push(startPoint);
-        
-        // Filter out any duplicate locations by coordinates
-        const uniqueLocations = locations.filter((location, index, self) =>
-            index === self.findIndex(l => 
-                l.lat === location.lat && l.lng === location.lng
-            )
-        );
-        
-        // Add all unique store stops with names
-        uniqueLocations.forEach(location => {
-            const storeName = location.retailer || 'Location';
-            const coordinates = `${location.lat},${location.lng}`;
-            waypoints.push(`${encodeURIComponent(storeName)}@${coordinates}`);
-        });
-        
-        // For round trips, add the start coordinates again at the end
+        // Always start from user's location
+        const originParam = `origin=${userCoords.lat},${userCoords.lng}`;
+
+        const stops = [...locations];
+        let destinationParam = '';
+        const extraParams = [];
         if (roundTrip) {
-            waypoints.push(startPoint);
+            destinationParam = `destination=${userCoords.lat},${userCoords.lng}`;
+        } else {
+            const last = stops[stops.length - 1];
+            if (last?.place_id) {
+                destinationParam = `destination=${encodeURIComponent(last.retailer || last.address || '')}`;
+                extraParams.push(`destination_place_id=${last.place_id}`);
+            } else {
+                destinationParam = `destination=${last.lat},${last.lng}`;
+            }
+            stops.pop();
         }
-        
-        const waypointString = waypoints.join('/');
-        const url = `https://www.google.com/maps/dir/${waypointString}`;
-        
-        // Debug output to verify URL generation
+
+        // Use lat,lng for waypoints to avoid any place_id parsing errors in Maps UI
+        const waypointVals = stops.map(loc => `${loc.lat},${loc.lng}`);
+        const waypointsParam = waypointVals.length > 0 ? `waypoints=${waypointVals.join('|')}` : '';
+
+        const params = [
+            'api=1',
+            'travelmode=driving',
+            originParam,
+            destinationParam,
+            waypointsParam,
+            ...extraParams
+        ].filter(Boolean).join('&');
+
+        const url = `https://www.google.com/maps/dir/?${params}`;
         console.log('Generated Google Maps URL:', url);
-        console.log('Route stops:', locations.map(l => `${l.retailer} (${l.lat}, ${l.lng})`));
-        console.log('Round trip:', roundTrip);
-        console.log('Unique locations:', uniqueLocations.length, 'of', locations.length);
-        
         return url;
     }
 }

@@ -91,7 +91,16 @@ function renderMap() {
       disableDefaultUI: MAP_SETTINGS.disableDefaultUI,
       zoomControl:      MAP_SETTINGS.zoomControl,
       mapTypeId:        google.maps.MapTypeId[MAP_TYPE_ID],
-      zoomControlOptions: { style: google.maps.ZoomControlStyle[ZOOM_CONTROL_STYLE] }
+      zoomControlOptions: { style: google.maps.ZoomControlStyle[ZOOM_CONTROL_STYLE] },
+      styles: [
+        { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.government', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.medical', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.park', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.school', stylers: [{ visibility: 'off' }] },
+        { featureType: 'poi.place_of_worship', stylers: [{ visibility: 'off' }] }
+      ]
     }
   );
 

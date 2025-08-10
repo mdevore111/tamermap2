@@ -64,12 +64,24 @@ export function createRetailerMarker(map, retailer) {
   marker.retailer_name    = (retailer.retailer       || '').toLowerCase();
   marker.retailer_address = (retailer.full_address   || '').toLowerCase();
   marker.retailer_phone   = (retailer.phone_number   || '').toLowerCase();
+  // Expose common fields used by the route planner mapping step
+  marker.place_id         = retailer.place_id || null;
+  marker.address          = retailer.full_address || null;
+  marker.phone            = retailer.phone_number || null;
   marker.opening_hours    = retailer.opening_hours;
   marker.status           = retailer.status;
+  // Pass through counts for UI rendering (kiosk aggregation)
+  marker.machine_count    = retailer.machine_count || 0;
+  marker.kiosk_count      = retailer.kiosk_count || undefined;
 
-  // Delegate HTML to UI helper
+  // Delegate HTML to UI helper; use marker.retailer_data to reflect merged updates
   marker.addListener('click', () => {
-    const html = renderRetailerInfoWindow(retailer, isPro);
+    const base = marker.retailer_data ? { ...marker.retailer_data } : { ...retailer };
+    const html = renderRetailerInfoWindow({
+      ...base,
+      kiosk_count: (marker.kiosk_count ?? base.kiosk_count ?? base.machine_count),
+      machine_count: (base.machine_count)
+    }, isPro);
 
     if (window.currentOpenMarker === marker) {
       window.infoWindow.close();
@@ -92,7 +104,12 @@ export function createRetailerMarker(map, retailer) {
     fetch('/track/pin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ marker_id: retailer.place_id || 'unknown', lat: parseFloat(retailer.latitude), lng: parseFloat(retailer.longitude) })
+      body: JSON.stringify({
+        marker_id: retailer.place_id || 'unknown',
+        place_id: retailer.place_id || undefined,
+        lat: parseFloat(retailer.latitude),
+        lng: parseFloat(retailer.longitude)
+      })
     }).catch(err => console.error('Error sending pin click data:', err));
   });
 

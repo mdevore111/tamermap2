@@ -3,7 +3,7 @@ export const DEFAULT_COORDS = { lat: 32.7157, lng: -117.1611 };
 
 // Only the pure settings (no google.*)
 export const MAP_SETTINGS = {
-  zoom: 9,
+  zoom: 11,
   minZoom: 7,
   maxZoom: 18,
   gestureHandling: "greedy",
@@ -27,9 +27,9 @@ export const ENDPOINTS = {
 };
 
 export const ICON_SIZES = {
-  retailer: { width: 40, height: 40, anchor: { x: 20, y: 40 } },
-  event:    { width: 40, height: 40, anchor: { x: 15, y: 30 } },
-  user:     { scale: 10 }
+  retailer: { width: 48, height: 48, anchor: { x: 24, y: 48 } },
+  event:    { width: 44, height: 44, anchor: { x: 16, y: 33 } },
+  user:     { scale: 12 }
 };
 
 export const Z_INDICES = {
