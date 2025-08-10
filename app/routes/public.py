@@ -77,7 +77,7 @@ def send_message():
     if request.method == "GET":
         pre = request.args.get("type", "")
         form.communication_type.data = (
-            pre if pre in ["suggestion", "contact", "report", "support"] else "contact"
+            pre if pre in ["suggestion", "contact", "report", "support", "business"] else "contact"
         )
         if form.communication_type.data == "report":
             addr = request.args.get("address", "")
@@ -128,8 +128,21 @@ def send_message():
             user_name = "Anonymous"
             sender_id = None
 
-        # Construct message body with report metadata
-        extra = f"Reported by {user_name}:\n"
+        # Category-specific metadata
+        extra_lines = [f"Reported by {user_name}:"]
+        if form.communication_type.data == 'support':
+            if form.support_topic.data:
+                extra_lines.append(f"Support Topic: {form.support_topic.data}")
+            if form.order_number.data:
+                extra_lines.append(f"Order Number: {form.order_number.data}")
+        if form.communication_type.data == 'business':
+            if form.company_name.data:
+                extra_lines.append(f"Company: {form.company_name.data}")
+            if form.company_website.data:
+                extra_lines.append(f"Website: {form.company_website.data}")
+            if form.company_size.data:
+                extra_lines.append(f"Company Size: {form.company_size.data}")
+        extra = "\n".join(extra_lines) + "\n"
 
         try:
             msg_record = Message(

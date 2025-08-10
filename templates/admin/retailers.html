@@ -16,7 +16,7 @@
                             <th>Address</th>
                             <th>Phone</th>
                             <th>Machine Count</th>
-                            <th>Enabled</th>
+                            <th>Status</th>
                             <th>Actions</th>
                                 </tr>
                             </thead>
@@ -81,7 +81,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
-    $('#retailers-table').DataTable({
+    const table = $('#retailers-table').DataTable({
         serverSide: true,
         processing: true,
         paging: true,
@@ -105,9 +105,22 @@ $(document).ready(function() {
             { data: 'address' },
             { data: 'phone' },
             { data: 'machine_count' },
-            { data: 'enabled' },
+            { data: 'status' },
             { data: 'actions', orderable: false, searchable: false }
         ]
+    });
+
+    // Grey out disabled rows
+    $('#retailers-table').on('draw.dt', function(){
+        $('#retailers-table tbody tr').each(function(){
+            const rowData = table.row(this).data();
+            if (rowData && (rowData.status_value || '').toLowerCase() === 'disabled') {
+                $(this).addClass('table-secondary');
+                $(this).css('opacity', 0.65);
+            } else {
+                $(this).removeClass('table-secondary').css('opacity', 1);
+            }
+        });
     });
 
     // Add Retailer Modal: Render form fields
@@ -124,17 +137,15 @@ $(document).ready(function() {
                 </div>
                                     <div class="col-md-6">
                         <div class='mb-3'><label class="form-label">Machine Count</label><input name='machine_count' type='number' class='form-control' min="0" value="0"></div>
-                        <div class='mb-3'><label class="form-label">Status</label><select name='status' class='form-select'>
-                            <option value="">Select Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Closed">Closed</option>
-                        </select></div>
-                        <div class='mb-3'><label class="form-label">Enabled</label><select name='enabled' class='form-select'>
-                            <option value="true" selected>Enabled</option>
-                            <option value="false">Disabled</option>
-                        </select></div>
+                         <div class='mb-3'><label class="form-label">Status</label><select name='status' class='form-select'>
+                             <option value="">Select Status</option>
+                             <option value="Active">Active</option>
+                             <option value="Inactive">Inactive</option>
+                             <option value="Pending">Pending</option>
+                             <option value="Closed">Closed</option>
+                             <option value="Disabled">Disabled</option>
+                         </select></div>
+                         
                         <div class='mb-3'><label class="form-label">Rating</label><input name='rating' type='number' class='form-control' min="0" max="5" step="0.1" placeholder="0.0 - 5.0"></div>
                         <div class='mb-3'><label class="form-label">Place ID</label><input name='place_id' class='form-control' placeholder="Google Place ID"></div>
                     </div>
@@ -225,17 +236,15 @@ $(document).ready(function() {
                     <div class="col-md-6">
                         <div class='mb-3'><label class="form-label">Machine Count</label><input name='machine_count' type='number' class='form-control' min="0" value='${data.machine_count || 0}'></div>
                         <div class='mb-3'><label class="form-label">Previous Count</label><input name='previous_count' type='number' class='form-control' min="0" value='${data.previous_count || 0}' readonly></div>
-                        <div class='mb-3'><label class="form-label">Status</label><select name='status' class='form-select'>
+                         <div class='mb-3'><label class="form-label">Status</label><select name='status' class='form-select'>
                             <option value="">Select Status</option>
-                            <option value="Active" ${data.status === 'Active' ? 'selected' : ''}>Active</option>
-                            <option value="Inactive" ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                            <option value="Pending" ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                            <option value="Closed" ${data.status === 'Closed' ? 'selected' : ''}>Closed</option>
+                             <option value="Active" ${data.status === 'Active' ? 'selected' : ''}>Active</option>
+                             <option value="Inactive" ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                             <option value="Pending" ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                             <option value="Closed" ${data.status === 'Closed' ? 'selected' : ''}>Closed</option>
+                             <option value="Disabled" ${data.status === 'Disabled' ? 'selected' : ''}>Disabled</option>
                         </select></div>
-                        <div class='mb-3'><label class="form-label">Enabled</label><select name='enabled' class='form-select'>
-                            <option value="true" ${data.enabled === true ? 'selected' : ''}>Enabled</option>
-                            <option value="false" ${data.enabled === false ? 'selected' : ''}>Disabled</option>
-                        </select></div>
+                         
                         <div class='mb-3'><label class="form-label">Rating</label><input name='rating' type='number' class='form-control' min="0" max="5" step="0.1" value='${data.rating || ''}' placeholder="0.0 - 5.0"></div>
                         <div class='mb-3'><label class="form-label">Place ID</label><input name='place_id' class='form-control' value='${data.place_id || ''}' placeholder="Google Place ID"></div>
                     </div>
@@ -258,6 +267,36 @@ $(document).ready(function() {
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
+        });
+    });
+
+    // Handle inline status change with confirmation
+    $(document).on('change', '.retailer-status-select', function(){
+        const id = $(this).data('id');
+        const newStatus = $(this).val();
+        const self = this;
+        Swal.fire({
+          title: 'Change Status?',
+          text: 'Do you want to change the status of this record?',
+          icon: 'question',
+          showCancelButton: true
+        }).then(res => {
+          if (res.isConfirmed) {
+            fetch('/admin/retailers/' + id, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus })
+            }).then(r => {
+              if (!r.ok) throw new Error('Failed');
+              $('#retailers-table').DataTable().ajax.reload(null, false);
+            }).catch(() => {
+              Swal.fire({ icon: 'error', title: 'Failed to update status' });
+              // revert UI
+              $(self).val($(self).data('current'));
+            });
+          } else {
+            // revert UI
+            $(self).val($(self).data('current'));
+          }
         });
     });
 

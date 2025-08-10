@@ -73,7 +73,8 @@ def get_retailer_locations(db, bounds=None, fields_only=True):
                 SELECT id, retailer, retailer_type, full_address, latitude, longitude, 
                        place_id, phone_number, opening_hours, machine_count, status, enabled
                 FROM retailers
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND enabled = 1
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                  AND (status IS NULL OR LOWER(status) != 'disabled')
             """
         else:
             # Full query for admin or detailed views
@@ -82,7 +83,8 @@ def get_retailer_locations(db, bounds=None, fields_only=True):
                        place_id, first_seen, phone_number, website, opening_hours, rating, 
                        last_api_update, machine_count, previous_count, status, enabled
                 FROM retailers
-                WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND enabled = 1
+                WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                  AND (status IS NULL OR LOWER(status) != 'disabled')
             """
         
         # Add viewport filtering if bounds provided

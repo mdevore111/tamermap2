@@ -1,7 +1,7 @@
-{% extends 'admin/base.html' %}
+{% extends 'admin/master.html' %}
 {% block title %}Engagement Analytics{% endblock %}
 
-{% block content %}
+{% block body %}
 <div class="container-fluid">
   <h2 class="mt-3">Engagement Analytics</h2>
   <p class="text-muted">Last {{ days }} days</p>
@@ -47,6 +47,31 @@
       <canvas id="legendBar" height="120"></canvas>
     </div>
   </div>
+
+  <div class="card mt-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Recent Legend Clicks</span>
+      <small class="text-muted">Latest 200</small>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm" id="recentLegendTable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Session</th>
+              <th>Pro</th>
+              <th>Control</th>
+              <th>Path</th>
+              <th>Zoom</th>
+              <th>Center (lat,lng)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -72,6 +97,28 @@ new Chart(ctx, {
     plugins: { legend: { position: 'top' } }
   }
 });
+</script>
+<script>
+// Load recent legend clicks
+fetch('/admin/api/admin/engagement/legend/recent')
+  .then(r => r.json())
+  .then(resp => {
+    const tbody = document.querySelector('#recentLegendTable tbody');
+    tbody.innerHTML = '';
+    (resp.data || []).forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${row.created_at || ''}</td>
+        <td><code>${row.session_id || ''}</code></td>
+        <td>${row.is_pro ? 'Yes' : 'No'}</td>
+        <td>${row.control_id || ''}</td>
+        <td>${row.path || ''}</td>
+        <td>${row.zoom ?? ''}</td>
+        <td>${(row.center_lat ?? '')}${row.center_lat != null ? ',' : ''}${row.center_lng ?? ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
 </script>
 {% endblock %}
 

@@ -113,6 +113,34 @@
           </div>
         {% endif %}
 
+        {# Support-specific fields #}
+        {% if form.communication_type.data == 'support' %}
+          <div class="mb-3">
+            {{ form.support_topic.label(class="form-label") }}
+            {{ form.support_topic(class="form-select") }}
+          </div>
+          <div class="mb-3">
+            {{ form.order_number.label(class="form-label") }}
+            {{ form.order_number(class="form-control") }}
+          </div>
+        {% endif %}
+
+        {# Business-specific fields #}
+        {% if form.communication_type.data == 'business' %}
+          <div class="mb-3">
+            {{ form.company_name.label(class="form-label") }}
+            {{ form.company_name(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ form.company_website.label(class="form-label") }}
+            {{ form.company_website(class="form-control") }}
+          </div>
+          <div class="mb-3">
+            {{ form.company_size.label(class="form-label") }}
+            {{ form.company_size(class="form-select") }}
+          </div>
+        {% endif %}
+
         <div>
           {{ form.submit(class="btn btn-primary w-100") }}
         </div>

@@ -535,8 +535,7 @@ def engagement():
     legend_rows = db.session.query(
         LegendClick.control_id,
         func.sum(case((LegendClick.is_pro == True, 1), else_=0)).label('pro'),
-        func.sum(case((LegendClick.is_pro == False, 1), else_=0)).label('non_pro'),
-        func.count().label('total')
+        func.sum(case((LegendClick.is_pro == False, 1), else_=0)).label('non_pro')
     ).filter(
         LegendClick.created_at >= cutoff
     ).group_by(LegendClick.control_id).order_by(func.count().desc()).limit(10).all()
@@ -556,6 +555,34 @@ def engagement():
                            sessions_go=sessions_go,
                            completion_rate=completion_rate,
                            legend_data=legend_data)
+
+@admin_bp.route('/api/admin/engagement/legend/recent')
+@admin_required
+def api_engagement_legend_recent():
+    limit = request.args.get('limit', 200, type=int)
+    rows = db.session.query(
+        LegendClick.created_at,
+        LegendClick.session_id,
+        LegendClick.is_pro,
+        LegendClick.control_id,
+        LegendClick.path,
+        LegendClick.zoom,
+        LegendClick.center_lat,
+        LegendClick.center_lng
+    ).order_by(LegendClick.created_at.desc()).limit(limit).all()
+    data = [
+        {
+            'created_at': r[0].strftime('%Y-%m-%d %H:%M:%S') if r[0] else '',
+            'session_id': r[1],
+            'is_pro': bool(r[2]),
+            'control_id': r[3],
+            'path': r[4],
+            'zoom': r[5],
+            'center_lat': r[6],
+            'center_lng': r[7]
+        } for r in rows
+    ]
+    return jsonify({ 'data': data })
 
 
 # ---------- Duplicates (place_id) admin UI ----------
@@ -867,7 +894,7 @@ def retailers_data():
             2: Retailer.full_address,   # Address column
             3: Retailer.phone_number,   # Phone column
             4: Retailer.machine_count,  # Machine Count column
-            5: Retailer.enabled,        # Enabled column
+            5: Retailer.status,         # Status column
             6: None                     # Actions column (not sortable)
         }
 
@@ -888,6 +915,14 @@ def retailers_data():
 
         data = []
         for retailer in retailers:
+            # Inline status dropdown
+            current_status = retailer.status or ''
+            status_options = ['Active', 'Inactive', 'Pending', 'Closed', 'Disabled']
+            options_html = ''.join([
+                f'<option value="{opt}" {"selected" if current_status==opt else ""}>{opt}</option>' for opt in status_options
+            ])
+            status_select = f'<select class="form-select form-select-sm retailer-status-select" data-id="{retailer.id}" data-current="{current_status}">{options_html}</select>'
+
             data.append({
                 'id': retailer.id,
                 'name': retailer.retailer,
@@ -895,7 +930,8 @@ def retailers_data():
                 'phone': retailer.phone_number or '',
                 'retailer_type': retailer.retailer_type or '',
                 'machine_count': retailer.machine_count or 0,
-                'enabled': '✅ Enabled' if retailer.enabled else '❌ Disabled',
+                'status': status_select,
+                'status_value': current_status,
                 'actions': f'''<button class="btn btn-sm btn-primary edit-retailer-btn" data-id="{retailer.id}">Edit</button> 
                               <button class="btn btn-sm btn-danger delete-retailer-btn" data-id="{retailer.id}" data-name="{retailer.retailer or 'Unknown'}">Delete</button>'''
             })
