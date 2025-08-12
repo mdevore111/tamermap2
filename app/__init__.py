@@ -140,6 +140,14 @@ def create_app(config_class=BaseConfig):
     # Initialize Flask-Migrate
     migrate.init_app(app, db)
 
+    # Ensure required tables exist in development without running an external migration
+    # Covers engagement/popularity tables like `legend_clicks`, `pin_interactions`, etc.
+    try:
+        with app.app_context():
+            db.create_all()
+    except Exception as e:
+        app.logger.error(f"db.create_all() failed: {e}")
+
     # Initialize Flask-Limiter
     limiter.init_app(app)
 

@@ -350,6 +350,11 @@ export class MarkerManager {
         const showKiosk = filters.showKiosk !== false;
         const showRetail = filters.showRetail !== false;
         const showIndie = filters.showIndie !== false;
+        // Derive kiosk presence from counts if type metadata is missing
+        const derivedKioskCount = Number(
+            (marker.kiosk_count ?? marker.retailer_data?.kiosk_current_count ?? marker.retailer_data?.kiosk_count ?? marker.retailer_data?.machine_count ?? marker.machine_count ?? 0)
+        ) || 0;
+        const hasDerivedKiosk = derivedKioskCount > 0;
         
 
         
@@ -378,10 +383,19 @@ export class MarkerManager {
             return matchesSearch;
         }
         
-        // No search term - apply type filtering
-        let matchesType = (type.includes('kiosk') && showKiosk) ||
+        // No search term - apply type filtering (robust kiosk inference)
+        let matchesType = ((type.includes('kiosk') || hasDerivedKiosk) && showKiosk) ||
                           ((type.includes('store') || type.includes('retail')) && showRetail) ||
                           (type.includes('card shop') && showIndie);
+
+        // Suppress kiosk-only pins that have zero machines when only Kiosks filter is active.
+        // Do NOT suppress combo locations (store + kiosk) since they should remain visible.
+        if (matchesType && showKiosk && !showRetail) {
+            const isKioskOnly = type.includes('kiosk') && !(type.includes('store') || type.includes('retail'));
+            if (isKioskOnly && derivedKioskCount <= 0) {
+                return false;
+            }
+        }
         
         if (matchesType && filters.showOpenNow) {
             matchesType = isOpenNow(marker.retailer_data?.opening_hours);

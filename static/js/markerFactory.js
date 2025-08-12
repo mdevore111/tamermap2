@@ -71,15 +71,19 @@ export function createRetailerMarker(map, retailer) {
   marker.opening_hours    = retailer.opening_hours;
   marker.status           = retailer.status;
   // Pass through counts for UI rendering (kiosk aggregation)
-  marker.machine_count    = retailer.machine_count || 0;
-  marker.kiosk_count      = retailer.kiosk_count || undefined;
+  marker.machine_count    = Number.isFinite(retailer.machine_count) ? retailer.machine_count : 0;
+  marker.kiosk_count      = (
+    Number.isFinite(retailer.kiosk_current_count) ? retailer.kiosk_current_count :
+    (Number.isFinite(retailer.kiosk_count) ? retailer.kiosk_count :
+     (Number.isFinite(retailer.machine_count) ? retailer.machine_count : undefined))
+  );
 
   // Delegate HTML to UI helper; use marker.retailer_data to reflect merged updates
   marker.addListener('click', () => {
     const base = marker.retailer_data ? { ...marker.retailer_data } : { ...retailer };
     const html = renderRetailerInfoWindow({
       ...base,
-      kiosk_count: (marker.kiosk_count ?? base.kiosk_count ?? base.machine_count),
+      kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
       machine_count: (base.machine_count)
     }, isPro);
 

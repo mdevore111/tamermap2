@@ -208,11 +208,39 @@ def main() -> None:
         Column('last_api_update', DateTime),
         Column('machine_count', Integer, default=0),
         Column('previous_count', Integer, default=0),
-        Column('status', String(100))
+        Column('status', String(100)),
+        # New kiosk snapshot derived fields (optional)
+        Column('kiosk_current_count', Integer),
+        Column('kiosk_previous_count', Integer),
+        Column('kiosk_delta', Integer),
+        Column('kiosk_trend', String(20)),
+        Column('kiosk_last_changed_at', String(50))
     )
+
+    def _ensure_kiosk_columns(conn) -> None:
+        """Add kiosk_* columns to retailers if missing (idempotent)."""
+        cols = {r[1] for r in conn.execute(text("PRAGMA table_info('retailers')")).fetchall()}
+        alter_stmts = []
+        if 'kiosk_current_count' not in cols:
+            alter_stmts.append("ALTER TABLE retailers ADD COLUMN kiosk_current_count INTEGER")
+        if 'kiosk_previous_count' not in cols:
+            alter_stmts.append("ALTER TABLE retailers ADD COLUMN kiosk_previous_count INTEGER")
+        if 'kiosk_delta' not in cols:
+            alter_stmts.append("ALTER TABLE retailers ADD COLUMN kiosk_delta INTEGER")
+        if 'kiosk_trend' not in cols:
+            alter_stmts.append("ALTER TABLE retailers ADD COLUMN kiosk_trend TEXT")
+        if 'kiosk_last_changed_at' not in cols:
+            alter_stmts.append("ALTER TABLE retailers ADD COLUMN kiosk_last_changed_at TEXT")
+        for stmt in alter_stmts:
+            try:
+                conn.execute(text(stmt))
+            except Exception:
+                pass
 
     try:
         with engine.begin() as conn:
+            # Ensure schema has kiosk_* columns before deletes/inserts
+            _ensure_kiosk_columns(conn)
             # -------- truncate both tables first -----------------
             conn.execute(text("DELETE FROM retailers"))
             logger.info("Cleared existing rows from retailers table")
@@ -223,6 +251,13 @@ def main() -> None:
 
             # Insert retailers
             if retailers_data:
+                # Ensure all kiosk fields exist on every row to avoid missing-key errors
+                for item in retailers_data:
+                    item.setdefault('kiosk_current_count', None)
+                    item.setdefault('kiosk_previous_count', None)
+                    item.setdefault('kiosk_delta', None)
+                    item.setdefault('kiosk_trend', None)
+                    item.setdefault('kiosk_last_changed_at', None)
                 conn.execute(insert(retailers), retailers_data)
                 logger.info("Inserted %d retailer rows", len(retailers_data))
             else:
