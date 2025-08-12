@@ -176,7 +176,9 @@ def get_individual_popularity_data():
         Retailer,
         Retailer.place_id == PinInteraction.marker_id
     ).filter(
-        PinInteraction.timestamp >= recent_cutoff
+        PinInteraction.timestamp >= recent_cutoff,
+        Retailer.latitude.isnot(None),
+        Retailer.longitude.isnot(None)
     ).group_by(
         Retailer.latitude,
         Retailer.longitude,
@@ -185,16 +187,22 @@ def get_individual_popularity_data():
     ).all()
 
     # Convert to list of dictionaries for easier frontend consumption
-    individual_data = [
-        {
-            "lat": float(lat),
-            "lng": float(lng),
-            "weight": weight,
-            "place_id": place_id,
-            "retailer_name": retailer_name
-        }
-        for lat, lng, weight, place_id, retailer_name in data
-    ]
+    individual_data = []
+    for lat, lng, weight, place_id, retailer_name in data:
+        # Double-guard in case of unexpected NULLs
+        if lat is None or lng is None:
+            continue
+        try:
+            individual_data.append({
+                "lat": float(lat),
+                "lng": float(lng),
+                "weight": int(weight) if weight is not None else 0,
+                "place_id": place_id,
+                "retailer_name": retailer_name
+            })
+        except Exception:
+            # Skip malformed rows defensively
+            continue
     
     return jsonify(individual_data)
 

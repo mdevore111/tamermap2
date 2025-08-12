@@ -149,10 +149,7 @@ form button:hover {
    SPLASH PAGE & CONTENT
    ========================================================================== */
 .landing-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: calc(100vh - 80px);
+  display: block;
   text-align: center;
   background-size: cover;
   background-position: center;

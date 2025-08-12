@@ -51,24 +51,7 @@ html, body {
   position: absolute !important;
 }
 
-/* iPad-specific adjustments for map height, footer, and controls */
-@media only screen and (min-width: 768px) and (max-width: 1366px) and (-webkit-min-device-pixel-ratio: 2) {
-  #map {
-    height: calc(100vh - 155px); /* Adjusted for iPad, including landscape */
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-right: env(safe-area-inset-right);
-  }
-
-  /* Adjust footer for iPad safe area */
-  #footer {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* Adjust body to prevent content clipping */
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
+/* Removed device-specific #map height override. The map fills via flex container. */
 
 /* Ensure zoom controls are above footer */
 .gm-style .gm-control-active.gm-zoom-in,
