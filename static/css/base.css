@@ -227,6 +227,12 @@ body.splash-page #footer {
 /* Compact splash hero: remove any global min-height constraints */
 body.splash-page .landing-page {
   min-height: auto !important;
+  height: 360px !important;
+  padding: 16px 0 !important;
+  overflow: hidden !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
 }
 
 /* Form Container: For Centered Forms/Dialogs */

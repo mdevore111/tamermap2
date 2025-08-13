@@ -23,7 +23,8 @@ export const ENDPOINTS = {
   popularAreas: '/api/pin-heatmap-data',   // for heatmap display (rounded coordinates)
   individualPopularity: '/api/individual-popularity-data', // for routing (full precision)
   trackMap:     '/track/map',
-  trackPin:     '/track/pin'
+  trackPin:     '/track/pin',
+  routeOptimize: '/api/route-optimize'
 };
 
 export const ICON_SIZES = {

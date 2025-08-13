@@ -468,26 +468,17 @@ function handleSearch(event) {
     return false;
   }
   
-  // Use Google Places Autocomplete if available
+  // Use Google Places Autocomplete if available (session handling is in map-init.js)
   if (window.google && window.google.maps && window.google.maps.places) {
-    const autocomplete = new google.maps.places.Autocomplete(searchInput);
-    const place = autocomplete.getPlace();
-    
-    if (place && place.geometry) {
-      window.map.setCenter(place.geometry.location);
-      window.map.setZoom(15);
-    } else {
-      // Fallback: use geocoding
-      const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address: searchInput.value }, (results, status) => {
-        if (status === 'OK' && results[0]) {
-          window.map.setCenter(results[0].geometry.location);
-          window.map.setZoom(15);
-        } else {
-          console.warn('Geocoding failed:', status);
-        }
-      });
-    }
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: searchInput.value }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        window.map.setCenter(results[0].geometry.location);
+        window.map.setZoom(15);
+      } else {
+        console.warn('Geocoding failed:', status);
+      }
+    });
   }
   
   return false;
