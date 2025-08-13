@@ -1,6 +1,6 @@
 # app/routes/api.py
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from sqlalchemy import func
 from datetime import datetime
 
@@ -8,6 +8,8 @@ from ..extensions import db, cache
 from ..models import Retailer, Event
 from app.routes.security import check_referrer
 from app.utils import get_retailer_locations, get_event_locations
+import requests
+import urllib.parse
 
 api_bp = Blueprint("api", __name__)
 
@@ -149,6 +151,54 @@ def combined_map_data():
         'viewport_filtered': bounds is not None,
         'timestamp': datetime.now().isoformat()
     })
+
+
+@api_bp.route('/route-optimize', methods=['POST'])
+def route_optimize():
+    """
+    Server-side waypoint optimization using Google Directions API.
+    Expects JSON body: { origin: {lat,lng}, destination: {lat,lng} or null if roundTrip,
+                         roundTrip: bool, waypoints: [{lat,lng}, ...] }
+    Returns: { waypoint_order: [int,...] }
+    """
+    try:
+        payload = request.get_json(force=True) or {}
+        origin = payload.get('origin')
+        destination = payload.get('destination')
+        round_trip = bool(payload.get('roundTrip'))
+        waypoints = payload.get('waypoints') or []
+
+        if not origin or not isinstance(waypoints, list) or len(waypoints) == 0:
+            return jsonify({'error': 'origin and waypoints are required'}), 400
+
+        # Compute destination for round trips
+        dest = destination
+        if round_trip:
+            dest = origin
+
+        api_key = current_app.config.get('GOOGLE_API_KEY')
+        if not api_key:
+            return jsonify({'error': 'server not configured with GOOGLE_API_KEY'}), 500
+
+        origin_str = f"{origin['lat']},{origin['lng']}"
+        dest_str = f"{dest['lat']},{dest['lng']}"
+        wp_tokens = ['optimize:true'] + [f"{w['lat']},{w['lng']}" for w in waypoints]
+        wp_val = urllib.parse.quote('|'.join(wp_tokens), safe='')
+
+        url = (
+            'https://maps.googleapis.com/maps/api/directions/json?'
+            f"origin={origin_str}&destination={dest_str}&mode=driving&waypoints={wp_val}&region=us&key={api_key}"
+        )
+
+        resp = requests.get(url, timeout=12)
+        data = resp.json()
+        if data.get('status') != 'OK' or not data.get('routes'):
+            return jsonify({'error': 'directions_failed', 'status': data.get('status'), 'details': data}), 502
+
+        order = data['routes'][0].get('waypoint_order', list(range(len(waypoints))))
+        return jsonify({'waypoint_order': order})
+    except Exception as exc:
+        return jsonify({'error': 'server_error', 'message': str(exc)}), 500
 
 
 # Keep legacy endpoints for backward compatibility

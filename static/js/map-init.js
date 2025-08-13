@@ -278,34 +278,63 @@ function renderMap() {
       window.individualPopularityData = [];
     });
 
+  // Helper: wire an Autocomplete with a session token lifecycle and details fallback
+  function setupAutocompleteWithSession(inputEl) {
+    if (!inputEl) return null;
+    let sessionToken = null;
+    const autocomplete = new google.maps.places.Autocomplete(inputEl, {
+      fields: ['place_id','geometry'],
+      types: ['establishment','address'],
+      componentRestrictions: { country: 'us' }
+    });
+    autocomplete.bindTo('bounds', window.map);
+    inputEl.addEventListener('focus', () => {
+      sessionToken = new google.maps.places.AutocompleteSessionToken();
+    });
+    inputEl.addEventListener('blur', () => { sessionToken = null; });
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      const applyPlace = (p) => {
+        if (p && p.geometry) { window.map.setCenter(p.geometry.location); window.map.setZoom(12); }
+      };
+      if (place && place.geometry) {
+        applyPlace(place);
+        sessionToken = null; return;
+      }
+      if (place && place.place_id) {
+        const svc = new google.maps.places.PlacesService(window.map);
+        svc.getDetails({ placeId: place.place_id, fields: ['place_id','geometry'], sessionToken }, (res, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && res && res.geometry) {
+            applyPlace(res);
+          } else {
+            console.warn('Places getDetails failed:', status);
+          }
+          sessionToken = null;
+        });
+      } else {
+        sessionToken = null;
+      }
+    });
+    return autocomplete;
+  }
+
   // Places Autocomplete (#pac-input)
   const placesInput = document.getElementById('pac-input');
   if (placesInput) {
-    const auto1 = new google.maps.places.Autocomplete(placesInput);
-    auto1.bindTo('bounds', window.map);
+    setupAutocompleteWithSession(placesInput);
     window.map.controls[google.maps.ControlPosition.TOP_LEFT].push(placesInput);
   }
 
   // Search-control Autocomplete
   const searchInput = document.querySelector('#search-control input.form-control');
   if (searchInput) {
-    const auto2 = new google.maps.places.Autocomplete(searchInput);
-    auto2.bindTo('bounds', window.map);
-    auto2.addListener('place_changed', () => {
-      const place = auto2.getPlace();
-      if (place.geometry) { window.map.setCenter(place.geometry.location); window.map.setZoom(12); }
-    });
+    setupAutocompleteWithSession(searchInput);
   } else { console.warn('Search input for autocomplete not found.'); }
 
   // Also initialize the places_search input if it exists
   const placesSearchInput = document.getElementById('places_search');
   if (placesSearchInput) {
-    const auto3 = new google.maps.places.Autocomplete(placesSearchInput);
-    auto3.bindTo('bounds', window.map);
-    auto3.addListener('place_changed', () => {
-      const place = auto3.getPlace();
-      if (place.geometry) { window.map.setCenter(place.geometry.location); window.map.setZoom(12); }
-    });
+    setupAutocompleteWithSession(placesSearchInput);
   }
 
   // On idle: filters & track map

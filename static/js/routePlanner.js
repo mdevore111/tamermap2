@@ -37,7 +37,9 @@ class RoutePlanner {
         if (!Array.isArray(locations) || locations.length <= 1) return locations || [];
 
         const degPerMeter = 1 / 111320; // rough conversion at mid-latitude
-        const cellSizeDeg = thresholdMeters * degPerMeter;
+        // Use the largest possible merge radius for bucketing so we don't miss candidates
+        const maxMergeMeters = Math.max(thresholdMeters, this.mergeSameNameBoostMeters);
+        const cellSizeDeg = maxMergeMeters * degPerMeter;
 
         const normalizeName = (name = '') => {
             const base = (name || '').toLowerCase().trim()
@@ -166,9 +168,9 @@ class RoutePlanner {
         });
 
         const representativeOf = (group) => {
-            // Prefer with opening hours; else prefer retail over kiosk; else nearest to user; else first
             const preferScore = (g) => {
                 let score = 0;
+                if (g.place_id) score += 100; // Strongly prefer entries with a valid place_id
                 if (g.opening_hours) score += 3;
                 const type = (g.retailer_type || '').toLowerCase();
                 if (type.includes('store')) score += 2; else if (type.includes('kiosk')) score += 1;
@@ -2201,12 +2203,54 @@ class RoutePlanner {
             return;
         }
 
+        // Warn if any selected stop lacks a valid place_id
+        const missingPid = this.selectedLocations.filter(l => !l.place_id || String(l.place_id).trim() === '');
+        if (missingPid.length > 0 && typeof Swal !== 'undefined') {
+            const names = missingPid.slice(0,5).map(l => (l.retailer || l.address || `${l.lat.toFixed(5)},${l.lng.toFixed(5)}`));
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: 'Some stops may show as an address only',
+                html: `<small>Missing place IDs for: ${names.join(', ')}${missingPid.length>5?'…':''}</small>`,
+                showConfirmButton: false,
+                timer: 3500,
+                timerProgressBar: true
+            });
+        }
+
         // Increment popularity for all selected locations
         this.incrementLocationPopularity(this.selectedLocations);
 
-        // Generate Google Maps URL and open
-        const mapsUrl = this.generateGoogleMapsURL(this.selectedLocations, window.userCoords, roundTrip);
-        window.open(mapsUrl, '_blank');
+        // Optimize order on server, then open Maps without optimize:true
+        this.optimizeAndOpen(this.selectedLocations, window.userCoords, roundTrip);
+    }
+
+    async optimizeAndOpen(locations, userCoords, roundTrip) {
+        try {
+            const waypoints = locations.map(l => ({ lat: l.lat, lng: l.lng }));
+            const dest = roundTrip ? null : waypoints[waypoints.length - 1];
+            const wpForOptimize = roundTrip ? waypoints : waypoints.slice(0, -1);
+            const res = await fetch('/api/route-optimize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ origin: userCoords, destination: dest, roundTrip, waypoints: wpForOptimize })
+            });
+            let ordered = locations;
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.waypoint_order)) {
+                    const base = roundTrip ? locations : locations.slice(0, -1);
+                    const reordered = data.waypoint_order.map(i => base[i]).filter(Boolean);
+                    ordered = roundTrip ? reordered : [...reordered, locations[locations.length - 1]];
+                }
+            }
+            const url = this.generateGoogleMapsURL_NoOptimize(ordered, userCoords, roundTrip);
+            window.open(url, '_blank');
+        } catch (e) {
+            const fallback = this.generateGoogleMapsURL(locations, userCoords, roundTrip);
+            window.open(fallback, '_blank');
+        }
     }
 
     /**
@@ -2218,36 +2262,93 @@ class RoutePlanner {
 
         const stops = [...locations];
         let destinationParam = '';
-        const extraParams = [];
         if (roundTrip) {
             destinationParam = `destination=${userCoords.lat},${userCoords.lng}`;
         } else {
             const last = stops[stops.length - 1];
-            if (last?.place_id) {
-                destinationParam = `destination=${encodeURIComponent(last.retailer || last.address || '')}`;
-                extraParams.push(`destination_place_id=${last.place_id}`);
-            } else {
-                destinationParam = `destination=${last.lat},${last.lng}`;
-            }
+            if (last) destinationParam = `destination=${last.lat},${last.lng}`;
             stops.pop();
         }
 
-        // Use lat,lng for waypoints and enable Google optimization of stop order
-        const waypointVals = stops.map(loc => `${loc.lat},${loc.lng}`);
-        const waypointsParam = waypointVals.length > 0 ? `waypoints=optimize:true|${waypointVals.join('|')}` : '';
+        // Use strict lat,lng (or place_id when available) for all waypoints and re-enable
+        // Google's built-in optimization. Encode the full value segment to avoid the
+        // UI treating 'optimize:true' as a freetext search item.
+        // Use strict lat,lng only for waypoints to avoid any place_id resolution issues
+        const waypointTokens = ['optimize:true', ...stops.map(loc => `${loc.lat},${loc.lng}`)];
+        const waypointsParam = stops.length > 0 ? `waypoints=${encodeURIComponent(waypointTokens.join('|'))}` : '';
 
         const params = [
             'api=1',
             'travelmode=driving',
             originParam,
             destinationParam,
-            waypointsParam,
-            ...extraParams
+            waypointsParam
         ].filter(Boolean).join('&');
 
         const url = `https://www.google.com/maps/dir/?${params}`;
-        console.log('Generated Google Maps URL:', url);
+
+        // Lightweight debug to help diagnose any mismatches in Google Maps
+        try {
+            const debugRows = locations.map((loc, idx) => ({
+                stop: idx + 1,
+                retailer: loc.retailer || '',
+                address: loc.full_address || loc.address || '',
+                lat: loc.lat,
+                lng: loc.lng,
+                place_id: loc.place_id || ''
+            }));
+            // eslint-disable-next-line no-console
+            console.groupCollapsed('RoutePlanner Debug');
+            // eslint-disable-next-line no-console
+            console.table(debugRows);
+            // eslint-disable-next-line no-console
+            console.log('Generated Google Maps URL:', url);
+            // eslint-disable-next-line no-console
+            console.groupEnd();
+        } catch (_) {
+            // ignore
+        }
+
         return url;
+    }
+
+    // Build URL without optimize:true, assuming locations are already ordered
+    generateGoogleMapsURL_NoOptimize(locations, userCoords, roundTrip = false) {
+        const originParam = `origin=${userCoords.lat},${userCoords.lng}`;
+        const stops = [...locations];
+        let destinationParam = '';
+        const extraParams = [];
+        const formatLabel = (loc) => {
+            const name = (loc.retailer || '').trim();
+            const addr = (loc.full_address || loc.address || '').trim();
+            const label = [name, addr].filter(Boolean).join(' ');
+            return label ? encodeURIComponent(label) : null;
+        };
+        if (roundTrip) {
+            destinationParam = `destination=${userCoords.lat},${userCoords.lng}`;
+        } else {
+            const last = stops[stops.length - 1];
+            if (last) {
+                const validPid = typeof last.place_id === 'string' && last.place_id.length >= 10 && !/\s/.test(last.place_id);
+                if (validPid) {
+                    // Pass destination text + companion place_id parameter (preferred pattern for Maps URLs)
+                    const label = formatLabel(last) || encodeURIComponent('Destination');
+                    destinationParam = `destination=${label}`;
+                    extraParams.push(`destination_place_id=${last.place_id}`);
+                } else {
+                    const label = formatLabel(last);
+                    destinationParam = label ? `destination=${label}` : `destination=${last.lat},${last.lng}`;
+                }
+            }
+            stops.pop();
+        }
+        // Use human-friendly labels for waypoints: "Store Address" (falls back to lat,lng)
+        const waypointVals = stops.map(loc => formatLabel(loc) || `${loc.lat},${loc.lng}`);
+        const waypointsParam = waypointVals.length > 0 ? `waypoints=${encodeURIComponent(waypointVals.join('|'))}` : '';
+        const params = ['api=1','travelmode=driving',originParam,destinationParam,waypointsParam,...extraParams]
+            .filter(Boolean)
+            .join('&');
+        return `https://www.google.com/maps/dir/?${params}`;
     }
 }
 
