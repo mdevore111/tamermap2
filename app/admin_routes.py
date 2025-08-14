@@ -758,7 +758,11 @@ def update_user(id):
     if 'active' in data:
         user.active = bool(int(data['active']))
     if 'password' in data and data['password']:
-        user.password = utils.encrypt_password(data['password'])
+        # Basic strength check: min 8 chars, upper/lower/digit
+        pw = data['password']
+        if len(pw) < 8 or not any(c.islower() for c in pw) or not any(c.isupper() for c in pw) or not any(c.isdigit() for c in pw):
+            return jsonify({'error': 'Password must be at least 8 chars and include upper, lower, and a number'}), 400
+        user.password = utils.encrypt_password(pw)
     
     # Handle Pro end date
     if 'pro_end_date' in data:
@@ -816,11 +820,16 @@ def add_user():
         return jsonify({'errors': {'email': 'User with this email already exists'}}), 400
     
     # Create new user
+    # Validate password
+    pw = data.get('password', '')
+    if len(pw) < 8 or not any(c.islower() for c in pw) or not any(c.isupper() for c in pw) or not any(c.isdigit() for c in pw):
+        return jsonify({'errors': {'password': 'Password must be at least 8 chars and include upper, lower, and a number'}}), 400
+
     user = User(
         first_name=data.get('first_name'),
         last_name=data.get('last_name'),
         email=data['email'],
-        password=utils.encrypt_password(data['password']),
+        password=utils.encrypt_password(pw),
         active=bool(int(data.get('active', 1)))
     )
     
