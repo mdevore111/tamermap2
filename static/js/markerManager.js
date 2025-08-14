@@ -235,7 +235,7 @@ export class MarkerManager {
             }
             return marker;
         } catch (error) {
-            console.warn(`Failed to create ${type} marker:`, error);
+            if (window.__TM_DEBUG__) console.warn(`Failed to create ${type} marker:`, error);
             return null;
         }
     }

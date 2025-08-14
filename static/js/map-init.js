@@ -10,15 +10,9 @@ function initApp() {
         window.userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         renderMap();
       },
-      () => {
-        console.warn('Geolocation failed; using defaults.');
-        renderMap();
-      }
+      () => { renderMap(); }
     );
-  } else {
-    console.warn('Geolocation not supported; using defaults.');
-    renderMap();
-  }
+  } else { renderMap(); }
 }
 
 // Explicitly expose initApp to global scope for Google Maps callback
@@ -152,7 +146,7 @@ function renderMap() {
           window.map.setCenter(newCoords);
         }
       },
-      err => console.error('Error watching position:', err),
+      err => { if (window.__TM_DEBUG__) console.error('Error watching position:', err); },
       { 
         enableHighAccuracy: false, // Use network location instead of GPS
         maximumAge: 30000,         // Accept 30-second old location
@@ -245,7 +239,7 @@ function renderMap() {
       }
     })
     .catch(err => {
-      console.error('Error fetching heatmap data:', err);
+      if (window.__TM_DEBUG__) console.error('Error fetching heatmap data:', err);
       // Notify user of error
       const toast = document.createElement('div');
       toast.className = 'toast align-items-center text-white bg-danger border-0';
@@ -271,12 +265,9 @@ function renderMap() {
     .then(data => {
       // Store individual popularity data for route planner to use
       window.individualPopularityData = data;
-      console.log('Loaded individual popularity data for', data.length, 'locations');
+      if (window.__TM_DEBUG__) console.log('Loaded individual popularity data for', data.length, 'locations');
     })
-    .catch(err => {
-      console.error('Error fetching individual popularity data:', err);
-      window.individualPopularityData = [];
-    });
+    .catch(err => { if (window.__TM_DEBUG__) console.error('Error fetching individual popularity data:', err); window.individualPopularityData = []; });
 
   // Helper: wire an Autocomplete with a session token lifecycle and details fallback
   function setupAutocompleteWithSession(inputEl) {
@@ -304,11 +295,8 @@ function renderMap() {
       if (place && place.place_id) {
         const svc = new google.maps.places.PlacesService(window.map);
         svc.getDetails({ placeId: place.place_id, fields: ['place_id','geometry'], sessionToken }, (res, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && res && res.geometry) {
-            applyPlace(res);
-          } else {
-            console.warn('Places getDetails failed:', status);
-          }
+          if (status === google.maps.places.PlacesServiceStatus.OK && res && res.geometry) { applyPlace(res); }
+          else { if (window.__TM_DEBUG__) console.warn('Places getDetails failed:', status); }
           sessionToken = null;
         });
       } else {
@@ -329,7 +317,7 @@ function renderMap() {
   const searchInput = document.querySelector('#search-control input.form-control');
   if (searchInput) {
     setupAutocompleteWithSession(searchInput);
-  } else { console.warn('Search input for autocomplete not found.'); }
+  } else { if (window.__TM_DEBUG__) console.warn('Search input for autocomplete not found.'); }
 
   // Also initialize the places_search input if it exists
   const placesSearchInput = document.getElementById('places_search');

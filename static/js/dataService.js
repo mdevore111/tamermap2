@@ -129,7 +129,7 @@ export async function fetchRetailers(forceRefresh = false) {
     
     return data;
   } catch (error) {
-    console.error('Error fetching retailers:', error);
+    if (window.__TM_DEBUG__) console.error('Error fetching retailers:', error);
     throw error;
   }
 }
@@ -182,7 +182,7 @@ export async function fetchEvents(forceRefresh = false) {
     
     return data;
   } catch (error) {
-    console.error('Error fetching events:', error);
+    if (window.__TM_DEBUG__) console.error('Error fetching events:', error);
     throw error;
   }
 }
@@ -285,7 +285,7 @@ class DataService {
             return data;
 
         } catch (error) {
-            console.error('Error loading map data:', error);
+            if (window.__TM_DEBUG__) console.error('Error loading map data:', error);
             throw error;
         }
     }

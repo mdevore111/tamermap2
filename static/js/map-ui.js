@@ -450,7 +450,7 @@ if (!is_pro) {
           }
         });
       } else {
-        alert('This feature is available for Pro users only.');
+        // Quiet in production; optional alert can be enabled for support
       }
     });
   });
