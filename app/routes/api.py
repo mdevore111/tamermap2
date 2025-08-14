@@ -10,6 +10,7 @@ from app.routes.security import check_referrer
 from app.utils import get_retailer_locations, get_event_locations
 import requests
 import urllib.parse
+import json
 
 api_bp = Blueprint("api", __name__)
 
@@ -156,7 +157,7 @@ def combined_map_data():
 @api_bp.route('/route-optimize', methods=['POST'])
 def route_optimize():
     """
-    Server-side waypoint optimization using Google Directions API.
+    Server-side waypoint optimization using Google Routes Preferred (v2).
     Expects JSON body: { origin: {lat,lng}, destination: {lat,lng} or null if roundTrip,
                          roundTrip: bool, waypoints: [{lat,lng}, ...] }
     Returns: { waypoint_order: [int,...] }
@@ -176,27 +177,41 @@ def route_optimize():
         if round_trip:
             dest = origin
 
-        api_key = current_app.config.get('GOOGLE_API_KEY')
+        # Prefer a dedicated server-side key if provided; fall back to browser key
+        api_key = (current_app.config.get('GOOGLE_SERVER_API_KEY')
+                   or current_app.config.get('GOOGLE_API_KEY'))
         if not api_key:
             return jsonify({'error': 'server not configured with GOOGLE_API_KEY'}), 500
 
-        origin_str = f"{origin['lat']},{origin['lng']}"
-        dest_str = f"{dest['lat']},{dest['lng']}"
-        wp_tokens = ['optimize:true'] + [f"{w['lat']},{w['lng']}" for w in waypoints]
-        wp_val = urllib.parse.quote('|'.join(wp_tokens), safe='')
-
-        url = (
-            'https://maps.googleapis.com/maps/api/directions/json?'
-            f"origin={origin_str}&destination={dest_str}&mode=driving&waypoints={wp_val}&region=us&key={api_key}"
-        )
-
-        resp = requests.get(url, timeout=12)
-        data = resp.json()
-        if data.get('status') != 'OK' or not data.get('routes'):
-            return jsonify({'error': 'directions_failed', 'status': data.get('status'), 'details': data}), 502
-
-        order = data['routes'][0].get('waypoint_order', list(range(len(waypoints))))
-        return jsonify({'waypoint_order': order})
+        # Use Routes Preferred v2 computeRoutes only
+        origin_body = {'location': {'latLng': {'latitude': origin['lat'], 'longitude': origin['lng']}}}
+        destination_body = {'location': {'latLng': {'latitude': dest['lat'], 'longitude': dest['lng']}}}
+        intermediates_body = [
+            {'location': {'latLng': {'latitude': w['lat'], 'longitude': w['lng']}}}
+            for w in waypoints
+        ]
+        body = {
+            'origin': origin_body,
+            'destination': destination_body,
+            'intermediates': intermediates_body,
+            'travelMode': 'DRIVE',
+            'routingPreference': 'TRAFFIC_AWARE',
+            'optimizeWaypointOrder': True
+        }
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': api_key,
+            'X-Goog-FieldMask': 'routes.optimizedIntermediateWaypointIndex'
+        }
+        v2_url = 'https://routes.googleapis.com/directions/v2:computeRoutes'
+        current_app.logger.info(f"Directions v2 request body: {json.dumps(body)[:500]}")
+        v2_resp = requests.post(v2_url, headers=headers, json=body, timeout=12)
+        v2_json = v2_resp.json()
+        order = (v2_json.get('routes') or [{}])[0].get('optimizedIntermediateWaypointIndex')
+        if isinstance(order, list):
+            return jsonify({'waypoint_order': order})
+        current_app.logger.warning(f"Directions v2 failed: {v2_json}")
+        return jsonify({'error': 'directions_failed'}), 502
     except Exception as exc:
         return jsonify({'error': 'server_error', 'message': str(exc)}), 500
 

@@ -91,6 +91,8 @@ class BaseConfig:
     SECRET_KEY = os.getenv("SECRET_KEY", "")  # Used for session management and CSRF protection.
     SECURITY_PASSWORD_SALT = os.getenv("SECURITY_PASSWORD_SALT", "")
     GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+    # Optional dedicated server-side key (Routes API, IP-restricted). If set, it will be used by server calls.
+    GOOGLE_SERVER_API_KEY = os.getenv("GOOGLE_SERVER_API_KEY", "")
     SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 
     # --------------------------
