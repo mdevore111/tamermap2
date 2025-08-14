@@ -2309,10 +2309,10 @@ class RoutePlanner {
             window.open(url, '_blank');
 
             // Persist and show ordered list for user clarity
-            const stopLabels = ordered.map((loc, idx) => {
+            const stopLabels = ordered.map((loc) => {
                 const name = (loc.retailer || '').trim();
                 const addr = (loc.full_address || loc.address || `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`).trim();
-                return `${idx + 1}. ${[name, addr].filter(Boolean).join(' — ')}`;
+                return `${[name, addr].filter(Boolean).join(' — ')}`;
             });
             try { localStorage.setItem('routePlanner:lastOrderedStops', JSON.stringify(stopLabels)); } catch {}
             this.showPostGoSummary(stopLabels);
@@ -2399,7 +2399,7 @@ class RoutePlanner {
             cancelButtonText: 'Close',
         }).then(async (r) => {
             if (r.isConfirmed) {
-                const text = stopLabels.map(s => s.replace(/^\d+\.\s*/, '')).join('\n');
+                const text = stopLabels.join('\n');
                 try { await navigator.clipboard.writeText(text); } catch {}
             }
         });

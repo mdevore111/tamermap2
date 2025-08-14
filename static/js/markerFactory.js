@@ -114,7 +114,7 @@ export function createRetailerMarker(map, retailer) {
         lat: parseFloat(retailer.latitude),
         lng: parseFloat(retailer.longitude)
       })
-    }).catch(err => console.error('Error sending pin click data:', err));
+    }).catch(err => { if (window.__TM_DEBUG__) console.error('Error sending pin click data:', err); });
   });
 
   // Do not auto-bounce on create; preview handles bounce for selected stops only
