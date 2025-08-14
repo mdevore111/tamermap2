@@ -104,6 +104,17 @@ def create_app(config_class=BaseConfig):
     app.logger.debug('TEMPLATE FOLDER: %s', app.template_folder)
     # print('TEMPLATE DEBUG:', app.jinja_loader.list_templates())
 
+    # Debug headers for HTTPS detection
+    @app.before_request
+    def debug_headers():
+        app.logger.info(f"=== HEADER DEBUG ===")
+        app.logger.info(f"X-Forwarded-Proto: {request.headers.get('X-Forwarded-Proto')}")
+        app.logger.info(f"X-Forwarded-Host: {request.headers.get('X-Forwarded-Host')}")
+        app.logger.info(f"request.is_secure: {request.is_secure}")
+        app.logger.info(f"request.scheme: {request.scheme}")
+        app.logger.info(f"request.url: {request.url}")
+        app.logger.info(f"==================")
+
     # Add a test route to render admin/master.html directly
     @app.route('/debug-template')
     def debug_template():
