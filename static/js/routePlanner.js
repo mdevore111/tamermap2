@@ -210,7 +210,7 @@ class RoutePlanner {
     async initialize() {
         if (this.isInitialized) return;
         
-        console.log('Initializing Route Planner...');
+        if (window.__TM_DEBUG__) console.log('Initializing Route Planner...');
         this.initializeUI();
         this.loadPreferences();
         this.isInitialized = true;
@@ -221,9 +221,7 @@ class RoutePlanner {
      */
     loadPreferences() {
         try {
-            console.log('=== LOADING ROUTE PLANNER PREFERENCES ===');
             const raw = localStorage.getItem(this.sessionKey);
-            console.log('Raw prefs from storage:', raw);
             if (raw) {
                 const data = JSON.parse(raw);
                 this.maxDistance = Number.isFinite(data.maxDistance) ? data.maxDistance : 25;
@@ -238,13 +236,13 @@ class RoutePlanner {
                     indie: data.checkboxStates?.indie !== undefined ? !!data.checkboxStates.indie : false,
                     mergeNearby: data.checkboxStates?.mergeNearby !== undefined ? !!data.checkboxStates.mergeNearby : true
                 };
-                console.log('Loaded preferences:', {
+                if (window.__TM_DEBUG__) console.log('Loaded preferences:', {
                     maxDistance: this.maxDistance,
                     maxStops: this.maxStops,
                     checkboxStates: this.sessionCheckboxStates
                 });
             } else {
-                console.log('No stored preferences found; using defaults');
+                if (window.__TM_DEBUG__) console.log('No stored preferences found; using defaults');
                 this.maxDistance = 25;
                 this.maxStops = 5;
                 this.sessionCheckboxStates = {
@@ -259,7 +257,7 @@ class RoutePlanner {
                 };
             }
         } catch (error) {
-            console.warn('Failed to load route planner preferences:', error);
+            if (window.__TM_DEBUG__) console.warn('Failed to load route planner preferences:', error);
         }
     }
 
@@ -274,10 +272,10 @@ class RoutePlanner {
                 checkboxStates: this.sessionCheckboxStates,
                 timestamp: Date.now()
             };
-            console.log('=== SAVING ROUTE PLANNER PREFERENCES ===', sessionData);
+            if (window.__TM_DEBUG__) console.log('Saving route planner preferences', sessionData);
             localStorage.setItem(this.sessionKey, JSON.stringify(sessionData));
         } catch (error) {
-            console.warn('Failed to save route planner preferences:', error);
+            if (window.__TM_DEBUG__) console.warn('Failed to save route planner preferences:', error);
         }
     }
 
@@ -296,7 +294,7 @@ class RoutePlanner {
         try {
             localStorage.removeItem(this.sessionKey);
         } catch (error) {
-            console.warn('Failed to clear route planner preferences:', error);
+            if (window.__TM_DEBUG__) console.warn('Failed to clear route planner preferences:', error);
         }
     }
 
@@ -383,17 +381,17 @@ class RoutePlanner {
                         </div>
                         <div style="display:flex; gap:12px; align-items:center;">
                             <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Return to your start location at the end">
-                                <input type="checkbox" id="round-trip-checkbox">
-                                <span>Round Trip</span>
-                            </label>
+                            <input type="checkbox" id="round-trip-checkbox">
+                            <span>Round Trip</span>
+                        </label>
                             <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Only include locations currently open">
-                                <input type="checkbox" id="open-now-checkbox">
-                                <span>Open Now</span>
-                            </label>
+                            <input type="checkbox" id="open-now-checkbox">
+                            <span>Open Now</span>
+                        </label>
                             <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Merge multiple stops that are very close to each other into a single location">
                                 <input type="checkbox" id="merge-nearby-checkbox">
                                 <span>Merge Nearby</span>
-                            </label>
+                        </label>
                         </div>
                     </div>
                 </div>
@@ -496,8 +494,7 @@ class RoutePlanner {
         const mergeNearbyCheckbox = document.getElementById('merge-nearby-checkbox');
         
         // Restore checkbox states from session data if available
-        console.log('=== SESSION DATA RESTORATION DEBUG ===');
-        console.log('this.sessionCheckboxStates:', this.sessionCheckboxStates);
+        if (window.__TM_DEBUG__) console.log('Restoring session state', this.sessionCheckboxStates);
         
         if (this.sessionCheckboxStates) {
             console.log('Restoring option states from preferences...');
@@ -561,7 +558,7 @@ class RoutePlanner {
             setSegActive(popularityLeastBtn, mode === 'least');
             setSegActive(popularityMostBtn, mode === 'most');
             this.savePreferences();
-            this.updateRouteSummary();
+                this.updateRouteSummary();
         };
         if (popularityOffBtn) popularityOffBtn.addEventListener('click', () => setPopularityMode('off'));
         if (popularityLeastBtn) popularityLeastBtn.addEventListener('click', () => setPopularityMode('least'));
@@ -582,7 +579,7 @@ class RoutePlanner {
             if (this.sessionCheckboxStates && filterType in this.sessionCheckboxStates) {
                 // Session data exists for this filter type - use it regardless of true/false
                 const shouldBeActive = this.sessionCheckboxStates[filterType];
-                console.log(`Restoring ${filterType} filter to ${shouldBeActive ? 'active' : 'inactive'} from session data`);
+                if (window.__TM_DEBUG__) console.log(`Restoring ${filterType} -> ${shouldBeActive ? 'active' : 'inactive'}`);
                 if (shouldBeActive) {
                     toggle.classList.add('active');
                     toggle.style.background = '#667eea';
@@ -597,14 +594,14 @@ class RoutePlanner {
                 }
             } else {
                 // No legend fallback; rely on defaults if not present in prefs
-                console.log(`No stored state for ${filterType}; using default`);
+                if (window.__TM_DEBUG__) console.log(`No stored state for ${filterType}; using default`);
                 const defaultActive = (filterType === 'kiosk' || filterType === 'retail');
                 if (defaultActive) {
-                    toggle.classList.add('active');
+                toggle.classList.add('active');
                     toggle.style.background = '#667eea';
                     toggle.style.color = '#fff';
                     toggle.style.border = '1px solid #667eea';
-                    hasActiveFilter = true;
+                hasActiveFilter = true;
                     this.sessionCheckboxStates[filterType] = true;
                 } else {
                     toggle.classList.remove('active');
@@ -637,7 +634,7 @@ class RoutePlanner {
         
         // If no filters are active, activate the first one (kiosk) by default
         if (!hasActiveFilter && filterToggles.length > 0) {
-            console.log('No store type filters active, activating kiosk by default');
+            if (window.__TM_DEBUG__) console.log('No type filters active; defaulting kiosk on');
             const kioskToggle = Array.from(filterToggles).find(t => t.getAttribute('data-filter') === 'kiosk');
             if (kioskToggle) {
                 kioskToggle.classList.add('active');
@@ -769,12 +766,12 @@ class RoutePlanner {
      * Update route summary
      */
     updateRouteSummary() {
-        console.log('=== UPDATE ROUTE SUMMARY DEBUG ===');
+        if (window.__TM_DEBUG__) console.log('Update route summary');
         const summaryContent = document.getElementById('summary-content');
         const routeSummary = document.getElementById('route-summary');
         
         if (!summaryContent) {
-            console.warn('Summary content element not found');
+            if (window.__TM_DEBUG__) console.warn('Summary content element not found');
             return;
         }
 
@@ -788,13 +785,13 @@ class RoutePlanner {
         const activeFilters = Array.from(toggles).filter(toggle => toggle.classList.contains('active'));
         
         if (activeFilters.length === 0) {
-            console.log('No store type filters active, showing empty route summary');
+            if (window.__TM_DEBUG__) console.log('No type filters active; empty route summary');
             summaryContent.innerHTML = '<div style="min-height: 60px; display: flex; align-items: center;"><small style="color: #6c757d;">Select store types to see route details.</small></div>';
             return;
         }
 
         if (!window.userCoords) {
-            console.log('ERROR: No user coordinates available for route summary');
+            if (window.__TM_DEBUG__) console.log('No user coordinates for route summary');
             summaryContent.innerHTML = 
                 '<div style="min-height: 60px; display: flex; align-items: center;"><small style="color: #dc3545;">Location access required for route planning.</small></div>';
             return;
@@ -806,33 +803,36 @@ class RoutePlanner {
         const leastPopular = !!this.sessionCheckboxStates.leastPopular;
         const mostPopular = !!this.sessionCheckboxStates.mostPopular;
         
-        console.log('1. Settings - roundTrip:', roundTrip, 'openNow:', openNow);
+        if (window.__TM_DEBUG__) console.log('Summary settings', { roundTrip, openNow });
         
         // Debug: Log available data sources
-        console.log('2. Available data sources:');
-        console.log('- userCoords:', window.userCoords);
-        console.log('- allMarkers:', window.allMarkers?.length || 0);
-        console.log('- markerManager:', window.markerManager ? 'exists' : 'missing');
-        console.log('- markerCache size:', window.markerManager?.markerCache?.size || 0);
-        console.log('- dataService:', window.dataService ? 'exists' : 'missing');
-        console.log('- dataService cache size:', window.dataService?.cache?.size || 0);
+        if (window.__TM_DEBUG__) console.log('Data sources snapshot', {
+            userCoords: window.userCoords,
+            allMarkers: window.allMarkers?.length || 0,
+            markerManager: !!window.markerManager,
+            markerCache: window.markerManager?.markerCache?.size || 0,
+            dataService: !!window.dataService,
+            dataCache: window.dataService?.cache?.size || 0,
+        });
         
         // Additional debugging for markerManager
         if (window.markerManager) {
+            if (window.__TM_DEBUG__) {
             console.log('- markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
             console.log('- markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
+            }
         }
         
         // Additional debugging for dataService
         if (window.dataService && window.dataService.cache) {
+            if (window.__TM_DEBUG__ && window.dataService?.cache) {
             console.log('- dataService.cache entries:');
-            window.dataService.cache.forEach((value, key) => {
-                console.log(`  - ${key}:`, value);
-            });
+                window.dataService.cache.forEach((value, key) => console.log(`  - ${key}:`, value));
+            }
         }
         
         // Get available locations and apply filters
-        console.log('3. Getting filtered locations...');
+        if (window.__TM_DEBUG__) console.log('Getting filtered locations...');
         // Capture pre-merge count for UI notice
         const beforeMergeCount = this.getFilteredLocations(openNow, leastPopular, mostPopular).length;
         let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
@@ -841,15 +841,14 @@ class RoutePlanner {
             availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
         }
         const afterMergeCount = availableLocations.length;
-        console.log('4. availableLocations after filtering:', availableLocations.length);
-        console.log('5. availableLocations sample:', availableLocations.slice(0, 3));
+        if (window.__TM_DEBUG__) console.log('availableLocations after filtering:', availableLocations.length);
+        if (window.__TM_DEBUG__) console.log('availableLocations sample:', availableLocations.slice(0, 3));
         
         const optimalLocations = this.selectOptimalLocations(availableLocations);
-        console.log('6. optimalLocations selected:', optimalLocations.length);
-        console.log('7. optimalLocations details:', optimalLocations);
+        if (window.__TM_DEBUG__) console.log('optimalLocations selected:', optimalLocations.length);
         
         if (optimalLocations.length === 0) {
-            console.log('ERROR: No optimal locations found');
+            if (window.__TM_DEBUG__) console.log('No optimal locations found');
             // Provide more helpful feedback
             let message = 'No locations found matching your criteria.';
             if (availableLocations.length === 0) {
@@ -1094,7 +1093,7 @@ class RoutePlanner {
         const anyActive = Array.from(toggles || []).some(t => t.classList.contains('active'));
         let beforeTypeFilter = locations.length;
         if (anyActive) {
-            locations = this.applyRetailerTypeFilters(locations);
+        locations = this.applyRetailerTypeFilters(locations);
         } else {
             console.log('12. No retailer type toggles active, skipping type filter');
         }
@@ -1230,7 +1229,7 @@ class RoutePlanner {
             const hasRetail = retailerTypeRaw.includes('store');
             const hasKiosk = retailerTypeRaw.includes('kiosk');
             const hasIndie = retailerTypeRaw.includes('card shop');
-
+            
             let matches = false;
             for (const filter of activeFilters) {
                 if (filter === 'retail' && hasRetail) { matches = true; break; }
@@ -1278,11 +1277,10 @@ class RoutePlanner {
 
         // Get individual popularity data if available
         const individualData = window.individualPopularityData || [];
-        console.log('=== POPULARITY FILTER DEBUG ===');
-        console.log('1. Individual popularity data available:', individualData.length, 'locations');
+        if (window.__TM_DEBUG__) console.log('Popularity data size', individualData.length);
         
         if (individualData.length === 0) {
-            console.warn('No individual popularity data available for popularity filtering');
+            if (window.__TM_DEBUG__) console.warn('No popularity data');
             return locations;
         }
 
@@ -1294,7 +1292,7 @@ class RoutePlanner {
             popularityMap.set(key, item.weight || 0);
         });
 
-        console.log('2. Popularity map created with', popularityMap.size, 'unique locations');
+        if (window.__TM_DEBUG__) console.log('Popularity map size', popularityMap.size);
 
         // Calculate popularity scores for each location using full precision matching
         const locationsWithScores = locations.map(location => {
@@ -1304,10 +1302,7 @@ class RoutePlanner {
             return { ...location, popularityScore };
         });
 
-        console.log('3. Locations with scores:', locationsWithScores.length);
-        console.log('4. Sample locations with scores:', locationsWithScores.slice(0, 3).map(loc => 
-            `${loc.retailer}: ${loc.popularityScore}`
-        ));
+        if (window.__TM_DEBUG__) console.log('Scored', locationsWithScores.length);
 
         // Sort by popularity score first
         locationsWithScores.sort((a, b) => a.popularityScore - b.popularityScore);
@@ -1321,7 +1316,7 @@ class RoutePlanner {
             // Then sort by distance within the least popular group to prioritize closer locations
             leastPopularLocations.sort((a, b) => a.distance - b.distance);
             
-            console.log('5. Least popular filter: selected', leastPopularLocations.length, 'locations (bottom 25% by popularity, then sorted by distance)');
+            if (window.__TM_DEBUG__) console.log('Least popular:', leastPopularLocations.length);
             console.log('6. Sample least popular locations:', leastPopularLocations.slice(0, 3).map(loc => 
                 `${loc.retailer}: popularity=${loc.popularityScore}, distance=${loc.distance?.toFixed(1)}mi`
             ));
@@ -1334,7 +1329,7 @@ class RoutePlanner {
             // Then sort by distance within the most popular group to prioritize closer locations
             mostPopularLocations.sort((a, b) => a.distance - b.distance);
             
-            console.log('5. Most popular filter: selected', mostPopularLocations.length, 'locations (top 25% by popularity, then sorted by distance)');
+            if (window.__TM_DEBUG__) console.log('Most popular:', mostPopularLocations.length);
             console.log('6. Sample most popular locations:', mostPopularLocations.slice(0, 3).map(loc => 
                 `${loc.retailer}: popularity=${loc.popularityScore}, distance=${loc.distance?.toFixed(1)}mi`
             ));
@@ -1348,12 +1343,10 @@ class RoutePlanner {
      * Select optimal locations for the route
      */
     selectOptimalLocations(locations) {
-        console.log('=== SELECT OPTIMAL LOCATIONS DEBUG ===');
-        console.log('1. Input locations:', locations?.length || 0);
-        console.log('2. Current maxStops:', this.maxStops);
+        if (window.__TM_DEBUG__) console.log('Select optimal locations', { count: locations?.length || 0, maxStops: this.maxStops });
         
         if (!locations || locations.length === 0) {
-            console.log('3. ERROR: No locations provided');
+            if (window.__TM_DEBUG__) console.log('No locations provided');
             return [];
         }
 
@@ -1361,11 +1354,7 @@ class RoutePlanner {
         const sorted = [...locations].sort((a, b) => a.distance - b.distance);
         const selected = sorted.slice(0, this.maxStops);
         
-        console.log('4. Sorted locations by distance');
-        console.log('5. Selected locations:', selected.length);
-        console.log('6. Selected locations details:', selected.map((loc, i) => 
-            `${i + 1}. ${loc.retailer} (${loc.distance?.toFixed(1)} mi)`
-        ));
+        if (window.__TM_DEBUG__) console.log('Selected locations', selected.length);
         
         return selected;
     }
@@ -1395,8 +1384,7 @@ class RoutePlanner {
      * Increment popularity for selected locations by calling the track pin API
      */
     incrementLocationPopularity(locations) {
-        console.log('=== INCREMENT POPULARITY DEBUG ===');
-        console.log('1. Incrementing popularity for', locations.length, 'locations');
+            if (window.__TM_DEBUG__) console.log('Increment popularity for', locations.length, 'locations');
         
         // Call the track pin API for each location to increment popularity
         locations.forEach(location => {
@@ -1415,7 +1403,7 @@ class RoutePlanner {
             }
             
             if (markerId) {
-                console.log('2. Incrementing popularity for:', location.retailer, 'ID:', markerId);
+                if (window.__TM_DEBUG__) console.log('Incrementing popularity for:', location.retailer, 'ID:', markerId);
                 
                 // Call the track pin API
                 fetch('/track/pin', {
@@ -1429,16 +1417,12 @@ class RoutePlanner {
                         lng: location.lng
                     })
                 }).then(response => {
-                    if (response.ok) {
-                        console.log('3. Successfully incremented popularity for:', location.retailer);
-                    } else {
-                        console.warn('4. Failed to increment popularity for:', location.retailer);
-                    }
+                    if (window.__TM_DEBUG__) console.log('Popularity increment response ok:', response.ok);
                 }).catch(error => {
-                    console.error('5. Error incrementing popularity for:', location.retailer, error);
+                    if (window.__TM_DEBUG__) console.error('Error incrementing popularity for:', location.retailer, error);
                 });
             } else {
-                console.warn('6. Could not find marker ID for location:', location.retailer);
+                if (window.__TM_DEBUG__) console.warn('Could not find marker ID for:', location.retailer);
             }
         });
     }
@@ -1487,8 +1471,8 @@ class RoutePlanner {
         if (retailerType && city) return `${baseName} (${retailerType} - ${city})`;
         if (retailerType)         return `${baseName} (${retailerType})`;
         if (city)                 return `${baseName} (${city})`;
-        return baseName;
-    }
+            return baseName;
+        }
 
     // New: Format a stop line as "Name (Store + Kiosk) City 1.3 mi — Open until 9:00 PM"
     formatStopLine(loc, isOpen) {
@@ -1703,7 +1687,7 @@ class RoutePlanner {
             // Safety fallback in case idle doesn't fire quickly
             setTimeout(() => { try { google.maps.event.removeListener(once); } catch {} addPins(); }, 150);
         } else {
-            this.createPreviewPins();
+        this.createPreviewPins();
         }
 
         // Close the planner modal after pins are on the map to reduce visual pop
@@ -2123,7 +2107,7 @@ class RoutePlanner {
         }
 
         // Auto-zoom to fit all preview points with padding after map is ready
-        console.log('Final positions for zooming:', allPositions);
+        if (window.__TM_DEBUG__) console.log('Final positions for zooming:', allPositions);
         if (window.map) {
             const runZoom = () => this.zoomToFitPreviewPoints(allPositions);
             const once = google.maps.event.addListenerOnce(window.map, 'idle', runZoom);
@@ -2163,7 +2147,7 @@ class RoutePlanner {
             return;
         }
 
-        console.log('Zooming to fit positions:', positions);
+        if (window.__TM_DEBUG__) console.log('Zooming to fit positions:', positions);
 
         const bounds = new google.maps.LatLngBounds();
         
@@ -2171,7 +2155,7 @@ class RoutePlanner {
         positions.forEach(pos => {
             const latLng = new google.maps.LatLng(pos.lat, pos.lng);
             bounds.extend(latLng);
-            console.log('Added position to bounds:', pos.lat, pos.lng);
+            if (window.__TM_DEBUG__) console.log('Added position to bounds:', pos.lat, pos.lng);
         });
 
         // Add padding to bounds (expand by 20% for better visibility)
@@ -2183,7 +2167,7 @@ class RoutePlanner {
         bounds.extend(new google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff));
         bounds.extend(new google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff));
 
-        console.log('Bounds created:', {
+        if (window.__TM_DEBUG__) console.log('Bounds created:', {
             north: bounds.getNorthEast().lat(),
             east: bounds.getNorthEast().lng(),
             south: bounds.getSouthWest().lat(),
@@ -2196,17 +2180,17 @@ class RoutePlanner {
         // Ensure reasonable zoom level and add a small delay for the animation
         setTimeout(() => {
             const currentZoom = window.map.getZoom();
-            console.log('Current zoom level:', currentZoom);
+            if (window.__TM_DEBUG__) console.log('Current zoom level:', currentZoom);
             
             // If zoomed out too far, set a reasonable zoom level
             if (currentZoom < 10) {
                 window.map.setZoom(12);
-                console.log('Adjusted zoom to 12');
+                if (window.__TM_DEBUG__) console.log('Adjusted zoom to 12');
             }
             // If zoomed in too close, set a reasonable zoom level
             else if (currentZoom > 16) {
                 window.map.setZoom(14);
-                console.log('Adjusted zoom to 14');
+                if (window.__TM_DEBUG__) console.log('Adjusted zoom to 14');
             }
         }, 500);
     }
@@ -2382,18 +2366,20 @@ class RoutePlanner {
                 lng: loc.lng,
                 place_id: loc.place_id || ''
             }));
-            // eslint-disable-next-line no-console
-            console.groupCollapsed('RoutePlanner Debug');
-            // eslint-disable-next-line no-console
-            console.table(debugRows);
-            // eslint-disable-next-line no-console
-            console.log('Generated Google Maps URL:', url);
-            // eslint-disable-next-line no-console
-            console.groupEnd();
+            if (window.__TM_DEBUG__) {
+                // eslint-disable-next-line no-console
+                console.groupCollapsed('RoutePlanner Debug');
+                // eslint-disable-next-line no-console
+                console.table(debugRows);
+                // eslint-disable-next-line no-console
+        console.log('Generated Google Maps URL:', url);
+                // eslint-disable-next-line no-console
+                console.groupEnd();
+            }
         } catch (_) {
             // ignore
         }
-
+        
         return url;
     }
 
