@@ -1134,6 +1134,56 @@ class RoutePlanner {
         return locations;
     }
 
+    applyPlannerFiltersToMap() {
+        // Force map to reflect planner's toggles while open
+        try {
+            const kiosk = this.sessionCheckboxStates.kiosk;
+            const retail = this.sessionCheckboxStates.retail;
+            const indie = this.sessionCheckboxStates.indie;
+            const openNow = this.sessionCheckboxStates.openNow;
+            const events = false;
+            const filters = { showKiosk: kiosk, showRetail: retail, showIndie: indie, showOpenNow: openNow, showEvents: events, showPopular: false, searchText: '' };
+            // Mirror into legend checkboxes if present (visual sync)
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+            set('filter-kiosk', kiosk); set('filter-retail', retail); set('filter-indie', indie);
+            set('filter-open-now', openNow); set('filter-events', false); set('filter-popular-areas', false);
+            if (typeof window.applyFilters === 'function') window.applyFilters(filters);
+        } catch {}
+    }
+
+    restoreMapFiltersFromLegend() {
+        try {
+            if (typeof window.applyFilters === 'function') window.applyFilters();
+        } catch {}
+    }
+
+    disableLegendControls() {
+        try {
+            const legend = document.getElementById('legend');
+            if (!legend) return;
+            legend.style.opacity = '0.6';
+            legend.querySelectorAll('input, button, select, textarea').forEach(el => { el.disabled = true; });
+            if (!document.getElementById('legend-route-lock')) {
+                const banner = document.createElement('div');
+                banner.id = 'legend-route-lock';
+                banner.textContent = 'Route Planner is controlling filters';
+                banner.style.cssText = 'font-size:12px; padding:6px 8px; margin:4px; border:1px solid #ffeeba; background:#fff3cd; color:#856404; border-radius:4px;';
+                legend.insertBefore(banner, legend.firstChild);
+            }
+        } catch {}
+    }
+
+    enableLegendControls() {
+        try {
+            const legend = document.getElementById('legend');
+            if (!legend) return;
+            legend.style.opacity = '';
+            legend.querySelectorAll('input, button, select, textarea').forEach(el => { el.disabled = false; });
+            const banner = document.getElementById('legend-route-lock');
+            if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+        } catch {}
+    }
+
     /**
      * Apply retailer type filters based on route planner toggles
      */
@@ -1646,8 +1696,15 @@ class RoutePlanner {
         // Clear any existing preview pins
         this.clearPreviewPins();
 
-        // Create preview pins
-        this.createPreviewPins();
+        // Create preview pins after map idle to ensure it's ready
+        const addPins = () => this.createPreviewPins();
+        if (window.map) {
+            const once = google.maps.event.addListenerOnce(window.map, 'idle', addPins);
+            // Safety fallback in case idle doesn't fire quickly
+            setTimeout(() => { try { google.maps.event.removeListener(once); } catch {} addPins(); }, 150);
+        } else {
+            this.createPreviewPins();
+        }
 
         // Close the planner modal after pins are on the map to reduce visual pop
         Swal.close();
@@ -1887,6 +1944,9 @@ class RoutePlanner {
             },
             width: '650px',
             didOpen: () => {
+                // Sync map to planner filters while planner is open
+                this.applyPlannerFiltersToMap();
+                this.disableLegendControls();
                 // Initialize controls - session data is already loaded in this.sessionCheckboxStates
                 console.log('=== OPEN PLANNING MODAL DEBUG ===');
                 console.log('this.sessionCheckboxStates available:', this.sessionCheckboxStates);
@@ -1912,6 +1972,9 @@ class RoutePlanner {
                     this.clearSessionData();
                 }
                 this.currentStep = 'planning';
+                // Restore legend/map filters after planner closes
+                this.restoreMapFiltersFromLegend();
+                this.enableLegendControls();
             }
         });
     }
@@ -2059,9 +2122,15 @@ class RoutePlanner {
             this.previewPins.push(endCircle);
         }
 
-        // Auto-zoom to fit all preview points with padding (slight delay to ensure markers drawn)
+        // Auto-zoom to fit all preview points with padding after map is ready
         console.log('Final positions for zooming:', allPositions);
-        setTimeout(() => this.zoomToFitPreviewPoints(allPositions), 50);
+        if (window.map) {
+            const runZoom = () => this.zoomToFitPreviewPoints(allPositions);
+            const once = google.maps.event.addListenerOnce(window.map, 'idle', runZoom);
+            setTimeout(() => { try { google.maps.event.removeListener(once); } catch {} runZoom(); }, 120);
+        } else {
+            setTimeout(() => this.zoomToFitPreviewPoints(allPositions), 120);
+        }
     }
 
     /**
@@ -2228,7 +2297,14 @@ class RoutePlanner {
 
     async optimizeAndOpen(locations, userCoords, roundTrip) {
         try {
-            const waypoints = locations.map(l => ({ lat: l.lat, lng: l.lng }));
+            // Deduplicate waypoints by rounded coordinates to prevent near-identical duplicates in Maps
+            const uniq = new Map();
+            locations.forEach(l => {
+                const key = `${l.retailer || ''}|${(l.full_address||l.address||'').toLowerCase()}|${l.place_id || ''}|${l.lat.toFixed(5)},${l.lng.toFixed(5)}`;
+                if (!uniq.has(key)) uniq.set(key, l);
+            });
+            const uniqueLocations = Array.from(uniq.values());
+            const waypoints = uniqueLocations.map(l => ({ lat: l.lat, lng: l.lng }));
             const dest = roundTrip ? null : waypoints[waypoints.length - 1];
             const wpForOptimize = roundTrip ? waypoints : waypoints.slice(0, -1);
             const res = await fetch('/api/route-optimize', {
@@ -2240,13 +2316,22 @@ class RoutePlanner {
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data.waypoint_order)) {
-                    const base = roundTrip ? locations : locations.slice(0, -1);
+                    const base = roundTrip ? uniqueLocations : uniqueLocations.slice(0, -1);
                     const reordered = data.waypoint_order.map(i => base[i]).filter(Boolean);
-                    ordered = roundTrip ? reordered : [...reordered, locations[locations.length - 1]];
+                    ordered = roundTrip ? reordered : [...reordered, uniqueLocations[uniqueLocations.length - 1]];
                 }
             }
             const url = this.generateGoogleMapsURL_NoOptimize(ordered, userCoords, roundTrip);
             window.open(url, '_blank');
+
+            // Persist and show ordered list for user clarity
+            const stopLabels = ordered.map((loc, idx) => {
+                const name = (loc.retailer || '').trim();
+                const addr = (loc.full_address || loc.address || `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`).trim();
+                return `${idx + 1}. ${[name, addr].filter(Boolean).join(' — ')}`;
+            });
+            try { localStorage.setItem('routePlanner:lastOrderedStops', JSON.stringify(stopLabels)); } catch {}
+            this.showPostGoSummary(stopLabels);
         } catch (e) {
             const fallback = this.generateGoogleMapsURL(locations, userCoords, roundTrip);
             window.open(fallback, '_blank');
@@ -2312,6 +2397,28 @@ class RoutePlanner {
         return url;
     }
 
+    showPostGoSummary(stopLabels) {
+        if (typeof Swal === 'undefined') return;
+        const html = `
+            <div style="text-align:left; max-height:50vh; overflow:auto;">
+                <div style="margin-bottom:8px; color:#6c757d;">Your route has opened in a new tab. Here are the exact stops in order:</div>
+                <ol style="padding-left:18px;">${stopLabels.map(s => `<li style='margin:4px 0;'>${s.replace(/</g,'&lt;')}</li>`).join('')}</ol>
+            </div>`;
+        Swal.fire({
+            title: 'Route opened',
+            html,
+            width: 600,
+            showCancelButton: true,
+            confirmButtonText: 'Copy addresses',
+            cancelButtonText: 'Close',
+        }).then(async (r) => {
+            if (r.isConfirmed) {
+                const text = stopLabels.map(s => s.replace(/^\d+\.\s*/, '')).join('\n');
+                try { await navigator.clipboard.writeText(text); } catch {}
+            }
+        });
+    }
+
     // Build URL without optimize:true, assuming locations are already ordered
     generateGoogleMapsURL_NoOptimize(locations, userCoords, roundTrip = false) {
         const originParam = `origin=${userCoords.lat},${userCoords.lng}`;
@@ -2342,8 +2449,8 @@ class RoutePlanner {
             }
             stops.pop();
         }
-        // Use human-friendly labels for waypoints: "Store Address" (falls back to lat,lng)
-        const waypointVals = stops.map(loc => formatLabel(loc) || `${loc.lat},${loc.lng}`);
+        // Use strict lat,lng for waypoints to avoid Google re-geocoding duplicates
+        const waypointVals = stops.map(loc => `${loc.lat},${loc.lng}`);
         const waypointsParam = waypointVals.length > 0 ? `waypoints=${encodeURIComponent(waypointVals.join('|'))}` : '';
         const params = ['api=1','travelmode=driving',originParam,destinationParam,waypointsParam,...extraParams]
             .filter(Boolean)
