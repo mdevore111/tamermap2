@@ -96,9 +96,13 @@ def create_app(config_class=BaseConfig):
     app = Flask(__name__, instance_relative_config=True,
                 template_folder=template_dir, static_folder=static_dir)
 
-    # Debug: Print template folder and list of templates
-    app.logger.debug('TEMPLATE FOLDER: %s', app.template_folder)
-    # print('TEMPLATE DEBUG:', app.jinja_loader.list_templates())
+# ProxyFix for nginx HTTPS detection (dev/prod environments)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+# Debug: Print template folder and list of templates
+app.logger.debug('TEMPLATE FOLDER: %s', app.template_folder)
+# print('TEMPLATE DEBUG:', app.jinja_loader.list_templates())
 
     # Add a test route to render admin/master.html directly
     @app.route('/debug-template')
