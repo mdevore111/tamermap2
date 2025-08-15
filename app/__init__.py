@@ -46,6 +46,8 @@ from .admin_routes import admin_bp
 # Global variable for the SQLAlchemyUserDatastore.
 user_datastore = None
 
+print("=== APP/__INIT__.PY MODULE IS BEING LOADED ===")
+
 # Initialize Flask-Migrate
 migrate = Migrate()
 
@@ -86,6 +88,7 @@ def create_app(config_class=BaseConfig):
     Returns:
         A configured Flask application instance.
     """
+    print("=== CREATE_APP FUNCTION IS BEING EXECUTED ===")
     global user_datastore
 
     # Determine paths for templates and static files.
