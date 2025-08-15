@@ -133,7 +133,7 @@ class BaseConfig:
     # --------------------------
     # Flask-Security Configuration
     # --------------------------
-    SECURITY_POST_LOGIN_VIEW = "/maps"
+    SECURITY_POST_LOGIN_VIEW = None  # Changed to None - don't force redirect
     SECURITY_POST_RESET_VIEW = "/maps"
     SECURITY_POST_FORGOT_PASSWORD_VIEW = "/splash"
     SECURITY_REGISTERABLE = False  # Registration controlled by Stripe payment system webhooks.
@@ -143,6 +143,30 @@ class BaseConfig:
     SECURITY_REMEMBER_ME = True
     SECURITY_REMEMBER_COOKIE_DURATION = timedelta(days=14)
     SECURITY_SEND_REGISTER_EMAIL = True
+    SECURITY_POST_CHANGE_VIEW = None  # Don't redirect after password change
+
+    # Flask-Security Session Configuration - Ensure session sharing with Flask-Login
+    SECURITY_USE_SESSION_FOR_NEXT = True
+    SECURITY_SESSION_INTERFACE = None  # Let Flask-Security inherit from Flask-Session
+    
+    # Flask-Security Authentication Configuration
+    SECURITY_LOGIN_URL = "/login"
+    SECURITY_LOGIN_USER_TEMPLATE = "security/login_user.html"
+    SECURITY_CHANGE_PASSWORD_TEMPLATE = "security/change_password.html"
+    SECURITY_FORGOT_PASSWORD_TEMPLATE = "security/forgot_password.html"
+    SECURITY_RESET_PASSWORD_TEMPLATE = "security/reset_password.html"
+    
+    # ENABLE Flask-Security authentication to work with Flask-Login
+    SECURITY_AUTHENTICATOR = None  # Keep this None to let Flask-Login handle auth
+    SECURITY_AUTHENTICATION_DOMAIN = None
+    SECURITY_AUTHENTICATION_REQUIRED = False  # Changed to False - let Flask-Login handle auth per route
+    SECURITY_AUTHENTICATION_REQUIRED_FOR_OPTIONS = False
+    
+    # Fix redirect URL issues
+    SECURITY_REDIRECT_HOST = None  # Don't force redirect host
+    SECURITY_REDIRECT_BEHAVIOR = 'http'  # Use HTTP redirects
+    SECURITY_URL_PREFIX = None  # No URL prefix
+    SECURITY_LOGOUT_URL = '/logout'  # Explicit logout URL
 
     # Add datetime to template context
     SECURITY_EMAIL_TEMPLATE_CONTEXT = {
@@ -172,8 +196,11 @@ class BaseConfig:
     # Use filesystem sessions if running on Windows (for development) to avoid Redis errors.
     if platform.system() == "Windows":
         SESSION_TYPE = 'filesystem'
-        # Optionally, set a directory where session files are stored.
-        SESSION_FILE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "flask_session_files")
+        # Set a directory where session files are stored.
+        SESSION_FILE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", "flask_session_files")
+        # Ensure the directory exists
+        if not os.path.exists(SESSION_FILE_DIR):
+            os.makedirs(SESSION_FILE_DIR, exist_ok=True)
     else:
         # On Linux/Ubuntu, use Redis (adjust as needed for your production/staging settings)
         SESSION_TYPE = 'redis'

@@ -16,6 +16,9 @@ import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 import re
+from functools import wraps
+from flask import redirect
+from flask_login import login_required
 
 import requests
 from flask import Flask, request, url_for, session, current_app, g
@@ -32,7 +35,7 @@ from . import signals
 from .config import BaseConfig
 from .custom_email import custom_send_mail, send_email_with_context
 from .models import User, Role, VisitorLog
-from .extensions import db, mail, security, session, cache, limiter
+from .extensions import db, mail, security, session as flask_session, cache, limiter
 from .payment.route import payment_bp
 from .payment.stripe_webhooks import stripe_webhooks_bp
 from .routes.api import api_bp
@@ -109,13 +112,15 @@ def create_app(config_class=BaseConfig):
     # Debug headers for HTTPS detection
     @app.before_request
     def debug_headers():
-        app.logger.info(f"=== HEADER DEBUG ===")
-        app.logger.info(f"X-Forwarded-Proto: {request.headers.get('X-Forwarded-Proto')}")
-        app.logger.info(f"X-Forwarded-Host: {request.headers.get('X-Forwarded-Host')}")
-        app.logger.info(f"request.is_secure: {request.is_secure}")
-        app.logger.info(f"request.scheme: {request.scheme}")
-        app.logger.info(f"request.url: {request.url}")
-        app.logger.info(f"==================")
+        # Only log headers for non-static requests to reduce noise
+        if not request.endpoint or not request.endpoint.startswith('static'):
+            app.logger.info(f"=== HEADER DEBUG ===")
+            app.logger.info(f"X-Forwarded-Proto: {request.headers.get('X-Forwarded-Proto')}")
+            app.logger.info(f"X-Forwarded-Host: {request.headers.get('X-Forwarded-Host')}")
+            app.logger.info(f"request.is_secure: {request.is_secure}")
+            app.logger.info(f"request.scheme: {request.scheme}")
+            app.logger.info(f"request.url: {request.url}")
+            app.logger.info(f"==================")
 
     # Add a test route to render admin/master.html directly
     @app.route('/debug-template')
@@ -125,8 +130,8 @@ def create_app(config_class=BaseConfig):
     # Load configuration.
     app.config.from_object(config_class)
 
-    # Initialize Flask-Session (using Redis as configured in BaseConfig).
-    session.init_app(app)
+    # REMOVED: Flask-Session initialization moved to after Flask-Login setup
+    # This ensures proper initialization order for session management
 
     # Initialize caching
     cache.init_app(app)
@@ -176,6 +181,17 @@ def create_app(config_class=BaseConfig):
 
     # Initialize Flask-Security with extended registration and confirmation forms.
     security = Security(app, user_datastore)
+    
+    # Ensure Flask-Security uses the same user loader as Flask-Login
+    # This should resolve the session mismatch by ensuring both systems see the same user state
+    # Note: user_loader is set later in the file after the function is defined
+    
+    # Simple integration: Ensure Flask-Security recognizes Flask-Login's authentication
+    # by setting the user loader and letting Flask-Security handle its own auth
+    # Note: user_loader is set later in the file
+    
+    # Remove custom authentication decorator that was causing redirect issues
+    # Let Flask-Security use its default authentication mechanism
 
     # Register a dummy mail extension for Flask-Security's email support.
     app.extensions = getattr(app, "extensions", {})
@@ -214,15 +230,19 @@ def create_app(config_class=BaseConfig):
             'debug_mode': app.config.get('DEBUG', False)
         }
         
+        # DEBUG: Log template context authentication state
         if current_user.is_authenticated:
             is_admin = current_user.has_role('Admin')
             is_pro = current_user.has_role('Pro')
+            
+            app.logger.info(f"Template Context: User {current_user.id} authenticated - Admin: {is_admin}, Pro: {is_pro}")
             
             context.update({
                 'is_admin': is_admin,
                 'is_pro': is_pro
             })
         else:
+            app.logger.info(f"Template Context: User not authenticated")
             context.update({
                 'is_admin': False,
                 'is_pro': False
@@ -269,27 +289,44 @@ def create_app(config_class=BaseConfig):
         if request.endpoint and request.endpoint.startswith('static'):
             return
 
-        # Debug: Print current user ID and roles to the terminal
-        if hasattr(current_user, 'is_authenticated'):
-            if current_user.is_authenticated:
-                user_id = getattr(current_user, 'id', None)
-                roles = [role.name for role in getattr(current_user, 'roles', [])]
-                # app.logger.debug("User ID: %s, Roles: %s - Request: %s", user_id, roles, request.endpoint)
-                pass
-            else:
-                # app.logger.debug("User not authenticated - Request: %s", request.endpoint)
-                # Check if there's a remember me cookie
-                remember_cookie = request.cookies.get('remember_token')
-                if remember_cookie:
-                    # app.logger.debug("Remember me cookie present but user not authenticated - Request: %s", request.endpoint)
-                    pass
-                pass
+        # DEBUG: Essential session/authentication debugging
+        if not request.endpoint or not request.endpoint.startswith('static'):
+            app.logger.info(f"=== AUTH DEBUG: {request.path} ===")
+            app.logger.info(f"Endpoint: {request.endpoint}")
+            try:
+                session_keys = list(session.keys()) if hasattr(session, 'keys') else []
+                app.logger.info(f"Session keys: {session_keys}")
+            except Exception as e:
+                app.logger.info(f"Session access error: {e}")
+        
+        try:
+            # Try to get session keys safely
+            session_keys = list(session.keys()) if hasattr(session, 'keys') else []
+            app.logger.info(f"Session keys: {session_keys}")
+            # Try to access specific session values (only if we have keys)
+            if session_keys:
+                for key in session_keys[:5]:  # Limit to first 5 keys to avoid overwhelming logs
+                    try:
+                        value = session.get(key, 'Error accessing value')
+                        app.logger.info(f"Session[{key}]: {value}")
+                    except Exception as e:
+                        app.logger.info(f"Session[{key}] access error: {e}")
+        except Exception as e:
+            app.logger.info(f"Session contents access error: {e}")
+        
+        # Debug: Essential authentication state logging
+        if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+            user_id = getattr(current_user, 'id', None)
+            roles = [role.name for role in getattr(current_user, 'roles', [])]
+            app.logger.info(f"Flask-Login: User {user_id} authenticated with roles: {roles}")
+        elif hasattr(current_user, 'is_authenticated'):
+            app.logger.info(f"Flask-Login: User NOT authenticated")
         else:
-            # app.logger.debug("User object not properly initialized - Request: %s", request.endpoint)
-            pass
+            app.logger.info(f"Flask-Login: User object not properly initialized")
 
         # Handle password reset
         if request.endpoint == 'security.forgot_password':
+            app.logger.info(f"Handling forgot_password request")
             def send_reset_password_instructions(user):
                 token = user.get_reset_password_token()
                 reset_link = url_for('security.reset_password', token=token, _external=True)
@@ -305,10 +342,30 @@ def create_app(config_class=BaseConfig):
             security.send_reset_password_instructions = send_reset_password_instructions
             return
 
+        # DEBUG: Track Flask-Security route access
+        if request.endpoint and request.endpoint.startswith('security.'):
+            app.logger.info(f"=== FLASK-SECURITY ROUTE ACCESS: {request.endpoint} ===")
+            app.logger.info(f"Path: {request.path}")
+            app.logger.info(f"Flask-Login current_user: {current_user}")
+            app.logger.info(f"Flask-Login is_authenticated: {getattr(current_user, 'is_authenticated', 'N/A')}")
+            app.logger.info(f"Flask-Login user ID: {getattr(current_user, 'id', 'N/A')}")
+            try:
+                session_keys = list(session.keys()) if hasattr(session, 'keys') else []
+                app.logger.info(f"Session keys: {session_keys}")
+                # Show key session values for debugging
+                if '_user_id' in session_keys:
+                    app.logger.info(f"Session _user_id: {session.get('_user_id')}")
+                if 'fs_cc' in session_keys:
+                    app.logger.info(f"Session fs_cc: {session.get('fs_cc')}")
+            except Exception as e:
+                app.logger.info(f"Session keys access error: {e}")
+            app.logger.info(f"Request cookies: {dict(request.cookies)}")
+
         # Track visitor activity
         if request.endpoint and not request.endpoint.startswith('static'):
             excluded_prefixes = ['/api', '/admin', '/webhooks', '/static', '/track', '/reset', '/logout', '/login']
             if any(request.path.startswith(prefix) for prefix in excluded_prefixes):
+                app.logger.info(f"Request excluded from tracking (prefix: {request.path})")
                 return
 
             ip = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -434,9 +491,63 @@ def create_app(config_class=BaseConfig):
     @app.route('/whoami')
     def whoami():
         from flask_login import current_user
-        return f"Authenticated: {current_user.is_authenticated}, ID: {getattr(current_user, 'id', None)}, Roles: {[r.name for r in getattr(current_user, 'roles', [])]}"
+        from flask import session
+        
+        try:
+            session_keys = list(session.keys()) if hasattr(session, 'keys') else []
+            session_info = f"Keys: {session_keys}"
+        except Exception as e:
+            session_info = f"Error accessing session: {e}"
+            
+        return f"Authenticated: {current_user.is_authenticated}, ID: {getattr(current_user, 'id', None)}, Roles: {[r.name for r in getattr(current_user, 'roles', [])]}, Session: {session_info}"
 
-
+    # Add a debug route specifically for session debugging
+    @app.route('/debug-session')
+    def debug_session():
+        from flask_login import current_user
+        from flask import session, request
+        
+        try:
+            session_keys = list(session.keys()) if hasattr(session, 'keys') else []
+            session_id = session.get('_id', 'No Flask session ID') if session_keys else 'No session keys'
+            session_info = f"Keys: {session_keys}"
+        except Exception as e:
+            session_id = f"Error accessing session: {e}"
+            session_info = f"Error accessing session: {e}"
+        
+        debug_info = {
+            'path': request.path,
+            'endpoint': request.endpoint,
+            'flask_login_authenticated': current_user.is_authenticated,
+            'flask_login_user_id': getattr(current_user, 'id', None),
+            'flask_login_user_email': getattr(current_user, 'email', None),
+            'flask_session_id': session_id,
+            'flask_session_info': session_info,
+            'cookies': dict(request.cookies),
+            'user_agent': request.headers.get('User-Agent', 'No User-Agent')
+        }
+        
+        return debug_info
+    
+    # Custom change password route that bypasses Flask-Security
+    @app.route('/change-password')
+    @login_required
+    def custom_change_password():
+        """Custom change password route that bypasses Flask-Security's redirect issues."""
+        from flask import render_template, request, flash, redirect, url_for
+        from app.auth.forms import ChangePasswordForm
+        
+        form = ChangePasswordForm()
+        if form.validate_on_submit():
+            if current_user.check_password(form.current_password.data):
+                current_user.set_password(form.new_password.data)
+                db.session.commit()
+                flash('Your password has been updated successfully!', 'success')
+                return redirect(url_for('auth.account'))
+            else:
+                flash('Current password is incorrect.', 'error')
+        
+        return render_template('security/change_password.html', change_password_form=form)
 
     # Initialize Flask-Login
     login_manager = LoginManager()
@@ -446,9 +557,30 @@ def create_app(config_class=BaseConfig):
     @login_manager.user_loader
     def load_user(user_id):
         try:
-            return User.query.get(int(user_id))
+            user = User.query.get(int(user_id))
+            if user:
+                app.logger.info(f"Flask-Login: Loaded user {user.email} (ID: {user.id})")
+            else:
+                app.logger.info(f"Flask-Login: No user found with ID: {user_id}")
+            return user
         except (ValueError, TypeError):
-            return User.query.filter_by(fs_uniquifier=user_id).first()
+            user = User.query.filter_by(fs_uniquifier=user_id).first()
+            if user:
+                app.logger.info(f"Flask-Login: Found user by fs_uniquifier: {user.email} (ID: {user.id})")
+            else:
+                app.logger.info(f"Flask-Login: No user found with fs_uniquifier: {user_id}")
+            return user
+    
+    # Ensure Flask-Security uses the same user loader
+    security.user_loader = load_user
+
+    # Initialize Flask-Session AFTER configuration is loaded
+    # This ensures all session settings are properly applied
+    flask_session.init_app(app)
+    
+    # REMOVED: Double initialization that was corrupting sessions
+    # with app.app_context():
+    #     session.init_app(app)
 
     @app.after_request
     def after_request(response):
