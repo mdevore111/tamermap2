@@ -35,7 +35,7 @@ from . import signals
 from .config import BaseConfig
 from .custom_email import custom_send_mail, send_email_with_context
 from .models import User, Role, VisitorLog
-from .extensions import db, mail, security, session as flask_session, cache, limiter
+from .extensions import db, mail, session as flask_session, cache, limiter
 from .payment.route import payment_bp
 from .payment.stripe_webhooks import stripe_webhooks_bp
 from .routes.api import api_bp
@@ -324,23 +324,7 @@ def create_app(config_class=BaseConfig):
         else:
             app.logger.info(f"Flask-Login: User object not properly initialized")
 
-        # Handle password reset
-        if request.endpoint == 'security.forgot_password':
-            app.logger.info(f"Handling forgot_password request")
-            def send_reset_password_instructions(user):
-                token = user.get_reset_password_token()
-                reset_link = url_for('security.reset_password', token=token, _external=True)
-                return send_email_with_context(
-                    subject="TAMERMAP.COM Password Reset Instructions",
-                    template="security/email/reset_instructions",
-                    recipient=user.email,
-                    user=user,
-                    reset_link=reset_link,
-                    config=app.config
-                )
-            # Suppress linter error: send_reset_password_instructions is a custom attribute
-            security.send_reset_password_instructions = send_reset_password_instructions
-            return
+
 
         # DEBUG: Track Flask-Security route access
         if request.endpoint and request.endpoint.startswith('security.'):
@@ -530,7 +514,7 @@ def create_app(config_class=BaseConfig):
         return debug_info
     
     # Custom change password route that bypasses Flask-Security
-    @app.route('/change-password')
+    @app.route('/change-password', methods=['GET', 'POST'])
     @login_required
     def custom_change_password():
         """Custom change password route that bypasses Flask-Security's redirect issues."""
@@ -539,8 +523,10 @@ def create_app(config_class=BaseConfig):
         
         form = ChangePasswordForm()
         if form.validate_on_submit():
-            if current_user.check_password(form.current_password.data):
-                current_user.set_password(form.new_password.data)
+            # Use Flask-Security's password verification
+            if security_utils.verify_and_update_password(form.current_password.data, current_user):
+                # Use Flask-Security's password hashing
+                current_user.password = security_utils.hash_password(form.new_password.data)
                 db.session.commit()
                 flash('Your password has been updated successfully!', 'success')
                 return redirect(url_for('auth.account'))
@@ -548,6 +534,44 @@ def create_app(config_class=BaseConfig):
                 flash('Current password is incorrect.', 'error')
         
         return render_template('security/change_password.html', change_password_form=form)
+
+
+
+    # Custom reset password route that bypasses Flask-Security's broken redirects
+    @app.route('/reset-password/<token>', methods=['GET', 'POST'])
+    def custom_reset_password(token):
+        """Custom reset password route that bypasses Flask-Security's redirect issues."""
+        from flask import render_template, request, flash, redirect, url_for
+        from app.auth.forms import ResetPasswordForm
+        from app.models import User
+        from app.extensions import db
+        from flask_security import utils as security_utils
+        from itsdangerous import URLSafeTimedSerializer
+        
+        try:
+            # Verify the token
+            serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+            email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  # 1 hour expiry
+            
+            # Find the user
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                flash('Invalid or expired reset link.', 'error')
+                return redirect(url_for('security.login'))
+            
+            form = ResetPasswordForm()
+            if form.validate_on_submit():
+                # Update the user's password
+                user.password = security_utils.hash_password(form.password.data)
+                db.session.commit()
+                flash('Your password has been reset successfully!', 'success')
+                return redirect(url_for('security.login'))
+            
+            return render_template('security/reset_password.html', reset_password_form=form)
+            
+        except Exception as e:
+            flash('Invalid or expired reset link.', 'error')
+            return redirect(url_for('security.login'))
 
     # Initialize Flask-Login
     login_manager = LoginManager()

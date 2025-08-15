@@ -12,7 +12,6 @@ from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_mail import Mail
-from flask_security import Security
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from limits.storage import MemoryStorage, RedisStorage
@@ -20,7 +19,6 @@ from limits.storage import MemoryStorage, RedisStorage
 # Initialize extensions
 db = SQLAlchemy()
 mail = Mail()
-security = Security()
 session = Session()
 cache = Cache()
 
