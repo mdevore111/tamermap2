@@ -22,6 +22,15 @@ def account():
     """
     Render the account page for the logged-in user.
     """
+    from flask import session
+    from flask_login import current_user
+    
+    current_app.logger.info(f"=== ACCOUNT ROUTE DEBUG ===")
+    current_app.logger.info(f"User accessing account: {current_user.email} (ID: {current_user.id})")
+    current_app.logger.info(f"Session ID: {session.get('_id', 'No Flask session ID')}")
+    current_app.logger.info(f"Session contents: {dict(session)}")
+    current_app.logger.info(f"Flask-Login authenticated: {current_user.is_authenticated}")
+    
     return render_template("account.html")
 
 
