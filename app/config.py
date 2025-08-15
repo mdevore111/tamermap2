@@ -135,10 +135,10 @@ class BaseConfig:
     # --------------------------
     SECURITY_POST_LOGIN_VIEW = None  # Changed to None - don't force redirect
     SECURITY_POST_RESET_VIEW = "/maps"
-    SECURITY_POST_FORGOT_PASSWORD_VIEW = "/splash"
+    SECURITY_POST_FORGOT_PASSWORD_VIEW = None  # Changed to None - don't redirect after forgot password
     SECURITY_REGISTERABLE = False  # Registration controlled by Stripe payment system webhooks.
     SECURITY_RECOVERABLE = True
-    SECURITY_CHANGEABLE = True
+    SECURITY_CHANGEABLE = False  # Disabled - using custom route instead
     SECURITY_CONFIRMABLE = False
     SECURITY_REMEMBER_ME = True
     SECURITY_REMEMBER_COOKIE_DURATION = timedelta(days=14)
@@ -156,16 +156,9 @@ class BaseConfig:
     SECURITY_FORGOT_PASSWORD_TEMPLATE = "security/forgot_password.html"
     SECURITY_RESET_PASSWORD_TEMPLATE = "security/reset_password.html"
     
-    # ENABLE Flask-Security authentication to work with Flask-Login
-    SECURITY_AUTHENTICATOR = None  # Keep this None to let Flask-Login handle auth
-    SECURITY_AUTHENTICATION_DOMAIN = None
-    SECURITY_AUTHENTICATION_REQUIRED = False  # Changed to False - let Flask-Login handle auth per route
-    SECURITY_AUTHENTICATION_REQUIRED_FOR_OPTIONS = False
+
     
-    # Fix redirect URL issues
-    SECURITY_REDIRECT_HOST = None  # Don't force redirect host
-    SECURITY_REDIRECT_BEHAVIOR = 'http'  # Use HTTP redirects
-    SECURITY_URL_PREFIX = None  # No URL prefix
+    # Flask-Security URL Configuration
     SECURITY_LOGOUT_URL = '/logout'  # Explicit logout URL
 
     # Add datetime to template context

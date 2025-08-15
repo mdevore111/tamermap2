@@ -127,3 +127,15 @@ class ChangePasswordForm(FlaskForm):
         EqualTo('new_password', message="Passwords must match")
     ])
     submit = SubmitField('Change Password')
+
+
+class ForgotPasswordForm(FlaskForm):
+    """
+    Form for requesting a password reset.
+    This form includes an email field.
+    """
+    email = StringField('Email', validators=[
+        DataRequired(),
+        Email(message="Please enter a valid email address")
+    ])
+    submit = SubmitField('Send Reset Link')
