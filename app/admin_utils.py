@@ -1289,6 +1289,7 @@ def get_referral_funnel_data(ref_code, days=30):
 
 def get_referral_time_analysis(ref_code, days=30):
     """Get time-based analysis for a referral code. Excludes internal traffic."""
+    from flask import current_app
     since = datetime.utcnow() - timedelta(days=days)
     
     # Automatically detect current Pacific timezone and handle DST transitions
@@ -1337,7 +1338,8 @@ def get_referral_time_analysis(ref_code, days=30):
             
             current_app.logger.debug(f"Referral time analysis - Estimated Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
     
-    # Get visits grouped by hour of day (excluding internal traffic)
+    # Get visits grouped by Pacific hour of day (excluding internal traffic)
+    # We'll use a more direct approach to avoid losing data during timezone conversion
     query = exclude_monitor_traffic(
         db.session.query(
             func.extract('hour', VisitorLog.timestamp).label('utc_hour'),
@@ -1351,17 +1353,16 @@ def get_referral_time_analysis(ref_code, days=30):
     query = exclude_internal_traffic(query)
     hourly_visits = query.all()
     
-    # Convert UTC hours to Pacific time
-    pacific_hourly_data = {}
+    # Convert UTC hours to Pacific time and ensure all 24 hours are represented
+    pacific_hourly_data = {hour: 0 for hour in range(24)}  # Initialize all hours with 0
+    
     for utc_hour, visits in hourly_visits:
         utc_hour = int(utc_hour)
+        # Convert UTC to Pacific time
         pacific_hour = (utc_hour + pacific_offset) % 24
-        if pacific_hour in pacific_hourly_data:
-            pacific_hourly_data[pacific_hour] += visits
-        else:
-            pacific_hourly_data[pacific_hour] = visits
+        pacific_hourly_data[pacific_hour] += visits
     
-    # Convert to sorted list format
+    # Convert to sorted list format - now all 24 hours will be present
     pacific_hourly = [{'hour': hour, 'visits': visits} for hour, visits in sorted(pacific_hourly_data.items())]
     
     # Get visits grouped by day of week (excluding internal traffic)
