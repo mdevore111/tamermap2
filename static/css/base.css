@@ -152,6 +152,7 @@ body {
 /* Map page specific layout - use flexbox to fit above fixed footer */
 body.map-page {
   min-height: 100vh !important;
+  min-height: 100dvh !important; /* Modern browsers - dynamic viewport height */
   overflow: visible !important;
 }
 

@@ -35,11 +35,18 @@
     left: 10px !important;
     width: fit-content !important; /* Auto-size to content width */
     max-width: calc(100vw - 20px) !important; /* Don't exceed screen width minus padding */
-    max-height: 40% !important; /* Limit height to 40% of the viewport */
+    max-height: 60% !important; /* Increased height limit for better content visibility */
     overflow-y: auto !important; /* Allow scrolling if legend is too tall */
     display: block !important;
     visibility: visible !important;
     z-index: 1000 !important;
+  }
+  
+  /* Portrait orientation adjustments for phones */
+  @media (orientation: portrait) and (max-width: 768px) {
+    #legend {
+      max-height: 70% !important; /* Even more height in portrait mode */
+    }
   }
 }
 
