@@ -4,8 +4,8 @@
     {% set title = 'Users' %}
             {% set tooltip = 'All registered users. Columns include email, names, status, roles, and actions.' %}
             {% set table_id = 'users-table' %}
-    {% set columns = ['Email', 'Name', 'Active', 'Last Login', 'Roles', 'Pro', 'Admin', 'Actions'] %}
-            {% set extra_header = '<div class="d-flex gap-2"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button><button class="btn btn-primary" id="bulkEmailBtn">Email Selected</button></div>' %}
+                        {% set columns = ['Email', 'Name', 'Active', 'Last Login <small class="text-muted">(Pacific Time)</small>', 'Roles', 'Pro', 'Admin', 'Actions'] %}
+            {% set extra_header = '<div class="d-flex gap-2"><button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button><button class="btn btn-primary" id="bulkEmailBtn">Email Selected</button></div><small class="text-muted d-block mt-2">All timestamps shown in Pacific Time (adjusted from UTC)</small>' %}
             {% include 'admin/_datatable_card.html' %}
 
             <!-- Add User Modal -->
@@ -294,7 +294,7 @@ $(document).ready(function() {
                 ).join('');
                 // Format dates for input fields
                 var proEndDate = userData.pro_end_date ? new Date(userData.pro_end_date).toISOString().split('T')[0] : '';
-                var lastLogin = userData.last_login ? new Date(userData.last_login).toLocaleString() : 'Never';
+                var lastLogin = userData.last_login || 'Never';
                 var loginCount = userData.login_count || 0;
                 var canceledAt = userData.canceled_at ? new Date(userData.canceled_at).toISOString().split('T')[0] : '';
                 var custIdHtml = userData.cust_id ? `<a href='https://dashboard.stripe.com/customers/${userData.cust_id}' target='_blank' rel='noopener'>${userData.cust_id}</a>` : 'N/A';

@@ -107,6 +107,7 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h5 class="card-title">Hourly Traffic Pattern</h5>
+                                    <small class="text-muted" id="hourlyTimezoneInfo">Adjusted to Pacific Time</small>
                                 </div>
                                 <div class="card-body">
                                     <canvas id="hourlyChart" height="200"></canvas>
@@ -178,6 +179,10 @@ function loadHourlyChart() {
         .then(data => {
             console.log('Hourly data:', data);
             if (data.success) {
+                // Update timezone info if available
+                if (data.data.timezone_info) {
+                    document.getElementById('hourlyTimezoneInfo').textContent = data.data.timezone_info;
+                }
                 createHourlyChart(data.data.hourly);
             } else {
                 console.error('Hourly API error:', data.error);
