@@ -330,3 +330,61 @@
 .swal2-route-planner .swal2-show {
     animation: none !important;
 }
+
+/* Route Summary Modal Specific Styles */
+.route-summary-modal,
+.swal2-popup[data-route-summary="true"] {
+    width: 90vw !important;
+    max-width: 600px !important;
+}
+
+.route-summary-modal .swal2-html-container,
+.swal2-popup[data-route-summary="true"] .swal2-html-container {
+    padding: 1rem !important;
+}
+
+.route-summary-modal ol,
+.swal2-popup[data-route-summary="true"] ol {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.route-summary-modal li,
+.swal2-popup[data-route-summary="true"] li {
+    margin: 6px 0 !important;
+    line-height: 1.4 !important;
+}
+
+/* Mobile-specific improvements for route summary */
+@media (max-width: 768px) {
+    .route-summary-modal,
+    .swal2-popup[data-route-summary="true"] {
+        width: 95vw !important;
+        margin: 0.5rem !important;
+    }
+    
+    .route-summary-modal .swal2-html-container,
+    .swal2-popup[data-route-summary="true"] .swal2-html-container {
+        padding: 0.75rem !important;
+        font-size: 0.9rem;
+    }
+    
+    .route-summary-modal .swal2-title,
+    .swal2-popup[data-route-summary="true"] .swal2-title {
+        font-size: 1.1rem !important;
+        padding: 0.75rem !important;
+    }
+    
+    .route-summary-modal .swal2-actions,
+    .swal2-popup[data-route-summary="true"] .swal2-actions {
+        padding: 0.75rem !important;
+    }
+    
+    .route-summary-modal .swal2-confirm,
+    .route-summary-modal .swal2-cancel,
+    .swal2-popup[data-route-summary="true"] .swal2-confirm,
+    .swal2-popup[data-route-summary="true"] .swal2-cancel {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.9rem !important;
+    }
+}
