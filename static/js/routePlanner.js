@@ -2388,15 +2388,23 @@ class RoutePlanner {
         const html = `
             <div style="text-align:left; max-height:50vh; overflow:auto;">
                 <div style="margin-bottom:8px; color:#6c757d;">Your route has opened in a new tab. Here are the exact stops in order:</div>
+                <div style="margin-bottom:12px; color:#dc3545; font-weight:bold; font-size:0.9em;">⚠️ If you don't see the map, make sure your browser isn't blocking popups!</div>
                 <ol style="padding-left:18px;">${stopLabels.map(s => `<li style='margin:4px 0;'>${s.replace(/</g,'&lt;')}</li>`).join('')}</ol>
             </div>`;
         Swal.fire({
             title: 'Route opened',
             html,
-            width: 600,
+            width: '90vw',
+            maxWidth: 600,
             showCancelButton: true,
             confirmButtonText: 'Copy addresses',
             cancelButtonText: 'Close',
+            customClass: {
+                popup: 'route-summary-modal'
+            },
+            didOpen: (popup) => {
+                popup.setAttribute('data-route-summary', 'true');
+            }
         }).then(async (r) => {
             if (r.isConfirmed) {
                 const text = stopLabels.join('\n');
