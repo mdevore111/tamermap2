@@ -21,6 +21,28 @@ from io import BytesIO
 from typing import Optional
 from app.models import RouteEvent, LegendClick
 
+def convert_utc_to_pacific_time(utc_timestamp):
+    """Convert UTC timestamp to Pacific time for display"""
+    if not utc_timestamp:
+        return None
+    
+    try:
+        from zoneinfo import ZoneInfo
+        # Convert to Pacific time
+        utc_time = utc_timestamp.replace(tzinfo=ZoneInfo("UTC"))
+        pacific_time = utc_time.astimezone(ZoneInfo("America/Los_Angeles"))
+        return pacific_time.strftime('%Y-%m-%d %H:%M')
+    except ImportError:
+        try:
+            import pytz
+            # Fallback for older Python versions
+            utc_time = pytz.utc.localize(utc_timestamp)
+            pacific_time = utc_time.astimezone(pytz.timezone("America/Los_Angeles"))
+            return pacific_time.strftime('%Y-%m-%d %H:%M')
+        except ImportError:
+            # Final fallback - show UTC with note
+            return f"{utc_timestamp.strftime('%Y-%m-%d %H:%M')} UTC"
+
 # Optional imports for PDF functionality
 SIGNING_AVAILABLE: bool
 try:
@@ -608,7 +630,10 @@ def api_engagement_legend_recent():
             'center_lng': r[7]
         } for r in rows
     ]
-    return jsonify({ 'data': data })
+    return jsonify({ 
+        'data': data,
+        'timezone_info': 'All times shown in UTC (server time)'
+    })
 
 
 # ---------- Duplicates (place_id) admin UI ----------
@@ -718,7 +743,7 @@ def users_data():
                     'name': f"{user.first_name or ''} {user.last_name or ''}".strip() or 'N/A',
                     'email': user.email,
                     'active': 'Yes' if user.active else 'No',
-                    'last_login': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never',
+                    'last_login': convert_utc_to_pacific_time(user.last_login) if user.last_login else 'Never',
                     'roles': roles,
                     'is_pro': 'Yes' if user.has_role('Pro') else 'No',
                     'is_admin': 'Yes' if any(role.name == 'Admin' for role in user.roles) else 'No',
@@ -759,7 +784,7 @@ def get_user(id):
         'email': user.email,
         'active': user.active,
         'pro_end_date': user.pro_end_date.isoformat() if user.pro_end_date else None,
-        'last_login': user.last_login.isoformat() if user.last_login else None,
+        'last_login': convert_utc_to_pacific_time(user.last_login) if user.last_login else None,
         'login_count': user.login_count,
         'cust_id': user.cust_id,
         'canceled_at': user.canceled_at.isoformat() if user.canceled_at else None,
@@ -1527,13 +1552,33 @@ def messages_data():
         subject_display = message.subject[:40] + '...' if message.subject and len(message.subject) > 40 else message.subject
         body_display = message.body[:40] + '...' if message.body and len(message.body) > 40 else message.body
         
+        # Convert UTC timestamp to Pacific time
+        pacific_timestamp = None
+        if message.timestamp:
+            try:
+                from zoneinfo import ZoneInfo
+                pacific_tz = ZoneInfo("America/Los_Angeles")
+                utc_time = message.timestamp.replace(tzinfo=ZoneInfo("UTC"))
+                pacific_time = utc_time.astimezone(pacific_tz)
+                pacific_timestamp = pacific_time.strftime('%Y-%m-%d %H:%M:%S')
+            except ImportError:
+                try:
+                    import pytz
+                    pacific_tz = pytz.timezone("America/Los_Angeles")
+                    utc_time = pytz.utc.localize(message.timestamp)
+                    pacific_time = utc_time.astimezone(pacific_tz)
+                    pacific_timestamp = pacific_time.strftime('%Y-%m-%d %H:%M:%S')
+                except ImportError:
+                    # Fallback to UTC if timezone libraries not available
+                    pacific_timestamp = message.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')
+        
         data.append({
             'id': message.id,
             'email': message.email,
             'communication_type': message.communication_type,
             'subject': subject_display,
             'body': body_display,
-            'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S') if message.timestamp else None,
+            'timestamp': pacific_timestamp,
             'read': 'Yes' if message.read else 'No',
             'actions': (
                 f'<button class="btn btn-sm btn-secondary reply-message-btn me-1" data-id="{message.id}">Reply</button>'

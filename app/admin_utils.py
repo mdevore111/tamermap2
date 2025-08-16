@@ -1291,10 +1291,56 @@ def get_referral_time_analysis(ref_code, days=30):
     """Get time-based analysis for a referral code. Excludes internal traffic."""
     since = datetime.utcnow() - timedelta(days=days)
     
+    # Automatically detect current Pacific timezone and handle DST transitions
+    try:
+        from zoneinfo import ZoneInfo
+        pacific_tz = ZoneInfo("America/Los_Angeles")
+        current_pacific = datetime.now(pacific_tz)
+        
+        # Get the current UTC offset (handles DST automatically)
+        if current_pacific.dst():
+            pacific_offset = -7  # PDT (UTC-7)
+            timezone_name = "PDT"
+        else:
+            pacific_offset = -8  # PST (UTC-8)
+            timezone_name = "PST"
+            
+        current_app.logger.debug(f"Referral time analysis - Detected Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+        
+    except ImportError:
+        # Fallback for older Python versions - use pytz
+        try:
+            import pytz
+            pacific_tz = pytz.timezone("America/Los_Angeles")
+            current_pacific = datetime.now(pacific_tz)
+            
+            # Get the current UTC offset
+            utc_offset = current_pacific.utcoffset().total_seconds() / 3600
+            pacific_offset = int(utc_offset)
+            
+            if current_pacific.dst():
+                timezone_name = "PDT"
+            else:
+                timezone_name = "PST"
+                
+            current_app.logger.debug(f"Referral time analysis - Detected Pacific timezone (pytz): {timezone_name} (UTC{pacific_offset:+d})")
+            
+        except ImportError:
+            # Final fallback - estimate based on current date
+            current_month = datetime.utcnow().month
+            if 3 <= current_month <= 11:  # March to November (approximate DST period)
+                pacific_offset = -7  # PDT
+                timezone_name = "PDT (estimated)"
+            else:
+                pacific_offset = -8  # PST
+                timezone_name = "PST (estimated)"
+            
+            current_app.logger.debug(f"Referral time analysis - Estimated Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+    
     # Get visits grouped by hour of day (excluding internal traffic)
     query = exclude_monitor_traffic(
         db.session.query(
-            func.extract('hour', VisitorLog.timestamp).label('hour'),
+            func.extract('hour', VisitorLog.timestamp).label('utc_hour'),
             func.count(VisitorLog.id).label('visits')
         ).filter(
             VisitorLog.ref_code == ref_code,
@@ -1304,6 +1350,19 @@ def get_referral_time_analysis(ref_code, days=30):
     )
     query = exclude_internal_traffic(query)
     hourly_visits = query.all()
+    
+    # Convert UTC hours to Pacific time
+    pacific_hourly_data = {}
+    for utc_hour, visits in hourly_visits:
+        utc_hour = int(utc_hour)
+        pacific_hour = (utc_hour + pacific_offset) % 24
+        if pacific_hour in pacific_hourly_data:
+            pacific_hourly_data[pacific_hour] += visits
+        else:
+            pacific_hourly_data[pacific_hour] = visits
+    
+    # Convert to sorted list format
+    pacific_hourly = [{'hour': hour, 'visits': visits} for hour, visits in sorted(pacific_hourly_data.items())]
     
     # Get visits grouped by day of week (excluding internal traffic)
     query = exclude_monitor_traffic(
@@ -1320,8 +1379,9 @@ def get_referral_time_analysis(ref_code, days=30):
     daily_visits = query.all()
     
     return {
-        'hourly': [{'hour': int(h), 'visits': v} for h, v in hourly_visits],
-        'daily': [{'day': int(d), 'visits': v} for d, v in daily_visits]
+        'hourly': pacific_hourly,
+        'daily': [{'day': int(d), 'visits': v} for d, v in daily_visits],
+        'timezone_info': f'Adjusted to Pacific Time ({timezone_name})'
     }
 
 def get_referral_geographic_data(ref_code, days=30):
@@ -1389,7 +1449,12 @@ def get_traffic_by_hour(days=30):
         days (int): Number of days to look back (default: 30, max: 60)
     
     Returns:
-        dict: Contains hourly data and overall average
+        dict: Contains hourly data and overall average (adjusted to Pacific Time)
+        
+    Note:
+        Automatically detects current Pacific timezone (PST/PDT) and handles
+        daylight saving time transitions. Uses current timezone for all historical
+        data analysis as a reasonable approximation.
     """
     if days < 1 or days > 60:
         days = 30
@@ -1420,10 +1485,63 @@ def get_traffic_by_hour(days=30):
     if admin_user_ids:
         query = query.filter(~VisitorLog.user_id.in_(admin_user_ids))
     
+    # Convert UTC timestamps to Pacific time for hour grouping
+    # Pacific time is UTC-8 (PST) or UTC-7 (PDT)
+    # Automatically detect current timezone and handle DST transitions
+    try:
+        from zoneinfo import ZoneInfo
+        pacific_tz = ZoneInfo("America/Los_Angeles")
+        current_pacific = datetime.now(pacific_tz)
+        
+        # Get the current UTC offset (handles DST automatically)
+        if current_pacific.dst():
+            pacific_offset = -7  # PDT (UTC-7)
+            timezone_name = "PDT"
+        else:
+            pacific_offset = -8  # PST (UTC-8)
+            timezone_name = "PST"
+            
+        current_app.logger.debug(f"Detected Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+        
+    except ImportError:
+        # Fallback for older Python versions - use pytz
+        try:
+            import pytz
+            pacific_tz = pytz.timezone("America/Los_Angeles")
+            current_pacific = datetime.now(pacific_tz)
+            
+            # Get the current UTC offset
+            utc_offset = current_pacific.utcoffset().total_seconds() / 3600
+            pacific_offset = int(utc_offset)
+            
+            if current_pacific.dst():
+                timezone_name = "PDT"
+            else:
+                timezone_name = "PST"
+                
+            current_app.logger.debug(f"Detected Pacific timezone (pytz): {timezone_name} (UTC{pacific_offset:+d})")
+            
+        except ImportError:
+            # Final fallback - estimate based on current date
+            current_month = datetime.utcnow().month
+            if 3 <= current_month <= 11:  # March to November (approximate DST period)
+                pacific_offset = -7  # PDT
+                timezone_name = "PDT (estimated)"
+            else:
+                pacific_offset = -8  # PST
+                timezone_name = "PST (estimated)"
+            
+            current_app.logger.debug(f"Estimated Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+    
+    # For historical data analysis, we'll use the current timezone
+    # This is a reasonable approximation since most users care about current patterns
+    # Future enhancement: could analyze each timestamp individually for exact timezone state
+    
     logs = (
         query
         .with_entities(
-            func.extract('hour', VisitorLog.timestamp).label('hour'),
+            # Convert UTC hour to Pacific hour: (UTC_hour + offset) % 24
+            func.extract('hour', VisitorLog.timestamp).label('utc_hour'),
             func.count(VisitorLog.id).label('count')
         )
         .filter(VisitorLog.timestamp >= since)
@@ -1437,10 +1555,12 @@ def get_traffic_by_hour(days=30):
     # Initialize hourly buckets (0-23) with 0 visits
     hourly_data = {hour: 0 for hour in range(24)}
     
-    # Count visits by hour
+    # Count visits by hour, converting UTC to Pacific time
     for log in logs:
-        hour = int(log.hour)
-        hourly_data[hour] += log.count
+        utc_hour = int(log.utc_hour)
+        # Convert to Pacific time: (UTC_hour + offset) % 24
+        pacific_hour = (utc_hour + pacific_offset) % 24
+        hourly_data[pacific_hour] += log.count
     
     # Calculate total visits across all hours
     total_visits = sum(hourly_data.values())
@@ -1477,5 +1597,6 @@ def get_traffic_by_hour(days=30):
         'hourly_data': result,
         'total_visits': total_visits,
         'avg_visits_per_hour': avg_visits_per_hour,
-        'days': days
+        'days': days,
+        'timezone_info': f'Adjusted to Pacific Time ({timezone_name})'
     }

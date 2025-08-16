@@ -57,6 +57,7 @@
   {# Traffic by Hour chart #}
   <div class="dashboard-section my-5">
     <h3 class="dashboard-header">Traffic by Hour (<span id="hourly-chart-days">{{ days_filter }}</span> Days)</h3>
+    <small class="text-muted" id="timezoneInfo">Adjusted to Pacific Time (PST)</small>
     <div class="row mb-2">
       <div class="col-md-4">
         <small class="text-muted">Total Visits: <span id="hourly-total-visits">-</span></small>
@@ -523,7 +524,7 @@
       });
   }
 
-  // Update traffic by hour chart
+    // Update traffic by hour chart
   function updateTrafficByHour(days) {
     return fetch(`/admin/api/analytics/traffic-by-hour?days=${days}`)
       .then(response => response.json())
@@ -533,6 +534,11 @@
           const totalVisitsSpan = document.getElementById('hourly-total-visits');
           const avgPerHourSpan = document.getElementById('hourly-avg-per-hour');
           const avgPerDaySpan = document.getElementById('hourly-avg-per-day');
+          
+          // Update timezone info if available
+          if (data.timezone_info) {
+            document.getElementById('timezoneInfo').textContent = data.timezone_info;
+          }
           
           // Update days display
           daysSpan.textContent = days;

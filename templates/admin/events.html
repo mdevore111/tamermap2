@@ -99,7 +99,10 @@
     <!-- Events Table -->
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <span data-bs-toggle="tooltip" title="All events in the system. Columns include name, date, location, description, and actions to edit or delete." id="tableTitle">Events</span>
+            <div>
+                <span data-bs-toggle="tooltip" title="All events in the system. Columns include name, date, location, description, and actions to edit or delete." id="tableTitle">Events</span>
+                <small class="text-muted d-block">All dates and times shown in UTC (server time)</small>
+            </div>
             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEventModal">Add Event</button>
         </div>
         <div class="card-body">
@@ -109,10 +112,10 @@
                         <tr>
                             <th>Title</th>
                             <th>Address</th>
-                            <th>Start Date</th>
-                            <th>Start Time</th>
-                            <th>End Date</th>
-                            <th>End Time</th>
+                            <th>Start Date <small class="text-muted">(UTC)</small></th>
+                            <th>Start Time <small class="text-muted">(UTC)</small></th>
+                            <th>End Date <small class="text-muted">(UTC)</small></th>
+                            <th>End Time <small class="text-muted">(UTC)</small></th>
                             <th>Actions</th>
                         </tr>
                     </thead>
