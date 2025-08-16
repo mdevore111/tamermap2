@@ -227,9 +227,9 @@ body.splash-page #footer {
 /* Compact splash hero: remove any global min-height constraints */
 body.splash-page .landing-page {
   min-height: auto !important;
-  height: 360px !important;
+  height: auto !important;
   padding: 16px 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   background-size: contain !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
@@ -470,4 +470,149 @@ form button:hover {
 .half-size {
     width: 65%;        /* Shrinks the image to 50% of its container's width */
     height: auto;      /* Maintains aspect ratio */
+}
+
+/* ==========================================================================
+   SWEETALERT2 MODAL FIXES
+   ========================================================================== */
+
+/* Fix height issues with SweetAlert2 modals on desktop */
+.swal2-popup {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+}
+
+/* Ensure the modal content is fully visible */
+.swal2-popup .swal2-image {
+    max-height: 40vh !important;
+    object-fit: contain !important;
+}
+
+/* Adjust modal width for better desktop display */
+@media (min-width: 768px) {
+    .swal2-popup {
+        width: 90% !important;
+        max-width: 500px !important;
+    }
+}
+
+/* Specific styling for the upgrade modal */
+.swal2-upgrade-modal {
+    max-height: 95vh !important;
+    overflow: visible !important;
+    /* Force portrait orientation with more height */
+    aspect-ratio: 3/5 !important;
+    max-width: 480px !important; /* Reduced width slightly */
+    min-height: 720px !important; /* Increased min-height */
+    /* Ensure even borders */
+    padding: 1em 1em !important; /* Added top/bottom and left/right padding */
+}
+
+/* Responsive height adjustments */
+@media (max-height: 800px) {
+    .swal2-upgrade-modal {
+        min-height: 650px !important;
+        aspect-ratio: 2/3 !important;
+    }
+}
+
+@media (max-height: 600px) {
+    .swal2-upgrade-modal {
+        min-height: 550px !important;
+        aspect-ratio: 4/5 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .swal2-upgrade-modal {
+        width: 95% !important;
+        max-width: 400px !important;
+        min-height: 600px !important;
+        aspect-ratio: 3/4 !important;
+    }
+}
+
+.swal2-upgrade-modal .swal2-title {
+    font-size: 1.8rem !important;
+    padding: 0.1em 0 0.1em 0 !important; /* Minimal vertical padding, no horizontal */
+    margin-bottom: 0.1em !important;
+    line-height: 1.2 !important;
+}
+
+.swal2-upgrade-modal .swal2-image {
+    max-height: 75vh !important;
+    object-fit: contain !important;
+    margin: 0 !important; /* No margins, let modal padding handle spacing */
+}
+
+/* Ensure buttons are always visible */
+.swal2-upgrade-modal .swal2-actions {
+    margin-top: 0.5em !important; /* Slightly more space from image */
+    padding-bottom: 0.5em !important; /* More bottom padding for buttons */
+}
+
+/* Remove default SweetAlert2 padding to maximize content space */
+.swal2-upgrade-modal .swal2-html-container {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Ensure the modal content uses maximum available space */
+.swal2-upgrade-modal .swal2-content {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Pro Features Comparison Styling */
+.pro-features-comparison {
+    padding: 1em 0;
+    text-align: center;
+}
+
+.feature-row {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.2em;
+    gap: 1em;
+}
+
+.feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 120px;
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5em;
+}
+
+.feature-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.coming-soon {
+    margin-top: 1.5em;
+    padding: 0.8em;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.coming-soon-icon {
+    font-size: 1.2rem;
+    margin-right: 0.5em;
+}
+
+.coming-soon-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c757d;
+    font-style: italic;
 }

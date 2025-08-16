@@ -32,6 +32,7 @@
       <div>
         <label for="register-password">{{ register_user_form.password.label.text }}</label>
         {{ register_user_form.password(placeholder="Enter your password", id="register-password") }}
+        <div id="register-password-strength-meter"></div>
       </div>
       <div>
         <label for="confirm-password">{{ register_user_form.password_confirm.label.text }}</label>
@@ -44,4 +45,19 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('register-password');
+    if (passwordInput) {
+        new PasswordStrengthMeter(passwordInput, {
+            minLength: 8,
+            requireUppercase: true,
+            requireLowercase: true,
+            requireNumbers: true,
+            requireSpecialChars: false
+        });
+    }
+});
+</script>
 {% endblock %}

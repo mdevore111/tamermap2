@@ -202,13 +202,13 @@ $(document).ready(function() {
             var form = $('#addUserModal .modal-body');
             var rolesOptions = roles.map(r => `<option value='${r.name}'>${r.name}</option>`).join('');
             form.html(`
-                <div class='mb-3'><label>First Name</label><input name='first_name' class='form-control'></div>
-                <div class='mb-3'><label>Last Name</label><input name='last_name' class='form-control'></div>
-                <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control' required></div>
-                <div class='mb-3'><label>Password</label><input name='password' type='password' class='form-control' required></div>
-                <div class='mb-3'><label>Active</label><select name='active' class='form-select'><option value='1'>Yes</option><option value='0'>No</option></select></div>
-                <div class='mb-3'><label>Pro End Date</label><input name='pro_end_date' type='date' class='form-control'></div>
-                <div class='mb-3'><label>Roles</label><select name='roles' class='form-select' multiple>${rolesOptions}</select></div>
+                <div class='mb-1'><label class='small mb-1'>First Name</label><input name='first_name' class='form-control form-control-sm'></div>
+                <div class='mb-1'><label class='small mb-1'>Last Name</label><input name='last_name' class='form-control form-control-sm'></div>
+                <div class='mb-1'><label class='small mb-1'>Email</label><input name='email' type='email' class='form-control form-control-sm' required></div>
+                <div class='mb-1'><label class='small mb-1'>Password</label><input name='password' type='password' class='form-control form-control-sm' required></div>
+                <div class='mb-1'><label class='small mb-1'>Active</label><select name='active' class='form-select form-select-sm'><option value='1'>Yes</option><option value='0'>No</option></select></div>
+                <div class='mb-1'><label class='small mb-1'>Pro End Date</label><input name='pro_end_date' type='date' class='form-control form-control-sm'></div>
+                <div class='mb-1'><label class='small mb-1'>Roles</label><select name='roles' class='form-select form-select-sm' multiple>${rolesOptions}</select></div>
             `);
         });
     });
@@ -262,28 +262,28 @@ $(document).ready(function() {
                     <input type='hidden' name='cust_id' value='${userData.cust_id || ''}'>
                     <input type='hidden' name='login_count' value='${loginCount}'>
                     <input type='hidden' name='last_login' value='${userData.last_login || ''}'>
-                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>User ID:</label><span class='ms-2'>${id}</span></div>
-                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>Customer ID:</label><span class='ms-2'>${custIdHtml}</span></div>
-                    <div class='mb-3'><label>First Name</label><input name='first_name' class='form-control' value='${userData.first_name || ''}'></div>
-                    <div class='mb-3'><label>Last Name</label><input name='last_name' class='form-control' value='${userData.last_name || ''}'></div>
-                    <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control' value='${userData.email || ''}' required></div>
-                    <div class='mb-3'>
-                      <label>Password <small class='text-muted'>(optional)</small></label>
-                      <input name='password' type='password' class='form-control' placeholder='Leave blank to keep current password' pattern='(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}' title='Min 8 chars, include upper/lower and a number'>
-                      <div class='form-text'>Min 8 characters with upper, lower, and a number.</div>
+                    <div class='mb-1 d-flex align-items-center'><label class='mb-0 small'>User ID:</label><span class='ms-2'>${id}</span></div>
+                    <div class='mb-1 d-flex align-items-center'><label class='mb-0 small'>Customer ID:</label><span class='ms-2'>${custIdHtml}</span></div>
+                    <div class='mb-1'><label class='small mb-1'>First Name</label><input name='first_name' class='form-control form-control-sm' value='${userData.first_name || ''}'></div>
+                    <div class='mb-1'><label class='small mb-1'>Last Name</label><input name='last_name' class='form-control form-control-sm' value='${userData.last_name || ''}'></div>
+                    <div class='mb-1'><label class='small mb-1'>Email</label><input name='email' type='email' class='form-control form-control-sm' value='${userData.email || ''}' required></div>
+                    <div class='mb-1'>
+                      <label class='small mb-1'>Password <small class='text-muted'>(optional)</small></label>
+                      <input name='password' type='password' class='form-control form-control-sm' placeholder='Leave blank to keep current password' pattern='(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}' title='Min 8 chars, include upper/lower and a number'>
+                      <div class='form-text small'>Min 8 characters with upper, lower, and a number.</div>
                     </div>
-                    <div class='mb-3'>
-                      <label>Confirm Password <small class='text-muted'>(optional)</small></label>
-                      <input name='password_confirm' type='password' class='form-control' placeholder='Re-enter password'>
+                    <div class='mb-1'>
+                      <label class='small mb-1'>Confirm Password <small class='text-muted'>(optional)</small></label>
+                      <input name='password_confirm' type='password' class='form-control form-control-sm' placeholder='Re-enter password'>
                     </div>
-                    <div class='mb-3'><label>Pro End Date</label><input type='date' name='pro_end_date' class='form-control' value='${proEndDate}'></div>
-                    <div class='mb-3'><label>Active</label><select name='active' class='form-select'><option value='1' ${userData.active ? 'selected' : ''}>Yes</option><option value='0' ${!userData.active ? 'selected' : ''}>No</option></select></div>
-                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>Last Login:</label><span class='ms-2'>${lastLogin}</span></div>
-                    <div class='mb-3 d-flex align-items-center'><label class='mb-0'>Login Count:</label><span class='ms-2'>${loginCount}</span></div>
-                    <div class='mb-3'><label>Roles</label><select name='roles' class='form-select' multiple>${rolesOptions}</select></div>
-                    <div class='mb-3'><label>Canceled At</label><input name='canceled_at' type='date' class='form-control' value='${canceledAt}'></div>
-                    <div class='mb-3'><label>Cancel Reason</label><input name='cancellation_reason' class='form-control' value='${userData.cancellation_reason || ''}'></div>
-                    <div class='mb-3'><label>Cancel Comment</label><textarea name='cancellation_comment' class='form-control'>${userData.cancellation_comment || ''}</textarea></div>
+                    <div class='mb-1'><label class='small mb-1'>Pro End Date</label><input type='date' name='pro_end_date' class='form-control form-control-sm' value='${proEndDate}'></div>
+                    <div class='mb-1'><label class='small mb-1'>Active</label><select name='active' class='form-select form-select-sm'><option value='1' ${userData.active ? 'selected' : ''}>Yes</option><option value='0' ${!userData.active ? 'selected' : ''}>No</option></select></div>
+                    <div class='mb-1 d-flex align-items-center'><label class='mb-0 small'>Last Login:</label><span class='ms-2'>${lastLogin}</span></div>
+                    <div class='mb-1 d-flex align-items-center'><label class='mb-0 small'>Login Count:</label><span class='ms-2'>${loginCount}</span></div>
+                    <div class='mb-1'><label class='small mb-1'>Roles</label><select name='roles' class='form-select form-select-sm' multiple>${rolesOptions}</select></div>
+                    <div class='mb-1'><label class='small mb-1'>Canceled At</label><input name='canceled_at' type='date' class='form-control form-control-sm' value='${canceledAt}'></div>
+                    <div class='mb-1'><label class='small mb-1'>Cancel Reason</label><input name='cancellation_reason' class='form-control form-control-sm' value='${userData.cancellation_reason || ''}'></div>
+                    <div class='mb-1'><label class='small mb-1'>Cancel Comment</label><textarea name='cancellation_comment' class='form-control form-control-sm' rows='2'>${userData.cancellation_comment || ''}</textarea></div>
                 `;
                 form.html(formHtml);
                 modal.modal('show');
