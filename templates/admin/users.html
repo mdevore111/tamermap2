@@ -202,28 +202,69 @@ $(document).ready(function() {
             var form = $('#addUserModal .modal-body');
             var rolesOptions = roles.map(r => `<option value='${r.name}'>${r.name}</option>`).join('');
             form.html(`
-                <div class='mb-1'><label class='small mb-1'>First Name</label><input name='first_name' class='form-control form-control-sm'></div>
-                <div class='mb-1'><label class='small mb-1'>Last Name</label><input name='last_name' class='form-control form-control-sm'></div>
-                <div class='mb-1'><label class='small mb-1'>Email</label><input name='email' type='email' class='form-control form-control-sm' required></div>
-                <div class='mb-1'><label class='small mb-1'>Password</label><input name='password' type='password' class='form-control form-control-sm' required></div>
-                <div class='mb-1'><label class='small mb-1'>Active</label><select name='active' class='form-select form-select-sm'><option value='1'>Yes</option><option value='0'>No</option></select></div>
-                <div class='mb-1'><label class='small mb-1'>Pro End Date</label><input name='pro_end_date' type='date' class='form-control form-control-sm'></div>
-                <div class='mb-1'><label class='small mb-1'>Roles</label><select name='roles' class='form-select form-select-sm' multiple>${rolesOptions}</select></div>
+                <div class='mb-1'><label class='small mb-0'>First Name</label><input name='first_name' class='form-control form-control-sm'></div>
+                <div class='mb-1'><label class='small mb-0'>Last Name</label><input name='last_name' class='form-control form-control-sm'></div>
+                <div class='mb-1'><label class='small mb-0'>Email</label><input name='email' type='email' class='form-control form-control-sm' required></div>
+                <div class='mb-1'><label class='small mb-0'>Password</label><input name='password' type='password' class='form-control form-control-sm' required pattern='(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}' title='Min 8 chars, include upper/lower and a number'></div>
+                <div class='mb-1'><label class='small mb-0'>Confirm Password</label><input name='password_confirm' type='password' class='form-control form-control-sm' required></div>
+                <div class='mb-1'><label class='small mb-0'>Active</label><select name='active' class='form-select form-select-sm'><option value='1'>Yes</option><option value='0'>No</option></select></div>
+                <div class='mb-1'><label class='mb-0'>Pro End Date</label><input name='pro_end_date' type='date' class='form-control form-control-sm'></div>
+                <div class='mb-1'><label class='small mb-0'>Roles</label><select name='roles' class='form-select form-select-sm' multiple>${rolesOptions}</select></div>
             `);
+            
+            // Add real-time password validation
+            $('input[name="password_confirm"]').on('input', function() {
+                var password = $('input[name="password"]').val();
+                var confirmPassword = $(this).val();
+                
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        $(this).removeClass('is-invalid').addClass('is-valid');
+                    } else {
+                        $(this).removeClass('is-valid').addClass('is-invalid');
+                    }
+                } else {
+                    $(this).removeClass('is-valid is-invalid');
+                }
+            });
+            
+            $('input[name="password"]').on('input', function() {
+                var password = $(this).val();
+                var confirmPassword = $('input[name="password_confirm"]').val();
+                
+                if (confirmPassword.length > 0) {
+                    if (password === confirmPassword) {
+                        $('input[name="password_confirm"]').removeClass('is-invalid').addClass('is-valid');
+                    } else {
+                        $('input[name="password_confirm"]').removeClass('is-valid').addClass('is-invalid');
+                    }
+                }
+            });
         });
     });
 
     // Handle Add User submit
     $('#addUserForm').on('submit', function(e) {
         e.preventDefault();
+        
+        // Check if passwords match
+        var password = $('input[name="password"]').val();
+        var passwordConfirm = $('input[name="password_confirm"]').val();
+        
+        if (password !== passwordConfirm) {
+            alert('Error: Passwords do not match!');
+            return;
+        }
+        
         var data = {};
         $(this).find('input,select').each(function() {
             if ($(this).attr('name') === 'roles') {
                 data['roles'] = $(this).val() || [];
-            } else {
+            } else if ($(this).attr('name') !== 'password_confirm') { // Don't send confirm password
                 data[$(this).attr('name')] = $(this).val();
             }
         });
+        
         $.ajax({
             url: '/admin/users/add',
             method: 'POST',

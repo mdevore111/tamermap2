@@ -285,6 +285,24 @@ class User(db.Model, UserMixin):
 
 
 
+    def verify_password(self, password):
+        """
+        Verify a password against the stored hash.
+        
+        This method is required by Flask-Security for password authentication.
+        """
+        from werkzeug.security import check_password_hash
+        from flask import current_app
+        
+        current_app.logger.info(f"VERIFY_PASSWORD called for user {self.email}")
+        current_app.logger.info(f"   Password length: {len(password)}")
+        current_app.logger.info(f"   Stored hash length: {len(self.password)}")
+        
+        result = check_password_hash(self.password, password)
+        current_app.logger.info(f"   Verification result: {result}")
+        
+        return result
+
     def __repr__(self):
         return (f"<User id={self.id} email={self.email} first_name={self.first_name} "
                 f"last_name={self.last_name} cust_id={self.cust_id}>")

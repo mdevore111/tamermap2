@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, jsonify, request, flash, redirect,
 import json
 from flask_login import login_required, current_user
 from flask_authorize import Authorize
-from flask_security import utils
+from werkzeug.security import generate_password_hash
 from app.models import User, Retailer, Event, Message, Role, VisitorLog, OutboundMessage, BulkEmailJob, BulkEmailRecipient  # Removed Location import since table doesn't exist
 from app import db
 from sqlalchemy import func
@@ -848,14 +848,20 @@ def add_user():
     # Create new user
     # Validate password
     pw = data.get('password', '')
+    current_app.logger.info(f"Creating user with email: {data['email']}, password length: {len(pw)}")
+    
     if len(pw) < 8 or not any(c.islower() for c in pw) or not any(c.isupper() for c in pw) or not any(c.isdigit() for c in pw):
+        current_app.logger.warning(f"Password validation failed for user {data['email']}: length={len(pw)}, has_lower={any(c.islower() for c in pw)}, has_upper={any(c.isupper() for c in pw)}, has_digit={any(c.isdigit() for c in pw)}")
         return jsonify({'errors': {'password': 'Password must be at least 8 chars and include upper, lower, and a number'}}), 400
+
+    hashed_password = generate_password_hash(pw)
+    current_app.logger.info(f"Password hashed successfully for user {data['email']}, hash length: {len(hashed_password)}")
 
     user = User(
         first_name=data.get('first_name'),
         last_name=data.get('last_name'),
         email=data['email'],
-        password=utils.encrypt_password(pw),
+        password=hashed_password,
         active=bool(int(data.get('active', 1)))
     )
     
@@ -874,8 +880,16 @@ def add_user():
                 user.roles.append(role)
     
     db.session.add(user)
-    db.session.commit()
-    return jsonify({'message': 'User created successfully'})
+    current_app.logger.info(f"User object added to session for {data['email']}")
+    
+    try:
+        db.session.commit()
+        current_app.logger.info(f"User successfully committed to database: {data['email']}, ID: {user.id}")
+        return jsonify({'message': 'User created successfully'})
+    except Exception as e:
+        current_app.logger.error(f"Failed to commit user {data['email']} to database: {e}")
+        db.session.rollback()
+        return jsonify({'errors': {'database': 'Failed to save user to database'}}), 500
 
 @admin_bp.route('/users/edit/<int:id>', methods=['PUT'])
 @admin_required
