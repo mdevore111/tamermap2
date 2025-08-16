@@ -133,8 +133,8 @@ class BaseConfig:
     # --------------------------
     # Flask-Security Configuration
     # --------------------------
-    SECURITY_POST_LOGIN_VIEW = None  # Changed to None - don't force redirect
-    SECURITY_POST_RESET_VIEW = "/maps"
+    SECURITY_POST_LOGIN_VIEW = "/"  # Redirect to home page after successful login
+    SECURITY_POST_RESET_VIEW = "/login"
     SECURITY_POST_FORGOT_PASSWORD_VIEW = None  # Changed to None - don't redirect after forgot password
     SECURITY_REGISTERABLE = False  # Registration controlled by Stripe payment system webhooks.
     SECURITY_RECOVERABLE = True
@@ -155,6 +155,16 @@ class BaseConfig:
     SECURITY_CHANGE_PASSWORD_TEMPLATE = "security/change_password.html"
     SECURITY_FORGOT_PASSWORD_TEMPLATE = "security/forgot_password.html"
     SECURITY_RESET_PASSWORD_TEMPLATE = "security/reset_password.html"
+    
+    # Essential Flask-Security settings for authentication
+    SECURITY_PASSWORD_HASH = "bcrypt"  # Use bcrypt for password hashing (supported by Flask-Security)
+    SECURITY_PASSWORD_SALT = "tamermap-salt"  # Custom salt for password hashing
+    SECURITY_PASSWORD_LENGTH_MIN = 8  # Minimum password length
+    SECURITY_PASSWORD_COMPLEXITY = {
+        'UPPER': 1,      # At least 1 uppercase letter
+        'LOWER': 1,      # At least 1 lowercase letter
+        'DIGITS': 1,     # At least 1 digit
+    }
     
 
     

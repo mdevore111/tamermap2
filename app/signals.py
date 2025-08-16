@@ -3,7 +3,7 @@ from datetime import datetime
 
 from flask import request, session
 from flask_login import user_logged_in
-from flask_security.signals import user_registered
+from flask_security.signals import user_registered, user_authenticated
 
 from .models import LoginEvent
 from .utils import trial_period
@@ -87,6 +87,21 @@ def register_signals(app, user_datastore, db):
 
     # Connect the signal listener to the user_logged_in signal
     user_logged_in.connect(on_user_logged_in)
+    
+    # Add Flask-Security debugging signals
+    @user_authenticated.connect_via(app)
+    def on_user_authenticated(sender, user, **extra):
+        """Debug signal for when Flask-Security authenticates a user."""
+        app.logger.info(f"FLASK-SECURITY: User authenticated: {user.email} (ID: {user.id})")
+        app.logger.info(f"   Extra data: {extra}")
+        
+        # Also log the authentication method being used
+        if 'authn_via' in extra:
+            app.logger.info(f"   Authentication method: {extra['authn_via']}")
+        if 'authn_mechanism' in extra:
+            app.logger.info(f"   Auth mechanism: {extra['authn_mechanism']}")
+    
+
 
     @user_registered.connect_via(app)
     def on_user_registered(sender, user, **extra):

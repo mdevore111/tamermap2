@@ -182,6 +182,24 @@ def create_app(config_class=BaseConfig):
     # Initialize Flask-Security with extended registration and confirmation forms.
     security = Security(app, user_datastore)
     
+    # Debug the user datastore to see what methods are available
+    app.logger.info(f"USER DATASTORE DEBUG:")
+    app.logger.info(f"   User model methods: {[m for m in dir(user_datastore.user_model) if not m.startswith('_')]}")
+    app.logger.info(f"   Has verify_password: {hasattr(user_datastore.user_model, 'verify_password')}")
+    app.logger.info(f"   Has get_id: {hasattr(user_datastore.user_model, 'get_id')}")
+    app.logger.info(f"   Has is_active: {hasattr(user_datastore.user_model, 'is_active')}")
+    app.logger.info(f"   Has is_authenticated: {hasattr(user_datastore.user_model, 'is_authenticated')}")
+    app.logger.info(f"   Has is_anonymous: {hasattr(user_datastore.user_model, 'is_anonymous')}")
+    
+    # Debug Flask-Security configuration
+    app.logger.info(f"FLASK-SECURITY CONFIGURATION:")
+    app.logger.info(f"   Login URL: {app.config.get('SECURITY_LOGIN_URL', 'Not set')}")
+    app.logger.info(f"   Post Login View: {app.config.get('SECURITY_POST_LOGIN_VIEW', 'Not set')}")
+    app.logger.info(f"   Post Reset View: {app.config.get('SECURITY_POST_RESET_VIEW', 'Not set')}")
+    app.logger.info(f"   User Datastore: {type(user_datastore).__name__}")
+    app.logger.info(f"   User Model: {user_datastore.user_model.__name__}")
+    app.logger.info(f"   Role Model: {user_datastore.role_model.__name__}")
+    
     # Ensure Flask-Security uses the same user loader as Flask-Login
     # This should resolve the session mismatch by ensuring both systems see the same user state
     # Note: user_loader is set later in the file after the function is defined
@@ -333,6 +351,15 @@ def create_app(config_class=BaseConfig):
             app.logger.info(f"Flask-Login current_user: {current_user}")
             app.logger.info(f"Flask-Login is_authenticated: {getattr(current_user, 'is_authenticated', 'N/A')}")
             app.logger.info(f"Flask-Login user ID: {getattr(current_user, 'id', 'N/A')}")
+            
+            # Add login form debugging
+            if request.endpoint == 'security.login' and request.method == 'POST':
+                app.logger.info(f"LOGIN ATTEMPT DEBUG:")
+                app.logger.info(f"   Form data: {dict(request.form)}")
+                app.logger.info(f"   Email: {request.form.get('email', 'No email')}")
+                app.logger.info(f"   Password length: {len(request.form.get('password', ''))}")
+                app.logger.info(f"   Remember me: {request.form.get('remember', 'No')}")
+            
             try:
                 session_keys = list(session.keys()) if hasattr(session, 'keys') else []
                 app.logger.info(f"Session keys: {session_keys}")
@@ -595,8 +622,8 @@ def create_app(config_class=BaseConfig):
                 app.logger.info(f"Flask-Login: No user found with fs_uniquifier: {user_id}")
             return user
     
-    # Ensure Flask-Security uses the same user loader
-    security.user_loader = load_user
+    # REMOVED: This was causing conflicts between Flask-Login and Flask-Security
+    # security.user_loader = load_user
 
     # Initialize Flask-Session AFTER configuration is loaded
     # This ensures all session settings are properly applied
