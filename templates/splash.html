@@ -10,10 +10,14 @@
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  /* Fixed, compact heights by breakpoint */
-  height: 420px;
+  /* Use min-height instead of fixed height to accommodate content */
+  min-height: 420px;
+  height: auto;
   padding: 16px 0;
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .landing-page::before {
   content: "";
@@ -36,6 +40,8 @@
     margin: auto;
     text-align: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
   }
   .headline {
     font-size: 1.8rem;
@@ -54,6 +60,7 @@
     display: flex;
     justify-content: center;
     gap: 20px;
+    margin-top: 20px;
   }
   .primary-button, .secondary-button {
     text-decoration: none;
@@ -83,14 +90,14 @@
 
   /* Tablet */
   @media (max-width: 991px) {
-    .landing-page { height: 380px; }
+    .landing-page { min-height: 380px; }
     .headline { font-size: 1.6rem; }
     .content { padding: 20px; }
   }
 
   /* Mobile */
   @media (max-width: 576px) {
-    .landing-page { height: 320px; padding: 12px 0; }
+    .landing-page { min-height: 320px; padding: 12px 0; }
     .headline { font-size: 1.4rem; }
     .subtitle { font-size: 1rem; }
     .content { padding: 16px; }
