@@ -1,6 +1,6 @@
 import psutil
 from datetime import datetime, timedelta
-from sqlalchemy import func, desc, and_, or_, case
+from sqlalchemy import func, desc, and_, or_, case, extract, text
 from .models import User, VisitorLog, Event, Retailer, Message, Role, PinInteraction, BillingEvent
 
 def exclude_monitor_traffic(query):
@@ -760,7 +760,7 @@ def get_visit_trends_30d(days=30):
     admin_user_ids = set()
     try:
         admin_users = db.session.query(User.id).join(User.roles).filter(
-            func.lower(db.text("role.name")) == 'admin'
+            func.lower(text("role.name")) == 'admin'
         ).all()
         admin_user_ids = {user.id for user in admin_users}
     except Exception as e:
@@ -1381,3 +1381,101 @@ def get_referral_device_data(ref_code, days=30):
             device_types['Desktop'] += visits
     
     return [{'device': device, 'visits': visits} for device, visits in device_types.items()]
+
+def get_traffic_by_hour(days=30):
+    """Return traffic patterns by hour averaged across the last N days.
+    
+    Args:
+        days (int): Number of days to look back (default: 30, max: 60)
+    
+    Returns:
+        dict: Contains hourly data and overall average
+    """
+    if days < 1 or days > 60:
+        days = 30
+    
+    since = datetime.utcnow().date() - timedelta(days=days-1)
+    
+    # Debug logging
+    from flask import current_app
+    current_app.logger.debug(f"Getting traffic by hour since {since}")
+    
+    # Get admin user IDs to exclude them
+    from app.models import Role
+    admin_user_ids = set()
+    try:
+        admin_users = db.session.query(User.id).join(User.roles).filter(
+            func.lower(text("role.name")) == 'admin'
+        ).all()
+        admin_user_ids = {user.id for user in admin_users}
+    except Exception as e:
+        current_app.logger.warning(f"Could not get admin user IDs: {e}")
+    
+    # Query all visits in the last N days with hour extraction
+    # Exclude monitor traffic and admin users, but NOT internal traffic
+    # (Internal traffic flag is too aggressive and filters out legitimate users)
+    query = exclude_monitor_traffic(VisitorLog.query)
+    
+    # Filter out admin users
+    if admin_user_ids:
+        query = query.filter(~VisitorLog.user_id.in_(admin_user_ids))
+    
+    logs = (
+        query
+        .with_entities(
+            func.extract('hour', VisitorLog.timestamp).label('hour'),
+            func.count(VisitorLog.id).label('count')
+        )
+        .filter(VisitorLog.timestamp >= since)
+        .group_by(func.extract('hour', VisitorLog.timestamp))
+        .order_by(func.extract('hour', VisitorLog.timestamp))
+        .all()
+    )
+    
+    current_app.logger.debug(f"Found {len(logs)} hourly traffic records")
+    
+    # Initialize hourly buckets (0-23) with 0 visits
+    hourly_data = {hour: 0 for hour in range(24)}
+    
+    # Count visits by hour
+    for log in logs:
+        hour = int(log.hour)
+        hourly_data[hour] += log.count
+    
+    # Calculate total visits across all hours
+    total_visits = sum(hourly_data.values())
+    
+    # Calculate average visits per hour across the entire time period
+    # This is the baseline: total visits / (24 hours × number of days)
+    total_hours = 24 * days
+    avg_visits_per_hour = round(total_visits / total_hours, 2) if total_hours > 0 else 0
+    
+    # Convert to list and calculate daily averages
+    result = []
+    for hour in range(24):
+        # Calculate average visits per day for this hour
+        avg_visits_per_day = round(hourly_data[hour] / days, 2)
+        
+        # Format hour for display (12-hour format with AM/PM)
+        if hour == 0:
+            hour_display = "12 AM"
+        elif hour < 12:
+            hour_display = f"{hour} AM"
+        elif hour == 12:
+            hour_display = "12 PM"
+        else:
+            hour_display = f"{hour - 12} PM"
+        
+        result.append({
+            'hour': hour,
+            'hour_display': hour_display,
+            'total_visits': hourly_data[hour],
+            'avg_visits_per_day': avg_visits_per_day
+        })
+    
+    return {
+        'hourly_data': result,
+        'total_visits': total_visits,
+        'avg_visits_per_hour': avg_visits_per_hour,
+        'days': days
+    }

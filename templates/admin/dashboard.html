@@ -54,6 +54,24 @@
     <canvas id="visitChart" class="w-100" style="height:40vh;"></canvas>
   </div>
 
+  {# Traffic by Hour chart #}
+  <div class="dashboard-section my-5">
+    <h3 class="dashboard-header">Traffic by Hour (<span id="hourly-chart-days">{{ days_filter }}</span> Days)</h3>
+    <div class="row mb-2">
+      <div class="col-md-4">
+        <small class="text-muted">Total Visits: <span id="hourly-total-visits">-</span></small>
+      </div>
+      <div class="col-md-4">
+        <small class="text-muted">Avg per Hour: <span id="hourly-avg-per-hour">-</span></small>
+      </div>
+      <div class="col-md-4">
+        <small class="text-muted">Avg per Day: <span id="hourly-avg-per-day">-</span></small>
+      </div>
+    </div>
+    <hr>
+    <canvas id="hourlyChart" class="w-100" style="height:40vh;"></canvas>
+  </div>
+
   {# Referral Code Trends bar chart #}
   <div class="dashboard-section my-5">
     <h3 class="dashboard-header">Top Referral Codes (<span id="ref-chart-days">{{ days_filter }}</span> Days)</h3>
@@ -191,6 +209,73 @@
     }
   });
 
+  // Traffic by Hour Chart
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  let hourlyChart = new Chart(hourlyCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        { 
+          label: 'Average Visits per Day', 
+          data: [], 
+          backgroundColor: 'rgba(153, 102, 255, 0.7)',
+          borderColor: 'rgba(153, 102, 255, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Overall Average per Hour',
+          data: [],
+          type: 'line',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderWidth: 2,
+          fill: false,
+          tension: 0,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          borderDash: [5, 5]
+        }
+      ]
+    },
+    options: { 
+      responsive: true, 
+      scales: { 
+        y: { 
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Average Visits per Day'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Hour of Day'
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              if (context.datasetIndex === 0) {
+                return `Hour ${context.label}: ${context.parsed.y} avg visits/day`;
+              } else {
+                return `Overall average: ${context.parsed.y} visits/hour`;
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
   // Referral Code Trends Chart
   const refCtx = document.getElementById('referralCodeChart').getContext('2d');
   let referralCodeChart = new Chart(refCtx, {
@@ -226,6 +311,29 @@
       });
   }
 
+  // Initialize traffic by hour chart
+  function initializeTrafficByHour() {
+    fetch('/admin/api/analytics/traffic-by-hour?days={{ days_filter }}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update chart data
+          hourlyChart.data.labels = data.data.map(item => item.hour_display);
+          hourlyChart.data.datasets[0].data = data.data.map(item => item.avg_visits_per_day);
+          
+          // Add average line across all hours
+          const avgLine = new Array(24).fill(data.avg_visits_per_hour);
+          hourlyChart.data.datasets[1].data = avgLine;
+          
+          // Update the chart
+          hourlyChart.update();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading traffic by hour:', error);
+      });
+  }
+
   // Analytics slider functionality
   let updateTimeout;
   const daysSlider = document.getElementById('daysSlider');
@@ -258,6 +366,7 @@
       updateTopPages(days),
       updateTopRefCodes(days),
       updateVisitTrends(days),
+      updateTrafficByHour(days),
       updateReferralCodeTrends(days)
     ]).finally(() => {
       hideLoadingState();
@@ -414,6 +523,44 @@
       });
   }
 
+  // Update traffic by hour chart
+  function updateTrafficByHour(days) {
+    return fetch(`/admin/api/analytics/traffic-by-hour?days=${days}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const daysSpan = document.getElementById('hourly-chart-days');
+          const totalVisitsSpan = document.getElementById('hourly-total-visits');
+          const avgPerHourSpan = document.getElementById('hourly-avg-per-hour');
+          const avgPerDaySpan = document.getElementById('hourly-avg-per-day');
+          
+          // Update days display
+          daysSpan.textContent = days;
+          totalVisitsSpan.textContent = data.total_visits || '-';
+          avgPerHourSpan.textContent = data.avg_visits_per_hour || '-';
+          
+          // Calculate average visits per day
+          const avgPerDay = data.total_visits ? (data.total_visits / days).toFixed(1) : '-';
+          avgPerDaySpan.textContent = avgPerDay;
+          
+          // Update chart data
+          hourlyChart.data.labels = data.data.map(item => item.hour_display);
+          hourlyChart.data.datasets[0].data = data.data.map(item => item.avg_visits_per_day);
+          
+          // Add average line across all hours
+          const avgLine = new Array(24).fill(data.avg_visits_per_hour);
+          hourlyChart.data.datasets[1].data = avgLine;
+          
+          // Update the chart
+          hourlyChart.update();
+        }
+      })
+      .catch(error => {
+        console.error('Error updating traffic by hour:', error);
+        showError('Failed to update traffic by hour data');
+      });
+  }
+
   // Update referral code trends chart
   function updateReferralCodeTrends(days) {
     return fetch(`/admin/api/analytics/referral-code-trends?days=${days}`)
@@ -533,6 +680,7 @@
   // Initialize charts on page load
   document.addEventListener('DOMContentLoaded', function() {
     initializeReferralCodeChart();
+    initializeTrafficByHour(); // Initialize traffic by hour on page load
   });
   
 
