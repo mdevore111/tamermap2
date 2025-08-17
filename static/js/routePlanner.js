@@ -24,13 +24,13 @@ class RoutePlanner {
             mostPopular: false,
             kiosk: true,
             retail: true,
-            indie: false,
-            mergeNearby: true
+            indie: false
         };
     }
 
     /**
      * Merge nearby duplicate locations (same venue kiosk + retail, minor coord differences)
+     * This function is always enabled to prevent duplicate locations in route planning.
      * Returns a new array with merged representatives.
      */
     mergeNearbyLocations(locations, thresholdMeters = 60) {
@@ -234,7 +234,7 @@ class RoutePlanner {
                     kiosk: data.checkboxStates?.kiosk !== undefined ? !!data.checkboxStates.kiosk : true,
                     retail: data.checkboxStates?.retail !== undefined ? !!data.checkboxStates.retail : true,
                     indie: data.checkboxStates?.indie !== undefined ? !!data.checkboxStates.indie : false,
-                    mergeNearby: data.checkboxStates?.mergeNearby !== undefined ? !!data.checkboxStates.mergeNearby : true
+
                 };
                 if (window.__TM_DEBUG__) console.log('Loaded preferences:', {
                     maxDistance: this.maxDistance,
@@ -252,8 +252,7 @@ class RoutePlanner {
                     mostPopular: false,
                     kiosk: true,
                     retail: true,
-                    indie: false,
-                    mergeNearby: true
+                    indie: false
                 };
             }
         } catch (error) {
@@ -369,8 +368,8 @@ class RoutePlanner {
 
                 <!-- Route Options + Popularity Segmented -->
                 <div class="route-control-group" style="margin:8px 0;">
-                    <div style="font-weight:600; margin-bottom:6px;"><i class="fas fa-cog"></i> Options</div>
-                    <div style="display:flex; align-items:center; justify-content: space-between; gap:12px; flex-wrap:wrap;">
+                    <div style="font-weight:600; margin-bottom:6px; text-align:center;"><i class="fas fa-cog"></i> Options</div>
+                    <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
                         <div style="display:flex; align-items:center; gap:8px;">
                             <div style="min-width:70px; color:#6c757d;">Popularity</div>
                             <div id="popularity-segment" style="display:inline-flex; border:1px solid #ced4da; border-radius:8px; overflow:hidden;" data-bs-toggle="tooltip" data-bs-placement="top" title="Choose popularity filter">
@@ -379,7 +378,7 @@ class RoutePlanner {
                                 <button type="button" id="popularity-most" style="padding:6px 10px; border:none; background:#f8f9fa; cursor:pointer;" data-bs-toggle="tooltip" data-bs-placement="top" title="Prefer most popular">Most</button>
                             </div>
                         </div>
-                        <div style="display:flex; gap:12px; align-items:center;">
+                        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:center;">
                             <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Return to your start location at the end">
                             <input type="checkbox" id="round-trip-checkbox">
                             <span>Round Trip</span>
@@ -388,10 +387,7 @@ class RoutePlanner {
                             <input type="checkbox" id="open-now-checkbox">
                             <span>Open Now</span>
                         </label>
-                            <label class="route-checkbox" style="display:flex; gap:6px; align-items:center; margin:0;" data-bs-toggle="tooltip" data-bs-placement="top" title="Merge multiple stops that are very close to each other into a single location">
-                                <input type="checkbox" id="merge-nearby-checkbox">
-                                <span>Merge Nearby</span>
-                        </label>
+    
                         </div>
                     </div>
                 </div>
@@ -491,7 +487,7 @@ class RoutePlanner {
         const popularityOffBtn = document.getElementById('popularity-off');
         const popularityLeastBtn = document.getElementById('popularity-least');
         const popularityMostBtn = document.getElementById('popularity-most');
-        const mergeNearbyCheckbox = document.getElementById('merge-nearby-checkbox');
+
         
         // Restore checkbox states from session data if available
         if (window.__TM_DEBUG__) console.log('Restoring session state', this.sessionCheckboxStates);
@@ -500,7 +496,7 @@ class RoutePlanner {
             console.log('Restoring option states from preferences...');
             if (roundTripCheckbox) roundTripCheckbox.checked = !!this.sessionCheckboxStates.roundTrip;
             if (openNowCheckbox) openNowCheckbox.checked = !!this.sessionCheckboxStates.openNow;
-            if (mergeNearbyCheckbox) mergeNearbyCheckbox.checked = !!this.sessionCheckboxStates.mergeNearby;
+
             // Set segmented control selection
             const mode = this.sessionCheckboxStates.mostPopular
                 ? 'most'
@@ -536,13 +532,7 @@ class RoutePlanner {
                 this.updateRouteSummary();
             });
         }
-        if (mergeNearbyCheckbox) {
-            mergeNearbyCheckbox.addEventListener('change', () => {
-                this.sessionCheckboxStates.mergeNearby = !!mergeNearbyCheckbox.checked;
-                this.savePreferences();
-                this.updateRouteSummary();
-            });
-        }
+
         
         // Popularity segmented control handlers
         const setPopularityMode = (mode) => {
@@ -836,10 +826,8 @@ class RoutePlanner {
         // Capture pre-merge count for UI notice
         const beforeMergeCount = this.getFilteredLocations(openNow, leastPopular, mostPopular).length;
         let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-        // Merge nearby duplicates when enabled (e.g., kiosk + retail within the same venue)
-        if (this.sessionCheckboxStates.mergeNearby) {
-            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
-        }
+        // Merge nearby duplicates (e.g., kiosk + retail within the same venue)
+        availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
         const afterMergeCount = availableLocations.length;
         if (window.__TM_DEBUG__) console.log('availableLocations after filtering:', availableLocations.length);
         if (window.__TM_DEBUG__) console.log('availableLocations sample:', availableLocations.slice(0, 3));
@@ -876,7 +864,7 @@ class RoutePlanner {
         const filterDescription = pills.join('');
         // Merge notice (optional transparency)
         let mergeNotice = '';
-        if (this.sessionCheckboxStates.mergeNearby && beforeMergeCount > afterMergeCount) {
+        if (beforeMergeCount > afterMergeCount) {
             const mergedGroups = availableLocations.filter(l => Array.isArray(l.mergedFrom) && l.mergedFrom.length > 1);
             const mergedCount = beforeMergeCount - afterMergeCount;
             if (mergedCount > 0 && mergedGroups.length > 0) {
@@ -1637,9 +1625,7 @@ class RoutePlanner {
         console.log('16. mostPopular filter:', mostPopular);
         
         let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-        if (this.sessionCheckboxStates.mergeNearby) {
-            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
-        }
+        availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
         console.log('17. availableLocations:', availableLocations.length);
         console.log('18. availableLocations sample:', availableLocations.slice(0, 3));
         
@@ -2241,9 +2227,7 @@ class RoutePlanner {
             const leastPopular = !!this.sessionCheckboxStates.leastPopular;
             const mostPopular = !!this.sessionCheckboxStates.mostPopular;
             let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
-            if (this.sessionCheckboxStates.mergeNearby) {
-                availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
-            }
+            availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
             this.selectedLocations = this.selectOptimalLocations(availableLocations);
         }
 

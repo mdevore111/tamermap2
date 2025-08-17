@@ -183,17 +183,19 @@ function renderMap() {
   myLocationButton.addEventListener('click', () => {
     autoCenter = true;
     window.map.setCenter(window.userCoords);
-    window.map.setZoom(15);
+    window.map.setZoom(12); // Reduced from 15 to provide better context around user location
   });
   window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);
 
   // Initialize InfoWindow with default positioning behavior
   window.infoWindow = new google.maps.InfoWindow({
-    disableAutoPan: false, // Allow Google Maps to handle positioning
+    disableAutoPan: false, // Allow Google Maps to handle positioning (reverted - user wants auto-pan)
     pixelOffset: new google.maps.Size(0, -5),
     maxWidth: 320,
     // Ensure close button is enabled
-    closeButton: true
+    closeButton: true,
+    // Set better positioning to avoid edge conflicts
+    position: null // Let Google Maps calculate optimal position
   });
   window.currentOpenMarker = null;
   
@@ -275,7 +277,7 @@ function renderMap() {
     let sessionToken = null;
     const autocomplete = new google.maps.places.Autocomplete(inputEl, {
       fields: ['place_id','geometry'],
-      types: ['establishment','address'],
+      types: ['establishment'],
       componentRestrictions: { country: 'us' }
     });
     autocomplete.bindTo('bounds', window.map);
@@ -357,7 +359,7 @@ function renderMap() {
 
   // Set up proper stacking immediately and on idle
   setupMapStacking();
-  window.map.addListener('idle', setupMapStacking);
+  // window.map.addListener('idle', setupMapStacking); // REMOVED - causes flickering when called repeatedly
 
   // Set up viewport change listeners for progressive loading
   setupMapEventListeners();
@@ -420,13 +422,13 @@ async function loadOptimizedMapData() {
     window.showAllMarkers = () => markerManager.showAllMarkers();
     window.getVisibleMarkers = () => markerManager.getVisibleMarkers();
     
-    // Set up drag end listener for info windows
-    window.map.addListener('dragend', () => {
-      if (window.currentOpenMarker && !window.map.getBounds().contains(window.currentOpenMarker.getPosition())) {
-        window.infoWindow.close(); 
-        window.currentOpenMarker = null;
-      }
-    });
+    // Set up drag end listener for info windows - REMOVED to prevent auto-closing
+    // window.map.addListener('dragend', () => {
+    //   if (window.currentOpenMarker && !window.map.getBounds().contains(window.currentOpenMarker.getPosition())) {
+    //     window.infoWindow.close(); 
+    //     window.currentOpenMarker = null;
+    //   }
+    // });
     
     // Apply filters to show markers
     window.applyFilters();
@@ -496,7 +498,7 @@ function loadEventMarkers() {
     });
 }
 
-// After creating the map, set up proper stacking context
+// After creating the map, set up proper stacking context - only run once
 function setupMapStacking() {
   // Force legend to have lower z-index
   const legend = document.getElementById('legend');
@@ -504,18 +506,22 @@ function setupMapStacking() {
     legend.style.zIndex = '1';
   }
   
-  // Just set z-indices, don't modify positioning
+  // Set z-indices only once, not on every idle event
   setTimeout(() => {
-    // Force any info windows to highest z-index
+    // Set info window z-index without being overly aggressive
     const infoWindows = document.querySelectorAll('.gm-style-iw-c, .gm-style-iw-t, .gm-style-iw-a');
     infoWindows.forEach(iw => {
-      iw.style.zIndex = '99999';
+      if (!iw.style.zIndex || iw.style.zIndex === 'auto') {
+        iw.style.zIndex = '9000';
+      }
     });
     
-    // Fix close buttons
+    // Fix close buttons without being overly aggressive
     const closeButtons = document.querySelectorAll('button.gm-ui-hover-effect');
     closeButtons.forEach(btn => {
-      btn.style.zIndex = '999999';
+      if (!btn.style.zIndex || btn.style.zIndex === 'auto') {
+        btn.style.zIndex = '9001';
+      }
       btn.style.display = 'block';
       btn.style.visibility = 'visible';
       btn.style.opacity = '1';

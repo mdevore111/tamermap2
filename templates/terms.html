@@ -1,6 +1,69 @@
 {% extends "base.html" %}
+{% block extra_head %}
+<style>
+.content-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  margin-bottom: 3rem; /* Match privacy page spacing */
+}
+
+.content-container section {
+  margin-bottom: 2rem;
+}
+
+.content-container h1 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.content-container h2 {
+  color: #444;
+  margin: 1.5rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #667eea;
+}
+
+.content-container p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.content-container ul {
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.content-container li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.last-updated {
+  color: #666;
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+
+.content-container a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.content-container a:hover {
+  text-decoration: underline;
+}
+
+/* Ensure the last section has proper spacing */
+.content-container section:last-child {
+  margin-bottom: 3rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="content-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+<div class="content-container">
 
   <h1>Terms of Service</h1>
   <p class="last-updated">Last Updated: March 20, 2025</p>

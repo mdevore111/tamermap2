@@ -28,7 +28,7 @@ html, body {
   z-index: 0;
 }
 
-/* Override Google Maps InfoWindow stacking */
+/* Override Google Maps InfoWindow stacking - simplified to prevent conflicts */
 .gm-style > div:nth-of-type(1) {
   z-index: 0 !important; /* Map tiles */
 }
@@ -45,9 +45,9 @@ html, body {
   z-index: 1000 !important; /* Controls appear above map and footer */
 }
 
-/* Set priority for Google Maps elements */
+/* Set priority for Google Maps elements - simplified */
 .gm-style-iw-a {
-  z-index: 99999 !important;
+  z-index: 9000 !important;
   position: absolute !important;
 }
 
@@ -67,7 +67,7 @@ html, body {
     }
 }
 
-/* MISC Google Maps Overrides */
+/* MISC Google Maps Overrides - simplified */
 .gm-style-iw-chr {
   position: absolute;
   display: flex;
@@ -79,50 +79,15 @@ html, body {
   padding-top: 5px !important;
 }
 
+/* Simplified z-index management to prevent conflicts */
 .gm-style-iw-c,
 .gm-style-iw-d,
 .gm-style-iw-t,
 .gm-style-iw {
-  z-index: 1000 !important;
+  z-index: 9000 !important;
 }
 
-.gm-style div[style*="position: absolute"][style*="z-index: 106"] {
-  z-index: 99999 !important;
-}
-
-.gm-style > div:nth-child(2) {
-  z-index: 99999 !important;
-}
-
-.gm-style .gm-style-iw-c {
-  z-index: 99999 !important;
-}
-
-.gm-style > div:nth-child(2) > div > div:last-child {
-  z-index: 99999 !important;
-}
-
-.gm-style-iw-t {
-  z-index: 99999 !important;
-}
-
-[style*="z-index: 106"] {
-  z-index: 99999 !important;
-}
-
-[style*="z-index: 107"] {
-  z-index: 99999 !important;
-}
-
-.gm-style-iw-tc, 
-.gm-style-iw-bd,
-.gm-style-iw-d {
-  z-index: 99999 !important;
-}
-
-div[style*="cursor: default"] {
-  z-index: 99999 !important;
-}
+/* Remove overly aggressive z-index overrides that could cause conflicts */
 
 button.gm-ui-hover-effect {
   display: block !important;

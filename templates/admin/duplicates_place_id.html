@@ -4,63 +4,121 @@
 {% block body %}
 <div class="container-fluid">
   <h2 class="mt-3">Duplicate Locations by Place ID</h2>
-  <p class="text-muted">Review groups of retailers sharing the same Google Place ID. Merge will keep the most complete row and remove others.</p>
-  <p class="text-muted"><small>All timestamps shown in UTC (server time)</small></p>
+  <p class="text-muted">Review groups of retailers sharing the same Google Place ID. Select which record to keep as master and preview the final merged result.</p>
+  <p class="text-muted"><small>All timestamps shown in UTC (server time). Bold fields indicate differences between records.</small></p>
 
   {% if not groups %}
     <div class="alert alert-success">No duplicates found.</div>
   {% else %}
     {% for g in groups %}
-      <div class="card mb-3">
+      <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
           <div>
             <strong>Place ID:</strong> <code>{{ g.place_id }}</code>
             <span class="badge bg-warning text-dark ms-2">{{ g.count }} entries</span>
           </div>
-          <button class="btn btn-sm btn-primary" onclick="mergeGroup('{{ g.place_id }}', this)">Merge Group</button>
+          <button class="btn btn-sm btn-primary" onclick="previewMerge('{{ g.place_id }}', this)" id="preview-btn-{{ g.place_id }}">Preview Merge</button>
         </div>
-        <div class="card-body p-0">
+        
+        <!-- Record Selection -->
+        <div class="card-body">
+          <h6 class="mb-3">Select Master Record:</h6>
+          <div class="row">
+            {% for r in g.members %}
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                <div class="card-header">
+                  <div class="form-check">
+                    <input class="form-check-input master-select" type="radio" name="master-{{ g.place_id }}" 
+                           id="master-{{ g.place_id }}-{{ r.id }}" value="{{ r.id }}" 
+                           {% if loop.first %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="master-{{ g.place_id }}-{{ r.id }}">
+                      Record #{{ r.id }} {% if loop.first %}(Recommended){% endif %}
+                    </label>
+                  </div>
+                </div>
+                <div class="card-body p-2">
+                  <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                      <td class="fw-bold text-muted" style="width: 30%;">Name:</td>
+                      <td class="retailer-name" data-field="retailer">{{ r.retailer or '—' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Type:</td>
+                      <td class="retailer-type" data-field="retailer_type">{{ r.retailer_type or '—' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Address:</td>
+                      <td class="retailer-address" data-field="full_address">{{ r.full_address or '—' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Coordinates:</td>
+                      <td class="retailer-coords" data-field="coordinates">
+                        {% if r.latitude is not none and r.longitude is not none %}
+                          {{ '%.5f'|format(r.latitude) }}, {{ '%.5f'|format(r.longitude) }}
+                        {% else %}
+                          —
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Phone:</td>
+                      <td class="retailer-phone" data-field="phone_number">{{ r.phone_number or '—' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Website:</td>
+                      <td class="retailer-website" data-field="website">
+                        {% if r.website %}
+                          <a href="{{ r.website }}" target="_blank">link</a>
+                        {% else %}
+                          —
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Hours:</td>
+                      <td class="retailer-hours" data-field="opening_hours">{{ '✓' if r.opening_hours else '—' }}</td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Last Update:</td>
+                      <td class="retailer-update" data-field="last_api_update">
+                        {{ r.last_api_update.strftime('%Y-%m-%d %H:%M') if r.last_api_update else '—' }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="fw-bold text-muted">Enabled:</td>
+                      <td class="retailer-enabled" data-field="enabled">{{ 'Yes' if r.enabled else 'No' }}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Merge Preview (initially hidden) -->
+        <div class="card-footer preview-section" id="preview-{{ g.place_id }}" style="display: none;">
+          <h6 class="mb-3">Merge Preview:</h6>
           <div class="table-responsive">
-            <table class="table table-sm mb-0">
-              <thead>
+            <table class="table table-sm table-bordered">
+              <thead class="table-light">
                 <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Address</th>
-                  <th>Lat</th>
-                  <th>Lng</th>
-                  <th>Phone</th>
-                  <th>Website</th>
-                  <th>Hours</th>
-                                              <th>Last API Update <small class="text-muted">(UTC)</small></th>
-                  <th>Enabled</th>
+                  <th>Field</th>
+                  <th>Final Value</th>
+                  <th>Source Record</th>
                 </tr>
               </thead>
-              <tbody>
-                {% for r in g.members %}
-                <tr>
-                  <td>{{ r.id }}</td>
-                  <td>{{ r.retailer or '—' }}</td>
-                  <td>{{ r.retailer_type or '—' }}</td>
-                  <td>{{ r.full_address or '—' }}</td>
-                  <td>{{ '%.5f'|format(r.latitude) if r.latitude is not none else '—' }}</td>
-                  <td>{{ '%.5f'|format(r.longitude) if r.longitude is not none else '—' }}</td>
-                  <td>{{ r.phone_number or '—' }}</td>
-                  <td>
-                    {% if r.website %}
-                      <a href="{{ r.website }}" target="_blank">link</a>
-                    {% else %}
-                      —
-                    {% endif %}
-                  </td>
-                  <td>{{ '✓' if r.opening_hours else '—' }}</td>
-                  <td>{{ r.last_api_update.strftime('%Y-%m-%d %H:%M') if r.last_api_update else '—' }}</td>
-                  <td>{{ 'Yes' if r.enabled else 'No' }}</td>
-                </tr>
-                {% endfor %}
+              <tbody id="preview-body-{{ g.place_id }}">
+                <!-- Preview content will be populated by JavaScript -->
               </tbody>
             </table>
+          </div>
+          <div class="mt-3">
+            <button class="btn btn-success" onclick="executeMerge('{{ g.place_id }}', this)" id="merge-btn-{{ g.place_id }}">
+              Execute Merge
+            </button>
+            <button class="btn btn-secondary ms-2" onclick="hidePreview('{{ g.place_id }}')">Cancel</button>
           </div>
         </div>
       </div>
@@ -69,29 +127,303 @@
 </div>
 
 <script>
-async function mergeGroup(placeId, btn) {
-  if (!confirm('Merge all entries for this place_id?')) return;
-  btn.disabled = true;
-  btn.textContent = 'Merging...';
+// Highlight differences between records
+function highlightDifferences(placeId) {
+  const group = document.querySelector(`[data-place-id="${placeId}"]`);
+  if (!group) return;
+  
+  const records = group.querySelectorAll('.master-select');
+  const fields = ['retailer', 'retailer_type', 'full_address', 'phone_number', 'website', 'opening_hours', 'last_api_update', 'enabled'];
+  
+  fields.forEach(field => {
+    const values = Array.from(records).map(radio => {
+      const record = radio.closest('.col-md-6');
+      const cell = record.querySelector(`[data-field="${field}"]`);
+      return {
+        radio: radio,
+        value: cell.textContent.trim(),
+        cell: cell
+      };
+    });
+    
+    // Check if values are different
+    const uniqueValues = [...new Set(values.map(v => v.value))];
+    if (uniqueValues.length > 1) {
+      values.forEach(v => {
+        if (v.value !== '—') {
+          v.cell.classList.add('fw-bold', 'text-danger');
+        }
+      });
+    }
+  });
+  
+  // Handle coordinates separately since they're combined
+  const coordValues = Array.from(records).map(radio => {
+    const record = radio.closest('.col-md-6');
+    const cell = record.querySelector(`[data-field="coordinates"]`);
+    return {
+      radio: radio,
+      value: cell.textContent.trim(),
+      cell: cell
+    };
+  });
+  
+  const uniqueCoords = [...new Set(coordValues.map(v => v.value))];
+  if (uniqueCoords.length > 1) {
+    coordValues.forEach(v => {
+      if (v.value !== '—') {
+        v.cell.classList.add('fw-bold', 'text-danger');
+      }
+    });
+  }
+}
+
+// Preview the merge result
+async function previewMerge(placeId, btn) {
+  // Find the specific group container for this preview button
+  // We need to go up to the main group card, not the nested record cards
+  const groupContainer = btn.closest('.card.mb-4');
+  if (!groupContainer) {
+    alert('Could not find group container.');
+    return;
+  }
+  
+  // Find the master radio button within this specific group
+  const masterRadio = groupContainer.querySelector(`input[name="master-${placeId}"]:checked`);
+  if (!masterRadio) {
+    alert('Please select a master record first.');
+    return;
+  }
+  
+  const masterId = masterRadio.value;
+  
+  // Find the preview elements within this specific group
+  const previewDiv = groupContainer.querySelector(`#preview-${placeId}`);
+  const previewBody = groupContainer.querySelector(`#preview-body-${placeId}`);
+  
+  if (!previewDiv || !previewBody) {
+    console.error('Preview elements not found in group:', { placeId, groupContainer });
+    alert('Preview elements not found.');
+    return;
+  }
+  
   try {
-    const resp = await fetch('/admin/duplicates/place-id/merge', {
+    btn.disabled = true;
+    btn.textContent = 'Generating Preview...';
+    
+    console.log('Sending preview request:', { place_id: placeId, master_id: masterId });
+    
+    const resp = await fetch('/admin/duplicates/place-id/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ place_id: placeId })
+      body: JSON.stringify({ 
+        place_id: placeId, 
+        master_id: masterId 
+      })
     });
+    
+    console.log('Preview response status:', resp.status);
+    console.log('Preview response headers:', resp.headers);
+    
     if (!resp.ok) {
-      const t = await resp.text();
-      alert('Merge failed: ' + t);
-    } else {
-      location.reload();
+      const errorText = await resp.text();
+      console.error('Preview request failed:', resp.status, errorText);
+      throw new Error(`HTTP ${resp.status}: ${errorText}`);
     }
+    
+    const data = await resp.json();
+    console.log('Preview data received:', data);
+    
+    displayPreview(previewBody, data);
+    previewDiv.style.display = 'block';
+    btn.textContent = 'Update Preview';
+    
   } catch (e) {
-    alert('Merge error: ' + e);
+    console.error('Preview error:', e);
+    alert('Preview failed: ' + e.message);
   } finally {
     btn.disabled = false;
   }
 }
+
+// Display the merge preview
+function displayPreview(previewBody, data) {
+  previewBody.innerHTML = '';
+  
+  const fields = [
+    { key: 'retailer', label: 'Name' },
+    { key: 'retailer_type', label: 'Type' },
+    { key: 'full_address', label: 'Address' },
+    { key: 'coordinates', label: 'Coordinates' },
+    { key: 'phone_number', label: 'Phone' },
+    { key: 'website', label: 'Website' },
+    { key: 'opening_hours', label: 'Hours' },
+    { key: 'last_api_update', label: 'Last Update' },
+    { key: 'enabled', label: 'Enabled' }
+  ];
+  
+  fields.forEach(field => {
+    const row = document.createElement('tr');
+    const value = data[field.key] || '—';
+    const source = data.sources[field.key] || '—';
+    
+    row.innerHTML = `
+      <td class="fw-bold">${field.label}</td>
+      <td>${value}</td>
+      <td><small class="text-muted">Record #${source}</small></td>
+    `;
+    previewBody.appendChild(row);
+  });
+}
+
+// Hide the preview
+function hidePreview(placeId) {
+  // Find the preview div by placeId (this function is called from the preview section itself)
+  const previewDiv = document.getElementById(`preview-${placeId}`);
+  if (previewDiv) {
+    previewDiv.style.display = 'none';
+  }
+}
+
+// Execute the merge
+async function executeMerge(placeId, btn) {
+  // Find the specific group container for this merge button
+  // We need to go up to the main group card, not the nested record cards
+  const groupContainer = btn.closest('.card.mb-4');
+  if (!groupContainer) {
+    alert('Could not find group container.');
+    return;
+  }
+  
+  // Find the master radio button within this specific group
+  const masterRadio = groupContainer.querySelector(`input[name="master-${placeId}"]:checked`);
+  if (!masterRadio) {
+    alert('Please select a master record first.');
+    return;
+  }
+  
+  if (!confirm('Are you sure you want to execute this merge? This action cannot be undone.')) {
+    return;
+  }
+  
+  const masterId = masterRadio.value;
+  
+  try {
+    btn.disabled = true;
+    btn.textContent = 'Merging...';
+    
+    const resp = await fetch('/admin/duplicates/place-id/merge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        place_id: placeId, 
+        master_id: masterId 
+      })
+    });
+    
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${errorText}`);
+    }
+    
+    const result = await resp.json();
+    alert(`Merge successful! Kept record #${result.kept_id}, deleted ${result.deleted_ids.length} duplicate(s).`);
+    location.reload();
+    
+  } catch (e) {
+    alert('Merge failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// Initialize difference highlighting when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  // Add data attributes for easier selection
+  document.querySelectorAll('.card').forEach(card => {
+    const placeId = card.querySelector('code')?.textContent;
+    if (placeId) {
+      card.setAttribute('data-place-id', placeId);
+    }
+  });
+  
+  // Highlight differences for each group
+  document.querySelectorAll('[data-place-id]').forEach(group => {
+    const placeId = group.getAttribute('data-place-id');
+    highlightDifferences(placeId);
+  });
+  
+  // Update preview when master selection changes
+  document.querySelectorAll('.master-select').forEach(radio => {
+    radio.addEventListener('change', function() {
+      const placeId = this.name.replace('master-', '');
+      // We need to go up to the main group card, not the nested record cards
+      const groupContainer = this.closest('.card.mb-4');
+      if (groupContainer) {
+        const previewDiv = groupContainer.querySelector(`#preview-${placeId}`);
+        if (previewDiv && previewDiv.style.display !== 'none') {
+          // If preview is visible, update it
+          const btn = groupContainer.querySelector(`#preview-btn-${placeId}`);
+          if (btn) {
+            previewMerge(placeId, btn);
+          }
+        }
+      }
+    });
+  });
+});
 </script>
+
+<style>
+.card-body .table td {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.fw-bold.text-danger {
+  background-color: #fff3cd;
+  border-radius: 3px;
+  padding: 2px 4px;
+  border-left: 3px solid #ffc107;
+}
+
+.preview-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Highlight differences more prominently */
+.retailer-name.fw-bold.text-danger,
+.retailer-type.fw-bold.text-danger,
+.retailer-address.fw-bold.text-danger,
+.retailer-coords.fw-bold.text-danger,
+.retailer-phone.fw-bold.text-danger,
+.retailer-website.fw-bold.text-danger,
+.retailer-hours.fw-bold.text-danger,
+.retailer-update.fw-bold.text-danger,
+.retailer-enabled.fw-bold.text-danger {
+  background-color: #fff3cd !important;
+  border-left: 3px solid #ffc107 !important;
+  padding-left: 8px !important;
+  font-weight: 700 !important;
+}
+
+/* Card styling improvements */
+.card .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.master-select:checked + label {
+  color: #0d6efd;
+}
+
+/* Preview section styling */
+.preview-section {
+  background-color: #f8f9fa;
+  border-top: 2px solid #dee2e6;
+}
+</style>
 {% endblock %}
 
 

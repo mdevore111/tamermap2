@@ -474,7 +474,7 @@ function handleSearch(event) {
     geocoder.geocode({ address: searchInput.value }, (results, status) => {
       if (status === 'OK' && results[0]) {
         window.map.setCenter(results[0].geometry.location);
-        window.map.setZoom(15);
+        window.map.setZoom(12); // Reduced from 15 to provide better context around search results
       } else {
         console.warn('Geocoding failed:', status);
       }

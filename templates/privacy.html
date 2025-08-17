@@ -6,6 +6,7 @@
   margin: 0 auto;
   padding: 20px;
   background: white;
+  margin-bottom: 3rem; /* Add bottom margin to prevent touching footer */
 }
 
 .content-container section {
@@ -52,6 +53,11 @@
 
 .content-container a:hover {
   text-decoration: underline;
+}
+
+/* Ensure the last section has proper spacing */
+.content-container section:last-child {
+  margin-bottom: 3rem;
 }
 </style>
 {% endblock %}

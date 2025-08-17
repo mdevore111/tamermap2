@@ -108,7 +108,7 @@ function initMap() {
                     autoCenter = true;
                     if (window.userCoords && window.map) {
                         window.map.setCenter(window.userCoords);
-                        window.map.setZoom(15);
+                        window.map.setZoom(12); // Reduced from 15 to provide better context around user location
                     }
                 });
                 window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);

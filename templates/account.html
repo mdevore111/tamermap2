@@ -84,13 +84,50 @@
                 <div class="section-header">
                     <h2 class="tds-text--h2">MEMBERSHIP</h2>
                 </div>
-                <p class="tds-text--value" id="display-membership">
-                    {% if is_pro %}
-                        Pro Member (valid until {{ current_user.pro_end_date.strftime('%Y-%m-%d') if current_user.pro_end_date else "N/A" }})
+                <div class="membership-info">
+                    <!-- User Roles -->
+                    <div class="user-roles">
+                        <h3 class="tds-text--h3">Roles:</h3>
+                        <div class="role-list">
+                            <!-- Show Basic role first if user has it -->
+                            {% if 'Basic' in user_roles %}
+                                <span class="role-badge role-basic">Basic</span>
+                            {% endif %}
+                            <!-- Show Pro role if user has it -->
+                            {% if 'Pro' in user_roles %}
+                                <span class="role-badge role-pro">Pro</span>
+                            {% endif %}
+                            <!-- Show Admin role if user has it -->
+                            {% if 'Admin' in user_roles %}
+                                <span class="role-badge role-admin">Admin</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Pro Status (moved below roles) -->
+                    {% if pro_end_date %}
+                        <div class="pro-status">
+                            {% if is_pro %}
+                                <p class="tds-text--value pro-member">
+                                    <i class="fa fa-crown" style="color: #ffd700; margin-right: 8px;"></i>
+                                    Pro Member (valid until {{ pro_end_date.strftime('%Y-%m-%d') }})
+                                </p>
+                            {% else %}
+                                <p class="tds-text--value expired-pro">
+                                    <i class="fa fa-clock" style="color: #dc3545; margin-right: 8px;"></i>
+                                    Pro Membership expired on {{ pro_end_date.strftime('%Y-%m-%d') }}
+                                </p>
+                            {% endif %}
+                        </div>
                     {% else %}
-                        Basic Member
+                        <div class="pro-status">
+                            <p class="tds-text--value basic-member">
+                                <i class="fa fa-user" style="color: #6c757d; margin-right: 8px;"></i>
+                                Basic Member
+                            </p>
+                        </div>
                     {% endif %}
-                </p>
+                </div>
             </section>
         </div>
 

@@ -85,21 +85,173 @@ a.icon span.fa-pencil {
   overflow: hidden; /* Prevent container from creating scrollbars */
 }
 
+/* Sidebar Header with Toggle Button */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+  min-height: auto;
+}
+
+.sidebar-header h4 {
+  margin: 0;
+  padding: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+  background-color: #e9ecef;
+  color: #0056b3;
+}
+
+/* Collapsible Sidebar */
 .admin-sidebar {
   flex: 0 0 200px;
   background: #f8f9fa;
   padding: 10px;
   border-right: 1px solid #ddd;
   height: 100%;
-  overflow-y: auto; /* Only sidebar scrolls if navigation is too long */
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-.admin-sidebar h4 {
-  font-size: 1.1rem;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+.admin-sidebar.collapsed {
+  flex: 0 0 50px;
+  padding: 10px 5px;
+  min-width: 50px;
 }
+
+.admin-sidebar.collapsed .sidebar-header h4 {
+  display: none;
+}
+
+.admin-sidebar.collapsed ul li a {
+  display: block;
+  text-align: center;
+  padding: 8px 4px;
+  margin-bottom: 2px;
+}
+
+.admin-sidebar.collapsed ul li a i {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 1.1rem;
+}
+
+/* Hide text content in collapsed state - target text nodes after icons */
+.admin-sidebar.collapsed ul li a {
+  font-size: 0;
+}
+
+.admin-sidebar.collapsed ul li a i {
+  font-size: 1.1rem !important;
+}
+
+.admin-sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+.admin-sidebar.collapsed .sidebar-toggle {
+  margin-left: 0;
+}
+
+.admin-sidebar.collapsed ul li a {
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.admin-sidebar.collapsed ul li a i {
+  margin: 0 !important;
+  font-size: 1.1rem;
+}
+
+/* Smooth transitions for all elements */
+.admin-sidebar * {
+  transition: all 0.3s ease;
+}
+
+/* Toggle Icon Animation */
+.admin-sidebar.collapsed #toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* Content Area Adjustment */
+.admin-content {
+  flex: 1;
+  padding: 15px;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  transition: margin-left 0.3s ease;
+}
+
+/* Ensure contact dropdown works in admin portal */
+.admin-container .dropdown-menu {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+
+.admin-container .navbar .dropdown-menu {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+
+/* Override any conflicting z-index values */
+.admin-container #navbar .dropdown-menu {
+  z-index: 9999 !important;
+  position: absolute !important;
+}
+
+/* Ensure dropdown is visible above admin content */
+.admin-container .dropdown-menu.show {
+  z-index: 9999 !important;
+  display: block !important;
+}
+
+/* Fix dropdown positioning in admin portal */
+.admin-container .navbar .dropdown {
+  position: relative !important;
+}
+
+.admin-container .navbar .dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: auto !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  margin-top: 0 !important;
+}
+
+/* Ensure dropdown items are visible */
+.admin-container .dropdown-menu .dropdown-item {
+  color: #333 !important;
+  background: white !important;
+}
+
+.admin-container .dropdown-menu .dropdown-item:hover {
+  background: #f8f9fa !important;
+  color: #333 !important;
+}
+
+/* Remove duplicate h4 styling - now handled in sidebar-header */
 
 /* Style page headers to match navigation header */
 .admin-content h1.h2 {
@@ -166,6 +318,8 @@ a.icon span.fa-pencil {
   display: block;
   border-radius: 4px;
   transition: background-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .admin-sidebar ul li a:hover {
@@ -173,12 +327,38 @@ a.icon span.fa-pencil {
   color: #0056b3;
 }
 
-.admin-content {
-  flex: 1;
-  padding: 15px;
-  min-width: 0; /* Allow content to shrink */
-  height: 100%;
-  overflow: auto; /* Allow content to scroll */
+/* Collapsed state navigation styling */
+.admin-sidebar.collapsed ul li a {
+  text-align: center;
+  padding: 8px 4px;
+  margin-bottom: 2px;
+}
+
+.admin-sidebar.collapsed ul li a i {
+  margin: 0 !important;
+  font-size: 1.1rem;
+  display: block;
+}
+
+/* Tooltip for collapsed state */
+.admin-sidebar.collapsed ul li a {
+  position: relative;
+}
+
+.admin-sidebar.collapsed ul li a:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 10000;
+  margin-left: 10px;
 }
 
 .admin-content .card {
