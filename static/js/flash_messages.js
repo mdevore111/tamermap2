@@ -20,8 +20,4 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
-  
-  // Mark as loaded for debugging
-  window.flashMessagesLoaded = true;
-  console.log('✅ flash_messages.js loaded and initialized');
 });

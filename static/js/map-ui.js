@@ -471,8 +471,6 @@ function handleSearch(event) {
   // Note: Places Autocomplete already handles coordinate lookup when a user selects a place
   // The search form submission is mainly for user experience - the actual search happens via autocomplete
   // If you need to enable geocoding for direct address searches, enable the Geocoding API in Google Cloud Console
-  console.log('Search submitted:', searchInput.value);
-  console.log('Use the autocomplete dropdown to select a specific location for best results');
   
   return false;
 }
@@ -574,7 +572,6 @@ function showProUpgradeToast() {
  */
 function openRoutePanel() {
   if (!window.routePlanner) {
-    console.error('Route planner not initialized');
     return;
   }
 
@@ -587,7 +584,7 @@ function openRoutePanel() {
     window.routePlanner.exitPreview();
   }
 
-  // Use the new wizard-style modal
+  // Use the new openPlanningModal method
   window.routePlanner.openPlanningModal();
 }
 

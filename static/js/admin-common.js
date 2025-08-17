@@ -287,8 +287,4 @@ $(document).ready(function() {
         // Ensure tooltips work in modals
         initTooltips();
     });
-    
-    // Mark as loaded for debugging
-    window.adminCommonLoaded = true;
-    console.log('✅ admin-common.js loaded and initialized');
 }); 

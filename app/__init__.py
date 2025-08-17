@@ -109,18 +109,12 @@ def create_app(config_class=BaseConfig):
     app.logger.debug('TEMPLATE FOLDER: %s', app.template_folder)
     # print('TEMPLATE DEBUG:', app.jinja_loader.list_templates())
 
-    # Debug headers for HTTPS detection
+    # Debug headers for HTTPS detection (only in debug mode, and only for errors)
     @app.before_request
     def debug_headers():
-        # Only log headers for non-static requests to reduce noise
-        if not request.endpoint or not request.endpoint.startswith('static'):
-            app.logger.info(f"=== HEADER DEBUG ===")
-            app.logger.info(f"X-Forwarded-Proto: {request.headers.get('X-Forwarded-Proto')}")
-            app.logger.info(f"X-Forwarded-Host: {request.headers.get('X-Forwarded-Host')}")
-            app.logger.info(f"request.is_secure: {request.is_secure}")
-            app.logger.info(f"request.scheme: {request.scheme}")
-            app.logger.info(f"request.url: {request.url}")
-            app.logger.info(f"==================")
+        # Only log headers if there's an actual issue (not every request)
+        if app.debug and request.is_secure == False and request.url.startswith('https'):
+            app.logger.warning(f"HTTPS mismatch: {request.url} - is_secure: {request.is_secure}")
 
     # Add a test route to render admin/master.html directly
     @app.route('/debug-template')
@@ -182,23 +176,13 @@ def create_app(config_class=BaseConfig):
     # Initialize Flask-Security with extended registration and confirmation forms.
     security = Security(app, user_datastore)
     
-    # Debug the user datastore to see what methods are available
-    app.logger.info(f"USER DATASTORE DEBUG:")
-    app.logger.info(f"   User model methods: {[m for m in dir(user_datastore.user_model) if not m.startswith('_')]}")
-    app.logger.info(f"   Has verify_password: {hasattr(user_datastore.user_model, 'verify_password')}")
-    app.logger.info(f"   Has get_id: {hasattr(user_datastore.user_model, 'get_id')}")
-    app.logger.info(f"   Has is_active: {hasattr(user_datastore.user_model, 'is_active')}")
-    app.logger.info(f"   Has is_authenticated: {hasattr(user_datastore.user_model, 'is_authenticated')}")
-    app.logger.info(f"   Has is_anonymous: {hasattr(user_datastore.user_model, 'is_anonymous')}")
-    
-    # Debug Flask-Security configuration
-    app.logger.info(f"FLASK-SECURITY CONFIGURATION:")
-    app.logger.info(f"   Login URL: {app.config.get('SECURITY_LOGIN_URL', 'Not set')}")
-    app.logger.info(f"   Post Login View: {app.config.get('SECURITY_POST_LOGIN_VIEW', 'Not set')}")
-    app.logger.info(f"   Post Reset View: {app.config.get('SECURITY_POST_RESET_VIEW', 'Not set')}")
-    app.logger.info(f"   User Datastore: {type(user_datastore).__name__}")
-    app.logger.info(f"   User Model: {user_datastore.user_model.__name__}")
-    app.logger.info(f"   Role Model: {user_datastore.role_model.__name__}")
+    # Only log configuration issues, not successful setup
+    if app.debug:
+        # Check for critical configuration issues
+        if not hasattr(user_datastore.user_model, 'verify_password'):
+            app.logger.error("CRITICAL: User model missing verify_password method")
+        if not hasattr(user_datastore.user_model, 'get_id'):
+            app.logger.error("CRITICAL: User model missing get_id method")
     
     # Ensure Flask-Security uses the same user loader as Flask-Login
     # This should resolve the session mismatch by ensuring both systems see the same user state
@@ -248,19 +232,16 @@ def create_app(config_class=BaseConfig):
             'debug_mode': app.config.get('DEBUG', False)
         }
         
-        # DEBUG: Log template context authentication state
+        # Set template context variables (no logging needed for successful operations)
         if current_user.is_authenticated:
             is_admin = current_user.has_role('Admin')
             is_pro = current_user.has_role('Pro')
-            
-            app.logger.info(f"Template Context: User {current_user.id} authenticated - Admin: {is_admin}, Pro: {is_pro}")
             
             context.update({
                 'is_admin': is_admin,
                 'is_pro': is_pro
             })
         else:
-            app.logger.info(f"Template Context: User not authenticated")
             context.update({
                 'is_admin': False,
                 'is_pro': False
@@ -307,76 +288,31 @@ def create_app(config_class=BaseConfig):
         if request.endpoint and request.endpoint.startswith('static'):
             return
 
-        # DEBUG: Essential session/authentication debugging
-        if not request.endpoint or not request.endpoint.startswith('static'):
-            app.logger.info(f"=== AUTH DEBUG: {request.path} ===")
-            app.logger.info(f"Endpoint: {request.endpoint}")
-            try:
-                session_keys = list(session.keys()) if hasattr(session, 'keys') else []
-                app.logger.info(f"Session keys: {session_keys}")
-            except Exception as e:
-                app.logger.info(f"Session access error: {e}")
-        
         try:
-            # Try to get session keys safely
-            session_keys = list(session.keys()) if hasattr(session, 'keys') else []
-            app.logger.info(f"Session keys: {session_keys}")
-            # Try to access specific session values (only if we have keys)
-            if session_keys:
-                for key in session_keys[:5]:  # Limit to first 5 keys to avoid overwhelming logs
-                    try:
-                        value = session.get(key, 'Error accessing value')
-                        app.logger.info(f"Session[{key}]: {value}")
-                    except Exception as e:
-                        app.logger.info(f"Session[{key}] access error: {e}")
+            # Try to get session data without excessive logging
+            if hasattr(session, 'keys'):
+                session_keys = list(session.keys())
+                # Only log if there's an authentication issue
+                if not session_keys or '_user_id' not in session_keys:
+                    if app.debug:
+                        app.logger.warning(f"Session issue on {request.path}: missing user_id")
         except Exception as e:
-            app.logger.info(f"Session contents access error: {e}")
-        
-        # Debug: Essential authentication state logging
-        if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
-            user_id = getattr(current_user, 'id', None)
-            roles = [role.name for role in getattr(current_user, 'roles', [])]
-            app.logger.info(f"Flask-Login: User {user_id} authenticated with roles: {roles}")
-        elif hasattr(current_user, 'is_authenticated'):
-            app.logger.info(f"Flask-Login: User NOT authenticated")
-        else:
-            app.logger.info(f"Flask-Login: User object not properly initialized")
+            if app.debug:
+                app.logger.error(f"Session access error on {request.path}: {e}")
 
 
 
-        # DEBUG: Track Flask-Security route access
-        if request.endpoint and request.endpoint.startswith('security.'):
-            app.logger.info(f"=== FLASK-SECURITY ROUTE ACCESS: {request.endpoint} ===")
-            app.logger.info(f"Path: {request.path}")
-            app.logger.info(f"Flask-Login current_user: {current_user}")
-            app.logger.info(f"Flask-Login is_authenticated: {getattr(current_user, 'is_authenticated', 'N/A')}")
-            app.logger.info(f"Flask-Login user ID: {getattr(current_user, 'id', 'N/A')}")
-            
-            # Add login form debugging
-            if request.endpoint == 'security.login' and request.method == 'POST':
-                app.logger.info(f"LOGIN ATTEMPT DEBUG:")
-                app.logger.info(f"   Form data: {dict(request.form)}")
-                app.logger.info(f"   Email: {request.form.get('email', 'No email')}")
-                app.logger.info(f"   Password length: {len(request.form.get('password', ''))}")
-                app.logger.info(f"   Remember me: {request.form.get('remember', 'No')}")
-            
-            try:
-                session_keys = list(session.keys()) if hasattr(session, 'keys') else []
-                app.logger.info(f"Session keys: {session_keys}")
-                # Show key session values for debugging
-                if '_user_id' in session_keys:
-                    app.logger.info(f"Session _user_id: {session.get('_user_id')}")
-                if 'fs_cc' in session_keys:
-                    app.logger.info(f"Session fs_cc: {session.get('fs_cc')}")
-            except Exception as e:
-                app.logger.info(f"Session keys access error: {e}")
-            app.logger.info(f"Request cookies: {dict(request.cookies)}")
+        # Only log Flask-Security issues, not every route access
+        if app.debug and request.endpoint and request.endpoint.startswith('security.'):
+            # Only log if there's an actual security issue
+            if not current_user.is_authenticated and request.method == 'POST':
+                app.logger.warning(f"Security issue: Unauthenticated POST to {request.endpoint}")
 
-        # Track visitor activity
+        # Track visitor activity (only log issues, not every request)
         if request.endpoint and not request.endpoint.startswith('static'):
             excluded_prefixes = ['/api', '/admin', '/webhooks', '/static', '/track', '/reset', '/logout', '/login']
             if any(request.path.startswith(prefix) for prefix in excluded_prefixes):
-                app.logger.info(f"Request excluded from tracking (prefix: {request.path})")
+                # Only log if there's a tracking issue
                 return
 
             ip = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -609,17 +545,15 @@ def create_app(config_class=BaseConfig):
     def load_user(user_id):
         try:
             user = User.query.get(int(user_id))
-            if user:
-                app.logger.info(f"Flask-Login: Loaded user {user.email} (ID: {user.id})")
-            else:
-                app.logger.info(f"Flask-Login: No user found with ID: {user_id}")
+            if not user:
+                # Only log if there's an actual issue
+                if app.debug:
+                    app.logger.warning(f"User not found with ID: {user_id}")
             return user
         except (ValueError, TypeError):
             user = User.query.filter_by(fs_uniquifier=user_id).first()
-            if user:
-                app.logger.info(f"Flask-Login: Found user by fs_uniquifier: {user.email} (ID: {user.id})")
-            else:
-                app.logger.info(f"Flask-Login: No user found with fs_uniquifier: {user_id}")
+            if not user and app.debug:
+                app.logger.warning(f"User not found with fs_uniquifier: {user_id}")
             return user
     
     # REMOVED: This was causing conflicts between Flask-Login and Flask-Security

@@ -269,7 +269,9 @@ def index():
     # Get visit trends data for the chart
     try:
         visit_trends = get_visit_trends_30d()
-        current_app.logger.debug(f"Retrieved {len(visit_trends)} visit trend records")
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and len(visit_trends) == 0:
+            current_app.logger.warning("No visit trend records found")
         
         # Prepare chart data
         chart_data = {
@@ -280,11 +282,10 @@ def index():
             'moving_average': [trend['moving_average'] for trend in visit_trends]
         }
         
-        # Log some sample data for debugging
-        if visit_trends:
-            sample = visit_trends[0]
-            current_app.logger.debug(f"Sample trend data: {sample}")
-            
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and not visit_trends:
+            current_app.logger.warning("No trend data available for chart")
+        
     except Exception as e:
         current_app.logger.error(f"Error getting visit trends: {e}")
         # Fallback to empty data
@@ -674,7 +675,9 @@ def users_data():
         start = request.args.get('start', type=int)
         length = request.args.get('length', type=int)
         search_value = request.args.get('search[value]', '')
-        current_app.logger.debug(f"users_data called with draw={draw}, start={start}, length={length}, search={search_value}")
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and not draw:
+            current_app.logger.warning("users_data called without required draw parameter")
 
         # Check cache first
         cache_key = get_cache_key('users_data', draw=draw, start=start, length=length, search=search_value)
@@ -728,10 +731,11 @@ def users_data():
             query = query.order_by(User.id)
 
         total_records = query.count()
-        current_app.logger.debug(f"Total records: {total_records}")
-
         users = query.offset(start).limit(length).all()
-        current_app.logger.debug(f"Retrieved {len(users)} users")
+        
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and total_records == 0:
+            current_app.logger.warning("No users found matching criteria")
 
         data = []
         for user in users:
@@ -750,10 +754,13 @@ def users_data():
                     'actions': f'<button class="btn btn-sm btn-primary edit-user-btn" data-id="{user.id}">Edit</button> <button class="btn btn-sm btn-danger delete-user-btn" data-id="{user.id}">Delete</button>'
                 })
             except Exception as e:
-                current_app.logger.debug(f"Error processing user {user.id}: {e}")
+                # Log actual errors, not debug info
+                current_app.logger.error(f"Error processing user {user.id}: {e}")
                 continue
 
-        current_app.logger.debug(f"Returning {len(data)} records")
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and len(data) == 0:
+            current_app.logger.warning("No user data to return")
 
         response_data = {
             'draw': draw,
@@ -934,7 +941,9 @@ def retailers():
 @rate_limit_data_tables(max_requests=20, window_seconds=60)
 def retailers_data():
     try:
-        current_app.logger.debug(f"retailers_data called by user: {current_user.id if current_user.is_authenticated else 'Not authenticated'}")
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and not draw:
+            current_app.logger.warning("retailers_data called without required draw parameter")
 
         # Get DataTables parameters
         draw = request.args.get('draw', type=int)
@@ -942,12 +951,9 @@ def retailers_data():
         length = request.args.get('length', type=int)
         search_value = request.args.get('search[value]', '')
 
-        current_app.logger.debug(f"DataTables params - draw: {draw}, start: {start}, length: {length}")
-
         # Build the query
         query = Retailer.query
 
-        # Apply search filter if provided
         if search_value:
             search = f"%{search_value}%"
             query = query.filter(
@@ -982,10 +988,11 @@ def retailers_data():
             query = query.order_by(Retailer.retailer)
 
         total_records = query.count()
-        current_app.logger.debug(f"Total records found: {total_records}")
-
         retailers = query.offset(start).limit(length).all()
-        current_app.logger.debug(f"Retrieved {len(retailers)} retailers for this page")
+        
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and total_records == 0:
+            current_app.logger.warning("No retailers found matching criteria")
 
         data = []
         for retailer in retailers:
@@ -1010,6 +1017,10 @@ def retailers_data():
                               <button class="btn btn-sm btn-danger delete-retailer-btn" data-id="{retailer.id}" data-name="{retailer.retailer or 'Unknown'}">Delete</button>'''
             })
 
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and len(data) == 0:
+            current_app.logger.warning("No retailer data to return")
+
         response_data = {
             'draw': draw,
             'recordsTotal': total_records,
@@ -1017,7 +1028,6 @@ def retailers_data():
             'data': data
         }
 
-        current_app.logger.debug(f"Returning response with {len(data)} records")
         return jsonify(response_data)
 
     except Exception as e:
@@ -2952,29 +2962,22 @@ def retry_setup_intent(setup_intent_id):
         if setup_intent.customer:
             # First try to find user in database
             user = User.query.filter_by(cust_id=setup_intent.customer).first()
-            current_app.logger.info(f"DEBUG: Found user for customer {setup_intent.customer}: {user.email if user else 'Not found'}")
             
-            if user:
-                current_app.logger.info(f"DEBUG: User details - ID: {user.id}, Email: {user.email}, First Name: {user.first_name}")
-            else:
+            if not user:
                 # If user not in database, try to get customer info from Stripe
-                current_app.logger.info(f"DEBUG: No user found in database for customer ID: {setup_intent.customer}")
                 try:
                     stripe_customer = stripe.Customer.retrieve(setup_intent.customer)
                     customer_email = stripe_customer.email
                     customer_name = stripe_customer.name
-                    current_app.logger.info(f"DEBUG: Found customer in Stripe - Email: {customer_email}, Name: {customer_name}")
                 except Exception as e:
-                    current_app.logger.error(f"DEBUG: Failed to retrieve customer from Stripe: {e}")
+                    current_app.logger.error(f"Failed to retrieve customer from Stripe: {e}")
         else:
-            current_app.logger.info(f"DEBUG: No customer associated with setup intent {setup_intent_id}")
+            current_app.logger.warning(f"No customer associated with setup intent {setup_intent_id}")
         
         current_app.logger.info(f"Retrying setup intent {setup_intent_id} for user {user.email if user else 'unknown'}")
-        current_app.logger.info("DEBUG: CODE VERSION 2.0 - Customer email enhancements deployed")
         
         # Test email functionality
         try:
-            current_app.logger.info("DEBUG: Testing email system...")
             test_result = send_email_with_context(
                 subject="TEST EMAIL - Setup Intent Retry",
                 template="email/admin_message_notification",
@@ -2986,10 +2989,8 @@ def retry_setup_intent(setup_intent_id):
                 body="This is a test email to verify the email system is working.",
                 config=current_app.config
             )
-            current_app.logger.info(f"DEBUG: Test email result: {test_result}")
         except Exception as e:
-            current_app.logger.error(f"DEBUG: Test email failed: {e}")
-            current_app.logger.error(f"DEBUG: Test email exception details: {str(e)}", exc_info=True)
+            current_app.logger.error(f"Test email failed: {e}")
         
         # Create a new checkout session for this setup intent
         session = stripe.checkout.Session.create(
@@ -3027,14 +3028,12 @@ def retry_setup_intent(setup_intent_id):
             # Use user from database
             customer_email_to_use = user.email
             customer_name_to_use = user.first_name or user.email
-            current_app.logger.info(f"DEBUG: Using customer email from database: {customer_email_to_use}")
         elif customer_email:
             # Use customer info from Stripe
             customer_email_to_use = customer_email
             customer_name_to_use = customer_name or customer_email
-            current_app.logger.info(f"DEBUG: Using customer email from Stripe: {customer_email_to_use}")
         else:
-            current_app.logger.info(f"DEBUG: No customer email available for setup intent {setup_intent_id}")
+            current_app.logger.warning(f"No customer email available for setup intent {setup_intent_id}")
         
         if customer_email_to_use:
             try:
@@ -3042,8 +3041,7 @@ def retry_setup_intent(setup_intent_id):
                 if setup_intent.status == 'canceled':
                     retry_reason = 'canceled (likely 3D Secure timeout)'
                 
-                current_app.logger.info(f"DEBUG: Attempting to send customer email to {customer_email_to_use}")
-                current_app.logger.info(f"DEBUG: Customer email template: email/setup_intent_retry_notification")
+                # Send customer email notification
                 
                 # Create a minimal user object for the template
                 template_user = type('User', (), {
@@ -3065,7 +3063,7 @@ def retry_setup_intent(setup_intent_id):
                 current_app.logger.error(f"Failed to send retry notification email to customer {customer_email_to_use}: {e}")
                 current_app.logger.error(f"Exception details: {str(e)}", exc_info=True)
         else:
-            current_app.logger.info(f"DEBUG: No customer email sent - no email available for setup intent {setup_intent_id}")
+            current_app.logger.warning(f"No customer email sent - no email available for setup intent {setup_intent_id}")
         
         # Send email notification to admin
         try:
@@ -3074,12 +3072,7 @@ def retry_setup_intent(setup_intent_id):
             
             # Debug logging
             admin_email = current_app.config.get('ADMIN_EMAIL', 'admin@tamermap.com')
-            current_app.logger.info(f"DEBUG: Admin email config value: {admin_email}")
-            current_app.logger.info(f"DEBUG: All config keys: {list(current_app.config.keys())}")
-            current_app.logger.info(f"DEBUG: ADMIN_EMAIL in config: {current_app.config.get('ADMIN_EMAIL')}")
-            
-            current_app.logger.info(f"DEBUG: Attempting to send admin email to {admin_email}")
-            current_app.logger.info(f"DEBUG: Admin email template: email/admin_setup_intent_retry_notification")
+                    # Send admin email notification
             
             send_email_with_context(
                 subject="Setup Intent Retry Initiated - Admin Alert",
@@ -3353,15 +3346,11 @@ def api_system_stats():
         from app.admin_utils import get_system_stats
         system_stats = get_system_stats()
         
-        # Log successful response for debugging
-        current_app.logger.info(f"System stats API called successfully: {system_stats}")
-        
         return jsonify({
             'success': True,
             'data': system_stats
         })
     except ImportError as e:
-        current_app.logger.error(f"Import error in system stats API: {e}")
         return jsonify({
             'success': False,
             'error': f"Import error: {str(e)}",
@@ -3376,7 +3365,6 @@ def api_system_stats():
             }
         }), 500
     except Exception as e:
-        current_app.logger.error(f"Error getting system stats: {e}")
         return jsonify({
             'success': False,
             'error': str(e),

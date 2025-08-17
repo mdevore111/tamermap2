@@ -260,7 +260,6 @@ def success():
         for field in custom_fields:
             if field.get('key') == 'full_name':
                 value = field.get('text', {}).get('value', '').strip()
-                current_app.logger.debug("Found custom field 'full_name': '%s'", value)
                 if value:
                     optional_full_name = value
                 break
