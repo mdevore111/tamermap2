@@ -114,8 +114,7 @@ def check_idempotency(event: Dict[str, Any]) -> bool:
     Returns True if the event should be processed, False if it's a duplicate.
     """
     event_id = event.get("id")
-    current_app.logger.debug("Checking idempotency for event: %s", event_id)
-
+    
     existing_event = ProcessedWebhookEvent.query.filter_by(event_id=event_id).first()
     if existing_event:
         current_app.logger.info("Duplicate event detected (%s); skipping processing.", event_id)
@@ -170,7 +169,6 @@ def handle_customer_created(event: Dict[str, Any]) -> None:
     """
     customer = event['data']['object']
     current_app.logger.info("Received customer.created event for customer: %s", customer.get('id'))
-    current_app.logger.debug("Customer details: %s", customer)
 
 
 def handle_customer_updated(event: Dict[str, Any]) -> None:
@@ -202,7 +200,6 @@ def handle_setup_intent_created(event: Dict[str, Any]) -> None:
     """
     setup_intent = event['data']['object']
     current_app.logger.info("Processing setup_intent.created event: %s", setup_intent.get('id'))
-    current_app.logger.debug("Setup intent details: %s", setup_intent)
 
 
 def handle_setup_intent_requires_action(event: Dict[str, Any]) -> None:
@@ -219,8 +216,6 @@ def handle_setup_intent_requires_action(event: Dict[str, Any]) -> None:
     next_action = setup_intent.get('next_action', {})
     
     current_app.logger.info("SetupIntent requires 3D Secure authentication for customer: %s", customer_id)
-    current_app.logger.debug("Next action type: %s", next_action.get('type'))
-    current_app.logger.debug("Client secret: %s", client_secret[:20] + "..." if client_secret else None)
     
     # Log this for monitoring - the actual authentication happens on the frontend
     user = get_user_by_stripe_customer_id(customer_id)
@@ -669,14 +664,11 @@ def send_welcome_email(user):
     from flask_mail import Message
 
     forgot_password_link = url_for('security.forgot_password', _external=True)
-    current_app.logger.debug(f"Generated forgot password link: {forgot_password_link}")
-
+    
     try:
         # Render both HTML and text versions of the email
-        current_app.logger.debug("Rendering email templates")
         html_content = render_template('email/welcome.html', user=user, forgot_password_link=forgot_password_link)
         text_content = render_template('email/welcome.txt', user=user, forgot_password_link=forgot_password_link)
-        current_app.logger.debug("Email templates rendered successfully")
 
         # Create the message
         msg = Message(
@@ -685,16 +677,13 @@ def send_welcome_email(user):
             html=html_content,
             body=text_content
         )
-        current_app.logger.debug(f"Message created for recipient: {user.email}")
 
         # Send using custom email function
         from app.custom_email import custom_send_mail
-        current_app.logger.debug("Attempting to send email via custom_send_mail")
         response = custom_send_mail(msg)
 
         if response:
             current_app.logger.info("Welcome email sent successfully to: %s", user.email)
-            current_app.logger.debug(f"Mail server response: {response}")
         else:
             current_app.logger.error("Failed to send welcome email to: %s - No response from mail server", user.email)
 
@@ -744,7 +733,6 @@ def handle_subscription_created(event: Dict[str, Any]) -> None:
     """
     subscription = event['data']['object']
     current_app.logger.info("Processing subscription.created event: %s", subscription.get('id'))
-    current_app.logger.debug("Subscription details: %s", subscription)
 
     customer_id = subscription.get('customer')
     user = get_user_by_stripe_customer_id(customer_id)
@@ -768,7 +756,6 @@ def handle_subscription_deleted(event: Dict[str, Any]) -> None:
     """
     subscription = event['data']['object']
     current_app.logger.info("Processing subscription.deleted event: %s", subscription.get('id'))
-    current_app.logger.debug("Subscription details: %s", subscription)
 
     customer_id = subscription.get('customer')
     user = get_user_by_stripe_customer_id(customer_id)
@@ -808,7 +795,6 @@ def handle_invoice_created(event: Dict[str, Any]) -> None:
     """
     invoice = event['data']['object']
     current_app.logger.info("Processing invoice.created event: %s", invoice.get('id'))
-    current_app.logger.debug("Invoice details: %s", invoice)
 
     customer_id = invoice.get('customer')
     user = get_user_by_stripe_customer_id(customer_id)
@@ -832,7 +818,6 @@ def handle_payment_intent_created(event: Dict[str, Any]) -> None:
     """
     payment_intent = event['data']['object']
     current_app.logger.info("Processing payment_intent.created event: %s", payment_intent.get('id'))
-    current_app.logger.debug("Payment intent details: %s", payment_intent)
 
     customer_id = payment_intent.get('customer')
     user = get_user_by_stripe_customer_id(customer_id)
@@ -941,7 +926,6 @@ def handle_invoice_updated(event: Dict[str, Any]) -> None:
     """
     invoice = event['data']['object']
     current_app.logger.info("Processing invoice.updated event: %s", invoice.get('id'))
-    current_app.logger.debug("Invoice details: %s", invoice)
 
     customer_id = invoice.get('customer')
     user = get_user_by_stripe_customer_id(customer_id)

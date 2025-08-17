@@ -16,9 +16,7 @@ def check_referrer():
     """
     referer = request.headers.get("Referer", "")
     
-    # DEBUG: Log the referrer for troubleshooting
-    current_app.logger.info(f"DEBUG: Request to {request.path} from referer: '{referer}'")
-    
+    # Only log unauthorized access attempts, not every request
     allowed_pattern = re.compile(r"^(https?://(?:.+\.)?tamermap\.com)", re.IGNORECASE)
     allowed_locals = [
         "http://127.0.0.1:5000",

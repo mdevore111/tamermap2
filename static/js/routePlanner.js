@@ -29,186 +29,12 @@ class RoutePlanner {
     }
 
     /**
-     * Merge nearby duplicate locations (same venue kiosk + retail, minor coord differences)
-     * This function is always enabled to prevent duplicate locations in route planning.
-     * Returns a new array with merged representatives.
-     */
-    mergeNearbyLocations(locations, thresholdMeters = 60) {
-        if (!Array.isArray(locations) || locations.length <= 1) return locations || [];
-
-        const degPerMeter = 1 / 111320; // rough conversion at mid-latitude
-        // Use the largest possible merge radius for bucketing so we don't miss candidates
-        const maxMergeMeters = Math.max(thresholdMeters, this.mergeSameNameBoostMeters);
-        const cellSizeDeg = maxMergeMeters * degPerMeter;
-
-        const normalizeName = (name = '') => {
-            const base = (name || '').toLowerCase().trim()
-                .replace(/[^a-z0-9\s]/g, '')
-                .replace(/\s+-\s+[a-z\s,]*$/i, '')
-                .replace(/\s+/g, ' ');
-            // Keep first two tokens to collapse variants like "fred meyer fuel center"
-            const tokens = base.split(' ').filter(Boolean);
-            return tokens.slice(0, 2).join(' ');
-        };
-
-        const normalizeStreet = (addr = '') => {
-            if (!addr) return '';
-            const firstLine = addr.toLowerCase().split(',')[0];
-            // Remove unit/suite
-            let s = firstLine.replace(/\b(ste|suite|unit|bldg|building)\b\s*[^\s]+/g, '')
-                             .replace(/#/g, ' ');
-            // Normalize common abbreviations
-            const reps = [
-                [/\bst\.?\b/g, ' street'],
-                [/\brd\.?\b/g, ' road'],
-                [/\bave\.?\b/g, ' avenue'],
-                [/\bblvd\.?\b/g, ' boulevard'],
-                [/\bpkwy\.?\b/g, ' parkway'],
-                [/\bhwy\.?\b/g, ' highway'],
-                [/\bctr\.?\b/g, ' center']
-            ];
-            reps.forEach(([re, to]) => { s = s.replace(re, to); });
-            s = s.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-            return s;
-        };
-
-        // Precompute quick-identity keys
-        const nameStreetKey = new Map();
-        const placeIdGroups = new Map();
-        locations.forEach((loc, i) => {
-            const nk = normalizeName(loc.retailer);
-            const sk = normalizeStreet(loc.address);
-            if (nk && sk) {
-                const key = `${nk}|${sk}`;
-                if (!nameStreetKey.has(key)) nameStreetKey.set(key, []);
-                nameStreetKey.get(key).push(i);
-            }
-            if (loc.place_id) {
-                const pid = String(loc.place_id);
-                if (!placeIdGroups.has(pid)) placeIdGroups.set(pid, []);
-                placeIdGroups.get(pid).push(i);
-            }
-        });
-
-        // Union by identical place_id first
-        const parent = new Array(locations.length).fill(0).map((_, i) => i);
-        const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
-        const union = (i, j) => { const pi = find(i), pj = find(j); if (pi !== pj) parent[pi] = pj; };
-        placeIdGroups.forEach(indices => { if (indices.length > 1) { const head = indices[0]; indices.slice(1).forEach(j => union(head, j)); } });
-
-        // Union by identical (normalized name, normalized street)
-        nameStreetKey.forEach(indices => { if (indices.length > 1) { const head = indices[0]; indices.slice(1).forEach(j => union(head, j)); } });
-
-        // Bucket by geocell to limit pair checks (proximity-based union)
-        const buckets = new Map();
-        locations.forEach((loc, idx) => {
-            const cellX = Math.floor(loc.lng / cellSizeDeg);
-            const cellY = Math.floor(loc.lat / cellSizeDeg);
-            const key = `${cellX}:${cellY}`;
-            if (!buckets.has(key)) buckets.set(key, []);
-            buckets.get(key).push({ loc, idx });
-        });
-
-        const haversineMeters = (a, b) => {
-            const R = 6371000; // meters
-            const toRad = (d) => d * Math.PI / 180;
-            const dLat = toRad(b.lat - a.lat);
-            const dLng = toRad(b.lng - a.lng);
-            const lat1 = toRad(a.lat);
-            const lat2 = toRad(b.lat);
-            const h = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng/2)**2;
-            return 2 * R * Math.asin(Math.sqrt(h));
-        };
-
-        const getNeighbors = (cellX, cellY) => {
-            const arr = [];
-            for (let dx = -1; dx <= 1; dx++) {
-                for (let dy = -1; dy <= 1; dy++) {
-                    const key = `${cellX+dx}:${cellY+dy}`;
-                    if (buckets.has(key)) arr.push(...buckets.get(key));
-                }
-            }
-            return arr;
-        };
-
-        // Union duplicates within threshold and with similar venue identity
-        buckets.forEach((items, key) => {
-            const [xStr, yStr] = key.split(':');
-            const cx = parseInt(xStr, 10), cy = parseInt(yStr, 10);
-            const candidates = getNeighbors(cx, cy);
-            items.forEach(({ loc, idx }) => {
-                const baseName = normalizeName(loc.retailer);
-                candidates.forEach(({ loc: other, idx: j }) => {
-                    if (idx === j) return;
-                    const dist = haversineMeters({ lat: loc.lat, lng: loc.lng }, { lat: other.lat, lng: other.lng });
-                    const otherName = normalizeName(other.retailer);
-                    const sameName = baseName && baseName === otherName;
-                    const samePlace = loc.place_id && other.place_id && (loc.place_id === other.place_id);
-                    const addrA = (loc.address || '').toLowerCase();
-                    const addrB = (other.address || '').toLowerCase();
-                    const streetA = addrA.split(',')[0].trim();
-                    const streetB = addrB.split(',')[0].trim();
-                    const similarAddress = streetA && streetA === streetB;
-
-                    // Dynamic threshold: allow larger radius for strong identity matches (same name or place)
-                    const dynamicThreshold = (sameName || samePlace || similarAddress) ? Math.max(thresholdMeters, this.mergeSameNameBoostMeters) : thresholdMeters;
-                    if (dist <= dynamicThreshold && (sameName || samePlace || similarAddress)) {
-                        union(idx, j);
-                    }
-                });
-            });
-        });
-
-        // Group by parent and build representatives
-        const groups = new Map();
-        locations.forEach((loc, i) => {
-            const p = find(i);
-            if (!groups.has(p)) groups.set(p, []);
-            groups.get(p).push(loc);
-        });
-
-        const representativeOf = (group) => {
-            const preferScore = (g) => {
-                let score = 0;
-                if (g.place_id) score += 100; // Strongly prefer entries with a valid place_id
-                if (g.opening_hours) score += 3;
-                const type = (g.retailer_type || '').toLowerCase();
-                if (type.includes('store')) score += 2; else if (type.includes('kiosk')) score += 1;
-                if (window.userCoords && typeof g.distance === 'number') score += Math.max(0, 1 - (g.distance / 100));
-                return score;
-            };
-            let best = group[0];
-            let bestScore = -Infinity;
-            group.forEach(g => { const s = preferScore(g); if (s > bestScore) { best = g; bestScore = s; } });
-            const types = [...new Set(group.flatMap(g => String(g.retailer_type || '').split('+').map(t => t.trim())).filter(Boolean))];
-            return {
-                ...best,
-                retailer_type: types.join(' + '),
-                mergedFrom: group
-            };
-        };
-
-        const merged = [];
-        groups.forEach((group) => {
-            if (group.length === 1) { merged.push(group[0]); }
-            else { merged.push(representativeOf(group)); }
-        });
-
-        // Recompute distance for merged representatives because we may have chosen coords from a member
-        if (window.userCoords) {
-            merged.forEach(m => {
-                m.distance = this.calculateDistance(window.userCoords.lat, window.userCoords.lng, m.lat, m.lng);
-            });
-        }
-
-        return merged;
-    }
-
-    /**
      * Initialize the route planner
      */
     async initialize() {
-        if (this.isInitialized) return;
+        if (this.isInitialized) {
+            return;
+        }
         
         if (window.__TM_DEBUG__) console.log('Initializing Route Planner...');
         this.initializeUI();
@@ -493,7 +319,6 @@ class RoutePlanner {
         if (window.__TM_DEBUG__) console.log('Restoring session state', this.sessionCheckboxStates);
         
         if (this.sessionCheckboxStates) {
-            console.log('Restoring option states from preferences...');
             if (roundTripCheckbox) roundTripCheckbox.checked = !!this.sessionCheckboxStates.roundTrip;
             if (openNowCheckbox) openNowCheckbox.checked = !!this.sessionCheckboxStates.openNow;
 
@@ -514,8 +339,6 @@ class RoutePlanner {
             setSegActive(popularityMostBtn, mode === 'most');
         }
         
-        // No legend fallback: planner is legend-agnostic
-            
         // Add event listeners
         if (roundTripCheckbox) {
             roundTripCheckbox.addEventListener('change', () => {
@@ -563,7 +386,6 @@ class RoutePlanner {
         filterToggles.forEach(toggle => {
             // Get the filter type from the data attribute
             const filterType = toggle.getAttribute('data-filter');
-            console.log(`Processing filter toggle: ${filterType}`);
             
             // Restore state from preferences if available
             if (this.sessionCheckboxStates && filterType in this.sessionCheckboxStates) {
@@ -584,7 +406,6 @@ class RoutePlanner {
                 }
             } else {
                 // No legend fallback; rely on defaults if not present in prefs
-                if (window.__TM_DEBUG__) console.log(`No stored state for ${filterType}; using default`);
                 const defaultActive = (filterType === 'kiosk' || filterType === 'retail');
                 if (defaultActive) {
                 toggle.classList.add('active');
@@ -795,32 +616,6 @@ class RoutePlanner {
         
         if (window.__TM_DEBUG__) console.log('Summary settings', { roundTrip, openNow });
         
-        // Debug: Log available data sources
-        if (window.__TM_DEBUG__) console.log('Data sources snapshot', {
-            userCoords: window.userCoords,
-            allMarkers: window.allMarkers?.length || 0,
-            markerManager: !!window.markerManager,
-            markerCache: window.markerManager?.markerCache?.size || 0,
-            dataService: !!window.dataService,
-            dataCache: window.dataService?.cache?.size || 0,
-        });
-        
-        // Additional debugging for markerManager
-        if (window.markerManager) {
-            if (window.__TM_DEBUG__) {
-            console.log('- markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
-            console.log('- markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
-            }
-        }
-        
-        // Additional debugging for dataService
-        if (window.dataService && window.dataService.cache) {
-            if (window.__TM_DEBUG__ && window.dataService?.cache) {
-            console.log('- dataService.cache entries:');
-                window.dataService.cache.forEach((value, key) => console.log(`  - ${key}:`, value));
-            }
-        }
-        
         // Get available locations and apply filters
         if (window.__TM_DEBUG__) console.log('Getting filtered locations...');
         // Capture pre-merge count for UI notice
@@ -899,123 +694,164 @@ class RoutePlanner {
     }
 
     /**
+     * Debug method to inspect all available data sources
+     */
+    debugDataSources() {
+        console.log('🔍 ROUTE PLANNER DATA SOURCE INSPECTION');
+        console.log('=====================================');
+        
+        // Check user coordinates
+        if (window.userCoords) {
+            console.log('✅ User coordinates available:', window.userCoords);
+        } else {
+            console.error('❌ No user coordinates available!');
+        }
+        
+        // Check allMarkers
+        if (window.allMarkers && window.allMarkers.length > 0) {
+            console.log(`📊 window.allMarkers: ${window.allMarkers.length} markers`);
+            console.log('Sample markers:');
+            window.allMarkers.slice(0, 3).forEach((marker, i) => {
+                const pos = marker.getPosition();
+                console.log(`  ${i + 1}. ${marker.getTitle()} - ${pos.lat()}, ${pos.lng()}`);
+            });
+        } else {
+            console.log('❌ window.allMarkers: Not available or empty');
+        }
+        
+        // Check markerManager
+        if (window.markerManager && window.markerManager.markerCache) {
+            console.log(`📊 markerManager.markerCache: ${window.markerManager.markerCache.size} entries`);
+            if (window.markerManager.markerCache.size > 0) {
+                const sample = Array.from(window.markerManager.markerCache.values()).slice(0, 3);
+                console.log('Sample cache entries:');
+                sample.forEach((marker, i) => {
+                    console.log(`  ${i + 1}. ${marker.retailer_type || 'No type'} - ${marker.retailer_data?.retailer || marker.getTitle?.() || 'Unknown'}`);
+                });
+            }
+        } else {
+            console.log('❌ markerManager.markerCache: Not available');
+        }
+        
+        // Check dataService
+        if (window.dataService && window.dataService.cache) {
+            console.log(`📊 dataService.cache: ${window.dataService.cache.size} entries`);
+            if (window.dataService.cache.size > 0) {
+                const keys = Array.from(window.dataService.cache.keys());
+                console.log('Cache keys:', keys.slice(0, 5));
+            }
+        } else {
+            console.log('❌ dataService.cache: Not available');
+        }
+        
+        // Check global markers
+        if (window.markers && window.markers.length > 0) {
+            console.log(`📊 window.markers: ${window.markers.length} markers`);
+        } else {
+            console.log('❌ window.markers: Not available or empty');
+        }
+        
+        console.log('=====================================');
+    }
+
+    /**
      * Get filtered locations based on current settings
      */
     getFilteredLocations(openNow = false, leastPopular = false, mostPopular = false) {
-        console.log('=== GET FILTERED LOCATIONS DEBUG ===');
-        console.log('1. openNow parameter:', openNow);
-        console.log('2. leastPopular parameter:', leastPopular);
-        console.log('3. mostPopular parameter:', mostPopular);
-        console.log('4. userCoords available:', !!window.userCoords);
-        console.log('5. userCoords value:', window.userCoords);
-        
         if (!window.userCoords) {
-            console.log('ERROR: No user coordinates available');
+            console.warn('No user coordinates available for filtering');
             return [];
         }
+
+        console.log('🔍 ROUTE PLANNER DEBUG: Starting location filtering');
+        console.log('📍 User coordinates:', window.userCoords);
+        console.log('📏 Max distance setting:', this.maxDistance, 'miles');
 
         // Try different data sources in order of preference
         let locations = [];
         let dataSource = 'none';
         
-        console.log('6. Checking data sources...');
-        
-        // First try window.allMarkers (from MarkerManager)
+        // First try to use the comprehensive marker data
         if (window.allMarkers && window.allMarkers.length > 0) {
-            // Convert Google Maps Marker objects to location data objects
-            locations = window.allMarkers.map(marker => {
-                const position = marker.getPosition();
-                return {
-                    lat: position.lat(),
-                    lng: position.lng(),
-                    retailer: marker.getTitle() || 'Unknown',
-                    retailer_type: marker.retailer_type || 'unknown',
-                    opening_hours: marker.opening_hours || null,
-                    address: marker.address || null,
-                    phone: marker.phone || null,
-                    place_id: marker.place_id || null
-                };
-            });
-            dataSource = 'allMarkers';
-            console.log(`5. SUCCESS: Using data source: allMarkers (${locations.length} locations)`);
-            console.log('6. Sample location:', locations[0]);
-            console.log('7. First 3 locations:', locations.slice(0, 3));
+            console.log('📊 Using data source: window.allMarkers');
+            console.log('📊 Total markers found:', window.allMarkers.length);
             
-            // Debug: Show retailer type distribution
-            const typeCounts = {};
-            locations.forEach(loc => {
-                const type = loc.retailer_type || 'unknown';
-                typeCounts[type] = (typeCounts[type] || 0) + 1;
-            });
-            console.log('8. Retailer type distribution:', typeCounts);
-        }
-        // Fallback to markerManager.markerCache if available
-        else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
-            const markerCache = Array.from(window.markerManager.markerCache.values());
-            // Normalize markers → plain location objects with lat/lng
-            locations = markerCache
-                .filter(marker => marker.retailer_type) // Only retailer markers
-                .map(marker => {
-                    const pos = marker.getPosition && marker.getPosition();
-                    const rd = marker.retailer_data || {};
-                    return {
-                        lat: pos ? pos.lat() : parseFloat(rd.latitude),
-                        lng: pos ? pos.lng() : parseFloat(rd.longitude),
-                        retailer: rd.retailer || marker.getTitle?.() || 'Unknown',
-                        retailer_type: (marker.retailer_type || rd.retailer_type || 'unknown'),
-                        opening_hours: rd.opening_hours || marker.opening_hours || null,
-                        address: rd.full_address || marker.address || null,
-                        phone: rd.phone_number || marker.phone || null,
-                        place_id: rd.place_id || marker.place_id || null
-                    };
-                })
-                .filter(loc => Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
-            dataSource = 'markerCache';
-            console.log(`5. SUCCESS: Using data source: markerCache (${locations.length} retailer locations from ${markerCache.length} total)`);
-            console.log('6. Sample location:', locations[0]);
-            console.log('7. First 3 locations:', locations.slice(0, 3));
-        }
-        // Try dataService if available
-        else if (window.dataService && window.dataService.cache && window.dataService.cache.size > 0) {
-            // Extract retailer data from dataService cache
-            const cacheKeys = Array.from(window.dataService.cache.keys());
-            console.log('5. DataService cache keys:', cacheKeys);
-            
-            const retailerKeys = cacheKeys.filter(key => key.includes('retailers') || key.includes('map-data'));
-            console.log('6. Retailer keys found:', retailerKeys);
-            
-            if (retailerKeys.length > 0) {
-                const cacheEntry = window.dataService.cache.get(retailerKeys[0]);
-                console.log('7. Cache entry:', cacheEntry);
-                
-                if (cacheEntry && cacheEntry.data) {
-                    const raw = Array.isArray(cacheEntry.data) ? cacheEntry.data : (cacheEntry.data.retailers || []);
-                    // Normalize {latitude,longitude} → {lat,lng}
-                    locations = raw.map(r => ({
-                        lat: parseFloat(r.lat ?? r.latitude),
-                        lng: parseFloat(r.lng ?? r.longitude),
-                        retailer: r.retailer || 'Unknown',
-                        retailer_type: r.retailer_type || 'unknown',
-                        opening_hours: r.opening_hours || null,
-                        address: r.full_address || r.address || null,
-                        phone: r.phone_number || r.phone || null,
-                        place_id: r.place_id || null
-                    })).filter(loc => Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
-                    dataSource = 'dataService';
-                    console.log(`8. SUCCESS: Using data source: dataService (${locations.length} locations from key: ${retailerKeys[0]})`);
-                    console.log('9. Sample location:', locations[0]);
-                    console.log('10. First 3 locations:', locations.slice(0, 3));
+            // Debug: Check for Boulder locations in allMarkers BEFORE conversion
+            if (window.__TM_DEBUG__) {
+                const boulderInAllMarkers = window.allMarkers.filter(m => {
+                    if (!m) return false;
+                    const title = m.getTitle ? m.getTitle() : (m.retailer || '');
+                    const address = m.address || '';
+                    return (title && title.includes('Boulder')) || (address && address.includes('Boulder'));
+                });
+                if (boulderInAllMarkers.length > 0) {
+                    console.log(`🔍 BOULDER MARKER FOUND in allMarkers BEFORE conversion: ${boulderInAllMarkers.length} found`);
+                    boulderInAllMarkers.forEach((m, i) => {
+                        console.log(`   ${i+1}. Title: "${m.getTitle ? m.getTitle() : (m.retailer || 'Unknown')}"`);
+                        console.log(`      Address: "${m.address || 'No address'}"`);
+                        console.log(`      Has getPosition: ${!!m.getPosition}`);
+                        if (m.getPosition) {
+                            const pos = m.getPosition();
+                            console.log(`      Position object:`, pos);
+                            console.log(`      Position.lat(): ${pos ? pos.lat() : 'undefined'}`);
+                            console.log(`      Position.lng(): ${pos ? pos.lng() : 'undefined'}`);
+                        }
+                        console.log(`      Raw lat: ${m.lat || 'undefined'}`);
+                        console.log(`      Raw lng: ${m.lng || 'undefined'}`);
+                        console.log(`      Raw latitude: ${m.latitude || 'undefined'}`);
+                        console.log(`      Raw longitude: ${m.longitude || 'undefined'}`);
+                        console.log(`      Full marker object:`, m);
+                    });
                 }
             }
-        }
-        // Last fallback to any global markers array
-        else if (window.markers && window.markers.length > 0) {
-            // Normalize generic markers → plain objects
-            locations = window.markers.map(marker => {
-                const pos = marker.getPosition && marker.getPosition();
+            
+            // Convert Google Maps Marker objects to plain objects
+            locations = window.allMarkers.map(marker => {
+                if (!marker) return null;
+                
+                let lat, lng;
+                
+                // Try to get position from Google Maps Marker
+                if (marker.getPosition && typeof marker.getPosition === 'function') {
+                    try {
+                        const position = marker.getPosition();
+                        if (position && typeof position.lat === 'function' && typeof position.lng === 'function') {
+                            lat = position.lat();
+                            lng = position.lng();
+                        } else {
+                            console.warn('⚠️ Marker position object missing lat/lng functions:', position);
+                            lat = lng = null;
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error getting marker position:', error);
+                        lat = lng = null;
+                    }
+                }
+                
+                // Fallback to direct properties
+                if (!Number.isFinite(lat)) lat = parseFloat(marker.lat ?? marker.latitude);
+                if (!Number.isFinite(lng)) lng = parseFloat(marker.lng ?? marker.longitude);
+                
+                // Debug: Log Boulder marker conversion specifically
+                if (window.__TM_DEBUG__) {
+                    const title = marker.getTitle ? marker.getTitle() : (marker.retailer || '');
+                    if (title.includes('Boulder') || (marker.address && marker.address.includes('Boulder'))) {
+                        console.log(`🔍 BOULDER MARKER CONVERSION: "${title}"`);
+                        console.log(`   getPosition result: ${marker.getPosition ? 'function exists' : 'no function'}`);
+                        if (marker.getPosition) {
+                            const pos = marker.getPosition();
+                            console.log(`   Position object:`, pos);
+                            console.log(`   pos.lat(): ${pos ? pos.lat() : 'undefined'}`);
+                            console.log(`   pos.lng(): ${pos ? pos.lng() : 'undefined'}`);
+                        }
+                        console.log(`   Final lat: ${lat}, Final lng: ${lng}`);
+                        console.log(`   Is valid: ${Number.isFinite(lat) && Number.isFinite(lng)}`);
+                    }
+                }
+                
                 return {
-                    lat: pos ? pos.lat() : parseFloat(marker.lat ?? marker.latitude),
-                    lng: pos ? pos.lng() : parseFloat(marker.lng ?? marker.longitude),
+                    lat: lat,
+                    lng: lng,
                     retailer: marker.getTitle?.() || marker.retailer || 'Unknown',
                     retailer_type: marker.retailer_type || 'unknown',
                     opening_hours: marker.opening_hours || null,
@@ -1023,102 +859,426 @@ class RoutePlanner {
                     phone: marker.phone || marker.phone_number || null,
                     place_id: marker.place_id || null
                 };
-            }).filter(loc => Number.isFinite(loc.lat) && Number.isFinite(loc.lng));
+            }).filter(loc => {
+                const isValid = Number.isFinite(loc.lat) && Number.isFinite(loc.lng);
+                if (!isValid && window.__TM_DEBUG__) {
+                    console.warn(`⚠️ Skipping invalid location from allMarkers:`, loc);
+                }
+                return isValid;
+            });
+            dataSource = 'allMarkers';
+        }
+        // Second try markerManager.markerCache (from MarkerManager)
+        else if (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) {
+            console.log('📊 Using data source: markerManager.markerCache');
+            console.log('📊 Cache size:', window.markerManager.markerCache.size);
+            
+            // Debug: Check for Boulder locations in markerCache BEFORE conversion
+            if (window.__TM_DEBUG__) {
+                const boulderInCache = Array.from(window.markerManager.markerCache.values()).filter(m => {
+                    if (!m) return false;
+                    const retailer = m.retailer || '';
+                    const address = m.address || '';
+                    return retailer.includes('Boulder') || address.includes('Boulder');
+                });
+                if (boulderInCache.length > 0) {
+                    console.log(`🔍 BOULDER MARKER CACHE FOUND: ${boulderInCache.length} found`);
+                    boulderInCache.forEach((m, i) => {
+                        console.log(`   ${i+1}. Retailer: "${m.retailer || 'Unknown'}"`);
+                        console.log(`      Address: "${m.address || 'No address'}"`);
+                        console.log(`      Raw lat: ${m.lat || 'undefined'}`);
+                        console.log(`      Raw lng: ${m.lng || 'undefined'}`);
+                        console.log(`      Raw latitude: ${m.latitude || 'undefined'}`);
+                        console.log(`      Raw longitude: ${m.longitude || 'undefined'}`);
+                        console.log(`      Full cache object:`, m);
+                    });
+                }
+            }
+            
+            // Extract marker data from MarkerManager cache
+            const cacheValues = Array.from(window.markerManager.markerCache.values());
+            locations = cacheValues.map(marker => {
+                if (!marker) return null;
+                
+                const lat = parseFloat(marker.lat ?? marker.latitude);
+                const lng = parseFloat(marker.lng ?? marker.longitude);
+                
+                // Debug: Log Boulder cache conversion specifically
+                if (window.__TM_DEBUG__) {
+                    const retailer = marker.retailer || '';
+                    if (retailer.includes('Boulder') || (marker.address && marker.address.includes('Boulder'))) {
+                        console.log(`🔍 BOULDER MARKER CACHE CONVERSION: "${retailer}"`);
+                        console.log(`   Raw lat: ${marker.lat}, Raw lng: ${marker.lng}`);
+                        console.log(`   Raw latitude: ${marker.latitude}, Raw longitude: ${marker.longitude}`);
+                        console.log(`   Final lat: ${lat}, Final lng: ${lng}`);
+                        console.log(`   Is valid: ${Number.isFinite(lat) && Number.isFinite(lng)}`);
+                    }
+                }
+                
+                return {
+                    lat: lat,
+                    lng: lng,
+                    retailer: marker.retailer || 'Unknown',
+                    retailer_type: marker.retailer_type || 'unknown',
+                    opening_hours: marker.opening_hours || null,
+                    address: marker.address || marker.full_address || null,
+                    phone: marker.phone || marker.phone_number || null,
+                    place_id: marker.place_id || null
+                };
+            }).filter(loc => {
+                const isValid = Number.isFinite(loc.lat) && Number.isFinite(loc.lng);
+                if (!isValid && window.__TM_DEBUG__) {
+                    console.warn(`⚠️ Skipping invalid location from markerCache:`, loc);
+                }
+                return isValid;
+            });
+            dataSource = 'markerCache';
+        }
+        // Third try dataService.cache (from DataService)
+        else if (window.dataService && window.dataService.cache && window.dataService.cache.size > 0) {
+            console.log('📊 Using data source: dataService.cache');
+            console.log('📊 Cache size:', window.dataService.cache.size);
+            
+            // Extract retailer data from dataService cache
+            const cacheKeys = Array.from(window.dataService.cache.keys());
+            const retailerKeys = cacheKeys.filter(key => key.includes('retailers') || key.includes('map-data'));
+            
+            if (retailerKeys.length > 0) {
+                const cacheEntry = window.dataService.cache.get(retailerKeys[0]);
+                
+                if (cacheEntry && cacheEntry.data) {
+                    const raw = Array.isArray(cacheEntry.data) ? cacheEntry.data : (cacheEntry.data.retailers || []);
+                    
+                    // Debug: Check for Boulder locations in dataService cache BEFORE conversion
+                    if (window.__TM_DEBUG__) {
+                        const boulderInDataService = raw.filter(r => 
+                            (r.retailer && r.retailer.includes('Boulder')) ||
+                            (r.full_address && r.full_address.includes('Boulder')) ||
+                            (r.address && r.address.includes('Boulder'))
+                        );
+                        if (boulderInDataService.length > 0) {
+                            console.log(`🔍 BOULDER LOCATIONS IN DATA SERVICE: ${boulderInDataService.length} found`);
+                            boulderInDataService.forEach((r, i) => {
+                                console.log(`   ${i+1}. ${r.retailer} - Lat: ${r.lat ?? r.latitude}, Lng: ${r.lng ?? r.longitude}, Address: ${r.full_address || r.address}`);
+                                console.log(`      Raw lat: ${r.lat}, Raw lng: ${r.lng}`);
+                                console.log(`      Raw latitude: ${r.latitude}, Raw longitude: ${r.longitude}`);
+                                console.log(`      Full dataService object:`, r);
+                            });
+                        }
+                    }
+                    
+                    // Normalize {latitude,longitude} → {lat,lng}
+                    locations = raw.map(r => {
+                        const lat = parseFloat(r.lat ?? r.latitude);
+                        const lng = parseFloat(r.lng ?? r.longitude);
+                        
+                        // Debug: Log Boulder dataService conversion specifically
+                        if (window.__TM_DEBUG__) {
+                            const retailer = r.retailer || '';
+                            if (retailer.includes('Boulder') || (r.full_address && r.full_address.includes('Boulder')) || (r.address && r.address.includes('Boulder'))) {
+                                console.log(`🔍 BOULDER DATA SERVICE CONVERSION: "${retailer}"`);
+                                console.log(`   Raw lat: ${r.lat}, Raw lng: ${r.lng}`);
+                                console.log(`   Raw latitude: ${r.latitude}, Raw longitude: ${r.longitude}`);
+                                console.log(`   Final lat: ${lat}, Final lng: ${lng}`);
+                                console.log(`   Is valid: ${Number.isFinite(lat) && Number.isFinite(lng)}`);
+                            }
+                        }
+                        
+                        return {
+                            lat: lat,
+                            lng: lng,
+                            retailer: r.retailer || 'Unknown',
+                            retailer_type: r.retailer_type || 'unknown',
+                            opening_hours: r.opening_hours || null,
+                            address: r.full_address || r.address || null,
+                            phone: r.phone_number || r.phone || null,
+                            place_id: r.place_id || null
+                        };
+                    }).filter(loc => {
+                        const isValid = Number.isFinite(loc.lat) && Number.isFinite(loc.lng);
+                        if (!isValid && window.__TM_DEBUG__) {
+                            console.warn(`⚠️ Skipping invalid location from dataService:`, loc);
+                        }
+                        return isValid;
+                    });
+                    dataSource = 'dataService';
+                }
+            }
+        }
+        // Last fallback to any global markers array
+        else if (window.markers && window.markers.length > 0) {
+            console.log('📊 Using data source: window.markers');
+            console.log('📊 Total markers found:', window.markers.length);
+            
+            // Debug: Check for Boulder locations in window.markers BEFORE conversion
+            if (window.__TM_DEBUG__) {
+                const boulderInMarkers = window.markers.filter(marker => {
+                    if (!marker) return false;
+                    const title = marker.getTitle ? marker.getTitle() : (marker.retailer || '');
+                    const address = marker.address || '';
+                    return (title && title.includes('Boulder')) || (address && address.includes('Boulder'));
+                });
+                if (boulderInMarkers.length > 0) {
+                    console.log(`🔍 BOULDER MARKERS FOUND in window.markers: ${boulderInMarkers.length} found`);
+                    boulderInMarkers.forEach((marker, i) => {
+                        console.log(`   ${i+1}. Title: "${marker.getTitle ? marker.getTitle() : (marker.retailer || 'Unknown')}"`);
+                        console.log(`      Address: "${marker.address || 'No address'}"`);
+                        console.log(`      Has getPosition: ${!!marker.getPosition}`);
+                        if (marker.getPosition) {
+                            const pos = marker.getPosition();
+                            console.log(`      Position object:`, pos);
+                            console.log(`      Position.lat(): ${pos ? pos.lat() : 'undefined'}`);
+                            console.log(`      Position.lng(): ${pos ? pos.lng() : 'undefined'}`);
+                        }
+                        console.log(`      Raw lat: ${marker.lat || 'undefined'}`);
+                        console.log(`      Raw lng: ${marker.lng || 'undefined'}`);
+                        console.log(`      Raw latitude: ${marker.latitude || 'undefined'}`);
+                        console.log(`      Raw longitude: ${marker.longitude || 'undefined'}`);
+                        console.log(`      Full marker object:`, marker);
+                    });
+                }
+            }
+            
+            // Normalize generic markers → plain objects
+            locations = window.markers.map(marker => {
+                if (!marker) return null;
+                
+                let lat, lng;
+                
+                // Try to get position from Google Maps Marker
+                if (marker.getPosition && typeof marker.getPosition === 'function') {
+                    try {
+                        const position = marker.getPosition();
+                        if (position && typeof position.lat === 'function' && typeof position.lng === 'function') {
+                            lat = position.lat();
+                            lng = position.lng();
+                        } else {
+                            console.warn('⚠️ Marker position object missing lat/lng functions:', position);
+                            lat = lng = null;
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Error getting marker position:', error);
+                        lat = lng = null;
+                    }
+                }
+                
+                // Fallback to direct properties
+                if (!Number.isFinite(lat)) lat = parseFloat(marker.lat ?? marker.latitude);
+                if (!Number.isFinite(lng)) lng = parseFloat(marker.lng ?? marker.longitude);
+                
+                // Debug: Log Boulder marker conversion specifically
+                if (window.__TM_DEBUG__) {
+                    const title = marker.getTitle ? marker.getTitle() : (marker.retailer || '');
+                    if (title.includes('Boulder') || (marker.address && marker.address.includes('Boulder'))) {
+                        console.log(`🔍 BOULDER MARKERS CONVERSION: "${title}"`);
+                        console.log(`   getPosition result: ${marker.getPosition ? 'function exists' : 'no function'}`);
+                        if (marker.getPosition) {
+                            const pos = marker.getPosition();
+                            console.log(`   Position object:`, pos);
+                            console.log(`   pos.lat(): ${pos ? pos.lat() : 'undefined'}`);
+                            console.log(`   pos.lng(): ${pos ? pos.lng() : 'undefined'}`);
+                        }
+                        console.log(`   Final lat: ${lat}, Final lng: ${lng}`);
+                        console.log(`   Is valid: ${Number.isFinite(lat) && Number.isFinite(lng)}`);
+                    }
+                }
+                
+                return {
+                    lat: lat,
+                    lng: lng,
+                    retailer: marker.getTitle?.() || marker.retailer || 'Unknown',
+                    retailer_type: marker.retailer_type || 'unknown',
+                    opening_hours: marker.opening_hours || null,
+                    address: marker.address || marker.full_address || null,
+                    phone: marker.phone || marker.phone_number || null,
+                    place_id: marker.place_id || null
+                };
+            }).filter(loc => {
+                const isValid = Number.isFinite(loc.lat) && Number.isFinite(loc.lng);
+                if (!isValid && window.__TM_DEBUG__) {
+                    console.warn(`⚠️ Skipping invalid location from window.markers:`, loc);
+                }
+                return isValid;
+            });
             dataSource = 'markers';
-            console.log(`5. SUCCESS: Using data source: markers (${locations.length} locations)`);
-            console.log('6. Sample location:', locations[0]);
-            console.log('7. First 3 locations:', locations.slice(0, 3));
         }
         
+        console.log(`📊 Data source: ${dataSource}, Raw locations found: ${locations.length}`);
+        
         if (locations.length === 0) {
-            console.log('ERROR: No marker data available for route planning');
-            console.log('Debug - Available data sources:');
-            console.log('- window.allMarkers:', window.allMarkers?.length || 0);
-            console.log('- window.markerManager:', window.markerManager ? 'exists' : 'missing');
-            console.log('- window.markerManager.markerCache:', window.markerManager?.markerCache?.size || 0);
-            console.log('- window.dataService:', window.dataService ? 'exists' : 'missing');
-            console.log('- window.dataService.cache:', window.dataService?.cache?.size || 0);
-            console.log('- window.markers:', window.markers?.length || 0);
-            
-            // Additional debugging for markerManager
-            if (window.markerManager) {
-                console.log('- markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
-                console.log('- markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
-            }
-            
-            // Additional debugging for dataService
-            if (window.dataService && window.dataService.cache) {
-                console.log('- dataService.cache entries:');
-                window.dataService.cache.forEach((value, key) => {
-                    console.log(`  - ${key}:`, value);
-                });
-            }
-            
+            console.warn('No marker data available for route planning');
             return [];
         }
 
-        console.log(`8. Initial locations found: ${locations.length}`);
-        console.log('9. Current maxDistance:', this.maxDistance);
+        // DEBUG: Show sample locations before filtering
+        console.log('🔍 Sample locations BEFORE filtering:');
+        locations.slice(0, 5).forEach((loc, i) => {
+            console.log(`  ${i + 1}. ${loc.retailer} - ${loc.address || 'No address'} - Lat: ${loc.lat}, Lng: ${loc.lng}`);
+        });
 
-        // Apply distance filter
+        // Apply distance filter with enhanced debugging and validation
         const beforeDistanceFilter = locations.length;
+        console.log(`📏 Applying distance filter: max ${this.maxDistance} miles from user location`);
+        
+        // First, validate and clean the locations to catch any corrupted data
+        locations = this.validateAndCleanLocations(locations);
+        
+        // Then apply the distance filter
         locations = locations.filter(location => {
             const distance = this.calculateDistance(
                 window.userCoords.lat, window.userCoords.lng,
                 location.lat, location.lng
             );
             location.distance = distance;
-            return distance <= this.maxDistance;
+            
+            const isWithinRange = distance <= this.maxDistance;
+            if (!isWithinRange && window.__TM_DEBUG__) {
+                console.log(`❌ Filtered out: ${location.retailer} (${distance.toFixed(1)} miles)`);
+            }
+            return isWithinRange;
         });
-        console.log(`10. After distance filter (${this.maxDistance} miles): ${locations.length} locations (was ${beforeDistanceFilter})`);
+        
+        console.log(`📏 Distance filter: ${beforeDistanceFilter} → ${locations.length} locations`);
         
         if (locations.length > 0) {
-            console.log('11. Sample locations after distance filter:', locations.slice(0, 3));
+            console.log('✅ Sample locations AFTER distance filter:');
+            locations.slice(0, 3).forEach((loc, i) => {
+                console.log(`  ${i + 1}. ${loc.retailer} - ${loc.address || 'No address'} - ${loc.distance.toFixed(1)} miles`);
+            });
         }
 
         // Apply retailer type filters only if at least one type toggle is active
         const toggles = document.querySelectorAll('.route-filter-toggle');
         const anyActive = Array.from(toggles || []).some(t => t.classList.contains('active'));
         let beforeTypeFilter = locations.length;
+        
+        console.log(`🏷️ Retailer type filter: ${beforeTypeFilter} locations before filtering`);
+        console.log(`🏷️ Active toggles:`, Array.from(toggles || []).map(t => t.classList.contains('active') ? t.getAttribute('data-filter') : null).filter(Boolean));
+        
         if (anyActive) {
-        locations = this.applyRetailerTypeFilters(locations);
+            locations = this.applyRetailerTypeFilters(locations);
+            console.log(`🏷️ Type filter: ${beforeTypeFilter} → ${locations.length} locations`);
         } else {
-            console.log('12. No retailer type toggles active, skipping type filter');
+            console.log('🏷️ No retailer type toggles active, skipping type filter');
         }
-        console.log(`12. After retailer type filter: ${locations.length} locations (was ${beforeTypeFilter})`);
         
         if (locations.length > 0) {
-            console.log('13. Sample locations after type filter:', locations.slice(0, 3));
+            console.log('✅ Sample locations AFTER type filter:');
+            locations.slice(0, 3).forEach((loc, i) => {
+                console.log(`  ${i + 1}. ${loc.retailer} (${loc.retailer_type}) - ${loc.distance.toFixed(1)} miles`);
+            });
         }
 
         // Apply opening hours filter
         if (openNow === true) {
             const beforeHoursFilter = locations.length;
             locations = this.filterByOpeningHours(locations);
-            console.log(`14. After opening hours filter: ${locations.length} locations (was ${beforeHoursFilter})`);
             
             if (locations.length > 0) {
-                console.log('15. Sample locations after hours filter:', locations.slice(0, 3));
+                if (window.__TM_DEBUG__) console.log('Sample locations after hours filter:', locations.slice(0, 3));
             }
         } else {
-            console.log('14. Skipping opening hours filter (openNow = false)');
+            if (window.__TM_DEBUG__) console.log('Skipping opening hours filter (openNow = false)');
         }
 
         // Apply popularity filter
         if (leastPopular === true || mostPopular === true) {
             const beforePopularityFilter = locations.length;
             locations = this.filterByPopularity(locations, leastPopular, mostPopular);
-            console.log(`16. After popularity filter: ${locations.length} locations (was ${beforePopularityFilter})`);
             
             if (locations.length > 0) {
-                console.log('17. Sample locations after popularity filter:', locations.slice(0, 3));
+                if (window.__TM_DEBUG__) console.log('Sample locations after popularity filter:', locations.slice(0, 3));
             }
         } else {
-            console.log('16. Skipping popularity filter (no popularity filter selected)');
+            if (window.__TM_DEBUG__) console.log('Skipping popularity filter (no popularity filter selected)');
         }
 
-        console.log(`18. FINAL: Returning ${locations.length} filtered locations`);
+        console.log(`🎯 FINAL RESULT: Returning ${locations.length} filtered locations`);
+        console.log(`🎯 Data source used: ${dataSource}`);
+        console.log(`🎯 Distance filter applied: ${this.maxDistance} miles max`);
+        console.log(`🎯 User location: ${window.userCoords.lat}, ${window.userCoords.lng}`);
+        
+        // Final validation - check for any remaining suspicious locations
+        const suspiciousLocations = locations.filter(loc => loc.distance > 50);
+        if (suspiciousLocations.length > 0) {
+            console.error(`🚨 CRITICAL: Found ${suspiciousLocations.length} locations beyond 50 miles!`);
+            suspiciousLocations.forEach(loc => {
+                console.error(`   🚨 ${loc.retailer} at ${loc.address || 'No address'} - ${loc.distance.toFixed(1)} miles away`);
+                console.error(`   🚨 Coordinates: ${loc.lat}, ${loc.lng}`);
+            });
+        }
+        
+        // Debug: Check for Boulder locations in final output
+        if (window.__TM_DEBUG__) {
+            const boulderInFinal = locations.filter(loc => 
+                (loc.retailer && loc.retailer.includes('Boulder')) || 
+                (loc.address && loc.address.includes('Boulder'))
+            );
+            if (boulderInFinal.length > 0) {
+                console.warn('🚨 WARNING: Boulder locations found in final filtered output:');
+                boulderInFinal.forEach((loc, i) => {
+                    console.warn(`   ${i+1}. ${loc.retailer} - Lat: ${loc.lat}, Lng: ${loc.lng}, Address: ${loc.address}, Distance: ${loc.distance?.toFixed(1) || 'N/A'} mi`);
+                });
+            }
+        }
+        
         return locations;
+    }
+
+    /**
+     * Force distance validation and clean up corrupted data
+     */
+    validateAndCleanLocations(locations) {
+        if (!window.userCoords) {
+            console.error('❌ Cannot validate locations: No user coordinates');
+            return [];
+        }
+
+        console.log('🧹 VALIDATING AND CLEANING LOCATIONS');
+        console.log(`📍 User location: ${window.userCoords.lat}, ${window.userCoords.lng}`);
+        console.log(`📏 Max allowed distance: ${this.maxDistance} miles`);
+        
+        const validLocations = [];
+        const suspiciousLocations = [];
+        const outOfRangeLocations = [];
+        
+        locations.forEach((location, index) => {
+            // Calculate distance
+            const distance = this.calculateDistance(
+                window.userCoords.lat, window.userCoords.lng,
+                location.lat, location.lng
+            );
+            
+            location.distance = distance;
+            
+            // Check for suspicious coordinates (likely data corruption)
+            if (distance > 100) {
+                suspiciousLocations.push({ ...location, index, distance });
+                console.error(`🚨 SUSPICIOUS: ${location.retailer} at ${location.address || 'No address'}`);
+                console.error(`   Distance: ${distance.toFixed(1)} miles`);
+                console.error(`   Coordinates: ${location.lat}, ${location.lng}`);
+                console.error(`   This suggests data corruption or wrong data source!`);
+            }
+            // Check if within range
+            else if (distance <= this.maxDistance) {
+                validLocations.push(location);
+            } else {
+                outOfRangeLocations.push({ ...location, distance });
+            }
+        });
+        
+        console.log(`🧹 Validation Results:`);
+        console.log(`   ✅ Valid locations: ${validLocations.length}`);
+        console.log(`   ❌ Out of range: ${outOfRangeLocations.length}`);
+        console.log(`   🚨 Suspicious (>100mi): ${suspiciousLocations.length}`);
+        
+        if (suspiciousLocations.length > 0) {
+            console.error(`🚨 CRITICAL: Found ${suspiciousLocations.length} suspicious locations!`);
+            console.error('   This indicates data corruption or wrong data source.');
+            console.error('   Check your data sources for contamination.');
+        }
+        
+        return validLocations;
     }
 
     applyPlannerFiltersToMap() {
@@ -1163,11 +1323,12 @@ class RoutePlanner {
     enableLegendControls() {
         try {
             const legend = document.getElementById('legend');
-            if (!legend) return;
-            legend.style.opacity = '';
-            legend.querySelectorAll('input, button, select, textarea').forEach(el => { el.disabled = false; });
-            const banner = document.getElementById('legend-route-lock');
-            if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+            if (legend) {
+                legend.style.opacity = '';
+                legend.querySelectorAll('input, button, select, textarea').forEach(el => { el.disabled = false; });
+                const banner = document.getElementById('legend-route-lock');
+                if (banner && banner.parentNode) banner.parentNode.removeChild(banner);
+            }
         } catch {}
     }
 
@@ -1175,42 +1336,27 @@ class RoutePlanner {
      * Apply retailer type filters based on route planner toggles
      */
     applyRetailerTypeFilters(locations) {
-        console.log('=== APPLY RETAILER TYPE FILTERS DEBUG ===');
         const activeFilters = [];
         
         // Check which toggles are active in the route planner
         const toggles = document.querySelectorAll('.route-filter-toggle');
-        console.log('1. Found route filter toggles:', toggles.length);
         
         toggles.forEach((toggle, index) => {
             const filterType = toggle.getAttribute('data-filter');
             const isActive = toggle.classList.contains('active');
-            console.log(`2. Toggle ${index + 1}: ${filterType} - ${isActive ? 'ACTIVE' : 'inactive'}`);
             
             if (isActive) {
                 activeFilters.push(filterType);
             }
         });
 
-        console.log('3. Active filters:', activeFilters);
-
         // If no filters are active, return all locations
         if (activeFilters.length === 0) {
-            console.log('4. No retailer type filters active, showing all location types');
+            if (window.__TM_DEBUG__) console.log('No retailer type filters active, showing all location types');
             return locations;
         }
 
-        console.log('5. Applying retailer type filters:', activeFilters);
-        
-        // Debug: Show all unique retailer types in the data
-        const uniqueTypes = [...new Set(locations.map(loc => loc.retailer_type).filter(Boolean))];
-        console.log('6. All unique retailer types in data:', uniqueTypes);
-        
-        // Additional debugging: Show sample locations with their types
-        console.log('7. Sample locations with types:');
-        locations.slice(0, 10).forEach((loc, index) => {
-            console.log(`   ${index + 1}. ${loc.retailer} -> type: "${loc.retailer_type || 'unknown'}"`);
-        });
+        if (window.__TM_DEBUG__) console.log('Applying retailer type filters:', activeFilters);
         
         const filtered = locations.filter((location, index) => {
             const retailerTypeRaw = (location.retailer_type || '').toLowerCase();
@@ -1225,13 +1371,23 @@ class RoutePlanner {
                 if (filter === 'indie' && hasIndie) { matches = true; break; }
             }
 
-            if (index < 5) {
-                console.log(`   Location ${index + 1}: ${location.retailer} (${location.retailer_type || 'unknown'}) -> match=${matches}`);
-            }
             return matches;
         });
-        console.log(`7. Filtered from ${locations.length} to ${filtered.length} locations`);
         return filtered;
+    }
+
+    /**
+     * Filter locations by distance from user
+     */
+    filterByDistance(locations, maxDistance) {
+        return locations.filter(location => {
+            const distance = this.calculateDistance(
+                window.userCoords.lat, window.userCoords.lng,
+                location.lat, location.lng
+            );
+            location.distance = distance;
+            return distance <= maxDistance;
+        });
     }
 
     /**
@@ -1305,10 +1461,10 @@ class RoutePlanner {
             leastPopularLocations.sort((a, b) => a.distance - b.distance);
             
             if (window.__TM_DEBUG__) console.log('Least popular:', leastPopularLocations.length);
-            console.log('6. Sample least popular locations:', leastPopularLocations.slice(0, 3).map(loc => 
-                `${loc.retailer}: popularity=${loc.popularityScore}, distance=${loc.distance?.toFixed(1)}mi`
-            ));
-            return leastPopularLocations;
+            return leastPopularLocations.map(loc => {
+                const { popularityScore, ...location } = loc;
+                return location;
+            });
         } else if (mostPopular) {
             // Take the top 25% of locations (most popular)
             const cutoffIndex = Math.floor(locationsWithScores.length * 0.75);
@@ -1318,13 +1474,13 @@ class RoutePlanner {
             mostPopularLocations.sort((a, b) => a.distance - b.distance);
             
             if (window.__TM_DEBUG__) console.log('Most popular:', mostPopularLocations.length);
-            console.log('6. Sample most popular locations:', mostPopularLocations.slice(0, 3).map(loc => 
-                `${loc.retailer}: popularity=${loc.popularityScore}, distance=${loc.distance?.toFixed(1)}mi`
-            ));
-            return mostPopularLocations;
+            return mostPopularLocations.map(loc => {
+                const { popularityScore, ...location } = loc;
+                return location;
+            });
         }
 
-        return locationsWithScores;
+        return locations;
     }
 
     /**
@@ -1416,7 +1572,7 @@ class RoutePlanner {
     }
 
     /**
-     * Format retailer name with type and city in parentheses
+     * Clean and format retailer names for display
      */
     cleanRetailerName(retailerName, retailerType = null, address = null) {
         if (!retailerName || retailerName === 'Unknown') {
@@ -1426,6 +1582,7 @@ class RoutePlanner {
         // Extract base name and city
         let baseName = retailerName;
         let city = '';
+        let citySource = 'none';
         
         // First check if there is a city suffix in the retailer name (e.g., " - Lynnwood", " - Seattle")
         const citySuffixPattern = /\s*-\s*([A-Za-z\s]+(?:,\s*[A-Z]{2})?)$/;
@@ -1434,6 +1591,7 @@ class RoutePlanner {
         if (cityMatch) {
             baseName = retailerName.replace(citySuffixPattern, '').trim();
             city = cityMatch[1].trim();
+            citySource = 'retailer_name';
         }
         // If no city suffix in retailer name, try to extract from address
         else if (address) {
@@ -1444,6 +1602,7 @@ class RoutePlanner {
             
             if (addressCityMatch) {
                 city = addressCityMatch[1].trim();
+                citySource = 'address_zip';
             } else {
                 // Try simpler pattern for "City, State"
                 const simpleCityPattern = /([A-Za-z\s]+),\s*[A-Z]{2}/; // "City, ST"
@@ -1451,16 +1610,26 @@ class RoutePlanner {
                 
                 if (simpleCityMatch) {
                     city = simpleCityMatch[1].trim();
+                    citySource = 'address_state';
                 }
             }
+        }
+        
+        // Debug logging for city extraction
+        if (window.__TM_DEBUG__ && city) {
+            console.log(`🏙️ CITY EXTRACTION DEBUG: ${retailerName}`);
+            console.log(`   Base name: "${baseName}"`);
+            console.log(`   City: "${city}" (source: ${citySource})`);
+            console.log(`   Address: "${address}"`);
+            console.log(`   Retailer type: "${retailerType}"`);
         }
         
         // Maintain original behavior for other callers
         if (retailerType && city) return `${baseName} (${retailerType} - ${city})`;
         if (retailerType)         return `${baseName} (${retailerType})`;
         if (city)                 return `${baseName} (${city})`;
-            return baseName;
-        }
+        return baseName;
+    }
 
     // New: Format a stop line as "Name (Store + Kiosk) City 1.3 mi — Open until 9:00 PM"
     formatStopLine(loc, isOpen) {
@@ -1557,33 +1726,6 @@ class RoutePlanner {
         // Persist preferences before going to preview
         this.savePreferences();
         
-        console.log('=== ROUTE PLANNER PREVIEW DEBUG ===');
-        console.log('1. showPreviewPins called');
-        console.log('2. userCoords:', window.userCoords);
-        console.log('3. allMarkers:', window.allMarkers?.length || 0);
-        console.log('4. markerManager:', window.markerManager ? 'exists' : 'missing');
-        console.log('5. markerCache size:', window.markerManager?.markerCache?.size || 0);
-        console.log('6. window.markers:', window.markers?.length || 0);
-        console.log('7. dataService:', window.dataService ? 'exists' : 'missing');
-        console.log('8. dataService cache size:', window.dataService?.cache?.size || 0);
-        if (window.dataService?.cache) {
-            console.log('9. dataService cache keys:', Array.from(window.dataService.cache.keys()));
-        }
-        
-        // Additional debugging for markerManager
-        if (window.markerManager) {
-            console.log('10. markerManager.markerCache keys:', Array.from(window.markerManager.markerCache?.keys() || []));
-            console.log('11. markerManager.markerCache values sample:', Array.from(window.markerManager.markerCache?.values() || []).slice(0, 3));
-        }
-        
-        // Additional debugging for dataService
-        if (window.dataService && window.dataService.cache) {
-            console.log('12. dataService.cache entries:');
-            window.dataService.cache.forEach((value, key) => {
-                console.log(`  - ${key}:`, value);
-            });
-        }
-        
         // Check if basic requirements are met
         if (!window.userCoords) {
             console.log('ERROR: No user coordinates available');
@@ -1602,8 +1744,6 @@ class RoutePlanner {
                              (window.markerManager && window.markerManager.markerCache && window.markerManager.markerCache.size > 0) ||
                              (window.markers && window.markers.length > 0);
         
-        console.log('13. hasMarkerData:', hasMarkerData);
-        
         if (!hasMarkerData) {
             console.log('ERROR: No marker data available');
             Swal.fire({
@@ -1620,18 +1760,11 @@ class RoutePlanner {
         const openNow = !!this.sessionCheckboxStates.openNow;
         const leastPopular = !!this.sessionCheckboxStates.leastPopular;
         const mostPopular = !!this.sessionCheckboxStates.mostPopular;
-        console.log('14. openNow filter:', openNow);
-        console.log('15. leastPopular filter:', leastPopular);
-        console.log('16. mostPopular filter:', mostPopular);
         
         let availableLocations = this.getFilteredLocations(openNow, leastPopular, mostPopular);
         availableLocations = this.mergeNearbyLocations(availableLocations, this.mergeThresholdMeters);
-        console.log('17. availableLocations:', availableLocations.length);
-        console.log('18. availableLocations sample:', availableLocations.slice(0, 3));
         
         this.selectedLocations = this.selectOptimalLocations(availableLocations);
-        console.log('19. selectedLocations:', this.selectedLocations.length);
-        console.log('20. selectedLocations details:', this.selectedLocations);
 
         // Track route planner preview
         try {
@@ -1838,8 +1971,6 @@ class RoutePlanner {
         // Save current session data before switching back to planning
         // We need to capture the checkbox states BEFORE closing the modal
         const currentCheckboxStates = this.getCurrentCheckboxStates();
-        console.log('=== BACK TO PLANNING DEBUG ===');
-        console.log('Captured checkbox states before modal close:', currentCheckboxStates);
         
         // Store the states temporarily so we can restore them
         this.sessionCheckboxStates = currentCheckboxStates;
@@ -1918,8 +2049,6 @@ class RoutePlanner {
                 this.applyPlannerFiltersToMap();
                 this.disableLegendControls();
                 // Initialize controls - session data is already loaded in this.sessionCheckboxStates
-                console.log('=== OPEN PLANNING MODAL DEBUG ===');
-                console.log('this.sessionCheckboxStates available:', this.sessionCheckboxStates);
                 this.initializeModalControls();
                 // Track route planner open
                 try {
@@ -1985,7 +2114,6 @@ class RoutePlanner {
         const allPositions = [
             { lat: window.userCoords.lat, lng: window.userCoords.lng }
         ];
-        console.log('Starting position collection. User coords:', window.userCoords);
 
         // Create start pin (green) with shaded circle
         const startPin = new google.maps.Marker({
@@ -2021,7 +2149,6 @@ class RoutePlanner {
         // Create stop pins (orange) with shaded circles
         this.selectedLocations.forEach((location) => {
             allPositions.push({ lat: location.lat, lng: location.lng });
-            console.log('Added location to positions:', location.retailer, location.lat, location.lng);
             
             // Create shaded circle around stop pin FIRST (so it appears below)
             const stopCircle = new google.maps.Circle({
@@ -2129,7 +2256,6 @@ class RoutePlanner {
      */
     zoomToFitPreviewPoints(positions) {
         if (!positions || positions.length === 0) {
-            console.log('No positions to zoom to');
             return;
         }
 
@@ -2141,7 +2267,6 @@ class RoutePlanner {
         positions.forEach(pos => {
             const latLng = new google.maps.LatLng(pos.lat, pos.lng);
             bounds.extend(latLng);
-            if (window.__TM_DEBUG__) console.log('Added position to bounds:', pos.lat, pos.lng);
         });
 
         // Add padding to bounds (expand by 20% for better visibility)
@@ -2153,35 +2278,23 @@ class RoutePlanner {
         bounds.extend(new google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff));
         bounds.extend(new google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff));
 
-        if (window.__TM_DEBUG__) console.log('Bounds created:', {
-            north: bounds.getNorthEast().lat(),
-            east: bounds.getNorthEast().lng(),
-            south: bounds.getSouthWest().lat(),
-            west: bounds.getSouthWest().lng()
-        });
-
         // Fit map to bounds with smooth animation
         window.map.fitBounds(bounds);
         
         // Ensure reasonable zoom level and add a small delay for the animation
         setTimeout(() => {
             const currentZoom = window.map.getZoom();
-            if (window.__TM_DEBUG__) console.log('Current zoom level:', currentZoom);
             
             // If zoomed out too far, set a reasonable zoom level
             if (currentZoom < 10) {
                 window.map.setZoom(12);
-                if (window.__TM_DEBUG__) console.log('Adjusted zoom to 12');
             }
             // If zoomed in too close, set a reasonable zoom level
             else if (currentZoom > 16) {
                 window.map.setZoom(14);
-                if (window.__TM_DEBUG__) console.log('Adjusted zoom to 14');
             }
         }, 500);
     }
-
-
 
     /**
      * Clear preview and optionally skip reopening modal
@@ -2205,8 +2318,6 @@ class RoutePlanner {
             this.openPlanningModal();
         }
     }
-
-
 
     /**
      * Generate route with current selections
@@ -2295,7 +2406,7 @@ class RoutePlanner {
             // Persist and show ordered list for user clarity
             const stopLabels = ordered.map((loc) => {
                 const name = (loc.retailer || '').trim();
-                const addr = (loc.full_address || loc.address || `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`).trim();
+                const addr = (loc.full_address || loc.address || `${l.lat.toFixed(5)}, ${l.lng.toFixed(5)}`).trim();
                 return `${[name, addr].filter(Boolean).join(' — ')}`;
             });
             try { localStorage.setItem('routePlanner:lastOrderedStops', JSON.stringify(stopLabels)); } catch {}
@@ -2379,7 +2490,6 @@ class RoutePlanner {
             title: 'Route opened',
             html,
             width: '90vw',
-            maxWidth: 600,
             showCancelButton: true,
             confirmButtonText: 'Copy addresses',
             cancelButtonText: 'Close',
@@ -2435,10 +2545,347 @@ class RoutePlanner {
             .join('&');
         return `https://www.google.com/maps/dir/?${params}`;
     }
+
+    /**
+     * Merge nearby locations to avoid duplicates
+     */
+    mergeNearbyLocations(locations, thresholdMeters = 60) {
+        if (!Array.isArray(locations) || locations.length <= 1) return locations || [];
+
+        if (window.__TM_DEBUG__) {
+            console.log('🔀 MERGE DEBUG: Starting merge process');
+            console.log('🔀 Input locations:', locations.length);
+            console.log('🔀 Threshold:', thresholdMeters, 'meters');
+            
+            // Debug: Check for any locations with invalid coordinates
+            const invalidCoords = locations.filter(loc => !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng));
+            if (invalidCoords.length > 0) {
+                console.warn('🚨 WARNING: Found locations with invalid coordinates in merge input:');
+                invalidCoords.forEach((loc, i) => {
+                    console.warn(`   ${i+1}. ${loc.retailer} - Lat: ${loc.lat}, Lng: ${loc.lng}, Address: ${loc.address}`);
+                });
+            }
+            
+            // Debug: Check for Boulder locations specifically
+            const boulderLocations = locations.filter(loc => 
+                (loc.retailer && loc.retailer.includes('Boulder')) || 
+                (loc.address && loc.address.includes('Boulder'))
+            );
+            if (boulderLocations.length > 0) {
+                console.warn('🚨 WARNING: Found Boulder locations in merge input:');
+                boulderLocations.forEach((loc, i) => {
+                    console.warn(`   ${i+1}. ${loc.retailer} - Lat: ${loc.lat}, Lng: ${loc.lng}, Address: ${loc.address}`);
+                });
+            }
+        }
+
+        const degPerMeter = 1 / 111320; // rough conversion at mid-latitude
+        // Use the largest possible merge radius for bucketing so we don't miss candidates
+        const maxMergeMeters = Math.max(thresholdMeters, this.mergeSameNameBoostMeters);
+        const cellSizeDeg = maxMergeMeters * degPerMeter;
+
+        const normalizeName = (name = '') => {
+            const base = (name || '').toLowerCase().trim()
+                .replace(/[^a-z0-9\s]/g, '')
+                .replace(/\s+-\s+[a-z\s,]*$/i, '')
+                .replace(/\s+/g, ' ');
+            // Keep first two tokens to collapse variants like "fred meyer fuel center"
+            const tokens = base.split(' ').filter(Boolean);
+            return tokens.slice(0, 2).join(' ');
+        };
+
+        const normalizeStreet = (addr = '') => {
+            if (!addr) return '';
+            const firstLine = addr.toLowerCase().split(',')[0];
+            // Remove unit/suite
+            let s = firstLine.replace(/\b(ste|suite|unit|bldg|building)\b\s*[^\s]+/g, '')
+                             .replace(/#/g, ' ');
+            // Normalize common abbreviations
+            const reps = [
+                [/\bst\.?\b/g, ' street'],
+                [/\brd\.?\b/g, ' road'],
+                [/\bave\.?\b/g, ' avenue'],
+                [/\bblvd\.?\b/g, ' boulevard'],
+                [/\bpkwy\.?\b/g, ' parkway'],
+                [/\bhwy\.?\b/g, ' highway'],
+                [/\bctr\.?\b/g, ' center']
+            ];
+            reps.forEach(([re, to]) => { s = s.replace(re, to); });
+            s = s.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            return s;
+        };
+
+        // Precompute quick-identity keys
+        const nameStreetKey = new Map();
+        const placeIdGroups = new Map();
+        locations.forEach((loc, i) => {
+            const nk = normalizeName(loc.retailer);
+            const sk = normalizeStreet(loc.address);
+            if (nk && sk) {
+                const key = `${nk}|${sk}`;
+                if (!nameStreetKey.has(key)) nameStreetKey.set(key, []);
+                nameStreetKey.get(key).push(i);
+            }
+            if (loc.place_id) {
+                const pid = String(loc.place_id);
+                if (!placeIdGroups.has(pid)) placeIdGroups.set(pid, []);
+                placeIdGroups.get(pid).push(i);
+            }
+        });
+
+        // Union by identical place_id first
+        const parent = new Array(locations.length).fill(0).map((_, i) => i);
+        const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+        const union = (i, j) => { const pi = find(i), pj = find(j); if (pi !== pj) parent[pi] = pj; };
+        placeIdGroups.forEach(indices => { if (indices.length > 1) { const head = indices[0]; indices.slice(1).forEach(j => union(head, j)); } });
+
+        // Union by identical (normalized name, normalized street)
+        nameStreetKey.forEach(indices => { if (indices.length > 1) { const head = indices[0]; indices.slice(1).forEach(j => union(head, j)); } });
+
+        // Bucket by geocell to limit pair checks (proximity-based union)
+        const buckets = new Map();
+        locations.forEach((loc, idx) => {
+            const cellX = Math.floor(loc.lng / cellSizeDeg);
+            const cellY = Math.floor(loc.lat / cellSizeDeg);
+            const key = `${cellX}:${cellY}`;
+            if (!buckets.has(key)) buckets.set(key, []);
+            buckets.get(key).push({ loc, idx });
+        });
+
+        const haversineMeters = (a, b) => {
+            const R = 6371000; // meters
+            const toRad = (d) => d * Math.PI / 180;
+            const dLat = toRad(b.lat - a.lat);
+            const dLng = toRad(b.lng - a.lng);
+            const lat1 = toRad(a.lat);
+            const lat2 = toRad(b.lat);
+            const h = Math.sin(dLat/2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng/2)**2;
+            return 2 * R * Math.asin(Math.sqrt(h));
+        };
+
+        const getNeighbors = (cellX, cellY) => {
+            const arr = [];
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    const key = `${cellX+dx}:${cellY+dy}`;
+                    if (buckets.has(key)) arr.push(...buckets.get(key));
+                }
+            }
+            return arr;
+        };
+
+        // Track merges for debugging
+        const mergeLog = [];
+
+        // Union duplicates within threshold and with similar venue identity
+        buckets.forEach((items, key) => {
+            const [xStr, yStr] = key.split(':');
+            const cx = parseInt(xStr, 10), cy = parseInt(yStr, 10);
+            const candidates = getNeighbors(cx, cy);
+            items.forEach(({ loc, idx }) => {
+                const baseName = normalizeName(loc.retailer);
+                candidates.forEach(({ loc: other, idx: j }) => {
+                    if (idx === j) return;
+                    
+                    // Debug: Log all merge attempts for Boulder locations
+                    if (window.__TM_DEBUG__ && (
+                        (loc.retailer && loc.retailer.includes('Boulder')) || 
+                        (other.retailer && other.retailer.includes('Boulder')) ||
+                        (loc.address && loc.address.includes('Boulder')) ||
+                        (other.address && other.address.includes('Boulder'))
+                    )) {
+                        console.log(`🔍 BOULDER MERGE ATTEMPT: ${loc.retailer} vs ${other.retailer}`);
+                        console.log(`   Location A: ${loc.lat}, ${loc.lng} - ${loc.address}`);
+                        console.log(`   Location B: ${other.lat}, ${other.lng} - ${other.address}`);
+                    }
+                    
+                    const dist = haversineMeters({ lat: loc.lat, lng: loc.lng }, { lat: other.lat, lng: other.lng });
+                    const otherName = normalizeName(other.retailer);
+                    const sameName = baseName && baseName === otherName;
+                    const samePlace = loc.place_id && other.place_id && (loc.place_id === other.place_id);
+                    const addrA = (loc.address || '').toLowerCase();
+                    const addrB = (other.address || '').toLowerCase();
+                    const streetA = addrA.split(',')[0].trim();
+                    const streetB = addrB.split(',')[0].trim();
+                    const similarAddress = streetA && streetA === streetB;
+
+                    // CRITICAL: Add distance check to prevent merging locations that are too far apart
+                    const distMiles = dist / 1609.34; // Convert meters to miles
+                    const maxMergeMiles = 5; // Maximum 5 miles for merging
+                    
+                    if (distMiles > maxMergeMiles) {
+                        if (window.__TM_DEBUG__ && (sameName || samePlace || similarAddress)) {
+                            console.log(`🚫 BLOCKED MERGE: ${loc.retailer} and ${other.retailer} - Distance: ${distMiles.toFixed(1)} miles (max: ${maxMergeMiles})`);
+                            console.log(`   Location A: ${loc.lat}, ${loc.lng} - ${loc.address}`);
+                            console.log(`   Location B: ${other.lat}, ${other.lng} - ${other.address}`);
+                        }
+                        return; // Skip this merge
+                    }
+
+                    // Dynamic threshold: allow larger radius for strong identity matches (same name or place)
+                    const dynamicThreshold = (sameName || samePlace || similarAddress) ? Math.max(thresholdMeters, this.mergeSameNameBoostMeters) : thresholdMeters;
+                    if (dist <= dynamicThreshold && (sameName || samePlace || similarAddress)) {
+                        if (window.__TM_DEBUG__) {
+                            mergeLog.push({
+                                loc1: { name: loc.retailer, coords: `${loc.lat}, ${loc.lng}`, addr: loc.address },
+                                loc2: { name: other.retailer, coords: `${other.lat}, ${other.lng}`, addr: other.address },
+                                distance: distMiles.toFixed(1),
+                                reason: samePlace ? 'place_id' : (sameName ? 'name' : 'address')
+                            });
+                        }
+                        union(idx, j);
+                    }
+                });
+            });
+        });
+
+        if (window.__TM_DEBUG__ && mergeLog.length > 0) {
+            console.log('🔀 MERGE LOG: Locations being merged:');
+            mergeLog.forEach((merge, i) => {
+                console.log(`   ${i+1}. ${merge.loc1.name} + ${merge.loc2.name} (${merge.distance} mi) - Reason: ${merge.reason}`);
+            });
+        }
+
+        // Group by parent and build representatives
+        const groups = new Map();
+        locations.forEach((loc, i) => {
+            const p = find(i);
+            if (!groups.has(p)) groups.set(p, []);
+            groups.get(p).push(loc);
+        });
+
+        if (window.__TM_DEBUG__) {
+            console.log('🔀 Groups formed:', groups.size);
+            groups.forEach((group, key) => {
+                if (group.length > 1) {
+                    console.log(`   Group ${key}: ${group.length} locations - ${group.map(g => g.retailer).join(', ')}`);
+                }
+            });
+        }
+
+        const representativeOf = (group) => {
+            const preferScore = (g) => {
+                let score = 0;
+                if (g.place_id) score += 100; // Strongly prefer entries with a valid place_id
+                if (g.opening_hours) score += 3;
+                const type = (g.retailer_type || '').toLowerCase();
+                if (type.includes('store')) score += 2; else if (type.includes('kiosk')) score += 1;
+                if (window.userCoords && typeof g.distance === 'number') score += Math.max(0, 1 - (g.distance / 100));
+                return score;
+            };
+            let best = group[0];
+            let bestScore = -Infinity;
+            group.forEach(g => { const s = preferScore(g); if (s > bestScore) { best = g; bestScore = s; } });
+            const types = [...new Set(group.flatMap(g => String(g.retailer_type || '').split('+').map(t => t.trim())).filter(Boolean))];
+            return {
+                ...best,
+                retailer_type: types.join(' + '),
+                mergedFrom: group
+            };
+        };
+
+        const merged = [];
+        groups.forEach((group) => {
+            if (group.length === 1) { merged.push(group[0]); }
+            else { merged.push(representativeOf(group)); }
+        });
+
+        // Recompute distance for merged representatives because we may have chosen coords from a member
+        if (window.userCoords) {
+            merged.forEach(m => {
+                m.distance = this.calculateDistance(window.userCoords.lat, window.userCoords.lng, m.lat, m.lng);
+            });
+        }
+
+        if (window.__TM_DEBUG__) {
+            console.log('🔀 MERGE COMPLETE: Input:', locations.length, '→ Output:', merged.length);
+            
+            // Debug: Check final output for Boulder locations
+            const boulderInOutput = merged.filter(loc => 
+                (loc.retailer && loc.retailer.includes('Boulder')) || 
+                (loc.address && loc.address.includes('Boulder'))
+            );
+            if (boulderInOutput.length > 0) {
+                console.warn('🚨 WARNING: Boulder locations found in merge output:');
+                boulderInOutput.forEach((loc, i) => {
+                    console.warn(`   ${i+1}. ${loc.retailer} - Lat: ${loc.lat}, Lng: ${loc.lng}, Address: ${loc.address}`);
+                    if (loc.mergedFrom) {
+                        console.warn(`      Merged from: ${loc.mergedFrom.map(m => `${m.retailer} (${m.lat}, ${m.lng})`).join(', ')}`);
+                    }
+                });
+            }
+        }
+
+        return merged;
+    }
+
+    /**
+     * Debug method to search for specific locations by name or city
+     */
+    debugSearchLocations(searchTerm) {
+        console.log(`🔍 SEARCHING FOR: "${searchTerm}"`);
+        
+        const dataSources = [
+            { name: 'window.allMarkers', data: window.allMarkers },
+            { name: 'markerManager.markerCache', data: window.markerManager?.markerCache },
+            { name: 'dataService.cache', data: window.dataService?.cache },
+            { name: 'window.markers', data: window.markers }
+        ];
+        
+        dataSources.forEach(source => {
+            if (!source.data || !Array.isArray(source.data)) {
+                console.log(`   ${source.name}: No data or not an array`);
+                return;
+            }
+            
+            const matches = source.data.filter(item => {
+                if (!item) return false;
+                const name = (item.retailer || '').toLowerCase();
+                const address = (item.address || '').toLowerCase();
+                const city = this.extractCity(item.address || '').toLowerCase();
+                const search = searchTerm.toLowerCase();
+                
+                return name.includes(search) || address.includes(search) || city.includes(search);
+            });
+            
+            if (matches.length > 0) {
+                console.log(`   ${source.name}: Found ${matches.length} matches`);
+                matches.forEach((match, i) => {
+                    const city = this.extractCity(match.address || '');
+                    const dist = window.userCoords ? this.calculateDistance(window.userCoords.lat, window.userCoords.lng, match.lat, match.lng) : 'unknown';
+                    console.log(`     ${i+1}. ${match.retailer} - ${city} - ${match.lat}, ${match.lng} - ${dist} mi`);
+                    console.log(`        Address: ${match.address}`);
+                    console.log(`        Type: ${match.retailer_type}`);
+                });
+            } else {
+                console.log(`   ${source.name}: No matches`);
+            }
+        });
+    }
 }
 
 // Create global instance
 window.routePlanner = new RoutePlanner();
+
+// Add debug methods to global scope for easy access
+window.debugRoutePlanner = () => {
+    console.log('🔍 ROUTE PLANNER DEBUG TOOLS');
+    console.log('Available commands:');
+    console.log('  window.routePlanner.debugDataSources() - Inspect all data sources');
+    console.log('  window.routePlanner.validateAndCleanLocations(locations) - Validate specific locations');
+    console.log('  window.routePlanner.getFilteredLocations() - Test filtering with debug output');
+    console.log('  window.routePlanner.debugSearchLocations("Boulder") - Search for specific locations');
+    console.log('');
+    console.log('Current route planner state:');
+    console.log('  Max distance:', window.routePlanner.maxDistance, 'miles');
+    console.log('  Max stops:', window.routePlanner.maxStops);
+    console.log('  User coords:', window.userCoords);
+    console.log('  Checkbox states:', window.routePlanner.sessionCheckboxStates);
+};
+
+// Auto-run debug info when route planner is created
+console.log('🚀 Route Planner initialized with debug tools');
+console.log('💡 Run window.debugRoutePlanner() for help');
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {

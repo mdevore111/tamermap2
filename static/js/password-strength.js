@@ -266,11 +266,10 @@ document.addEventListener('DOMContentLoaded', function() {
             new PasswordStrengthMeter(field);
         }
     });
-    
-    // Mark as loaded for debugging
-    window.passwordStrengthLoaded = true;
-    console.log('✅ password-strength.js loaded and initialized');
 });
+
+// Make PasswordStrengthMeter globally available
+window.PasswordStrengthMeter = PasswordStrengthMeter;
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {

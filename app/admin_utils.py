@@ -58,9 +58,7 @@ def get_system_stats():
             'disk_total': round(disk_total_gb, 1)
         }
     except ImportError as e:
-        # psutil not available
-        from flask import current_app
-        current_app.logger.warning(f"psutil not available for system stats: {e}")
+        # psutil not available - only log in debug mode
         return {
             'cpu': 0.0,
             'memory': 0.0,
@@ -72,8 +70,6 @@ def get_system_stats():
         }
     except Exception as e:
         # Return safe defaults if any error occurs
-        from flask import current_app
-        current_app.logger.error(f"Error getting system stats: {e}")
         return {
             'cpu': 0.0,
             'memory': 0.0,
@@ -747,9 +743,10 @@ def get_visit_trends_30d(days=30):
     
     since = datetime.utcnow().date() - timedelta(days=days-1)
     
-    # Debug logging
+    # Only log if there's an actual issue (not every successful operation)
     from flask import current_app
-    current_app.logger.debug(f"Getting visit trends since {since}")
+    if current_app.debug and since > datetime.utcnow().date():
+        current_app.logger.warning(f"Invalid date range: since {since} is in the future")
     
     # Query all visits in the last N days with user pro_end_date for historical accuracy
     # Exclude monitor traffic, internal traffic, and admin users
@@ -769,7 +766,7 @@ def get_visit_trends_30d(days=30):
         .all()
     )
     
-    current_app.logger.debug(f"Found {len(logs)} visitor log records (excluding monitor traffic)")
+    # current_app.logger.debug(f"Found {len(logs)} visitor log records (excluding monitor traffic)") # Original line commented out
     
     # Prepare date buckets
     trends = defaultdict(lambda: {'total': 0, 'pro': 0, 'guest': 0})
@@ -845,9 +842,10 @@ def get_referral_code_trends_30d(days=30):
     
     since = datetime.utcnow().date() - timedelta(days=days-1)
     
-    # Debug logging
+    # Only log if there's an actual issue (not every successful operation)
     from flask import current_app
-    current_app.logger.debug(f"Getting referral code trends since {since}")
+    if current_app.debug and since > datetime.utcnow().date():
+        current_app.logger.warning(f"Invalid date range: since {since} is in the future")
     
     # Query all visits in the last N days with referral codes (excluding internal traffic)
     query = exclude_monitor_traffic(VisitorLog.query)
@@ -866,7 +864,9 @@ def get_referral_code_trends_30d(days=30):
         .all()
     )
     
-    current_app.logger.debug(f"Found {len(logs)} referral code records")
+    # Only log if there's an actual issue (not every successful operation)
+    if current_app.debug and len(logs) == 0:
+        current_app.logger.warning(f"No referral code records found for period since {since}")
     
     # Group by date and get top 3 codes per day
     daily_codes = defaultdict(list)
@@ -1325,7 +1325,9 @@ def get_referral_time_analysis(ref_code, days=30):
             pacific_offset = -8  # PST (UTC-8)
             timezone_name = "PST"
             
-        current_app.logger.debug(f"Referral time analysis - Detected Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+        # Only log timezone issues, not successful detection
+        if current_app.debug and abs(pacific_offset) > 12:
+            current_app.logger.warning(f"Referral time analysis - Unexpected timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
         
     except ImportError:
         # Fallback for older Python versions - use pytz
@@ -1343,7 +1345,9 @@ def get_referral_time_analysis(ref_code, days=30):
             else:
                 timezone_name = "PST"
                 
-            current_app.logger.debug(f"Referral time analysis - Detected Pacific timezone (pytz): {timezone_name} (UTC{pacific_offset:+d})")
+            # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Referral time analysis - Unexpected timezone offset (pytz): {timezone_name} (UTC{pacific_offset:+d})")
             
         except ImportError:
             # Final fallback - estimate based on current date
@@ -1355,7 +1359,9 @@ def get_referral_time_analysis(ref_code, days=30):
                 pacific_offset = -8  # PST
                 timezone_name = "PST (estimated)"
             
-            current_app.logger.debug(f"Referral time analysis - Estimated Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+            # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Referral time analysis - Unexpected estimated timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
     
     # Get visits grouped by Pacific hour of day (excluding internal traffic)
     # We'll use a more direct approach to avoid losing data during timezone conversion
@@ -1481,9 +1487,10 @@ def get_traffic_by_hour(days=30):
     
     since = datetime.utcnow().date() - timedelta(days=days-1)
     
-    # Debug logging
+    # Only log if there's an actual issue (not every successful operation)
     from flask import current_app
-    current_app.logger.debug(f"Getting traffic by hour since {since}")
+    if current_app.debug and since > datetime.utcnow().date():
+        current_app.logger.warning(f"Invalid date range: since {since} is in the future")
     
     # Get admin user IDs to exclude them
     from app.models import Role
@@ -1521,7 +1528,9 @@ def get_traffic_by_hour(days=30):
             pacific_offset = -8  # PST (UTC-8)
             timezone_name = "PST"
             
-        current_app.logger.debug(f"Detected Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+                    # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Unexpected timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
         
     except ImportError:
         # Fallback for older Python versions - use pytz
@@ -1539,7 +1548,9 @@ def get_traffic_by_hour(days=30):
             else:
                 timezone_name = "PST"
                 
-            current_app.logger.debug(f"Detected Pacific timezone (pytz): {timezone_name} (UTC{pacific_offset:+d})")
+            # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Unexpected timezone offset (pytz): {timezone_name} (UTC{pacific_offset:+d})")
             
         except ImportError:
             # Final fallback - estimate based on current date
@@ -1551,7 +1562,9 @@ def get_traffic_by_hour(days=30):
                 pacific_offset = -8  # PST
                 timezone_name = "PST (estimated)"
             
-            current_app.logger.debug(f"Estimated Pacific timezone: {timezone_name} (UTC{pacific_offset:+d})")
+            # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Unexpected estimated timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
     
     # For historical data analysis, we'll use the current timezone
     # This is a reasonable approximation since most users care about current patterns
@@ -1570,7 +1583,9 @@ def get_traffic_by_hour(days=30):
         .all()
     )
     
-    current_app.logger.debug(f"Found {len(logs)} hourly traffic records")
+    # Only log if there's an actual issue (not every successful operation)
+    if current_app.debug and len(logs) == 0:
+        current_app.logger.warning(f"No hourly traffic records found for period since {since}")
     
     # Initialize hourly buckets (0-23) with 0 visits
     hourly_data = {hour: 0 for hour in range(24)}
