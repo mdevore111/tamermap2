@@ -256,50 +256,126 @@ function showToast(message, type = 'info') {
 
 // Cache Management Functions
 function clearAllCaches(event) {
-  console.log('🧹 Clearing all caches...');
+  console.log('🧹 Clearing application caches...');
   
   const button = event.target;
   const originalText = button.innerHTML;
   button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
   button.disabled = true;
+  
+  try {
+    // Clear application caches (NOT user data)
+    try {
+      if (window.dataService && window.dataService.cache) {
+        window.dataService.cache.clear();
+        console.log('✅ DataService cache cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear DataService cache:', error);
+    }
     
-  localStorage.clear();
-  sessionStorage.clear();
-  
-  if (window.dataService && window.dataService.cache) {
-    window.dataService.cache.clear();
+    try {
+      if (window.markerManager && window.markerManager.markerCache) {
+        window.markerManager.markerCache.clear();
+        console.log('✅ Marker cache cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear marker cache:', error);
+    }
+    
+    try {
+      if (window.allMarkers) {
+        window.allMarkers.length = 0;
+        console.log('✅ All markers cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear all markers:', error);
+    }
+    
+    try {
+      if (window.heatmapData) {
+        window.heatmapData = null;
+        console.log('✅ Heatmap data cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear heatmap data:', error);
+    }
+    
+    try {
+      if (window.cacheManager) {
+        window.cacheManager.clearAllCaches();
+        console.log('✅ CacheManager caches cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear CacheManager caches:', error);
+    }
+    
+    // Clear route planner data if available
+    try {
+      if (window.routePlanner) {
+        if (window.routePlanner.selectedLocations) {
+          window.routePlanner.selectedLocations = [];
+        }
+        if (window.routePlanner.previewPins) {
+          window.routePlanner.previewPins = [];
+        }
+        console.log('✅ Route planner data cleared');
+      }
+    } catch (error) {
+      console.warn('⚠️ Could not clear route planner data:', error);
+    }
+    
+    console.log('✅ All application caches cleared successfully');
+    button.innerHTML = '<i class="fas fa-check"></i> Cleared!';
+    
+    // Show success message
+    showToast('Application caches cleared successfully!', 'success');
+    
+    // Refresh cache status display
+    setTimeout(() => {
+      debugCache({ button: button });
+    }, 1000);
+    
+  } catch (error) {
+    console.error('❌ Error clearing caches:', error);
+    button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error!';
+    showToast('Error clearing caches. Check console for details.', 'error');
+  } finally {
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }, 2000);
   }
-  
-  if (window.markerManager && window.markerManager.markerCache) {
-    window.markerManager.markerCache.clear();
-  }
-  
-  if (window.allMarkers) {
-    window.allMarkers.length = 0;
-  }
-  if (window.heatmapData) {
-    window.heatmapData = null;
-  }
-  
-  if (window.cacheManager) {
-    window.cacheManager.clearAllCaches();
-  }
-  
-  console.log('✅ All caches cleared');
-  
-  button.innerHTML = '<i class="fas fa-check"></i> Cleared!';
-  setTimeout(() => {
-    window.location.reload();
-  }, 1000);
 }
 
 function debugCache(event) {
   console.log('🔍 Debugging cache state...');
   
-  const button = event.target;
-  const originalText = button.innerHTML;
-  button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
-  button.disabled = true;
+  // Handle both real events and fake objects gracefully
+  let button = null;
+  let originalText = 'Debug Cache';
+  
+  if (event && event.target) {
+    // Real event object
+    button = event.target;
+    originalText = button.innerHTML;
+  } else if (event && event.button) {
+    // Fake event object with button property
+    button = event.button;
+    originalText = button.innerHTML;
+  } else {
+    // No button provided, find one dynamically
+    button = document.querySelector('[onclick*="debugCache"]');
+    if (button) {
+      originalText = button.innerHTML;
+    }
+  }
+  
+  // Update button state if we found one
+  if (button) {
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+    button.disabled = true;
+  }
   
   let stats = {
     localStorage: Object.keys(localStorage).length,
@@ -311,19 +387,26 @@ function debugCache(event) {
   };
   
   if (window.cacheManager) {
-    const cacheManagerStats = window.cacheManager.getCacheStats();
-    stats = { ...stats, ...cacheManagerStats };
+    try {
+      const cacheManagerStats = window.cacheManager.getCacheStats();
+      stats = { ...stats, ...cacheManagerStats };
+    } catch (error) {
+      console.warn('⚠️ Could not get CacheManager stats:', error);
+    }
   }
   
   console.log('📊 Cache Statistics:', stats);
   
   updateCacheStatus(stats);
   
-  button.innerHTML = '<i class="fas fa-check"></i> Done!';
-  setTimeout(() => {
-    button.innerHTML = originalText;
-    button.disabled = false;
-  }, 2000);
+  // Restore button state if we found one
+  if (button) {
+    button.innerHTML = '<i class="fas fa-check"></i> Done!';
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }, 2000);
+  }
   
   showToast('Cache analysis complete! Check browser console for details.', 'info');
 }
@@ -335,29 +418,38 @@ function clearRoutePlannerCache(event) {
   const originalText = button.innerHTML;
   button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
   button.disabled = true;
+  
+  try {
+    if (window.routePlanner) {
+      if (window.routePlanner.selectedLocations) {
+        window.routePlanner.selectedLocations = [];
+      }
+      if (window.routePlanner.previewPins) {
+        window.routePlanner.previewPins = [];
+      }
+      console.log('✅ Route planner data cleared');
+    }
     
-  if (window.routePlanner) {
-    window.routePlanner.selectedLocations = [];
-    window.routePlanner.previewPins = [];
+    if (window.cacheManager) {
+      window.cacheManager.clearAllCaches();
+      console.log('✅ CacheManager caches cleared');
+    }
+    
+    console.log('✅ Route planner caches cleared successfully');
+    button.innerHTML = '<i class="fas fa-check"></i> Cleared!';
+    
+    showToast('Route planner caches cleared successfully!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Error clearing route planner caches:', error);
+    button.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error!';
+    showToast('Error clearing route planner caches. Check console for details.', 'error');
+  } finally {
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.disabled = false;
+    }, 2000);
   }
-  
-  if (window.cacheManager) {
-    window.cacheManager.clearAllCaches();
-  }
-  
-  console.log('✅ Route planner caches cleared');
-  
-  button.innerHTML = '<i class="fas fa-check"></i> Cleared!';
-  setTimeout(() => {
-    button.innerHTML = originalText;
-    button.disabled = false;
-  }, 2000);
-  
-  showToast('Route planner caches cleared successfully!', 'success');
-  
-  setTimeout(() => {
-    debugCache();
-  }, 500);
 }
 
 function updateCacheStatus(stats) {
