@@ -9,9 +9,20 @@ html, body {
   background-color: #f8f9fa;
   color: #333;
 }
+
+/* Ensure consistent background color throughout */
+html {
+  background-color: #f8f9fa;
+}
+
+body {
+  background-color: #f8f9fa;
+}
+
 * {
   box-sizing: border-box;
 }
+
 body {
   display: flex;
   flex-direction: column;
@@ -234,4 +245,72 @@ form button:hover {
 #flash-container .btn-close {
   top: 50%;
   transform: translateY(-50%);
+}
+
+/* ==========================================================================
+   BACKGROUND COLOR CONSISTENCY & SPACING FIXES
+   ========================================================================== */
+
+/* Ensure consistent background color across all pages */
+html, body, #main-content {
+  background-color: #f8f9fa !important;
+}
+
+/* Override any potential Bootstrap or other framework background changes */
+.container, .container-fluid, .row, .col, [class*="col-"] {
+  background-color: transparent !important;
+}
+
+/* Ensure content areas have proper spacing from footer */
+.content, .form-container {
+  margin-bottom: 2rem;
+}
+
+/* Extra spacing for the last content element before footer */
+.content:last-child,
+.form-container:last-child {
+  margin-bottom: 3rem;
+}
+
+/* Fix for long content pages to prevent background color changes */
+body:not(.map-page):not(.splash-page) {
+  background-color: #f8f9fa !important;
+  background-image: none !important;
+}
+
+/* ==========================================================================
+   COMPREHENSIVE BOTTOM SPACING FOR ALL PAGES
+   ========================================================================== */
+
+/* Universal rule: ensure any content container has proper bottom spacing */
+/* EXCLUDE map and splash pages from these rules to maintain their perfect layout */
+body:not(.map-page):not(.splash-page) #main-content > *:last-child,
+body:not(.map-page):not(.splash-page) main > *:last-child,
+body:not(.map-page):not(.splash-page) .page-content > *:last-child,
+body:not(.map-page):not(.splash-page) .content > *:last-child {
+  margin-bottom: 2rem !important;
+}
+
+/* Catch-all for any content containers that might not have specific classes */
+/* EXCLUDE map and splash pages from these rules */
+body:not(.map-page):not(.splash-page) #main-content > div:last-child,
+body:not(.map-page):not(.splash-page) main > div:last-child {
+  margin-bottom: 2rem !important;
+}
+
+/* Ensure any form or content wrapper has proper spacing */
+/* EXCLUDE map and splash pages from these rules */
+body:not(.map-page):not(.splash-page) .form-wrapper,
+body:not(.map-page):not(.splash-page) .content-wrapper,
+body:not(.map-page):not(.splash-page) .page-wrapper,
+body:not(.map-page):not(.splash-page) .section-wrapper {
+  margin-bottom: 2rem;
+}
+
+/* Special handling for pages with multiple sections */
+/* EXCLUDE map and splash pages from these rules */
+body:not(.map-page):not(.splash-page) .section:last-child,
+body:not(.map-page):not(.splash-page) .chapter:last-child,
+body:not(.map-page):not(.splash-page) .part:last-child {
+  margin-bottom: 3rem !important;
 }

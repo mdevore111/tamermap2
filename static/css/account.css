@@ -68,6 +68,78 @@
     margin-bottom: 30px;
 }
 
+/* Membership Section Styling */
+.membership-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.user-roles {
+    margin-bottom: 15px;
+}
+
+.tds-text--h3 {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+    text-transform: none;
+}
+
+.role-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-basic {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.role-pro {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.role-admin {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.pro-status {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.pro-member {
+    color: #856404 !important;
+    font-weight: 600;
+}
+
+.expired-pro {
+    color: #dc3545 !important;
+    font-weight: 600;
+}
+
+.basic-member {
+    color: #6c757d !important;
+}
+
 /* Form Container */
 .form-container {
     max-width: 600px;

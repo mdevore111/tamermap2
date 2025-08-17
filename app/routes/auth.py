@@ -31,7 +31,14 @@ def account():
     current_app.logger.info(f"Session contents: {dict(session)}")
     current_app.logger.info(f"Flask-Login authenticated: {current_user.is_authenticated}")
     
-    return render_template("account.html")
+    # Get user roles and determine pro status
+    user_roles = [role.name for role in current_user.roles]
+    is_pro = current_user.pro_end_date and current_user.pro_end_date > datetime.utcnow()
+    
+    return render_template("account.html", 
+                         user_roles=user_roles, 
+                         is_pro=is_pro, 
+                         pro_end_date=current_user.pro_end_date)
 
 
 @auth_bp.route('/customer-portal', methods=['GET'])

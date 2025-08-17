@@ -1178,37 +1178,195 @@ def list_place_id_duplicates():
 
     return jsonify(result)
 
+@admin_bp.route('/duplicates/place-id/preview', methods=['POST'])
+@admin_required
+def preview_place_id_merge():
+    """Preview the result of merging duplicate retailers by place_id.
+    
+    Body: { place_id: "...", master_id: "..." }
+    Returns: Preview of the final merged record
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        current_app.logger.info(f"Preview request data: {data}")
+        
+        pid = (data.get('place_id') or '').strip()
+        master_id = data.get('master_id')
+        
+        if not pid:
+            current_app.logger.warning(f"Missing place_id in preview request: {data}")
+            return jsonify({'message': 'place_id is required'}), 400
+        if not master_id:
+            current_app.logger.warning(f"Missing master_id in preview request: {data}")
+            return jsonify({'message': 'master_id is required'}), 400
+        
+        # Convert master_id to integer for database comparison
+        try:
+            master_id = int(master_id)
+        except (ValueError, TypeError):
+            current_app.logger.error(f"Invalid master_id format: {master_id}")
+            return jsonify({'message': 'Invalid master_id format'}), 400
+
+        current_app.logger.info(f"Looking for duplicates with place_id: {pid}")
+        members = Retailer.query.filter_by(place_id=pid).all()
+        current_app.logger.info(f"Found {len(members)} records with place_id {pid}")
+        
+        if len(members) <= 1:
+            current_app.logger.info(f"No duplicates to merge for place_id: {pid}")
+            return jsonify({'message': 'No duplicates to merge', 'place_id': pid})
+
+        # Find the master record
+        master = next((m for m in members if m.id == master_id), None)
+        if not master:
+            current_app.logger.error(f"Master record {master_id} not found for place_id {pid}")
+            return jsonify({'message': 'Master record not found'}), 400
+
+        current_app.logger.info(f"Building preview for master record {master_id}")
+        
+        # Build the preview by merging data from all records
+        preview = {}
+        sources = {}
+        
+        # Start with master record data
+        preview['retailer'] = master.retailer
+        preview['retailer_type'] = master.retailer_type
+        preview['full_address'] = master.full_address
+        preview['coordinates'] = f"{master.latitude:.5f}, {master.longitude:.5f}" if master.latitude and master.longitude else None
+        preview['phone_number'] = master.phone_number
+        preview['website'] = master.website
+        preview['opening_hours'] = master.opening_hours
+        preview['last_api_update'] = master.last_api_update.strftime('%Y-%m-%d %H:%M') if master.last_api_update else None
+        preview['enabled'] = 'Yes' if master.enabled else 'No'
+        
+        # Track sources for each field
+        sources['retailer'] = master.id
+        sources['retailer_type'] = master.id
+        sources['full_address'] = master.id
+        sources['coordinates'] = master.id
+        sources['phone_number'] = master.id
+        sources['website'] = master.id
+        sources['opening_hours'] = master.id
+        sources['last_api_update'] = master.id
+        sources['enabled'] = master.id
+        
+        # Merge retailer_type from all records
+        types = set()
+        for r in members:
+            if r.retailer_type:
+                for t in str(r.retailer_type).lower().split('+'):
+                    t = t.strip()
+                    if t:
+                        types.add(t)
+        if types:
+            preview['retailer_type'] = ' + '.join(sorted(types))
+            # Source is the first record that contributed to the merged type
+            sources['retailer_type'] = 'merged'
+        
+        # Merge other fields conservatively (keep best data)
+        for field, source_field in [
+            ('phone_number', 'phone_number'),
+            ('website', 'website'), 
+            ('opening_hours', 'opening_hours')
+        ]:
+            if not preview[field] or preview[field] == '—':
+                # Find best available value from other records
+                for r in members:
+                    if r.id != master.id and getattr(r, source_field):
+                        preview[field] = getattr(r, source_field) if source_field != 'opening_hours' else '✓'
+                        sources[field] = r.id
+                        break
+        
+        # Handle coordinates specially
+        if not preview['coordinates'] or preview['coordinates'] == 'None':
+            for r in members:
+                if r.id != master.id and r.latitude and r.longitude:
+                    preview['coordinates'] = f"{r.latitude:.5f}, {r.longitude:.5f}"
+                    sources['coordinates'] = r.id
+                    break
+        
+        # Handle address specially
+        if not preview['full_address'] or preview['full_address'] == '—':
+            for r in members:
+                if r.id != master.id and r.full_address:
+                    preview['full_address'] = r.full_address
+                    sources['full_address'] = r.id
+                    break
+        
+        # Handle retailer name specially
+        if not preview['retailer'] or preview['retailer'] == '—':
+            for r in members:
+                if r.id != master.id and r.retailer:
+                    preview['retailer'] = r.retailer
+                    sources['retailer'] = r.id
+                    break
+        
+        # Handle enabled status (if any are enabled, keep enabled)
+        if any(r.enabled for r in members):
+            preview['enabled'] = 'Yes'
+            # Source is the first enabled record
+            for r in members:
+                if r.enabled:
+                    sources['enabled'] = r.id
+                    break
+        
+        # Handle last API update (keep most recent)
+        latest_update = None
+        latest_record = None
+        for r in members:
+            if r.last_api_update and (not latest_update or r.last_api_update > latest_update):
+                latest_update = r.last_api_update
+                latest_record = r
+        
+        if latest_update:
+            preview['last_api_update'] = latest_update.strftime('%Y-%m-%d %H:%M')
+            sources['last_api_update'] = latest_record.id
+        
+        result = {
+            'place_id': pid,
+            'master_id': master_id,
+            'sources': sources,
+            **preview
+        }
+        
+        current_app.logger.info(f"Preview generated successfully for place_id {pid}")
+        return jsonify(result)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error in preview_place_id_merge: {str(e)}", exc_info=True)
+        return jsonify({'message': f'Internal server error: {str(e)}'}), 500
 
 @admin_bp.route('/duplicates/place-id/merge', methods=['POST'])
 @admin_required
 def merge_place_id_duplicates():
     """Merge kiosk/store duplicates sharing the same place_id.
 
-    Body: { place_id: "..." }
+    Body: { place_id: "...", master_id: "..." }
     """
     data = request.get_json(silent=True) or {}
     pid = (data.get('place_id') or '').strip()
+    master_id = data.get('master_id')
+    
     if not pid:
         return jsonify({'message': 'place_id is required'}), 400
+    if not master_id:
+        return jsonify({'message': 'master_id is required'}), 400
+    
+    # Convert master_id to integer for database comparison
+    try:
+        master_id = int(master_id)
+    except (ValueError, TypeError):
+        return jsonify({'message': 'Invalid master_id format'}), 400
 
     members = Retailer.query.filter_by(place_id=pid).all()
     if len(members) <= 1:
-        return jsonify({'message': 'No duplicates to merge', 'place_id': pid, 'kept_id': members[0].id if members else None})
+        return jsonify({'message': 'No duplicates to merge', 'place_id': pid})
 
-    # Pick the best row to keep
-    def score(r: Retailer) -> int:
-        s = 0
-        if r.opening_hours: s += 4
-        if r.latitude is not None and r.longitude is not None: s += 3
-        if r.phone_number: s += 2
-        if r.website: s += 1
-        if r.last_api_update: s += 1
-        return s
+    # Find the master record
+    master = next((m for m in members if m.id == master_id), None)
+    if not master:
+        return jsonify({'message': 'Master record not found'}), 400
 
-    keep = max(members, key=score)
-    to_delete = [m for m in members if m.id != keep.id]
-
-    # Merge retailer_type
+    # Merge retailer_type from all records
     types = set()
     for r in members:
         if r.retailer_type:
@@ -1217,27 +1375,62 @@ def merge_place_id_duplicates():
                 if t:
                     types.add(t)
     if types:
-        keep.retailer_type = ' + '.join(sorted(types))
+        master.retailer_type = ' + '.join(sorted(types))
 
-    # Merge other fields conservatively
-    keep.machine_count = max([m.machine_count or 0 for m in members])
-    keep.enabled = any([m.enabled for m in members])
-    if not keep.phone_number:
-        keep.phone_number = next((m.phone_number for m in to_delete if m.phone_number), keep.phone_number)
-    if not keep.website:
-        keep.website = next((m.website for m in to_delete if m.website), keep.website)
-    if not keep.opening_hours:
-        keep.opening_hours = next((m.opening_hours for m in to_delete if m.opening_hours), keep.opening_hours)
-    keep.first_seen = min([m.first_seen for m in members if m.first_seen] or [datetime.utcnow()])
-
+    # Merge other fields conservatively (keep best data)
+    if not master.phone_number:
+        master.phone_number = next((r.phone_number for r in members if r.phone_number), None)
+    if not master.website:
+        master.website = next((r.website for r in members if r.website), None)
+    if not master.opening_hours:
+        master.opening_hours = next((r.opening_hours for r in members if r.opening_hours), None)
+    if not master.full_address:
+        master.full_address = next((r.full_address for r in members if r.full_address), None)
+    if not master.retailer:
+        master.retailer = next((r.retailer for r in members if r.retailer), None)
+    
+    # Handle coordinates (keep best available)
+    if not master.latitude or not master.longitude:
+        for r in members:
+            if r.latitude and r.longitude:
+                master.latitude = r.latitude
+                master.longitude = r.longitude
+                break
+    
+    # Handle enabled status (if any are enabled, keep enabled)
+    if any(r.enabled for r in members):
+        master.enabled = True
+    
+    # Handle last API update (keep most recent)
+    latest_update = max([r.last_api_update for r in members if r.last_api_update] or [master.last_api_update])
+    if latest_update:
+        master.last_api_update = latest_update
+    
+    # Handle first seen (keep earliest)
+    first_seen = min([r.first_seen for r in members if r.first_seen] or [master.first_seen])
+    if first_seen:
+        master.first_seen = first_seen
+    
+    # Handle machine count (keep highest)
+    max_machines = max([r.machine_count or 0 for r in members])
+    master.machine_count = max_machines
+    
+    # Delete duplicate records
+    to_delete = [r for r in members if r.id != master.id]
     deleted_ids = []
-    for m in to_delete:
-        deleted_ids.append(m.id)
-        db.session.delete(m)
+    
+    for r in to_delete:
+        deleted_ids.append(r.id)
+        db.session.delete(r)
 
     db.session.commit()
 
-    return jsonify({'message': 'merged', 'place_id': pid, 'kept_id': keep.id, 'deleted_ids': deleted_ids})
+    return jsonify({
+        'message': 'merged', 
+        'place_id': pid, 
+        'kept_id': master.id, 
+        'deleted_ids': deleted_ids
+    })
 
 # Events routes
 @admin_bp.route('/events')
