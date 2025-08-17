@@ -468,18 +468,11 @@ function handleSearch(event) {
     return false;
   }
   
-  // Use Google Places Autocomplete if available (session handling is in map-init.js)
-  if (window.google && window.google.maps && window.google.maps.places) {
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: searchInput.value }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        window.map.setCenter(results[0].geometry.location);
-        window.map.setZoom(12); // Reduced from 15 to provide better context around search results
-      } else {
-        console.warn('Geocoding failed:', status);
-      }
-    });
-  }
+  // Note: Places Autocomplete already handles coordinate lookup when a user selects a place
+  // The search form submission is mainly for user experience - the actual search happens via autocomplete
+  // If you need to enable geocoding for direct address searches, enable the Geocoding API in Google Cloud Console
+  console.log('Search submitted:', searchInput.value);
+  console.log('Use the autocomplete dropdown to select a specific location for best results');
   
   return false;
 }
