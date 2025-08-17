@@ -18,6 +18,10 @@ from app import db
 def get_system_stats():
     """Get system resource statistics with cross-platform support."""
     try:
+        # Check if psutil is available
+        if not psutil:
+            raise ImportError("psutil not available")
+            
         # CPU usage
         cpu_percent = psutil.cpu_percent(interval=1)
         
@@ -53,8 +57,23 @@ def get_system_stats():
             'disk_used': round(disk_used_gb, 1),
             'disk_total': round(disk_total_gb, 1)
         }
+    except ImportError as e:
+        # psutil not available
+        from flask import current_app
+        current_app.logger.warning(f"psutil not available for system stats: {e}")
+        return {
+            'cpu': 0.0,
+            'memory': 0.0,
+            'memory_used': 0.0,
+            'memory_total': 0.0,
+            'disk': 0.0,
+            'disk_used': 0.0,
+            'disk_total': 0.0
+        }
     except Exception as e:
         # Return safe defaults if any error occurs
+        from flask import current_app
+        current_app.logger.error(f"Error getting system stats: {e}")
         return {
             'cpu': 0.0,
             'memory': 0.0,

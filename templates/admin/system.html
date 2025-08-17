@@ -472,18 +472,43 @@ function updateCacheStatus(stats) {
 // System Resource Functions
 function refreshSystemStats() {
   fetch('/admin/api/system/stats')
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
     .then(data => {
       if (data.success) {
         updateSystemStats(data.data);
         showToast('System stats updated successfully!', 'success');
       } else {
-        showToast('Failed to update system stats', 'danger');
+        // Handle API error but still update with fallback data
+        console.warn('API returned error but provided fallback data:', data.error);
+        if (data.data) {
+          updateSystemStats(data.data);
+          showToast('System stats updated with fallback data', 'warning');
+        } else {
+          showToast('Failed to update system stats', 'danger');
+        }
       }
     })
     .catch(error => {
       console.error('Error updating system stats:', error);
-      showToast('Error updating system stats', 'danger');
+      
+      // Provide fallback data when API fails
+      const fallbackData = {
+        cpu: 0.0,
+        memory: 0.0,
+        memory_used: 0.0,
+        memory_total: 0.0,
+        disk: 0.0,
+        disk_used: 0.0,
+        disk_total: 0.0
+      };
+      
+      updateSystemStats(fallbackData);
+      showToast('System stats unavailable - showing fallback data', 'warning');
     });
 }
 
@@ -566,6 +591,30 @@ document.getElementById('auto-refresh-toggle').addEventListener('change', functi
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+  // Test static file loading
+  console.log('🔍 Testing static file availability...');
+  
+  // Check if admin-common.js loaded
+  if (typeof window.adminCommonLoaded !== 'undefined') {
+    console.log('✅ admin-common.js loaded successfully');
+  } else {
+    console.warn('⚠️ admin-common.js may not have loaded properly');
+  }
+  
+  // Check if password-strength.js loaded
+  if (typeof window.passwordStrengthLoaded !== 'undefined') {
+    console.log('✅ password-strength.js loaded successfully');
+  } else {
+    console.warn('⚠️ password-strength.js may not have loaded properly');
+  }
+  
+  // Check if flash_messages.js loaded
+  if (typeof window.flashMessagesLoaded !== 'undefined') {
+    console.log('✅ flash_messages.js loaded successfully');
+  } else {
+    console.warn('⚠️ flash_messages.js may not have loaded properly');
+  }
+  
   // Initialize cache status
   setTimeout(() => {
     debugCache({ target: document.querySelector('[onclick*="debugCache"]') });

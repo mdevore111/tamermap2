@@ -3353,15 +3353,42 @@ def api_system_stats():
         from app.admin_utils import get_system_stats
         system_stats = get_system_stats()
         
+        # Log successful response for debugging
+        current_app.logger.info(f"System stats API called successfully: {system_stats}")
+        
         return jsonify({
             'success': True,
             'data': system_stats
         })
+    except ImportError as e:
+        current_app.logger.error(f"Import error in system stats API: {e}")
+        return jsonify({
+            'success': False,
+            'error': f"Import error: {str(e)}",
+            'data': {
+                'cpu': 0.0,
+                'memory': 0.0,
+                'memory_used': 0.0,
+                'memory_total': 0.0,
+                'disk': 0.0,
+                'disk_used': 0.0,
+                'disk_total': 0.0
+            }
+        }), 500
     except Exception as e:
         current_app.logger.error(f"Error getting system stats: {e}")
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': str(e),
+            'data': {
+                'cpu': 0.0,
+                'memory': 0.0,
+                'memory_used': 0.0,
+                'memory_total': 0.0,
+                'disk': 0.0,
+                'disk_used': 0.0,
+                'disk_total': 0.0
+            }
         }), 500
 
 # Initialize signer once (if cert path provided and pyHanko installed)
