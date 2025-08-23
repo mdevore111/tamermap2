@@ -93,6 +93,18 @@
         {{ form.body(class="form-control", rows=8) }}
       </div>
 
+      {# Out of business checkbox for report type #}
+      {% if form.communication_type.data == 'report' %}
+        <div class="mb-3">
+          <div class="form-check">
+            {{ form.out_of_business(class="form-check-input") }}
+            <label class="form-check-label" for="{{ form.out_of_business.id }}">
+              {{ form.out_of_business.label.text }}
+            </label>
+          </div>
+        </div>
+      {% endif %}
+
         {# extra report metadata #}
         {% if form.communication_type.data == 'report' %}
           <div class="mb-3">

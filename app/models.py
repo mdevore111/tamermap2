@@ -441,6 +441,7 @@ class Message(db.Model):
     reported_phone = db.Column(db.String(100), nullable=True)
     reported_website = db.Column(db.String(255), nullable=True)
     reported_hours = db.Column(db.String(255), nullable=True)
+    out_of_business = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     name = db.Column(db.String(255), nullable=True)

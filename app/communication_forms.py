@@ -1,7 +1,7 @@
 # communication_forms.py
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SubmitField, SelectField, ValidationError, HiddenField
+from wtforms import StringField, TextAreaField, SubmitField, SelectField, ValidationError, HiddenField, BooleanField
 from wtforms.validators import DataRequired, Length, Optional
 from datetime import datetime
 import re
@@ -65,6 +65,7 @@ class MessageForm(FlaskForm):
     reported_phone   = StringField('Reported Phone',   validators=[Optional()])
     reported_website = StringField('Reported Website', validators=[Optional()])
     reported_hours   = StringField('Reported Hours',   validators=[Optional()])
+    out_of_business = BooleanField('Appears to be out of business')
 
     # Spam prevention fields
     honeypot = HiddenField('Honeypot')  # Hidden field to catch bots
