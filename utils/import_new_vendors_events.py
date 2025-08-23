@@ -209,6 +209,7 @@ def main() -> None:
         Column('machine_count', Integer, default=0),
         Column('previous_count', Integer, default=0),
         Column('status', String(100)),
+        Column('enabled', Integer, default=1),  # Active status: 1 = enabled, 0 = disabled
         # New kiosk snapshot derived fields (optional)
         Column('kiosk_current_count', Integer),
         Column('kiosk_previous_count', Integer),
@@ -237,10 +238,24 @@ def main() -> None:
             except Exception:
                 pass
 
+    def _ensure_enabled_column(conn) -> None:
+        """Add enabled column to retailers if missing (idempotent)."""
+        cols = {r[1] for r in conn.execute(text("PRAGMA table_info('retailers')")).fetchall()}
+        if 'enabled' not in cols:
+            try:
+                conn.execute(text("ALTER TABLE retailers ADD COLUMN enabled INTEGER DEFAULT 1"))
+                # Set all existing records to enabled=1 (since they were working before)
+                conn.execute(text("UPDATE retailers SET enabled = 1 WHERE enabled IS NULL"))
+                logger.info("Added 'enabled' column to retailers table and set existing records to enabled=1")
+            except Exception as e:
+                logger.warning(f"Could not add 'enabled' column: {e}")
+
     try:
         with engine.begin() as conn:
             # Ensure schema has kiosk_* columns before deletes/inserts
             _ensure_kiosk_columns(conn)
+            # Ensure schema has enabled column before deletes/inserts
+            _ensure_enabled_column(conn)
             # -------- truncate both tables first -----------------
             conn.execute(text("DELETE FROM retailers"))
             logger.info("Cleared existing rows from retailers table")
@@ -258,6 +273,11 @@ def main() -> None:
                     item.setdefault('kiosk_delta', None)
                     item.setdefault('kiosk_trend', None)
                     item.setdefault('kiosk_last_changed_at', None)
+                    
+                    # Handle enabled field: set to 1 for new records, preserve existing value if present
+                    if 'enabled' not in item:
+                        item['enabled'] = 1  # Default to enabled for new records
+                    # Note: If 'enabled' exists in the JSON, it will be preserved as-is
                 conn.execute(insert(retailers), retailers_data)
                 logger.info("Inserted %d retailer rows", len(retailers_data))
             else:

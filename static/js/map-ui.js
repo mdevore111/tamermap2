@@ -136,25 +136,21 @@ function initUI() {
         DB.legendFilter.value = '';
         localStorage.setItem('checkbox_legend_filter', '');
         
-        // Always keep kiosk checked, others depend on pro status
-        if (DB.filterKiosk) {
-          DB.filterKiosk.checked = true;
-          localStorage.setItem('checkbox_filter-kiosk', 'true');
-        }
-        
         // Check pro status for other checkboxes
         const proSection = document.getElementById('pro-features-section');
         const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : false;
         
         if (isPro) {
-          // For pro users, restore saved states
+          // For pro users, restore saved states or use sensible defaults
           if (DB.filterRetail) {
-            DB.filterRetail.checked = localStorage.getItem('checkbox_filter-retail') === 'true' || true;
-            localStorage.setItem('checkbox_filter-retail', DB.filterRetail.checked);
+            const saved = localStorage.getItem('checkbox_filter-retail');
+            DB.filterRetail.checked = (saved ?? 'true') === 'true'; // Pro default true
+            localStorage.setItem('checkbox_filter-retail', String(DB.filterRetail.checked));
           }
           if (DB.filterIndie) {
-            DB.filterIndie.checked = localStorage.getItem('checkbox_filter-indie') === 'true' || false;
-            localStorage.setItem('checkbox_filter-indie', DB.filterIndie.checked);
+            const saved = localStorage.getItem('checkbox_filter-indie');
+            DB.filterIndie.checked = (saved ?? 'false') === 'true'; // Pro default false
+            localStorage.setItem('checkbox_filter-indie', String(DB.filterIndie.checked));
           }
         } else {
           // For non-pro users, uncheck pro checkboxes
@@ -198,9 +194,9 @@ function initUI() {
         // Don't automatically check events - they have their own search logic
         
         // Save the checkbox states
-        localStorage.setItem('checkbox_filter-kiosk', 'true');
-        localStorage.setItem('checkbox_filter-retail', 'true');
-        localStorage.setItem('checkbox_filter-indie', 'true');
+        localStorage.setItem('checkbox_filter-kiosk', String(DB.filterKiosk.checked));
+        localStorage.setItem('checkbox_filter-retail', String(DB.filterRetail.checked));
+        localStorage.setItem('checkbox_filter-indie', String(DB.filterIndie.checked));
         // Don't save events state
       }
       
@@ -255,37 +251,50 @@ function initUI() {
   
   // Setup checkbox states based on pro status
   function setupCheckboxStates(isPro) {
-    // Always keep kiosk checkbox checked
+    // kiosk: default true on first load, but don't force it every time
     if (DB.filterKiosk) {
-      DB.filterKiosk.checked = true;
-      localStorage.setItem('checkbox_filter-kiosk', 'true');
+      const saved = localStorage.getItem('checkbox_filter-kiosk');
+      DB.filterKiosk.checked = saved === null ? true : (saved === 'true');
+      localStorage.setItem('checkbox_filter-kiosk', String(DB.filterKiosk.checked));
     }
     
     if (isPro) {
-      // For pro users, restore saved states or use defaults
+      // retail: default true for Pro, false for non-Pro, but honor saved value
       if (DB.filterRetail) {
-        DB.filterRetail.checked = localStorage.getItem('checkbox_filter-retail') === 'true' || true;
-        localStorage.setItem('checkbox_filter-retail', DB.filterRetail.checked);
+        const fallback = 'true'; // Pro default
+        const saved = localStorage.getItem('checkbox_filter-retail');
+        DB.filterRetail.checked = (saved ?? fallback) === 'true';   // <-- no "|| true"
+        localStorage.setItem('checkbox_filter-retail', String(DB.filterRetail.checked));
       }
       if (DB.filterIndie) {
-        DB.filterIndie.checked = localStorage.getItem('checkbox_filter-indie') === 'true' || false;
-        localStorage.setItem('checkbox_filter-indie', DB.filterIndie.checked);
+        const fallback = 'false'; // Pro default
+        const saved = localStorage.getItem('checkbox_filter-indie');
+        DB.filterIndie.checked = (saved ?? fallback) === 'true';
+        localStorage.setItem('checkbox_filter-indie', String(DB.filterIndie.checked));
       }
       if (DB.filterOpenNow) {
-        DB.filterOpenNow.checked = localStorage.getItem('checkbox_filter-open-now') === 'true' || false;
-        localStorage.setItem('checkbox_filter-open-now', DB.filterOpenNow.checked);
+        const fallback = 'false';
+        const saved = localStorage.getItem('checkbox_filter-open-now');
+        DB.filterOpenNow.checked = (saved ?? fallback) === 'true';
+        localStorage.setItem('checkbox_filter-open-now', String(DB.filterOpenNow.checked));
       }
       if (DB.filterNew) {
-        DB.filterNew.checked = localStorage.getItem('checkbox_filter-new') === 'true' || false;
-        localStorage.setItem('checkbox_filter-new', DB.filterNew.checked);
+        const fallback = 'false';
+        const saved = localStorage.getItem('checkbox_filter-new');
+        DB.filterNew.checked = (saved ?? fallback) === 'true';
+        localStorage.setItem('checkbox_filter-new', String(DB.filterNew.checked));
       }
       if (DB.filterPopularAreas) {
-        DB.filterPopularAreas.checked = localStorage.getItem('checkbox_filter-popular-areas') === 'true' || false;
-        localStorage.setItem('checkbox_filter-popular-areas', DB.filterPopularAreas.checked);
+        const fallback = 'false';
+        const saved = localStorage.getItem('checkbox_filter-popular-areas');
+        DB.filterPopularAreas.checked = (saved ?? fallback) === 'true';
+        localStorage.setItem('checkbox_filter-popular-areas', String(DB.filterPopularAreas.checked));
       }
       if (DB.filterEvents) {
-        DB.filterEvents.checked = localStorage.getItem('checkbox_filter-events') === 'true' || false;
-        localStorage.setItem('checkbox_filter-events', DB.filterEvents.checked);
+        const fallback = 'false';
+        const saved = localStorage.getItem('checkbox_filter-events');
+        DB.filterEvents.checked = (saved ?? fallback) === 'true';
+        localStorage.setItem('checkbox_filter-events', String(DB.filterEvents.checked));
       }
     } else {
       // For non-pro users, uncheck all pro checkboxes

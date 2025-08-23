@@ -86,7 +86,14 @@ export function createRetailerMarker(map, retailer) {
   marker.address          = retailer.full_address || null;
   marker.phone            = retailer.phone_number || null;
   marker.opening_hours    = retailer.opening_hours;
-  marker.status           = retailer.status;
+  marker.status           = retailer.status; // Business logic status (new, updated, etc.)
+  marker.enabled          = Boolean(retailer.enabled); // Enabled state: true = enabled, false = disabled
+  
+  // Copy business hours data for Open Now filtering
+  marker.business_hours   = retailer.business_hours || retailer.opening_hours;
+  
+  // Store the full retailer data for advanced filtering
+  marker.retailer_data    = { ...retailer };
   // Pass through counts for UI rendering (kiosk aggregation)
   marker.machine_count    = Number.isFinite(retailer.machine_count) ? retailer.machine_count : 0;
   marker.kiosk_count      = (

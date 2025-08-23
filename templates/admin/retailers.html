@@ -16,7 +16,7 @@
                             <th>Address</th>
                             <th>Phone</th>
                             <th>Machine Count</th>
-                            <th>Status</th>
+                                                         <th>Active</th>
                             <th>Actions</th>
                                 </tr>
                             </thead>
@@ -105,7 +105,7 @@ $(document).ready(function() {
             { data: 'address' },
             { data: 'phone' },
             { data: 'machine_count' },
-            { data: 'status' },
+            { data: 'active' },
             { data: 'actions', orderable: false, searchable: false }
         ]
     });
@@ -114,7 +114,7 @@ $(document).ready(function() {
     $('#retailers-table').on('draw.dt', function(){
         $('#retailers-table tbody tr').each(function(){
             const rowData = table.row(this).data();
-            if (rowData && (rowData.status_value || '').toLowerCase() === 'disabled') {
+            if (rowData && (rowData.active_value || '').toLowerCase() === 'false') {
                 $(this).addClass('table-secondary');
                 $(this).css('opacity', 0.65);
             } else {
@@ -137,14 +137,10 @@ $(document).ready(function() {
                 </div>
                                     <div class="col-md-6">
                         <div class='mb-3'><label class="form-label">Machine Count</label><input name='machine_count' type='number' class='form-control' min="0" value="0"></div>
-                         <div class='mb-3'><label class="form-label">Status</label><select name='status' class='form-select'>
-                             <option value="">Select Status</option>
-                             <option value="Active">Active</option>
-                             <option value="Inactive">Inactive</option>
-                             <option value="Pending">Pending</option>
-                             <option value="Closed">Closed</option>
-                             <option value="Disabled">Disabled</option>
-                         </select></div>
+                                                   <div class='mb-3'><label class="form-label">Active</label><select name='enabled' class='form-select'>
+                              <option value="true" selected>True</option>
+                              <option value="false">False</option>
+                          </select></div>
                          
                         <div class='mb-3'><label class="form-label">Rating</label><input name='rating' type='number' class='form-control' min="0" max="5" step="0.1" placeholder="0.0 - 5.0"></div>
                         <div class='mb-3'><label class="form-label">Place ID</label><input name='place_id' class='form-control' placeholder="Google Place ID"></div>
@@ -236,14 +232,10 @@ $(document).ready(function() {
                     <div class="col-md-6">
                         <div class='mb-3'><label class="form-label">Machine Count</label><input name='machine_count' type='number' class='form-control' min="0" value='${data.machine_count || 0}'></div>
                         <div class='mb-3'><label class="form-label">Previous Count</label><input name='previous_count' type='number' class='form-control' min="0" value='${data.previous_count || 0}' readonly></div>
-                         <div class='mb-3'><label class="form-label">Status</label><select name='status' class='form-select'>
-                            <option value="">Select Status</option>
-                             <option value="Active" ${data.status === 'Active' ? 'selected' : ''}>Active</option>
-                             <option value="Inactive" ${data.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                             <option value="Pending" ${data.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                             <option value="Closed" ${data.status === 'Closed' ? 'selected' : ''}>Closed</option>
-                             <option value="Disabled" ${data.status === 'Disabled' ? 'selected' : ''}>Disabled</option>
-                        </select></div>
+                                                  <div class='mb-3'><label class="form-label">Active</label><select name='enabled' class='form-select'>
+                             <option value="true" ${data.enabled === true ? 'selected' : ''}>True</option>
+                             <option value="false" ${data.enabled === false ? 'selected' : ''}>False</option>
+                         </select></div>
                          
                         <div class='mb-3'><label class="form-label">Rating</label><input name='rating' type='number' class='form-control' min="0" max="5" step="0.1" value='${data.rating || ''}' placeholder="0.0 - 5.0"></div>
                         <div class='mb-3'><label class="form-label">Place ID</label><input name='place_id' class='form-control' value='${data.place_id || ''}' placeholder="Google Place ID"></div>
@@ -276,20 +268,23 @@ $(document).ready(function() {
         const newStatus = $(this).val();
         const self = this;
         Swal.fire({
-          title: 'Change Status?',
-          text: 'Do you want to change the status of this record?',
+          title: 'Change Active Status?',
+          text: 'Do you want to change whether this retailer is active?',
           icon: 'question',
           showCancelButton: true
         }).then(res => {
           if (res.isConfirmed) {
             fetch('/admin/retailers/' + id, {
               method: 'PUT', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: newStatus })
+              body: JSON.stringify({ enabled: newStatus === 'True' })
             }).then(r => {
               if (!r.ok) throw new Error('Failed');
+              // Update the data-current attribute to reflect the new state
+              $(self).data('current', newStatus);
+              // Reload the table to show updated data
               $('#retailers-table').DataTable().ajax.reload(null, false);
             }).catch(() => {
-              Swal.fire({ icon: 'error', title: 'Failed to update status' });
+              Swal.fire({ icon: 'error', title: 'Failed to update active status' });
               // revert UI
               $(self).val($(self).data('current'));
             });

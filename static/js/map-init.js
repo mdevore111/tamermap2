@@ -30,7 +30,8 @@ import {
   MAP_TYPE_ID,
   ZOOM_CONTROL_STYLE,
   ENDPOINTS,
-  Z_INDICES
+  Z_INDICES,
+  DEBOUNCE_TIMINGS
 } from './config.js';
 
 // Data & filtering
@@ -363,7 +364,7 @@ function renderMap() {
         window.applyFilters();
         window.filtersAppliedRecently = true;
         // Reset flag after a delay
-        setTimeout(() => { window.filtersAppliedRecently = false; }, 1000);
+        setTimeout(() => { window.filtersAppliedRecently = false; }, DEBOUNCE_TIMINGS.FLAG_RESET);
       }
       
       const c = window.map.getCenter();
@@ -372,7 +373,7 @@ function renderMap() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lat: c.lat(), lng: c.lng(), zoom: window.map.getZoom() })
       }).catch(console.error);
-    }, 100); // Small delay to batch rapid idle events
+    }, DEBOUNCE_TIMINGS.UI_UPDATE); // Use constant for consistent timing
   });
 
   // Close infoWindow on map click - BUT NOT on drag or other map movements
@@ -728,7 +729,7 @@ function applyFilters() {
         }
 
         updateFilterUI(filters);
-    }, 10); // Reduced debounce from 50ms to 10ms for more responsive filtering
+    }, DEBOUNCE_TIMINGS.FILTER_APPLY); // Use constant for consistent timing
 }
 
 /**

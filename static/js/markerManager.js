@@ -1,7 +1,7 @@
 // ==== static/js/markerManager.js ====
 // Advanced marker management with clustering, viewport culling, and progressive loading
 
-import { MARKER_TYPES, Z_INDICES } from './config.js';
+import { MARKER_TYPES, Z_INDICES, DEBOUNCE_TIMINGS } from './config.js';
 import { createRetailerMarker, createEventMarker } from './markerFactory.js';
 import { isOpenNow } from './utils.js';
 
@@ -42,7 +42,7 @@ export class MarkerManager {
             clearTimeout(boundsChangeTimer);
             boundsChangeTimer = setTimeout(() => {
                 this.handleViewportChange();
-            }, 500); // Increased to 500ms to reduce excessive updates and improve performance
+            }, DEBOUNCE_TIMINGS.VIEWPORT_CHANGE); // Use constant for consistent timing
         });
         
         // Zoom level changes - only handle clustering changes, not every zoom
@@ -51,7 +51,7 @@ export class MarkerManager {
             clearTimeout(this.zoomChangeTimer);
             this.zoomChangeTimer = setTimeout(() => {
                 this.handleZoomChange();
-            }, 300);
+            }, DEBOUNCE_TIMINGS.UI_UPDATE);
         });
     }
     
@@ -449,9 +449,17 @@ export class MarkerManager {
     }
     
     shouldShowRetailer(marker, filters) {
-        // Check if marker is disabled
-        const status = (marker.retailer_data?.status || marker.status || '').toLowerCase();
-        if (status === 'disabled') {
+        // Check if marker is enabled using the existing 'enabled' field
+        const isEnabled = Boolean(marker.retailer_data?.enabled); // Convert to proper boolean
+        
+        // Hide markers that are disabled (enabled = 0 or false)
+        if (!isEnabled) {
+            if (window.__TM_DEBUG__) {
+                console.log('Hiding disabled marker:', {
+                    retailer: marker.retailer_data?.retailer || marker.retailer_name,
+                    enabled: isEnabled
+                });
+            }
             return false;
         }
         
