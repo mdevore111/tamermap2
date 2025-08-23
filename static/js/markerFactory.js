@@ -36,6 +36,15 @@ function handleInfoWindowClose() {
  * @returns {google.maps.Marker|null} The created marker, or null if coords invalid.
  */
 export function createRetailerMarker(map, retailer) {
+  if (window.__TM_DEBUG__) {
+    console.log('createRetailerMarker called:', {
+      map: !!map,
+      retailer: retailer?.retailer || 'unknown',
+      coords: retailer?.latitude && retailer?.longitude ? 
+        `${retailer.latitude}, ${retailer.longitude}` : 'missing'
+    });
+  }
+  
   const cfg = MARKER_TYPES.retailer;
   const isPro = window.is_pro;
   // choose pin filename
@@ -58,6 +67,14 @@ export function createRetailerMarker(map, retailer) {
     },
     zIndex: cfg.zIndex
   });
+
+  if (window.__TM_DEBUG__) {
+    console.log('Retailer marker created:', {
+      marker: !!marker,
+      position: marker.getPosition?.(),
+      iconUrl
+    });
+  }
 
   // Copy fields for filtering
   marker.retailer_type    = (retailer.retailer_type  || '').toLowerCase();
