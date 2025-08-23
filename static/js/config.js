@@ -39,6 +39,14 @@ export const Z_INDICES = {
   ui:       1000
 };
 
+// Debounce timing constants for consistent event handling
+export const DEBOUNCE_TIMINGS = {
+  VIEWPORT_CHANGE: 500,    // Map bounds/zoom changes (marker updates)
+  UI_UPDATE: 100,          // UI updates and filter changes
+  FILTER_APPLY: 10,        // Filter application (very responsive)
+  FLAG_RESET: 1000         // Reset flags and state
+};
+
 // New: centralize per‑type icon & z‑index info
 export const MARKER_TYPES = {
   retailer: {

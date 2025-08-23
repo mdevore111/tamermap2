@@ -941,15 +941,15 @@ def retailers():
 @rate_limit_data_tables(max_requests=20, window_seconds=60)
 def retailers_data():
     try:
-        # Only log if there's an actual issue (not every successful operation)
-        if current_app.debug and not draw:
-            current_app.logger.warning("retailers_data called without required draw parameter")
-
         # Get DataTables parameters
         draw = request.args.get('draw', type=int)
         start = request.args.get('start', type=int)
         length = request.args.get('length', type=int)
         search_value = request.args.get('search[value]', '')
+
+        # Only log if there's an actual issue (not every successful operation)
+        if current_app.debug and not draw:
+            current_app.logger.warning("retailers_data called without required draw parameter")
 
         # Build the query
         query = Retailer.query
@@ -974,7 +974,7 @@ def retailers_data():
             2: Retailer.full_address,   # Address column
             3: Retailer.phone_number,   # Phone column
             4: Retailer.machine_count,  # Machine Count column
-            5: Retailer.status,         # Status column
+            5: Retailer.enabled,        # Active column (sortable by enabled field)
             6: None                     # Actions column (not sortable)
         }
 
@@ -996,9 +996,12 @@ def retailers_data():
 
         data = []
         for retailer in retailers:
-            # Inline status dropdown
-            current_status = retailer.status or ''
-            status_options = ['Active', 'Inactive', 'Pending', 'Closed', 'Disabled']
+            # Use the existing 'enabled' field for active/inactive state
+            is_enabled = retailer.enabled if hasattr(retailer, 'enabled') else True
+            current_status = 'True' if is_enabled else 'False'
+            
+            # Inline status dropdown - True/False only
+            status_options = ['True', 'False']
             options_html = ''.join([
                 f'<option value="{opt}" {"selected" if current_status==opt else ""}>{opt}</option>' for opt in status_options
             ])
@@ -1011,8 +1014,8 @@ def retailers_data():
                 'phone': retailer.phone_number or '',
                 'retailer_type': retailer.retailer_type or '',
                 'machine_count': retailer.machine_count or 0,
-                'status': status_select,
-                'status_value': current_status,
+                'active': status_select,
+                'active_value': current_status,
                 'actions': f'''<button class="btn btn-sm btn-primary edit-retailer-btn" data-id="{retailer.id}">Edit</button> 
                               <button class="btn btn-sm btn-danger delete-retailer-btn" data-id="{retailer.id}" data-name="{retailer.retailer or 'Unknown'}">Delete</button>'''
             })
@@ -1131,6 +1134,7 @@ def add_retailer():
             machine_count=int(data.get('machine_count', 0)),
             status=data.get('status'),
             enabled=data.get('enabled', True),  # Default to True for new retailers
+            active=data.get('active', True),    # Default to True for new retailers
             first_seen=datetime.utcnow()
         )
         
