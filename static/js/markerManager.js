@@ -22,7 +22,7 @@ export class MarkerManager {
         this.minClusterSize = 2;
         
         // Viewport culling
-        this.viewportPadding = 0.1; // 10% padding around viewport
+        this.viewportPadding = 0.2; // 20% padding around viewport (reduced from 0.05)
         this.lastBounds = null;
         
         // Performance settings
@@ -42,12 +42,16 @@ export class MarkerManager {
             clearTimeout(boundsChangeTimer);
             boundsChangeTimer = setTimeout(() => {
                 this.handleViewportChange();
-            }, 300); // Increased from 150ms to 300ms to prevent excessive updates
+            }, 500); // Increased to 500ms to reduce excessive updates and improve performance
         });
         
-        // Zoom level changes
+        // Zoom level changes - only handle clustering changes, not every zoom
         this.map.addListener('zoom_changed', () => {
-            this.handleZoomChange();
+            // Debounce zoom changes to prevent excessive updates
+            clearTimeout(this.zoomChangeTimer);
+            this.zoomChangeTimer = setTimeout(() => {
+                this.handleZoomChange();
+            }, 300);
         });
     }
     
@@ -55,13 +59,27 @@ export class MarkerManager {
         const bounds = this.map.getBounds();
         if (!bounds) return;
         
-        // Check if viewport has changed significantly - INCREASED tolerance to prevent micro-updates
-        if (this.lastBounds && this.boundsEqual(bounds, this.lastBounds, 0.005)) { // Increased from 0.001 to 0.005
+        // Don't handle viewport changes until we have data loaded
+        if (this.markerCache.size === 0) {
+            if (window.__TM_DEBUG__) {
+                console.log('Skipping viewport change - no markers loaded yet');
+            }
             return;
         }
         
-        this.lastBounds = bounds;
-        this.updateVisibleMarkers();
+        // Check if viewport has changed significantly
+        if (!this.hasViewportChanged(bounds)) {
+            return;
+        }
+        
+        if (window.__TM_DEBUG__) {
+            console.log('Viewport changed significantly, updating visible markers');
+        }
+        
+        // Only update if we have markers and filters haven't changed
+        if (this.markerCache.size > 0 && this.currentFilters) {
+            this.updateVisibleMarkers();
+        }
     }
     
     handleZoomChange() {
@@ -72,17 +90,20 @@ export class MarkerManager {
         
         if (shouldCluster !== this.clusteringEnabled) {
             this.clusteringEnabled = shouldCluster;
-            this.updateVisibleMarkers();
+            // Only update if we have markers and filters haven't changed
+            if (this.markerCache.size > 0 && this.currentFilters) {
+                this.updateVisibleMarkers();
+            }
         }
     }
     
-    boundsEqual(bounds1, bounds2, tolerance = 0.005) { // Increased default tolerance
+    boundsEqual(bounds1, bounds2, tolerance = 0.01) { // Increased from 0.002 to 0.01 for less sensitivity
         const ne1 = bounds1.getNorthEast();
         const sw1 = bounds1.getSouthWest();
         const ne2 = bounds2.getNorthEast();
         const sw2 = bounds2.getSouthWest();
         
-        // More efficient bounds comparison with increased tolerance
+        // More efficient bounds comparison with reduced tolerance
         const latDiff = Math.abs(ne1.lat() - ne2.lat()) + Math.abs(sw1.lat() - sw2.lat());
         const lngDiff = Math.abs(ne1.lng() - ne2.lng()) + Math.abs(sw1.lng() - sw2.lng());
         
@@ -90,17 +111,30 @@ export class MarkerManager {
     }
     
     /**
+     * Check if viewport has changed significantly
+     */
+    hasViewportChanged(bounds) {
+        if (!this.lastBounds) return true;
+        return !this.boundsEqual(bounds, this.lastBounds, 0.01);
+    }
+    
+    /**
      * Load retailer data and create markers progressively
      */
-    async loadRetailers(retailers) {
+    async loadRetailers(retailers, append = false) {
         if (window.__TM_DEBUG__) {
-            console.log('loadRetailers called with:', retailers?.length || 0, 'retailers');
+            console.log('loadRetailers called with:', retailers?.length || 0, 'retailers, append:', append);
         }
         
-        this.allRetailers = retailers || [];
-        
-        // Clear existing markers
-        this.clearRetailerMarkers();
+        if (append) {
+            // Append to existing retailers
+            this.allRetailers = [...(this.allRetailers || []), ...(retailers || [])];
+        } else {
+            // Replace existing retailers (initial load)
+            this.allRetailers = retailers || [];
+            // Clear existing markers only on initial load
+            this.clearRetailerMarkers();
+        }
         
         // Create markers progressively
         if (Array.isArray(retailers) && retailers.length > 0) {
@@ -111,26 +145,31 @@ export class MarkerManager {
             console.log('Retailers loaded, marker cache size:', this.markerCache.size);
         }
         
-        // Update visible markers
-        this.updateVisibleMarkers();
+        // Update visible markers with force to ensure first render works
+        this.updateVisibleMarkers({ force: true });
     }
     
     /**
      * Load event data and create markers progressively
      */
-    async loadEvents(events) {
-        this.allEvents = events || [];
-        
-        // Clear existing event markers
-        this.clearEventMarkers();
+    async loadEvents(events, append = false) {
+        if (append) {
+            // Append to existing events
+            this.allEvents = [...(this.allEvents || []), ...(events || [])];
+        } else {
+            // Replace existing events (initial load)
+            this.allEvents = events || [];
+            // Clear existing event markers only on initial load
+            this.clearEventMarkers();
+        }
         
         // Create markers progressively
         if (Array.isArray(events) && events.length > 0) {
             await this.createMarkersProgressively(events, 'event');
         }
         
-        // Update visible markers
-        this.updateVisibleMarkers();
+        // Update visible markers with force to ensure first render works
+        this.updateVisibleMarkers({ force: true });
     }
     
     /**
@@ -290,67 +329,76 @@ export class MarkerManager {
     /**
      * Update which markers are visible based on viewport and filters
      */
-    updateVisibleMarkers() {
-        // Get current filters from UI
-        const newFilters = this.getCurrentFiltersFromUI();
+    updateVisibleMarkers(opts = {}) {
+        const { force = false, filters: providedFilters } = opts;
         
-        // Always update on first run or if filters actually changed
-        const filtersChanged = this.hasFiltersChanged(newFilters);
-        const isFirstRun = !this.currentFilters || Object.keys(this.currentFilters).length === 0;
-        
-        // Update if filters changed, first run, or if we have no visible markers
-        if (!filtersChanged && !isFirstRun && this.visibleMarkers.size > 0) {
-            return; // Skip update if nothing meaningful changed
-        }
-        
-        // FALLBACK: If we have markers in cache but none visible, force an update
-        if (this.markerCache.size > 0 && this.visibleMarkers.size === 0) {
-            if (window.__TM_DEBUG__) {
-                console.log('FALLBACK: No visible markers but cache has markers, forcing update');
-            }
-        }
-        
-        this.currentFilters = newFilters;
+        // Get bounds first
         const bounds = this.map.getBounds();
         if (!bounds) return;
+
+        // Use provided filters or read from UI
+        const newFilters = providedFilters || this.getCurrentFiltersFromUI();
+
+        // Detect changes before mutating
+        const filtersChanged = this.hasFiltersChanged(newFilters);
+        const viewportChanged = !this.lastBounds || !this.boundsEqual(bounds, this.lastBounds, 0.002);
+        const isFirstRun = !this.currentFilters;
+
+        // Only skip if truly nothing changed
+        if (!force && !filtersChanged && !viewportChanged && !isFirstRun && this.visibleMarkers.size > 0) {
+            return;
+        }
+
+        // ✅ Commit filters & bounds now so downstream uses the right set
+        this.currentFilters = newFilters;
+        this.lastBounds = bounds;
         
-        // Expand bounds for viewport padding
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-        const latRange = ne.lat() - sw.lat();
-        const lngRange = ne.lng() - sw.lng();
-        
-        const expandedBounds = new google.maps.LatLngBounds(
-            new google.maps.LatLng(
-                sw.lat() - latRange * this.viewportPadding,
-                sw.lng() - lngRange * this.viewportPadding
-            ),
-            new google.maps.LatLng(
-                ne.lat() + latRange * this.viewportPadding,
-                ne.lng() + lngRange * this.viewportPadding
-            )
-        );
-        
-        // Track which markers should be visible to minimize DOM operations
+        // Track which markers should be visible
         const newVisibleMarkers = new Set();
         
         let shown = 0;
         let processed = 0;
+        let filteredOut = 0;
+        let outOfBounds = 0;
+        
+        if (window.__TM_DEBUG__) {
+            console.log('Processing markers:', {
+                totalInCache: this.markerCache.size,
+                currentBounds: bounds.toString(),
+                boundsNE: bounds.getNorthEast().toString(),
+                boundsSW: bounds.getSouthWest().toString()
+            });
+        }
+        
         this.markerCache.forEach((marker, key) => {
             processed++;
             let shouldShow = true;
             if (key.startsWith('retailer_')) {
                 shouldShow = this.shouldShowRetailer(marker, this.currentFilters);
+                if (!shouldShow) filteredOut++;
             } else if (key.startsWith('event_')) {
                 shouldShow = this.shouldShowEvent(marker, this.currentFilters);
+                if (!shouldShow) filteredOut++;
             }
             
-            if (shouldShow && expandedBounds.contains(marker.getPosition())) {
+            // Show markers that pass filters AND are within the current map bounds
+            if (shouldShow && bounds.contains(marker.getPosition())) {
                 newVisibleMarkers.add(marker);
                 // Only add to map if not already visible
                 if (!this.visibleMarkers.has(marker)) {
                     marker.setMap(this.map);
                     shown++;
+                }
+            } else if (shouldShow) {
+                outOfBounds++;
+                if (window.__TM_DEBUG__ && outOfBounds <= 5) { // Log first 5 out-of-bounds markers
+                    const pos = marker.getPosition();
+                    console.log('Marker out of bounds:', {
+                        key,
+                        position: pos.toString(),
+                        inBounds: bounds.contains(pos),
+                        bounds: bounds.toString()
+                    });
                 }
             }
         });
@@ -365,16 +413,18 @@ export class MarkerManager {
         // Update the visible markers set
         this.visibleMarkers = newVisibleMarkers;
         
-        // Debug logging to help troubleshoot
         if (window.__TM_DEBUG__) {
-            console.log('updateVisibleMarkers:', {
+            console.log('Markers updated:', {
                 filtersChanged,
+                viewportChanged,
                 isFirstRun,
-                currentFilters: this.currentFilters,
-                markerCacheSize: this.markerCache.size,
-                visibleMarkers: this.visibleMarkers.size,
+                processed,
+                filteredOut,
+                outOfBounds,
                 shown,
-                processed
+                totalVisible: this.visibleMarkers.size,
+                bounds: bounds.toString(),
+                currentFilters: this.currentFilters
             });
         }
     }
@@ -384,13 +434,19 @@ export class MarkerManager {
      */
     hasFiltersChanged(newFilters) {
         if (!this.currentFilters) return true;
-        
-        const keys = Object.keys(newFilters);
-        for (const key of keys) {
+        if (this.visibleMarkers.size === 0) return true;
+
+        const keyFilters = [
+            'showKiosk','showRetail','showIndie','showEvents',
+            'showOpenNow','showNew','searchText','eventDays'
+        ];
+
+        for (const key of keyFilters) {
             if (this.currentFilters[key] !== newFilters[key]) {
                 return true;
             }
         }
+        
         return false;
     }
     
@@ -425,106 +481,97 @@ export class MarkerManager {
      * Apply filters to markers
      */
     applyFilters(filters) {
-        this.currentFilters = filters;
-        this.updateVisibleMarkers();
-        // Optionally, update UI here if needed
+        if (filters) {
+            // Use the provided filters to update visible markers
+            this.updateVisibleMarkers({ force: true, filters: filters });
+        } else {
+            // Get filters from UI and update visible markers
+            const uiFilters = this.getCurrentFiltersFromUI();
+            this.updateVisibleMarkers({ force: true, filters: uiFilters });
+        }
     }
     
     shouldShowRetailer(marker, filters) {
-        // Debug logging
-        if (window.__TM_DEBUG__) {
-            console.log('shouldShowRetailer called:', {
-                marker: marker?.retailer_type || 'unknown',
-                filters: filters,
-                type: marker.retailer_type || '',
-                status: marker.retailer_data?.status || marker.status || ''
-            });
-        }
-        
-        // Implement retailer filtering logic
-        const type = (marker.retailer_type || '').toLowerCase();
+        // Check if marker is disabled
         const status = (marker.retailer_data?.status || marker.status || '').toLowerCase();
         if (status === 'disabled') {
-            if (window.__TM_DEBUG__) console.log('Marker disabled, hiding');
             return false;
         }
-        const showKiosk = filters.showKiosk !== false;
-        const showRetail = filters.showRetail !== false;
-        const showIndie = filters.showIndie !== false;
         
-        if (window.__TM_DEBUG__) {
-            console.log('Filter states:', { showKiosk, showRetail, showIndie });
+        // Get checkbox states - these should be boolean values
+        const showKiosk = filters.showKiosk === true;
+        const showRetail = filters.showRetail === true;
+        const showIndie = filters.showIndie === true;
+        
+        // If NO checkboxes are checked, show NO markers
+        if (!showKiosk && !showRetail && !showIndie) {
+            return false;
         }
         
-        // Derive kiosk presence from counts if type metadata is missing
-        const derivedKioskCount = Number(
-            (marker.kiosk_count ?? marker.retailer_data?.kiosk_current_count ?? marker.retailer_data?.kiosk_count ?? marker.retailer_data?.machine_count ?? marker.machine_count ?? 0)
-        ) || 0;
-        const hasDerivedKiosk = derivedKioskCount > 0;
+        // Get marker type for filtering
+        const type = (marker.retailer_type || '').toLowerCase();
         
-        if (window.__TM_DEBUG__) {
-            console.log('Kiosk analysis:', { derivedKioskCount, hasDerivedKiosk });
-        }
+        // Check if marker matches any of the checked categories
+        let matchesType = false;
         
-
-        
-        // If there's a search term, bypass type filtering and show any matching results
-        if (filters.searchText) {
-            const searchText = filters.searchText.toLowerCase();
-            const retailerData = marker.retailer_data || {};
-            const searchableText = [
-                retailerData.retailer || '',
-                retailerData.full_address || '',
-                retailerData.phone_number || '',
-                retailerData.retailer_type || '',
-                type
-            ].join(' ').toLowerCase();
-            
-            let matchesSearch = searchableText.includes(searchText);
-            
-            // Apply additional filters only if search matches
-            if (matchesSearch && filters.showOpenNow) {
-                matchesSearch = isOpenNow(marker.retailer_data?.opening_hours);
+        if (showKiosk) {
+            // Check if this is a kiosk marker
+            const hasKiosk = type.includes('kiosk') || 
+                            (marker.kiosk_count > 0) || 
+                            (marker.retailer_data?.kiosk_count > 0) ||
+                            (marker.retailer_data?.machine_count > 0);
+            if (hasKiosk) {
+                matchesType = true;
             }
-            if (matchesSearch && filters.showNew) {
-                matchesSearch = marker.retailer_data && marker.retailer_data.is_new === true;
-            }
-            
-            return matchesSearch;
         }
         
-        // No search term - apply type filtering (robust kiosk inference)
-        let matchesType = ((type.includes('kiosk') || hasDerivedKiosk) && showKiosk) ||
-                          ((type.includes('store') || type.includes('retail')) && showRetail) ||
-                          (type.includes('card shop') && showIndie);
-
-        // Suppress kiosk-only pins that have zero machines when only Kiosks filter is active.
-        // Do NOT suppress combo locations (store + kiosk) since they should remain visible.
-        if (matchesType && showKiosk && !showRetail) {
-            const isKioskOnly = type.includes('kiosk') && !(type.includes('store') || type.includes('retail'));
-            if (isKioskOnly && derivedKioskCount <= 0) {
+        if (showRetail && !matchesType) {
+            // Check if this is a retail store marker
+            if (type.includes('store') || type.includes('retail')) {
+                matchesType = true;
+            }
+        }
+        
+        if (showIndie && !matchesType) {
+            // Check if this is an indie/card shop marker
+            if (type.includes('card shop') || type.includes('indie')) {
+                matchesType = true;
+            }
+        }
+        
+        // If no type matches, don't show the marker
+        if (!matchesType) {
+            return false;
+        }
+        
+        // Apply additional filters for retailers that passed type filtering
+        console.log('🔍 Applying additional filters to marker:', {
+            type: marker.retailer_type,
+            showOpenNow: filters.showOpenNow,
+            showNew: filters.showNew,
+            searchText: filters.searchText
+        });
+        
+        // Open Now filter
+        if (filters.showOpenNow) {
+            if (!isOpenNow(marker.retailer_data?.opening_hours)) {
                 return false;
             }
         }
         
-        if (matchesType && filters.showOpenNow) {
-            matchesType = isOpenNow(marker.retailer_data?.opening_hours);
-        }
-        if (matchesType && filters.showNew) {
-            // Assume marker.retailer_data.is_new is a boolean or similar
-            matchesType = marker.retailer_data && marker.retailer_data.is_new === true;
+        // New filter
+        if (filters.showNew && !this.isNew(marker)) {
+            console.log('🔍 Marker filtered out by New filter:', marker.retailer_type);
+            return false;
         }
         
-        if (window.__TM_DEBUG__) {
-            console.log('Final result for shouldShowRetailer:', {
-                marker: marker?.retailer_type || 'unknown',
-                matchesType,
-                type,
-                hasDerivedKiosk
-            });
+        // Search text filter
+        if (filters.searchText && !this.matchesSearch(marker, filters.searchText)) {
+            console.log('🔍 Marker filtered out by Search filter:', marker.retailer_type);
+            return false;
         }
         
-        return matchesType;
+        return true;
     }
     
     shouldShowEvent(marker, filters) {
@@ -570,6 +617,49 @@ export class MarkerManager {
         return position && bounds.contains(position);
     }
     
+
+    
+    /**
+     * Check if a retailer is new
+     */
+    isNew(marker) {
+        // Check if there's a specific "new" field
+        if (marker.retailer_data?.is_new === true) {
+            return true;
+        }
+        
+        // Check if there's a creation date and it's recent (within last 30 days)
+        if (marker.retailer_data?.created_at) {
+            const createdDate = new Date(marker.retailer_data.created_at);
+            const now = new Date();
+            const daysSinceCreation = (now - createdDate) / (1000 * 60 * 60 * 24);
+            return daysSinceCreation <= 30;
+        }
+        
+        // For now, assume all markers are not new if we don't have specific data
+        return false;
+    }
+    
+    /**
+     * Check if a retailer matches search text
+     */
+    matchesSearch(marker, searchText) {
+        if (!searchText) return true;
+        
+        const searchableText = [
+            marker.retailer_data?.retailer || marker.retailer_type || '',
+            marker.retailer_data?.full_address || marker.retailer_data?.address || '',
+            marker.retailer_data?.phone || '',
+            marker.retailer_data?.name || ''
+        ].join(' ').toLowerCase();
+        
+        return searchableText.includes(searchText.toLowerCase());
+    }
+    
+
+    
+
+    
     /**
      * Get performance statistics
      */
@@ -597,17 +687,7 @@ export class MarkerManager {
         const searchText = searchFilter ? searchFilter.value.toLowerCase() : '';
         const eventDays = eventDaysSlider ? parseInt(eventDaysSlider.value) : 30;
         
-        // console.log('getCurrentFiltersFromUI:', {
-        //     kiosk,
-        //     retail,
-        //     indie,
-        //     events,
-        //     openNow,
-        //     isNew,
-        //     popular,
-        //     eventDays
-        // });
-        return {
+        const filters = {
             showKiosk: kiosk ? kiosk.checked : false,
             showRetail: retail ? retail.checked : false,
             showIndie: indie ? indie.checked : false,
@@ -618,6 +698,21 @@ export class MarkerManager {
             searchText: searchText,
             eventDays: eventDays
         };
+        
+        // Debug: Log the actual checkbox states
+        console.log('🔍 Filter checkboxes state:', {
+            kiosk: kiosk?.checked,
+            retail: retail?.checked,
+            indie: indie?.checked,
+            events: events?.checked,
+            openNow: openNow?.checked,
+            isNew: isNew?.checked,
+            popular: popular?.checked,
+            searchText: searchText,
+            eventDays: eventDays
+        });
+        
+        return filters;
     }
 
     /**
@@ -648,4 +743,5 @@ export class MarkerManager {
     }
 }
 // touch
+ 
  
