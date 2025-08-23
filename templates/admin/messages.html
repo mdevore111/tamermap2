@@ -106,6 +106,28 @@
               </div>
             </div>
 
+            <!-- View Message Modal -->
+            <div class="modal fade" id="viewMessageModal" tabindex="-1" aria-labelledby="viewMessageModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="viewMessageModalLabel">View Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <!-- Message content will be injected by JS -->
+                  </div>
+                  <div class="modal-footer">
+                    <div class="w-100 d-grid modal-footer-grid">
+                      <button type="button" class="btn btn-outline-primary btn-compact" id="viewMessageReplyBtn">Reply</button>
+                      <button type="button" class="btn btn-primary btn-compact" id="viewMessageEditBtn">Edit</button>
+                      <button type="button" class="btn btn-secondary btn-compact" data-bs-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Edit Message Modal -->
             <div class="modal fade" id="editMessageModal" tabindex="-1" aria-labelledby="editMessageModalLabel" aria-hidden="true">
               <div class="modal-dialog">
@@ -291,6 +313,11 @@ $(document).ready(function() {
             <div class='mb-3'><label>Type</label><input name='communication_type' class='form-control' required></div>
             <div class='mb-3'><label>Subject</label><input name='subject' class='form-control' required></div>
             <div class='mb-3'><label>Message</label><textarea name='body' class='form-control' required></textarea></div>
+            <div class='mb-3'><label>Reported Address</label><input name='reported_address' class='form-control'></div>
+            <div class='mb-3'><label>Reported Phone</label><input name='reported_phone' class='form-control'></div>
+            <div class='mb-3'><label>Reported Website</label><input name='reported_website' class='form-control'></div>
+            <div class='mb-3'><label>Reported Hours</label><input name='reported_hours' class='form-control'></div>
+            <div class='mb-3'><label>Out of Business</label><select name='out_of_business' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
             <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control'></div>
             <div class='mb-3'><label>Read</label><select name='read' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
         `);
@@ -351,11 +378,77 @@ $(document).ready(function() {
         });
     });
 
+    // View Message Modal: Populate content using AJAX
+    $(document).on('click', '.view-message-btn', function() {
+        var id = $(this).data('id');
+        var modal = $('#viewMessageModal');
+        var body = modal.find('.modal-body');
+        
+        // Mark message as read when viewing
+        $.ajax({
+            url: '/admin/messages/' + id + '/mark-read',
+            method: 'POST',
+            success: function() {
+                // Update the read status in the table without reloading
+                var row = $('#messages-table').DataTable().row(`[data-id="${id}"]`).closest('tr');
+                if (row.length) {
+                    row.find('td:eq(7)').text('Yes'); // Update the Read column
+                }
+            }
+        });
+        
+        $.get('/admin/messages/' + id, function(data) {
+            body.html(`
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class='mb-3'><strong>Sender ID:</strong> ${data.sender_id || 'N/A'}</div>
+                        <div class='mb-3'><strong>Type:</strong> ${data.communication_type || 'N/A'}</div>
+                        <div class='mb-3'><strong>Subject:</strong> ${data.subject || 'N/A'}</div>
+                        <div class='mb-3'><strong>Name:</strong> ${data.name || 'N/A'}</div>
+                        <div class='mb-3'><strong>Email:</strong> ${data.address || 'N/A'}</div>
+                        <div class='mb-3'><strong>Timestamp:</strong> ${data.timestamp ? data.timestamp.replace("T", " ").slice(0, 16) : 'N/A'}</div>
+                        <div class='mb-3'><strong>Read:</strong> ${data.read ? 'Yes' : 'No'}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class='mb-3'><strong>Reported Address:</strong> ${data.reported_address || 'N/A'}</div>
+                        <div class='mb-3'><strong>Reported Phone:</strong> ${data.reported_phone || 'N/A'}</div>
+                        <div class='mb-3'><strong>Reported Website:</strong> ${data.reported_website || 'N/A'}</div>
+                        <div class='mb-3'><strong>Reported Hours:</strong> ${data.reported_hours || 'N/A'}</div>
+                        <div class='mb-3'><strong>Out of Business:</strong> ${data.out_of_business ? 'Yes' : 'No'}</div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class='mb-3'><strong>Message:</strong></div>
+                        <div class="border p-3 bg-light rounded">${data.body || 'N/A'}</div>
+                    </div>
+                </div>
+            `);
+            modal.modal('show');
+        }).fail(function() {
+            alert('Error loading message data.');
+        });
+    });
+
     // Edit Message Modal: Populate form fields using AJAX
     $(document).on('click', '.edit-message-btn', function() {
         var id = $(this).data('id');
         var modal = $('#editMessageModal');
         var form = modal.find('.modal-body');
+        
+        // Mark message as read when editing
+        $.ajax({
+            url: '/admin/messages/' + id + '/mark-read',
+            method: 'POST',
+            success: function() {
+                // Update the read status in the table without reloading
+                var row = $('#messages-table').DataTable().row(`[data-id="${id}"]`).closest('tr');
+                if (row.length) {
+                    row.find('td:eq(7)').text('Yes'); // Update the Read column
+                }
+            }
+        });
+        
         $.get('/admin/messages/' + id, function(data) {
             form.html(`
                 <input type='hidden' name='id' value='${data.id}'>
@@ -367,6 +460,10 @@ $(document).ready(function() {
                 <div class='mb-2'><label>Reported Phone</label><input name='reported_phone' class='form-control form-control-sm' value='${data.reported_phone || ''}'></div>
                 <div class='mb-2'><label>Reported Website</label><input name='reported_website' class='form-control form-control-sm' value='${data.reported_website || ''}'></div>
                 <div class='mb-2'><label>Reported Hours</label><input name='reported_hours' class='form-control form-control-sm' value='${data.reported_hours || ''}'></div>
+                <div class='mb-2'><label>Out of Business</label><select name='out_of_business' class='form-control form-control-sm'>
+                    <option value='false' ${!data.out_of_business ? 'selected' : ''}>No</option>
+                    <option value='true' ${data.out_of_business ? 'selected' : ''}>Yes</option>
+                </select></div>
                 <div class='mb-2'><label>Timestamp</label><input class='form-control form-control-sm' value='${data.timestamp ? data.timestamp.replace("T", " ").slice(0, 16) : ''}' readonly></div>
                 <div class='mb-2'><label>Read</label><select name='read' class='form-control form-control-sm'>
                     <option value='false' ${!data.read ? 'selected' : ''}>No</option>
@@ -423,6 +520,18 @@ $(document).ready(function() {
                 alert('Error: ' + (xhr.responseJSON?.errors ? JSON.stringify(xhr.responseJSON.errors) : 'Unknown error'));
             }
         });
+    });
+
+    // View modal footer: Edit button
+    $(document).on('click', '#viewMessageEditBtn', function() {
+        var modal = $('#viewMessageModal');
+        var id = modal.find('.modal-body').find('[data-id]').attr('data-id') || 
+                 modal.find('.modal-body').text().match(/Sender ID:\s*(\d+)/)?.[1];
+        if (id) {
+            modal.modal('hide');
+            // Trigger the edit button click for this message
+            $(`.edit-message-btn[data-id="${id}"]`).click();
+        }
     });
 
     // Edit modal footer: Reply button
