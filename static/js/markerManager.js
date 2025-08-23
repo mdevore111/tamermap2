@@ -93,6 +93,10 @@ export class MarkerManager {
      * Load retailer data and create markers progressively
      */
     async loadRetailers(retailers) {
+        if (window.__TM_DEBUG__) {
+            console.log('loadRetailers called with:', retailers?.length || 0, 'retailers');
+        }
+        
         this.allRetailers = retailers || [];
         
         // Clear existing markers
@@ -101,6 +105,10 @@ export class MarkerManager {
         // Create markers progressively
         if (Array.isArray(retailers) && retailers.length > 0) {
             await this.createMarkersProgressively(retailers, 'retailer');
+        }
+        
+        if (window.__TM_DEBUG__) {
+            console.log('Retailers loaded, marker cache size:', this.markerCache.size);
         }
         
         // Update visible markers
@@ -129,11 +137,19 @@ export class MarkerManager {
      * Create markers in batches to avoid blocking the main thread
      */
     async createMarkersProgressively(data, type) {
+        if (window.__TM_DEBUG__) {
+            console.log('createMarkersProgressively called:', type, data?.length || 0, 'items');
+        }
+        
         if (!Array.isArray(data) || data.length === 0) {
+            if (window.__TM_DEBUG__) {
+                console.log('No data to create markers for');
+            }
             return;
         }
         
         const batchSize = this.maxMarkersPerFrame;
+        let totalCreated = 0;
         
         for (let i = 0; i < data.length; i += batchSize) {
             const batch = data.slice(i, i + batchSize);
@@ -162,6 +178,7 @@ export class MarkerManager {
                             const altMarker = this.createMarker(item, type);
                             if (altMarker) {
                                 this.markerCache.set(altKey, altMarker);
+                                totalCreated++;
                             }
                             continue;
                         }
@@ -206,6 +223,7 @@ export class MarkerManager {
                 const marker = this.createMarker(item, type);
                 if (marker) {
                     this.markerCache.set(key, marker);
+                    totalCreated++;
                 }
             }
             
@@ -214,10 +232,18 @@ export class MarkerManager {
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
         }
+        
+        if (window.__TM_DEBUG__) {
+            console.log('createMarkersProgressively completed:', type, totalCreated, 'markers created');
+        }
     }
     
     createMarker(data, type) {
         try {
+            if (window.__TM_DEBUG__) {
+                console.log('Creating marker:', type, data?.id || data?.place_id || 'unknown');
+            }
+            
             let marker;
             if (type === 'retailer') {
                 marker = createRetailerMarker(null, data); // Don't add to map yet
@@ -234,6 +260,11 @@ export class MarkerManager {
                     marker.event_data = data;
                 }
             }
+            
+            if (window.__TM_DEBUG__) {
+                console.log('Marker created:', type, !!marker, marker?.getPosition?.());
+            }
+            
             return marker;
         } catch (error) {
             if (window.__TM_DEBUG__) console.warn(`Failed to create ${type} marker:`, error);
@@ -260,13 +291,23 @@ export class MarkerManager {
      * Update which markers are visible based on viewport and filters
      */
     updateVisibleMarkers() {
-        // Prevent excessive updates by checking if filters have actually changed
+        // Get current filters from UI
         const newFilters = this.getCurrentFiltersFromUI();
-        const filtersChanged = this.hasFiltersChanged(newFilters);
         
-        // Only update if filters changed or if this is the first update
-        if (!filtersChanged && this.currentFilters && Object.keys(this.currentFilters).length > 0) {
-            return;
+        // Always update on first run or if filters actually changed
+        const filtersChanged = this.hasFiltersChanged(newFilters);
+        const isFirstRun = !this.currentFilters || Object.keys(this.currentFilters).length === 0;
+        
+        // Update if filters changed, first run, or if we have no visible markers
+        if (!filtersChanged && !isFirstRun && this.visibleMarkers.size > 0) {
+            return; // Skip update if nothing meaningful changed
+        }
+        
+        // FALLBACK: If we have markers in cache but none visible, force an update
+        if (this.markerCache.size > 0 && this.visibleMarkers.size === 0) {
+            if (window.__TM_DEBUG__) {
+                console.log('FALLBACK: No visible markers but cache has markers, forcing update');
+            }
         }
         
         this.currentFilters = newFilters;
@@ -324,7 +365,18 @@ export class MarkerManager {
         // Update the visible markers set
         this.visibleMarkers = newVisibleMarkers;
         
-        // console.log('updateVisibleMarkers: filters=', this.currentFilters, 'markers shown=', shown);
+        // Debug logging to help troubleshoot
+        if (window.__TM_DEBUG__) {
+            console.log('updateVisibleMarkers:', {
+                filtersChanged,
+                isFirstRun,
+                currentFilters: this.currentFilters,
+                markerCacheSize: this.markerCache.size,
+                visibleMarkers: this.visibleMarkers.size,
+                shown,
+                processed
+            });
+        }
     }
     
     /**
@@ -379,20 +431,40 @@ export class MarkerManager {
     }
     
     shouldShowRetailer(marker, filters) {
+        // Debug logging
+        if (window.__TM_DEBUG__) {
+            console.log('shouldShowRetailer called:', {
+                marker: marker?.retailer_type || 'unknown',
+                filters: filters,
+                type: marker.retailer_type || '',
+                status: marker.retailer_data?.status || marker.status || ''
+            });
+        }
+        
         // Implement retailer filtering logic
         const type = (marker.retailer_type || '').toLowerCase();
         const status = (marker.retailer_data?.status || marker.status || '').toLowerCase();
         if (status === 'disabled') {
+            if (window.__TM_DEBUG__) console.log('Marker disabled, hiding');
             return false;
         }
         const showKiosk = filters.showKiosk !== false;
         const showRetail = filters.showRetail !== false;
         const showIndie = filters.showIndie !== false;
+        
+        if (window.__TM_DEBUG__) {
+            console.log('Filter states:', { showKiosk, showRetail, showIndie });
+        }
+        
         // Derive kiosk presence from counts if type metadata is missing
         const derivedKioskCount = Number(
             (marker.kiosk_count ?? marker.retailer_data?.kiosk_current_count ?? marker.retailer_data?.kiosk_count ?? marker.retailer_data?.machine_count ?? marker.machine_count ?? 0)
         ) || 0;
         const hasDerivedKiosk = derivedKioskCount > 0;
+        
+        if (window.__TM_DEBUG__) {
+            console.log('Kiosk analysis:', { derivedKioskCount, hasDerivedKiosk });
+        }
         
 
         
@@ -443,7 +515,14 @@ export class MarkerManager {
             matchesType = marker.retailer_data && marker.retailer_data.is_new === true;
         }
         
-
+        if (window.__TM_DEBUG__) {
+            console.log('Final result for shouldShowRetailer:', {
+                marker: marker?.retailer_type || 'unknown',
+                matchesType,
+                type,
+                hasDerivedKiosk
+            });
+        }
         
         return matchesType;
     }

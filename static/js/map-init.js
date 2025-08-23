@@ -437,6 +437,27 @@ function renderMap() {
       loadOptimizedMapData();
     }
   });
+  
+  // TEMPORARY DEBUG: Add a test marker to see if the issue is with marker creation or display
+  if (window.__TM_DEBUG__) {
+    setTimeout(() => {
+      console.log('Adding test marker for debugging...');
+      const testMarker = new google.maps.Marker({
+        position: window.userCoords,
+        map: window.map,
+        title: 'TEST MARKER',
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: '#FF0000',
+          fillOpacity: 1,
+          strokeColor: 'white',
+          strokeWeight: 2,
+          scale: 15
+        }
+      });
+      console.log('Test marker added:', testMarker);
+    }, 2000);
+  }
 }
 
 /**
@@ -475,12 +496,30 @@ async function loadOptimizedMapData() {
       markerManager.loadEvents(mapData.events)
     ]);
     
+    // Debug logging after marker loading
+    if (window.__TM_DEBUG__) {
+      console.log('Markers loaded:', {
+        retailers: mapData.retailers?.length || 0,
+        events: mapData.events?.length || 0,
+        markerCacheSize: markerManager.markerCache.size,
+        visibleMarkers: markerManager.visibleMarkers.size
+      });
+    }
+    
     // Populate legacy arrays for compatibility with existing filter system
     window.allMarkers = Array.from(markerManager.markerCache.values())
       .filter(marker => marker.retailer_type); // Only retailer markers
     
     window.allEventMarkers = Array.from(markerManager.markerCache.values())
       .filter(marker => marker.event_title); // Only event markers
+    
+    // Debug logging for legacy arrays
+    if (window.__TM_DEBUG__) {
+      console.log('Legacy arrays populated:', {
+        allMarkers: window.allMarkers.length,
+        allEventMarkers: window.allEventMarkers.length
+      });
+    }
     
     // Expose marker visibility functions globally for route planner
     window.hideAllMarkers = () => markerManager.hideAllMarkers();
@@ -649,6 +688,17 @@ function setupFilterControls() {
  */
 let filterDebounceTimer;
 function applyFilters() {
+    // Debug logging to help troubleshoot
+    if (window.__TM_DEBUG__) {
+        console.log('applyFilters called, current state:', {
+            markerManager: !!markerManager,
+            markerCacheSize: markerManager?.markerCache?.size || 0,
+            visibleMarkers: markerManager?.visibleMarkers?.size || 0,
+            allMarkers: window.allMarkers?.length || 0,
+            allEventMarkers: window.allEventMarkers?.length || 0
+        });
+    }
+    
     // Debounce filter application to prevent excessive calls
     clearTimeout(filterDebounceTimer);
     filterDebounceTimer = setTimeout(() => {
@@ -666,8 +716,15 @@ function applyFilters() {
         };
 
         // Debug logging
+        if (window.__TM_DEBUG__) {
+            console.log('Applying filters:', filters);
+        }
 
-        markerManager.applyFilters(filters);
+        if (markerManager) {
+            markerManager.applyFilters(filters);
+        } else {
+            console.warn('MarkerManager not available for applyFilters');
+        }
 
         // Toggle heatmap layer
         if (filters.showPopular) {
@@ -677,6 +734,14 @@ function applyFilters() {
         }
 
         updateFilterUI(filters);
+        
+        // Debug logging after filters applied
+        if (window.__TM_DEBUG__) {
+            console.log('Filters applied, new state:', {
+                visibleMarkers: markerManager?.visibleMarkers?.size || 0,
+                markerCacheSize: markerManager?.markerCache?.size || 0
+            });
+        }
     }, 50); // Small debounce to batch rapid filter changes
 }
 
@@ -775,3 +840,35 @@ function showErrorMessage(message) {
 }
 
 // touch
+
+// DEBUG FUNCTION: Add this to global scope for troubleshooting
+window.debugMapState = function() {
+  console.log('=== MAP DEBUG STATE ===');
+  console.log('Map:', !!window.map);
+  console.log('Marker Manager:', !!markerManager);
+  console.log('Data Service:', !!dataService);
+  console.log('Data Loaded:', window.dataLoaded);
+  console.log('User Coords:', window.userCoords);
+  
+  if (markerManager) {
+    console.log('Marker Manager State:', {
+      markerCacheSize: markerManager.markerCache.size,
+      visibleMarkers: markerManager.visibleMarkers.size,
+      allRetailers: markerManager.allRetailers.length,
+      allEvents: markerManager.allEvents.length,
+      currentFilters: markerManager.currentFilters
+    });
+  }
+  
+  if (window.allMarkers) {
+    console.log('Legacy allMarkers:', window.allMarkers.length);
+  }
+  
+  if (window.allEventMarkers) {
+    console.log('Legacy allEventMarkers:', window.allEventMarkers.length);
+  }
+  
+  console.log('Info Window:', !!window.infoWindow);
+  console.log('Current Open Marker:', !!window.currentOpenMarker);
+  console.log('=====================');
+};
