@@ -34,27 +34,17 @@ import {
 } from './config.js';
 
 // Data & filtering
-import { fetchRetailers, fetchEvents, DataService } from './dataService.js';
-// import { filterMarkersViewport, filterEventMarkers } from './filterService.js';
+import { DataService } from './dataService.js';
 
-// Marker factories
-import { createRetailerMarker, createEventMarker } from './markerFactory.js';
+
+// Marker factories - imported by markerManager.js, not needed here
 
 // Utilities
-import { isEventUpcoming, isOpenNow } from './utils.js';
+import { isOpenNow } from './utils.js';
 
 import { MarkerManager } from './markerManager.js';
 
 // Global state
-// Comment out legacy filtering code and arrays
-// import { filterMarkersViewport, filterEventMarkers } from './filterService.js';
-// window.allMarkers        = [];
-// window.allEventMarkers   = [];
-// window.applyFilters = () => {
-//   filterMarkersViewport(window.map, window.allMarkers, window.domCache, isOpenNow);
-//   filterEventMarkers(window.map, window.allEventMarkers, window.domCache);
-//   // ...heatmap code...
-// };
 // Use only the new system:
 window.applyFilters = applyFilters;
 window.userCoords        = DEFAULT_COORDS;
@@ -64,7 +54,6 @@ window.currentOpenMarker = null;
 window.is_pro            = window.is_pro || false;
 
 // Global variables
-let map;
 let markerManager;
 let dataService;
 let loadingOverlay;
@@ -431,25 +420,10 @@ function renderMap() {
         console.log('Filter controls setup complete');
     }
     
-    // Test if checkboxes are working
-    if (window.__TM_DEBUG__) {
-        setTimeout(() => {
-            const testKiosk = document.getElementById('filter-kiosk');
-            if (testKiosk) {
-                console.log('Test: Kiosk checkbox found, current state:', testKiosk.checked);
-                // Add a test click handler
-                testKiosk.addEventListener('click', () => {
-                    console.log('Test: Kiosk checkbox clicked, new state:', testKiosk.checked);
-                });
-            } else {
-                console.log('Test: Kiosk checkbox NOT found!');
-            }
-        }, 1000);
-    }
+
   
   // Set up proper stacking immediately and on idle
   setupMapStacking();
-  // window.map.addListener('idle', setupMapStacking); // REMOVED - causes flickering when called repeatedly
 
   // Set up viewport change listeners for progressive loading
   setupMapEventListeners();
@@ -488,26 +462,7 @@ function renderMap() {
     }
   }, 1500); // Increased initial wait time
   
-  // TEMPORARY DEBUG: Add a test marker to see if the issue is with marker creation or display
-  if (window.__TM_DEBUG__) {
-    setTimeout(() => {
-      console.log('Adding test marker for debugging...');
-      const testMarker = new google.maps.Marker({
-        position: window.userCoords,
-        map: window.map,
-        title: 'TEST MARKER',
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          fillColor: '#FF0000',
-          fillOpacity: 1,
-          strokeColor: 'white',
-          strokeWeight: 2,
-          scale: 15
-        }
-      });
-      console.log('Test marker added:', testMarker);
-    }, 2000);
-  }
+
 }
 
 /**
@@ -565,13 +520,7 @@ async function loadOptimizedMapData() {
     window.showAllMarkers = () => markerManager.showAllMarkers();
     window.getVisibleMarkers = () => markerManager.getVisibleMarkers();
     
-    // Set up drag end listener for info windows - REMOVED to prevent auto-closing
-    // window.map.addListener('dragend', () => {
-    //   if (window.currentOpenMarker && !window.map.getBounds().contains(window.currentOpenMarker.getPosition())) {
-    //     window.infoWindow.close(); 
-    //     window.currentOpenMarker = null;
-    //   }
-    // });
+
     
     // Markers are already visible from the loadRetailers/loadEvents calls
     // No need to apply filters again - just update viewport tracking
@@ -587,57 +536,12 @@ async function loadOptimizedMapData() {
     hideLoadingOverlay();
     showErrorMessage('Failed to load map data. Please refresh the page.');
     
-    // Fallback to original system if optimization fails
-
-    loadLegacyMapData();
+    // No fallback - new system should handle all cases
+    // If this fails, user should refresh the page
   }
 }
 
-/**
- * Fallback to original data loading if optimization fails
- */
-function loadLegacyMapData() {
-  fetchRetailers()
-    .then(data => {
-      if (data && Array.isArray(data)) {
-        window.allMarkers = data.map(r => createRetailerMarker(window.map, r)).filter(m => m);
-      } else {
-        window.allMarkers = [];
-      }
-      loadEventMarkers();
-      window.applyFilters();
-    })
-    .catch(err => {
-      console.error('Error fetching retailers:', err);
-      window.allMarkers = [];
-      loadEventMarkers();
-      window.applyFilters();
-    });
-}
 
-function loadEventMarkers() {
-  fetchEvents()
-    .then(events => {
-      window.allEventMarkers.forEach(m => m.setMap(null));
-      window.allEventMarkers = [];
-      
-      // Load all events and let the filter function handle date filtering
-      if (events && Array.isArray(events)) {
-        events.forEach(evt => {
-          const m = createEventMarker(window.map, evt);
-          if (m) window.allEventMarkers.push(m);
-        });
-      }
-      
-      window.applyFilters();
-    })
-    .catch(err => {
-      console.error('Error fetching events:', err);
-      // Initialize empty array if events fail to load
-      window.allEventMarkers = [];
-      window.applyFilters();
-    });
-}
 
 // After creating the map, set up proper stacking context - only run once
 function setupMapStacking() {
@@ -881,13 +785,7 @@ function updateMapUI() {
     }
 }
 
-/**
- * Update filter UI
- */
-function updateFilterUI(filters) {
-    // Update any filter-related UI elements
 
-}
 
 /**
  * Show error message to user
@@ -921,36 +819,6 @@ function showErrorMessage(message) {
     }, 5000);
 }
 
-// touch
 
-// DEBUG FUNCTION: Add this to global scope for troubleshooting
-window.debugMapState = function() {
-  console.log('=== MAP DEBUG STATE ===');
-  console.log('Map:', !!window.map);
-  console.log('Marker Manager:', !!markerManager);
-  console.log('Data Service:', !!dataService);
-  console.log('Data Loaded:', window.dataLoaded);
-  console.log('User Coords:', window.userCoords);
-  
-  if (markerManager) {
-    console.log('Marker Manager State:', {
-      markerCacheSize: markerManager.markerCache.size,
-      visibleMarkers: markerManager.visibleMarkers.size,
-      allRetailers: markerManager.allRetailers.length,
-      allEvents: markerManager.allEvents.length,
-      currentFilters: markerManager.currentFilters
-    });
-  }
-  
-  if (window.allMarkers) {
-    console.log('Legacy allMarkers:', window.allMarkers.length);
-  }
-  
-  if (window.allEventMarkers) {
-    console.log('Legacy allEventMarkers:', window.allEventMarkers.length);
-  }
-  
-  console.log('Info Window:', !!window.infoWindow);
-  console.log('Current Open Marker:', !!window.currentOpenMarker);
-  console.log('=====================');
-};
+
+
