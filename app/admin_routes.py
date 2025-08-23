@@ -1788,6 +1788,7 @@ def messages_data():
             'timestamp': pacific_timestamp,
             'read': 'Yes' if message.read else 'No',
             'actions': (
+                f'<button class="btn btn-sm btn-info view-message-btn me-1" data-id="{message.id}">View</button>'
                 f'<button class="btn btn-sm btn-secondary reply-message-btn me-1" data-id="{message.id}">Reply</button>'
                 f'<button class="btn btn-sm btn-primary edit-message-btn me-1" data-id="{message.id}">Edit</button>'
                 f'<button class="btn btn-sm btn-danger delete-message-btn" data-id="{message.id}">Delete</button>'
@@ -1812,6 +1813,7 @@ def get_message(id):
             sender_email = user.email
     return jsonify({
         'id': message.id,
+        'sender_id': message.sender_id,
         'sender_email': sender_email or '',
         'communication_type': message.communication_type,
         'subject': message.subject,
@@ -1820,6 +1822,7 @@ def get_message(id):
         'reported_phone': message.reported_phone,
         'reported_website': message.reported_website,
         'reported_hours': message.reported_hours,
+        'out_of_business': message.out_of_business,
         'read': message.read,
         'name': message.name,
         'address': message.address,
@@ -1849,6 +1852,7 @@ def add_message():
         reported_phone=data.get('reported_phone'),
         reported_website=data.get('reported_website'),
         reported_hours=data.get('reported_hours'),
+        out_of_business=data.get('out_of_business') == 'true',
         read=data.get('read') == 'true',
         name=data.get('name'),
         address=data.get('address'),
@@ -1885,6 +1889,8 @@ def edit_message(id):
         message.reported_website = data['reported_website']
     if 'reported_hours' in data:
         message.reported_hours = data['reported_hours']
+    if 'out_of_business' in data:
+        message.out_of_business = data['out_of_business'] == 'true'
     if 'read' in data:
         message.read = data['read'] == 'true'
     if 'name' in data:
@@ -1896,6 +1902,14 @@ def edit_message(id):
     
     db.session.commit()
     return jsonify({'message': 'Message updated successfully'})
+
+@admin_bp.route('/messages/<int:id>/mark-read', methods=['POST'])
+@admin_required
+def mark_message_read(id):
+    message = Message.query.get_or_404(id)
+    message.read = True
+    db.session.commit()
+    return jsonify({'message': 'Message marked as read'})
 
 @admin_bp.route('/messages/bulk-delete', methods=['POST'])
 @admin_required
