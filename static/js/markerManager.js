@@ -36,13 +36,13 @@ export class MarkerManager {
     }
     
     bindMapEvents() {
-        // Debounced viewport change handler
+        // Debounced viewport change handler - INCREASED debounce time to prevent flickering
         let boundsChangeTimer;
         this.map.addListener('bounds_changed', () => {
             clearTimeout(boundsChangeTimer);
             boundsChangeTimer = setTimeout(() => {
                 this.handleViewportChange();
-            }, 150);
+            }, 300); // Increased from 150ms to 300ms to prevent excessive updates
         });
         
         // Zoom level changes
@@ -55,8 +55,8 @@ export class MarkerManager {
         const bounds = this.map.getBounds();
         if (!bounds) return;
         
-        // Check if viewport has changed significantly
-        if (this.lastBounds && this.boundsEqual(bounds, this.lastBounds)) {
+        // Check if viewport has changed significantly - INCREASED tolerance to prevent micro-updates
+        if (this.lastBounds && this.boundsEqual(bounds, this.lastBounds, 0.005)) { // Increased from 0.001 to 0.005
             return;
         }
         
@@ -76,16 +76,17 @@ export class MarkerManager {
         }
     }
     
-    boundsEqual(bounds1, bounds2, tolerance = 0.001) {
+    boundsEqual(bounds1, bounds2, tolerance = 0.005) { // Increased default tolerance
         const ne1 = bounds1.getNorthEast();
         const sw1 = bounds1.getSouthWest();
         const ne2 = bounds2.getNorthEast();
         const sw2 = bounds2.getSouthWest();
         
-        return Math.abs(ne1.lat() - ne2.lat()) < tolerance &&
-               Math.abs(ne1.lng() - ne2.lng()) < tolerance &&
-               Math.abs(sw1.lat() - sw2.lat()) < tolerance &&
-               Math.abs(sw1.lng() - sw2.lng()) < tolerance;
+        // More efficient bounds comparison with increased tolerance
+        const latDiff = Math.abs(ne1.lat() - ne2.lat()) + Math.abs(sw1.lat() - sw2.lat());
+        const lngDiff = Math.abs(ne1.lng() - ne2.lng()) + Math.abs(sw1.lng() - sw2.lng());
+        
+        return latDiff < tolerance && lngDiff < tolerance;
     }
     
     /**
@@ -259,7 +260,16 @@ export class MarkerManager {
      * Update which markers are visible based on viewport and filters
      */
     updateVisibleMarkers() {
-        this.currentFilters = this.getCurrentFiltersFromUI();
+        // Prevent excessive updates by checking if filters have actually changed
+        const newFilters = this.getCurrentFiltersFromUI();
+        const filtersChanged = this.hasFiltersChanged(newFilters);
+        
+        // Only update if filters changed or if this is the first update
+        if (!filtersChanged && this.currentFilters && Object.keys(this.currentFilters).length > 0) {
+            return;
+        }
+        
+        this.currentFilters = newFilters;
         const bounds = this.map.getBounds();
         if (!bounds) return;
         
@@ -280,7 +290,8 @@ export class MarkerManager {
             )
         );
         
-        this.clearVisibleMarkers();
+        // Track which markers should be visible to minimize DOM operations
+        const newVisibleMarkers = new Set();
         
         let shown = 0;
         let processed = 0;
@@ -294,14 +305,41 @@ export class MarkerManager {
             }
             
             if (shouldShow && expandedBounds.contains(marker.getPosition())) {
-                // Muted style for disabled (should not reach due to earlier check), or normal
-                this.visibleMarkers.add(marker);
-                marker.setMap(this.map);
-                shown++;
+                newVisibleMarkers.add(marker);
+                // Only add to map if not already visible
+                if (!this.visibleMarkers.has(marker)) {
+                    marker.setMap(this.map);
+                    shown++;
+                }
             }
         });
         
+        // Remove markers that are no longer visible
+        this.visibleMarkers.forEach(marker => {
+            if (!newVisibleMarkers.has(marker)) {
+                marker.setMap(null);
+            }
+        });
+        
+        // Update the visible markers set
+        this.visibleMarkers = newVisibleMarkers;
+        
         // console.log('updateVisibleMarkers: filters=', this.currentFilters, 'markers shown=', shown);
+    }
+    
+    /**
+     * Check if filters have changed to prevent unnecessary updates
+     */
+    hasFiltersChanged(newFilters) {
+        if (!this.currentFilters) return true;
+        
+        const keys = Object.keys(newFilters);
+        for (const key of keys) {
+            if (this.currentFilters[key] !== newFilters[key]) {
+                return true;
+            }
+        }
+        return false;
     }
     
     clearVisibleMarkers() {

@@ -174,8 +174,8 @@ function renderMap() {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
       <path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10
       10-4.477 10-10 10zm1-2.062 A8.004 8.004 0 0 0 19.938 13H16a1 1 0 1 1 0-2h3.938A8.004
-      8.004 0 0 0 13 4.062V8a1 1 0 1 1-2 0V4.062A8.004 8.004 0 0 0 4.062 11H8a1 1 0
-      1 1 0 2H4.062A8.004 8.004 0 0 0 11 19.938V16a1 1 0 1 1 2 0v3.938z"/>
+      8.004 8.004 0 0 0 13 4.062V8a1 1 0 1 1-2 0V4.062A8.004 8.004 8.004 0 0 0 4.062 11H8a1 1 0
+      1 1 0 2H4.062A8.004 8.004 8.004 0 0 0 11 19.938V16a1 1 0 1 1 2 0v3.938z"/>
     </svg>
   `;
   myLocationButton.classList.add('my-location-button');
@@ -187,15 +187,20 @@ function renderMap() {
   });
   window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);
 
-  // Initialize InfoWindow with default positioning behavior
+  // Initialize InfoWindow with better positioning behavior
   window.infoWindow = new google.maps.InfoWindow({
-    disableAutoPan: false, // Allow Google Maps to handle positioning (reverted - user wants auto-pan)
+    disableAutoPan: false, // Allow Google Maps to handle positioning
     pixelOffset: new google.maps.Size(0, -5),
     maxWidth: 320,
     // Ensure close button is enabled
     closeButton: true,
     // Set better positioning to avoid edge conflicts
-    position: null // Let Google Maps calculate optimal position
+    position: null, // Let Google Maps calculate optimal position
+    // Add options to prevent excessive auto-pan
+    shouldFocus: false, // Don't automatically focus the map
+    // Better handling for edge cases
+    maxWidth: 320,
+    pixelOffset: new google.maps.Size(0, -5)
   });
   window.currentOpenMarker = null;
   
@@ -204,6 +209,38 @@ function renderMap() {
     window.currentOpenMarker = null;
     const legend = document.getElementById('legend');
     if (legend) legend.classList.remove('has-active-infowindow');
+  });
+
+  // Add listener for info window position changes to prevent excessive auto-pan
+  google.maps.event.addListener(window.infoWindow, 'position_changed', function() {
+    // If the info window is near the edge, adjust the map view more gently
+    const position = window.infoWindow.getPosition();
+    if (position && window.map) {
+      const bounds = window.map.getBounds();
+      if (bounds) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        const latRange = ne.lat() - sw.lat();
+        const lngRange = ne.lng() - sw.lng();
+        
+        // Check if info window is near the edge (within 20% of viewport)
+        const edgeThreshold = 0.2;
+        const isNearEdge = 
+          position.lat() > ne.lat() - latRange * edgeThreshold ||
+          position.lat() < sw.lat() + latRange * edgeThreshold ||
+          position.lng() > ne.lng() - lngRange * edgeThreshold ||
+          position.lng() < sw.lng() + lngRange * edgeThreshold;
+        
+        if (isNearEdge) {
+          // Temporarily disable auto-pan for edge cases
+          window.infoWindow.setOptions({ disableAutoPan: true });
+          // Re-enable after a short delay
+          setTimeout(() => {
+            window.infoWindow.setOptions({ disableAutoPan: false });
+          }, 100);
+        }
+      }
+    }
   });
 
   // Fetch and build Popular Areas heatmap layer (for display)
@@ -327,24 +364,52 @@ function renderMap() {
     setupAutocompleteWithSession(placesSearchInput);
   }
 
-  // On idle: filters & track map
+  // On idle: filters & track map - OPTIMIZED to prevent excessive calls
+  let idleTimer;
   window.map.addListener('idle', () => {
-    window.applyFilters();
-    const c = window.map.getCenter();
-    fetch(ENDPOINTS.trackMap, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lat: c.lat(), lng: c.lng(), zoom: window.map.getZoom() })
-    }).catch(console.error);
+    // Debounce idle events to prevent excessive filtering
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      // Only apply filters if they haven't been applied recently
+      if (!window.filtersAppliedRecently) {
+        window.applyFilters();
+        window.filtersAppliedRecently = true;
+        // Reset flag after a delay
+        setTimeout(() => { window.filtersAppliedRecently = false; }, 1000);
+      }
+      
+      const c = window.map.getCenter();
+      fetch(ENDPOINTS.trackMap, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: c.lat(), lng: c.lng(), zoom: window.map.getZoom() })
+      }).catch(console.error);
+    }, 100); // Small delay to batch rapid idle events
   });
 
-  // Close infoWindow on map click
-  window.map.addListener('click', () => {
-    window.infoWindow.close();
-    window.currentOpenMarker = null;
-    // Remove has-active-infowindow class from legend when infowindow is closed
-    const legend = document.getElementById('legend');
-    if (legend) legend.classList.remove('has-active-infowindow');
+  // Close infoWindow on map click - BUT NOT on drag or other map movements
+  window.map.addListener('click', (event) => {
+    // Only close info window if it's a genuine click, not a drag end
+    if (!window.isDragging) {
+      window.infoWindow.close();
+      window.currentOpenMarker = null;
+      // Remove has-active-infowindow class from legend when infowindow is closed
+      const legend = document.getElementById('legend');
+      if (legend) legend.classList.remove('has-active-infowindow');
+    }
+  });
+
+  // Track dragging state to prevent info window closure during drag
+  window.isDragging = false;
+  window.map.addListener('dragstart', () => {
+    window.isDragging = true;
+  });
+  
+  window.map.addListener('dragend', () => {
+    // Small delay to prevent immediate closure after drag
+    setTimeout(() => {
+      window.isDragging = false;
+    }, 100);
   });
 
   // Initialize marker manager and data service
@@ -533,57 +598,13 @@ function setupMapStacking() {
  * Set up optimized map event listeners
  */
 function setupMapEventListeners() {
-    // Debounced bounds change handler for viewport-based loading
-    let boundsChangeTimer;
-    window.map.addListener('bounds_changed', () => {
-        clearTimeout(boundsChangeTimer);
-        boundsChangeTimer = setTimeout(() => {
-            handleViewportChange();
-        }, 300); // Slightly longer debounce for data loading
-    });
+    // REMOVED duplicate bounds_changed listener - marker manager handles this
+    // Only handle idle events for data loading, not marker updates
     
     // Idle event for loading new data when user stops moving
     window.map.addListener('idle', () => {
         handleMapIdle();
     });
-}
-
-/**
- * Handle viewport changes for progressive data loading
- */
-async function handleViewportChange() {
-    const bounds = dataService.getMapBounds(window.map);
-    if (!bounds) return;
-    
-    // Check if viewport has changed significantly
-    if (!dataService.hasViewportChanged(bounds, 0.2)) {
-        return; // Not enough change to warrant new data
-    }
-    
-    try {
-        // Load new data for the viewport
-        const mapData = await dataService.loadMapData(bounds, {
-            includeEvents: true,
-            daysAhead: 30
-        });
-        
-        // Update markers if we got new data
-        if (mapData.viewport_filtered) {
-        
-            
-            // Update markers progressively
-            await Promise.all([
-                markerManager.loadRetailers(mapData.retailers),
-                markerManager.loadEvents(mapData.events)
-            ]);
-        }
-        
-        // Update viewport tracking
-        dataService.updateLastViewport(bounds);
-        
-    } catch (error) {
-        console.warn('Error updating viewport data:', error);
-    }
 }
 
 /**
@@ -626,33 +647,37 @@ function setupFilterControls() {
 /**
  * Apply filters using the marker manager
  */
+let filterDebounceTimer;
 function applyFilters() {
-    const eventDaysSlider = document.getElementById('event-days-slider');
-    const filters = {
-        showKiosk: document.getElementById('filter-kiosk')?.checked ?? false,
-        showRetail: document.getElementById('filter-retail')?.checked ?? false,
-        showIndie: document.getElementById('filter-indie')?.checked ?? false,
-        showEvents: document.getElementById('filter-events')?.checked ?? false,
-        showOpenNow: document.getElementById('filter-open-now')?.checked ?? false,
-        showNew: document.getElementById('filter-new')?.checked ?? false,
-        showPopular: document.getElementById('filter-popular-areas')?.checked ?? false,
-        searchText: document.getElementById('legend_filter')?.value?.toLowerCase() || '',
-        eventDays: eventDaysSlider ? parseInt(eventDaysSlider.value) : 30
-    };
+    // Debounce filter application to prevent excessive calls
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+        const eventDaysSlider = document.getElementById('event-days-slider');
+        const filters = {
+            showKiosk: document.getElementById('filter-kiosk')?.checked ?? false,
+            showRetail: document.getElementById('filter-retail')?.checked ?? false,
+            showIndie: document.getElementById('filter-indie')?.checked ?? false,
+            showEvents: document.getElementById('filter-events')?.checked ?? false,
+            showOpenNow: document.getElementById('filter-open-now')?.checked ?? false,
+            showNew: document.getElementById('filter-new')?.checked ?? false,
+            showPopular: document.getElementById('filter-popular-areas')?.checked ?? false,
+            searchText: document.getElementById('legend_filter')?.value?.toLowerCase() || '',
+            eventDays: eventDaysSlider ? parseInt(eventDaysSlider.value) : 30
+        };
 
-    // Debug logging
+        // Debug logging
 
+        markerManager.applyFilters(filters);
 
-    markerManager.applyFilters(filters);
+        // Toggle heatmap layer
+        if (filters.showPopular) {
+            window.popularAreasHeatmap?.setMap(window.map);
+        } else {
+            window.popularAreasHeatmap?.setMap(null);
+        }
 
-    // Toggle heatmap layer
-    if (filters.showPopular) {
-        window.popularAreasHeatmap?.setMap(window.map);
-    } else {
-        window.popularAreasHeatmap?.setMap(null);
-    }
-
-    updateFilterUI(filters);
+        updateFilterUI(filters);
+    }, 50); // Small debounce to batch rapid filter changes
 }
 
 /**
