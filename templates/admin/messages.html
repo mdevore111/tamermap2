@@ -203,6 +203,18 @@
     .compact-form .mb-3 { margin-bottom: 0.5rem !important; }
     .compact-form .mb-2 { margin-bottom: 0.4rem !important; }
     .compact-form label { margin-bottom: 0.15rem; font-size: 0.9rem; }
+    
+    /* Ultra-compact form styles for table view */
+    .compact-form .form-control-sm,
+    .compact-form .form-select-sm {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.8rem;
+        height: auto;
+        min-height: 28px;
+    }
+    .compact-form .mb-2 { margin-bottom: 0.25rem !important; }
+    .compact-form .mb-1 { margin-bottom: 0.15rem !important; }
+    .compact-form label { margin-bottom: 0.1rem; font-size: 0.8rem; }
 
     /* Reduce vertical padding in modals to decrease overall height */
     #editMessageModal .modal-header,
@@ -219,6 +231,11 @@
     #addMessageModal .modal-body {
         padding-top: 0.6rem;
         padding-bottom: 0.6rem;
+    }
+    
+    /* Extra compact for edit modal */
+    #editMessageModal .modal-body {
+        padding: 0.4rem 1rem;
     }
     #editMessageModal .modal-title,
     #replyModal .modal-title,
@@ -317,7 +334,7 @@ $(document).ready(function() {
             <div class='mb-3'><label>Reported Phone</label><input name='reported_phone' class='form-control'></div>
             <div class='mb-3'><label>Reported Website</label><input name='reported_website' class='form-control'></div>
             <div class='mb-3'><label>Reported Hours</label><input name='reported_hours' class='form-control'></div>
-            <div class='mb-3'><label>Out of Business</label><select name='out_of_business' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
+            <div class='mb-3'><label>Reported Out of Business</label><select name='out_of_business' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
             <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control'></div>
             <div class='mb-3'><label>Read</label><select name='read' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
         `);
@@ -414,7 +431,7 @@ $(document).ready(function() {
                         <div class='mb-3'><strong>Reported Phone:</strong> ${data.reported_phone || 'N/A'}</div>
                         <div class='mb-3'><strong>Reported Website:</strong> ${data.reported_website || 'N/A'}</div>
                         <div class='mb-3'><strong>Reported Hours:</strong> ${data.reported_hours || 'N/A'}</div>
-                        <div class='mb-3'><strong>Out of Business:</strong> ${data.out_of_business ? 'Yes' : 'No'}</div>
+                        <div class='mb-3'><strong>Reported Out of Business:</strong> ${data.out_of_business ? 'Yes' : 'No'}</div>
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -452,25 +469,25 @@ $(document).ready(function() {
         $.get('/admin/messages/' + id, function(data) {
             form.html(`
                 <input type='hidden' name='id' value='${data.id}'>
-                <div class='mb-2'><label>Sender ID</label><input name='sender_id' type='number' class='form-control form-control-sm' value='${data.sender_id || ''}' readonly></div>
-                <div class='mb-2'><label>Type</label><input name='communication_type' class='form-control form-control-sm' value='${data.communication_type || ''}' required></div>
-                <div class='mb-2'><label>Subject</label><input name='subject' class='form-control form-control-sm' value='${data.subject || ''}' required></div>
-                <div class='mb-2'><label>Message</label><textarea name='body' class='form-control form-control-sm' rows='5' required>${data.body || ''}</textarea></div>
-                <div class='mb-2'><label>Reported Address</label><input name='reported_address' class='form-control form-control-sm' value='${data.reported_address || ''}'></div>
-                <div class='mb-2'><label>Reported Phone</label><input name='reported_phone' class='form-control form-control-sm' value='${data.reported_phone || ''}'></div>
-                <div class='mb-2'><label>Reported Website</label><input name='reported_website' class='form-control form-control-sm' value='${data.reported_website || ''}'></div>
-                <div class='mb-2'><label>Reported Hours</label><input name='reported_hours' class='form-control form-control-sm' value='${data.reported_hours || ''}'></div>
-                <div class='mb-2'><label>Out of Business</label><select name='out_of_business' class='form-control form-control-sm'>
+                <div class='mb-1'><label>Sender ID</label><input name='sender_id' type='number' class='form-control form-control-sm' value='${data.sender_id || ''}' readonly></div>
+                <div class='mb-1'><label>Type</label><input name='communication_type' class='form-control form-control-sm' value='${data.communication_type || ''}' required></div>
+                <div class='mb-1'><label>Subject</label><input name='subject' class='form-control form-control-sm' value='${data.subject || ''}' required></div>
+                <div class='mb-1'><label>Message</label><textarea name='body' class='form-control form-control-sm' rows='4' required>${data.body || ''}</textarea></div>
+                <div class='mb-1'><label>Reported Address</label><input name='reported_address' class='form-control form-control-sm' value='${data.reported_address || ''}'></div>
+                <div class='mb-1'><label>Reported Phone</label><input name='reported_phone' class='form-control form-control-sm' value='${data.reported_phone || ''}'></div>
+                <div class='mb-1'><label>Reported Website</label><input name='reported_website' class='form-control form-control-sm' value='${data.reported_website || ''}'></div>
+                <div class='mb-1'><label>Reported Hours</label><input name='reported_hours' class='form-control form-control-sm' value='${data.reported_hours || ''}'></div>
+                <div class='mb-1'><label>Reported Out of Business</label><select name='out_of_business' class='form-control form-control-sm'>
                     <option value='false' ${!data.out_of_business ? 'selected' : ''}>No</option>
                     <option value='true' ${data.out_of_business ? 'selected' : ''}>Yes</option>
                 </select></div>
-                <div class='mb-2'><label>Timestamp</label><input class='form-control form-control-sm' value='${data.timestamp ? data.timestamp.replace("T", " ").slice(0, 16) : ''}' readonly></div>
-                <div class='mb-2'><label>Read</label><select name='read' class='form-control form-control-sm'>
+                <div class='mb-1'><label>Timestamp</label><input class='form-control form-control-sm' value='${data.timestamp ? data.timestamp.replace("T", " ").slice(0, 16) : ''}' readonly></div>
+                <div class='mb-1'><label>Read</label><select name='read' class='form-control form-control-sm'>
                     <option value='false' ${!data.read ? 'selected' : ''}>No</option>
                     <option value='true' ${data.read ? 'selected' : ''}>Yes</option>
                 </select></div>
-                <div class='mb-2'><label>Name</label><input name='name' class='form-control form-control-sm' value='${data.name || ''}'></div>
-                <div class='mb-2'><label>Email Address</label><input name='address' class='form-control form-control-sm' value='${data.address || ''}'></div>
+                <div class='mb-1'><label>Name</label><input name='name' class='form-control form-control-sm' value='${data.name || ''}'></div>
+                <div class='mb-1'><label>Email Address</label><input name='address' class='form-control form-control-sm' value='${data.address || ''}'></div>
             `);
             modal.modal('show');
         }).fail(function() {
