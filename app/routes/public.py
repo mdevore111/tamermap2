@@ -155,6 +155,7 @@ def send_message():
                 reported_phone=form.reported_phone.data,
                 reported_website=form.reported_website.data,
                 reported_hours=form.reported_hours.data,
+                out_of_business=form.out_of_business.data,
                 name=form.name.data,
                 address=form.address.data
             )
@@ -175,6 +176,7 @@ def send_message():
                 reported_phone=form.reported_phone.data,
                 reported_website=form.reported_website.data,
                 reported_hours=form.reported_hours.data,
+                out_of_business=form.out_of_business.data,
                 config=current_app.config
             )
 

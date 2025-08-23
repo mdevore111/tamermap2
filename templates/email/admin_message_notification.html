@@ -12,6 +12,7 @@
   {% if reported_phone %}<li><strong>Reported Phone:</strong> {{ reported_phone }}</li>{% endif %}
   {% if reported_website %}<li><strong>Reported Website:</strong> {{ reported_website }}</li>{% endif %}
   {% if reported_hours %}<li><strong>Reported Hours:</strong> {{ reported_hours }}</li>{% endif %}
+  {% if out_of_business %}<li><strong>Out of Business:</strong> Yes</li>{% endif %}
 </ul>
 <p>Submitted at: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}</p>
 {% endblock %} 
