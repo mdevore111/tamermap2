@@ -122,9 +122,7 @@ export class MarkerManager {
      * Load retailer data and create markers progressively
      */
     async loadRetailers(retailers, append = false) {
-        if (window.__TM_DEBUG__) {
-            console.log('loadRetailers called with:', retailers?.length || 0, 'retailers, append:', append);
-        }
+
         
         if (append) {
             // Append to existing retailers
@@ -141,9 +139,7 @@ export class MarkerManager {
             await this.createMarkersProgressively(retailers, 'retailer');
         }
         
-        if (window.__TM_DEBUG__) {
-            console.log('Retailers loaded, marker cache size:', this.markerCache.size);
-        }
+
         
         // Update visible markers with force to ensure first render works
         this.updateVisibleMarkers({ force: true });
@@ -176,15 +172,10 @@ export class MarkerManager {
      * Create markers in batches to avoid blocking the main thread
      */
     async createMarkersProgressively(data, type) {
-        if (window.__TM_DEBUG__) {
-            console.log('createMarkersProgressively called:', type, data?.length || 0, 'items');
-        }
+
         
         if (!Array.isArray(data) || data.length === 0) {
-            if (window.__TM_DEBUG__) {
-                console.log('No data to create markers for');
-            }
-            return;
+                    return;
         }
         
         const batchSize = this.maxMarkersPerFrame;
@@ -272,16 +263,12 @@ export class MarkerManager {
             }
         }
         
-        if (window.__TM_DEBUG__) {
-            console.log('createMarkersProgressively completed:', type, totalCreated, 'markers created');
-        }
+
     }
     
     createMarker(data, type) {
         try {
-            if (window.__TM_DEBUG__) {
-                console.log('Creating marker:', type, data?.id || data?.place_id || 'unknown');
-            }
+            
             
             let marker;
             if (type === 'retailer') {
@@ -300,9 +287,7 @@ export class MarkerManager {
                 }
             }
             
-            if (window.__TM_DEBUG__) {
-                console.log('Marker created:', type, !!marker, marker?.getPosition?.());
-            }
+            
             
             return marker;
         } catch (error) {
@@ -361,14 +346,7 @@ export class MarkerManager {
         let filteredOut = 0;
         let outOfBounds = 0;
         
-        if (window.__TM_DEBUG__) {
-            console.log('Processing markers:', {
-                totalInCache: this.markerCache.size,
-                currentBounds: bounds.toString(),
-                boundsNE: bounds.getNorthEast().toString(),
-                boundsSW: bounds.getSouthWest().toString()
-            });
-        }
+
         
         this.markerCache.forEach((marker, key) => {
             processed++;
@@ -391,15 +369,7 @@ export class MarkerManager {
                 }
             } else if (shouldShow) {
                 outOfBounds++;
-                if (window.__TM_DEBUG__ && outOfBounds <= 5) { // Log first 5 out-of-bounds markers
-                    const pos = marker.getPosition();
-                    console.log('Marker out of bounds:', {
-                        key,
-                        position: pos.toString(),
-                        inBounds: bounds.contains(pos),
-                        bounds: bounds.toString()
-                    });
-                }
+
             }
         });
         
@@ -413,20 +383,7 @@ export class MarkerManager {
         // Update the visible markers set
         this.visibleMarkers = newVisibleMarkers;
         
-        if (window.__TM_DEBUG__) {
-            console.log('Markers updated:', {
-                filtersChanged,
-                viewportChanged,
-                isFirstRun,
-                processed,
-                filteredOut,
-                outOfBounds,
-                shown,
-                totalVisible: this.visibleMarkers.size,
-                bounds: bounds.toString(),
-                currentFilters: this.currentFilters
-            });
-        }
+
     }
     
     /**
@@ -544,13 +501,7 @@ export class MarkerManager {
             return false;
         }
         
-        // Apply additional filters for retailers that passed type filtering
-        console.log('🔍 Applying additional filters to marker:', {
-            type: marker.retailer_type,
-            showOpenNow: filters.showOpenNow,
-            showNew: filters.showNew,
-            searchText: filters.searchText
-        });
+
         
         // Open Now filter
         if (filters.showOpenNow) {
@@ -561,13 +512,11 @@ export class MarkerManager {
         
         // New filter
         if (filters.showNew && !this.isNew(marker)) {
-            console.log('🔍 Marker filtered out by New filter:', marker.retailer_type);
             return false;
         }
         
         // Search text filter
         if (filters.searchText && !this.matchesSearch(marker, filters.searchText)) {
-            console.log('🔍 Marker filtered out by Search filter:', marker.retailer_type);
             return false;
         }
         
@@ -699,18 +648,7 @@ export class MarkerManager {
             eventDays: eventDays
         };
         
-        // Debug: Log the actual checkbox states
-        console.log('🔍 Filter checkboxes state:', {
-            kiosk: kiosk?.checked,
-            retail: retail?.checked,
-            indie: indie?.checked,
-            events: events?.checked,
-            openNow: openNow?.checked,
-            isNew: isNew?.checked,
-            popular: popular?.checked,
-            searchText: searchText,
-            eventDays: eventDays
-        });
+
         
         return filters;
     }

@@ -421,7 +421,33 @@ function renderMap() {
 
   // Initialize UI components (legend, search, filters)
   initUI();
-
+  
+      // Set up filter controls to wire up checkbox event listeners
+    if (window.__TM_DEBUG__) {
+        console.log('Setting up filter controls...');
+    }
+  setupFilterControls();
+  
+  if (window.__TM_DEBUG__) {
+        console.log('Filter controls setup complete');
+    }
+    
+    // Test if checkboxes are working
+    if (window.__TM_DEBUG__) {
+        setTimeout(() => {
+            const testKiosk = document.getElementById('filter-kiosk');
+            if (testKiosk) {
+                console.log('Test: Kiosk checkbox found, current state:', testKiosk.checked);
+                // Add a test click handler
+                testKiosk.addEventListener('click', () => {
+                    console.log('Test: Kiosk checkbox clicked, new state:', testKiosk.checked);
+                });
+            } else {
+                console.log('Test: Kiosk checkbox NOT found!');
+            }
+        }, 1000);
+    }
+  
   // Set up proper stacking immediately and on idle
   setupMapStacking();
   // window.map.addListener('idle', setupMapStacking); // REMOVED - causes flickering when called repeatedly
@@ -430,13 +456,38 @@ function renderMap() {
   setupMapEventListeners();
 
   // Wait for map to be properly initialized before loading data
-  window.map.addListener('idle', () => {
-    // Only load data on first idle event
-    if (!window.dataLoaded) {
-      window.dataLoaded = true;
-      loadOptimizedMapData();
+  // Use a more reliable approach than the 'idle' event
+  setTimeout(() => {
+    // Ensure map is properly centered and zoomed before loading data
+    if (window.userCoords && window.map) {
+      if (window.__TM_DEBUG__) {
+        console.log('Initializing map with user coordinates:', window.userCoords);
+      }
+      
+      // Center the map on user location (keep default zoom from MAP_SETTINGS)
+      window.map.setCenter(window.userCoords);
+      // Don't change zoom - let it stay at the default from MAP_SETTINGS
+      
+      if (window.__TM_DEBUG__) {
+        console.log('Map centered and zoomed, waiting for settlement...');
+      }
+      
+      // Wait for the map to settle and get proper bounds, then load data
+      setTimeout(() => {
+        if (!window.dataLoaded) {
+          // Get the actual map bounds after it has settled
+          const actualBounds = dataService.getMapBounds(window.map);
+          if (window.__TM_DEBUG__) {
+            console.log('Map settled, actual bounds:', actualBounds);
+
+          }
+          
+          window.dataLoaded = true;
+          loadOptimizedMapData();
+        }
+      }, 1000); // Increased wait time to ensure map is fully settled
     }
-  });
+  }, 1500); // Increased initial wait time
   
   // TEMPORARY DEBUG: Add a test marker to see if the issue is with marker creation or display
   if (window.__TM_DEBUG__) {
@@ -470,17 +521,20 @@ async function loadOptimizedMapData() {
     // Get initial viewport bounds for filtering
     const bounds = dataService.getMapBounds(window.map);
     
-    // If no bounds available, use a default viewport around user location
-    let effectiveBounds = bounds;
-    if (!bounds && window.userCoords) {
-      const defaultRadius = 0.1; // About 11km radius
-      effectiveBounds = {
-        north: window.userCoords.lat + defaultRadius,
-        south: window.userCoords.lat - defaultRadius,
-        east: window.userCoords.lng + defaultRadius,
-        west: window.userCoords.lng - defaultRadius
-      };
+        if (window.__TM_DEBUG__) {
+        console.log('Map bounds from dataService:', bounds);
     }
+    
+    // The map should now be properly initialized, so bounds should be reasonable
+    if (!bounds) {
+      console.error('No map bounds available - this should not happen after proper initialization');
+      return;
+    }
+    
+    // Use the actual map bounds - they should be correct now
+    const effectiveBounds = bounds;
+    
+
     
     // Load combined data in a single request
     const mapData = await dataService.loadMapData(effectiveBounds, {
@@ -496,15 +550,7 @@ async function loadOptimizedMapData() {
       markerManager.loadEvents(mapData.events)
     ]);
     
-    // Debug logging after marker loading
-    if (window.__TM_DEBUG__) {
-      console.log('Markers loaded:', {
-        retailers: mapData.retailers?.length || 0,
-        events: mapData.events?.length || 0,
-        markerCacheSize: markerManager.markerCache.size,
-        visibleMarkers: markerManager.visibleMarkers.size
-      });
-    }
+
     
     // Populate legacy arrays for compatibility with existing filter system
     window.allMarkers = Array.from(markerManager.markerCache.values())
@@ -513,13 +559,7 @@ async function loadOptimizedMapData() {
     window.allEventMarkers = Array.from(markerManager.markerCache.values())
       .filter(marker => marker.event_title); // Only event markers
     
-    // Debug logging for legacy arrays
-    if (window.__TM_DEBUG__) {
-      console.log('Legacy arrays populated:', {
-        allMarkers: window.allMarkers.length,
-        allEventMarkers: window.allEventMarkers.length
-      });
-    }
+
     
     // Expose marker visibility functions globally for route planner
     window.hideAllMarkers = () => markerManager.hideAllMarkers();
@@ -534,10 +574,8 @@ async function loadOptimizedMapData() {
     //   }
     // });
     
-    // Apply filters to show markers
-    window.applyFilters();
-    
-    // Update viewport tracking
+    // Markers are already visible from the loadRetailers/loadEvents calls
+    // No need to apply filters again - just update viewport tracking
     dataService.updateLastViewport(bounds);
     
     hideLoadingOverlay();
@@ -647,40 +685,104 @@ function setupMapEventListeners() {
 }
 
 /**
- * Handle map idle event
+ * Handle map idle: intelligently load data for new areas
  */
-function handleMapIdle() {
-    // Update visible markers based on current viewport
-    // This is handled automatically by MarkerManager
-    
-    // Update UI elements if needed
+async function handleMapIdle() {
+  const bounds = dataService.getMapBounds(window.map);
+  if (!bounds) return;
+
+  // Only fetch if viewport really changed significantly (larger threshold to prevent excessive loading)
+  const hasChanged = dataService.hasViewportChanged(bounds, 0.15); // Increased from 0.05 to 0.15
+  
+  if (!hasChanged) {
     updateMapUI();
+    return;
+  }
+
+  // Check if we already have data for this area
+  const currentBounds = dataService.lastViewport;
+  if (currentBounds) {
+    const latRange = Math.abs(bounds.north - bounds.south);
+    const lngRange = Math.abs(bounds.east - bounds.west);
+    const currentLatRange = Math.abs(currentBounds.north - currentBounds.south);
+    const currentLngRange = Math.abs(currentBounds.east - currentBounds.west);
+    
+    // If the new bounds are smaller than current bounds, we probably already have the data
+    if (latRange <= currentLatRange && lngRange <= currentLngRange) {
+      updateMapUI();
+      return;
+    }
+  }
+
+  // Only load new data if we don't have it already
+  try {
+    const daysAhead = parseInt(document.getElementById('event-days-slider')?.value, 10) || 30;
+
+    // Fetch fresh data for the new viewport
+    const mapData = await dataService.loadMapData(bounds, {
+      includeEvents: true,
+      daysAhead,
+    });
+
+    // Only add new markers, don't replace existing ones
+    if (mapData.retailers && mapData.retailers.length > 0) {
+      await markerManager.loadRetailers(mapData.retailers, true); // append = true
+    }
+    if (mapData.events && mapData.events.length > 0) {
+      await markerManager.loadEvents(mapData.events, true); // append = true
+    }
+
+    // Track viewport for next change detection
+    dataService.updateLastViewport(bounds);
+
+    // Update UI without re-applying filters (markers are already visible from loadRetailers/loadEvents)
+    updateMapUI();
+  } catch (err) {
+    console.error('Idle load failed:', err);
+  }
 }
 
 /**
- * Set up filter controls with optimized handling
+ * Debounce function to limit the frequency of function calls
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Setup filter controls and bind event listeners
  */
 function setupFilterControls() {
-    // Get filter elements
-    const kioskToggle = document.getElementById('kiosk-toggle');
-    const retailToggle = document.getElementById('retail-toggle');
-    const indieToggle = document.getElementById('indie-toggle');
-    const eventsToggle = document.getElementById('events-toggle');
+    // Get filter elements using the correct IDs from the HTML
+    const kioskToggle = document.getElementById('filter-kiosk');
+    const retailToggle = document.getElementById('filter-retail');
+    const indieToggle = document.getElementById('filter-indie');
+    const eventsToggle = document.getElementById('filter-events');
+    const openNowToggle = document.getElementById('filter-open-now');
+    const newToggle = document.getElementById('filter-new');
+    const popularToggle = document.getElementById('filter-popular-areas');
     
-    // Debounced filter handler
-    let filterTimer;
-    const handleFilterChange = () => {
-        clearTimeout(filterTimer);
-        filterTimer = setTimeout(() => {
-            applyFilters();
-        }, 100);
-    };
+    // Debounced filter change handler
+    const handleFilterChange = debounce(() => {
+        applyFilters();
+    }, 100);
     
     // Bind filter events
     if (kioskToggle) kioskToggle.addEventListener('change', handleFilterChange);
     if (retailToggle) retailToggle.addEventListener('change', handleFilterChange);
     if (indieToggle) indieToggle.addEventListener('change', handleFilterChange);
     if (eventsToggle) eventsToggle.addEventListener('change', handleFilterChange);
+    if (openNowToggle) openNowToggle.addEventListener('change', handleFilterChange);
+    if (newToggle) newToggle.addEventListener('change', handleFilterChange);
+    if (popularToggle) popularToggle.addEventListener('change', handleFilterChange);
 }
 
 /**
@@ -688,15 +790,9 @@ function setupFilterControls() {
  */
 let filterDebounceTimer;
 function applyFilters() {
-    // Debug logging to help troubleshoot
-    if (window.__TM_DEBUG__) {
-        console.log('applyFilters called, current state:', {
-            markerManager: !!markerManager,
-            markerCacheSize: markerManager?.markerCache?.size || 0,
-            visibleMarkers: markerManager?.visibleMarkers?.size || 0,
-            allMarkers: window.allMarkers?.length || 0,
-            allEventMarkers: window.allEventMarkers?.length || 0
-        });
+    // Don't apply filters if markers aren't loaded yet
+    if (!markerManager || markerManager.markerCache.size === 0) {
+        return;
     }
     
     // Debounce filter application to prevent excessive calls
@@ -715,15 +811,10 @@ function applyFilters() {
             eventDays: eventDaysSlider ? parseInt(eventDaysSlider.value) : 30
         };
 
-        // Debug logging
-        if (window.__TM_DEBUG__) {
-            console.log('Applying filters:', filters);
-        }
-
         if (markerManager) {
+            // Force immediate update by clearing current filters
+            markerManager.currentFilters = null;
             markerManager.applyFilters(filters);
-        } else {
-            console.warn('MarkerManager not available for applyFilters');
         }
 
         // Toggle heatmap layer
@@ -734,15 +825,7 @@ function applyFilters() {
         }
 
         updateFilterUI(filters);
-        
-        // Debug logging after filters applied
-        if (window.__TM_DEBUG__) {
-            console.log('Filters applied, new state:', {
-                visibleMarkers: markerManager?.visibleMarkers?.size || 0,
-                markerCacheSize: markerManager?.markerCache?.size || 0
-            });
-        }
-    }, 50); // Small debounce to batch rapid filter changes
+    }, 10); // Reduced debounce from 50ms to 10ms for more responsive filtering
 }
 
 /**
