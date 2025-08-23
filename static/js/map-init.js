@@ -172,10 +172,9 @@ function renderMap() {
   const myLocationButton = document.createElement('button');
   myLocationButton.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-      <path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10
-      10-4.477 10-10 10zm1-2.062 A8.004 8.004 0 0 0 19.938 13H16a1 1 0 1 1 0-2h3.938A8.004
-      8.004 8.004 0 0 0 13 4.062V8a1 1 0 1 1-2 0V4.062A8.004 8.004 8.004 0 0 0 4.062 11H8a1 1 0
-      1 1 0 2H4.062A8.004 8.004 8.004 0 0 0 11 19.938V16a1 1 0 1 1 2 0v3.938z"/>
+      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+      <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="2"/>
+      <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2"/>
     </svg>
   `;
   myLocationButton.classList.add('my-location-button');
@@ -183,7 +182,7 @@ function renderMap() {
   myLocationButton.addEventListener('click', () => {
     autoCenter = true;
     window.map.setCenter(window.userCoords);
-    window.map.setZoom(12); // Reduced from 15 to provide better context around user location
+    window.map.setZoom(11); // Set to same zoom level as initial map
   });
   window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);
 
