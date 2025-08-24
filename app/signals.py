@@ -70,6 +70,7 @@ def register_signals(app, user_datastore, db):
         db.session.add(event)
         db.session.commit()
 
+    @user_logged_in.connect_via(app)
     def on_user_logged_in(sender, user, **extra):
         """
         Signal listener for when a user logs in.
@@ -84,9 +85,6 @@ def register_signals(app, user_datastore, db):
         """
         session['is_admin'] = user.has_role('Admin')
         session['is_pro'] = user.has_role('Pro')
-
-    # Connect the signal listener to the user_logged_in signal
-    user_logged_in.connect(on_user_logged_in)
     
     # Add Flask-Security debugging signals
     @user_authenticated.connect_via(app)

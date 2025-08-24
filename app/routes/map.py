@@ -267,7 +267,21 @@ def track_legend_click():
 
     sess_id = session.get('visitor_session_id') or session.get('user_id') or request.remote_addr
     user_id = session.get('user_id') if isinstance(session.get('user_id'), int) else None
-    is_pro = bool(session.get('is_pro'))
+    
+    # Better Pro user detection - check session first, then fall back to database lookup
+    is_pro = False
+    if user_id:
+        try:
+            from app.models import User
+            user = User.query.get(user_id)
+            if user and user.is_pro:
+                is_pro = True
+        except Exception:
+            pass
+    
+    # Fall back to session if database lookup fails
+    if not is_pro:
+        is_pro = bool(session.get('is_pro'))
 
     click = LegendClick(
         session_id=sess_id,
@@ -295,7 +309,21 @@ def track_route_event():
 
     sess_id = session.get('visitor_session_id') or session.get('user_id') or request.remote_addr
     user_id = session.get('user_id') if isinstance(session.get('user_id'), int) else None
-    is_pro = bool(session.get('is_pro'))
+    
+    # Better Pro user detection - check session first, then fall back to database lookup
+    is_pro = False
+    if user_id:
+        try:
+            from app.models import User
+            user = User.query.get(user_id)
+            if user and user.is_pro:
+                is_pro = True
+        except Exception:
+            pass
+    
+    # Fall back to session if database lookup fails
+    if not is_pro:
+        is_pro = bool(session.get('is_pro'))
 
     re = RouteEvent(
         session_id=sess_id,
