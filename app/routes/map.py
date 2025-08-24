@@ -268,6 +268,10 @@ def track_legend_click():
     sess_id = session.get('visitor_session_id') or session.get('user_id') or request.remote_addr
     user_id = session.get('user_id') if isinstance(session.get('user_id'), int) else None
     
+    # Debug logging
+    print(f"🔍 DEBUG: track_legend_click - user_id: {user_id}, session keys: {list(session.keys())}")
+    print(f"🔍 DEBUG: session.get('is_pro'): {session.get('is_pro')}, session.get('user_id'): {session.get('user_id')}")
+    
     # Better Pro user detection - check session first, then fall back to database lookup
     is_pro = False
     if user_id:
@@ -276,12 +280,19 @@ def track_legend_click():
             user = User.query.get(user_id)
             if user and user.is_pro:
                 is_pro = True
-        except Exception:
+                print(f"🔍 DEBUG: User {user_id} is Pro (from database)")
+            else:
+                print(f"🔍 DEBUG: User {user_id} is NOT Pro (from database)")
+        except Exception as e:
+            print(f"🔍 DEBUG: Error looking up user {user_id}: {e}")
             pass
     
     # Fall back to session if database lookup fails
     if not is_pro:
         is_pro = bool(session.get('is_pro'))
+        print(f"🔍 DEBUG: Fallback to session: is_pro = {is_pro}")
+    
+    print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
     click = LegendClick(
         session_id=sess_id,
@@ -310,6 +321,10 @@ def track_route_event():
     sess_id = session.get('visitor_session_id') or session.get('user_id') or request.remote_addr
     user_id = session.get('user_id') if isinstance(session.get('user_id'), int) else None
     
+    # Debug logging
+    print(f"🔍 DEBUG: track_route_event - user_id: {user_id}, session keys: {list(session.keys())}")
+    print(f"🔍 DEBUG: session.get('is_pro'): {session.get('is_pro')}, session.get('user_id'): {session.get('user_id')}")
+    
     # Better Pro user detection - check session first, then fall back to database lookup
     is_pro = False
     if user_id:
@@ -318,12 +333,19 @@ def track_route_event():
             user = User.query.get(user_id)
             if user and user.is_pro:
                 is_pro = True
-        except Exception:
+                print(f"🔍 DEBUG: User {user_id} is Pro (from database)")
+            else:
+                print(f"🔍 DEBUG: User {user_id} is NOT Pro (from database)")
+        except Exception as e:
+            print(f"🔍 DEBUG: Error looking up user {user_id}: {e}")
             pass
     
     # Fall back to session if database lookup fails
     if not is_pro:
         is_pro = bool(session.get('is_pro'))
+        print(f"🔍 DEBUG: Fallback to session: is_pro = {is_pro}")
+    
+    print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
     re = RouteEvent(
         session_id=sess_id,

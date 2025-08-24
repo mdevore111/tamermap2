@@ -37,6 +37,7 @@ def register_signals(app, user_datastore, db):
           3. Creates a new LoginEvent entry recording the login timestamp,
              the user's IP address, and the user agent.
           4. Links the current session ID to the user account for funnel tracking.
+          5. Sets boolean flags in the session for quick access to 'is_admin' and 'is_pro' status.
 
         Args:
             sender: The sender of the signal (usually the Flask app).
@@ -66,25 +67,13 @@ def register_signals(app, user_datastore, db):
         if 'visitor_session_id' in session:
             link_session_to_user(session['visitor_session_id'], user.id)
 
+        # Set boolean flags in session for quick access to user roles
+        session['is_admin'] = user.has_role('Admin')
+        session['is_pro'] = user.has_role('Pro')
+
         db.session.add(user)
         db.session.add(event)
         db.session.commit()
-
-    @user_logged_in.connect_via(app)
-    def on_user_logged_in(sender, user, **extra):
-        """
-        Signal listener for when a user logs in.
-
-        This function is triggered after a user successfully logs in. It checks the
-        user's roles and sets boolean flags in the session for quick access
-        to 'is_admin' and 'is_pro' status throughout the application.
-
-        Args:
-            sender: The application that sent the signal.
-            user: The user object who has just logged in.
-        """
-        session['is_admin'] = user.has_role('Admin')
-        session['is_pro'] = user.has_role('Pro')
     
     # Add Flask-Security debugging signals
     @user_authenticated.connect_via(app)
