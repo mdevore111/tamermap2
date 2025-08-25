@@ -59,6 +59,7 @@ class VisitorLog(db.Model):
     city = db.Column(db.String(100))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    is_pro = db.Column(db.Boolean, default=False)  # Track Pro user status
 
 
 class Event(db.Model):

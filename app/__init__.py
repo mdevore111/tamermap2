@@ -410,6 +410,18 @@ def create_app(config_class=BaseConfig):
                 g.session_id = session_id
                 g.is_new_session = is_new_session
 
+                # Determine if user is Pro (for visitor logging)
+                is_pro = False
+                if user_id:
+                    try:
+                        from app.models import User
+                        user = User.query.get(user_id)
+                        if user and user.is_pro:
+                            is_pro = True
+                    except Exception:
+                        # Fall back to session if database lookup fails
+                        is_pro = bool(session.get('is_pro'))
+
                 # Create visitor log entry with proper internal flags and session tracking
                 log = VisitorLog(**{
                     'session_id': session_id,  # New session tracking field
@@ -425,7 +437,8 @@ def create_app(config_class=BaseConfig):
                     'method': request.method,
                     'user_agent': request.user_agent.string,
                     'referrer': referrer,
-                    'is_internal_referrer': is_internal_referrer
+                    'is_internal_referrer': is_internal_referrer,
+                    'is_pro': is_pro  # Add Pro status tracking
                 })
                 db.session.add(log)
                 db.session.commit()
