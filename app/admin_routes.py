@@ -454,6 +454,36 @@ def api_traffic_by_hour():
             'error': 'Failed to load traffic by hour data'
         }), 500
 
+@admin_bp.route('/api/analytics/traffic-by-day-of-week')
+@admin_required
+def api_traffic_by_day_of_week():
+    """AJAX endpoint for traffic by day of week data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    try:
+        from app.admin_utils import get_traffic_by_day_of_week
+        result = get_traffic_by_day_of_week(days=days)
+        
+        return jsonify({
+            'success': True,
+            'data': result['daily_data'],
+            'total_visits': result['total_visits'],
+            'total_pro_visits': result['total_pro_visits'],
+            'total_non_pro_visits': result['total_non_pro_visits'],
+            'avg_visits_per_day': result['avg_visits_per_day'],
+            'avg_pro_visits_per_day': result['avg_pro_visits_per_day'],
+            'avg_non_pro_visits_per_day': result['avg_non_pro_visits_per_day'],
+            'days': result['days']
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting traffic by day of week: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load traffic by day of week data'
+        }), 500
+
 # Users routes
 @admin_bp.route('/users')
 @admin_required
