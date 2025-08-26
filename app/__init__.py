@@ -116,10 +116,7 @@ def create_app(config_class=BaseConfig):
         if app.debug and request.is_secure == False and request.url.startswith('https'):
             app.logger.warning(f"HTTPS mismatch: {request.url} - is_secure: {request.is_secure}")
 
-    # Add a test route to render admin/master.html directly
-    @app.route('/debug-template')
-    def debug_template():
-        return app.jinja_env.get_template('admin/master.html').render()
+
 
     # Load configuration.
     app.config.from_object(config_class)
@@ -458,47 +455,9 @@ def create_app(config_class=BaseConfig):
                 app.logger.error(f"Error tracking visitor: {str(e)}")
                 db.session.rollback()
 
-    # Add a debug route to check current user authentication and roles
-    @app.route('/whoami')
-    def whoami():
-        from flask_login import current_user
-        from flask import session
-        
-        try:
-            session_keys = list(session.keys()) if hasattr(session, 'keys') else []
-            session_info = f"Keys: {session_keys}"
-        except Exception as e:
-            session_info = f"Error accessing session: {e}"
-            
-        return f"Authenticated: {current_user.is_authenticated}, ID: {getattr(current_user, 'id', None)}, Roles: {[r.name for r in getattr(current_user, 'roles', [])]}, Session: {session_info}"
 
-    # Add a debug route specifically for session debugging
-    @app.route('/debug-session')
-    def debug_session():
-        from flask_login import current_user
-        from flask import session, request
-        
-        try:
-            session_keys = list(session.keys()) if hasattr(session, 'keys') else []
-            session_id = session.get('_id', 'No Flask session ID') if session_keys else 'No session keys'
-            session_info = f"Keys: {session_keys}"
-        except Exception as e:
-            session_id = f"Error accessing session: {e}"
-            session_info = f"Error accessing session: {e}"
-        
-        debug_info = {
-            'path': request.path,
-            'endpoint': request.endpoint,
-            'flask_login_authenticated': current_user.is_authenticated,
-            'flask_login_user_id': getattr(current_user, 'id', None),
-            'flask_login_user_email': getattr(current_user, 'email', None),
-            'flask_session_id': session_id,
-            'flask_session_info': session_info,
-            'cookies': dict(request.cookies),
-            'user_agent': request.headers.get('User-Agent', 'No User-Agent')
-        }
-        
-        return debug_info
+
+
     
     # Custom change password route that bypasses Flask-Security
     @app.route('/change-password', methods=['GET', 'POST'])
