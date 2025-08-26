@@ -6,6 +6,7 @@ These routes are only registered when running in development mode.
 import os
 from functools import wraps
 from flask import Blueprint, jsonify, request, abort, render_template, current_app
+from flask_security import admin_required
 from app.extensions import limiter, cache
 from datetime import datetime
 
@@ -35,6 +36,7 @@ def require_test_key(f):
 @dev_bp.route("/environment-check")
 @dev_only
 @require_test_key
+@admin_required
 def check_environment():
     """Check the current environment configuration"""
     return jsonify({
@@ -48,6 +50,7 @@ def check_environment():
 @dev_bp.route("/test-limit")
 @dev_only
 @require_test_key
+@admin_required
 @limiter.limit("3 per minute")
 def test_rate_limit():
     """
@@ -66,6 +69,7 @@ def test_rate_limit():
 @dev_bp.route("/test-cache")
 @dev_only
 @require_test_key
+@admin_required
 def test_cache():
     """
     Test endpoint for cache functionality.
@@ -77,6 +81,7 @@ def test_cache():
 @dev_bp.route("/api/test-cache-data")
 @dev_only
 @require_test_key
+@admin_required
 @cache.cached(timeout=60)  # Cache for 1 minute
 def test_cache_data():
     """

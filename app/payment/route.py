@@ -1,5 +1,6 @@
 import stripe
 from flask import jsonify, url_for, Blueprint, current_app, request
+from flask_security import login_required
 
 from app.models import User
 
@@ -8,6 +9,7 @@ payment_bp = Blueprint('payment', __name__, url_prefix='/payment')
 
 
 @payment_bp.route('/create-checkout-session', methods=['POST'])
+@login_required
 def create_checkout_session():
     """
     Create a Stripe Checkout session for a Pro subscription.
