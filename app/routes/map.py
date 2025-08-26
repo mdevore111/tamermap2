@@ -108,7 +108,7 @@ def get_pin_heatmap_data():
     Retrieve aggregated pin click data for heatmap rendering.
 
     Joins PinInteraction with Retailer to match coordinates using Google Places IDs,
-    aggregating the number of clicks for data within the last 30 days.
+    aggregating the number of clicks for data within the last 60 days.
     This endpoint is for heatmap display only - coordinates are rounded to 2 decimals.
 
     Returns:
@@ -116,7 +116,7 @@ def get_pin_heatmap_data():
     """
     check_referrer()
 
-    recent_cutoff = datetime.utcnow() - timedelta(days=30)
+    recent_cutoff = datetime.utcnow() - timedelta(days=60)
 
     # Prefer aggregated popularity by place_id; fallback to recent clicks if popularity empty
     pop_rows = db.session.query(
@@ -162,7 +162,7 @@ def get_individual_popularity_data():
     """
     check_referrer()
 
-    recent_cutoff = datetime.utcnow() - timedelta(days=30)
+    recent_cutoff = datetime.utcnow() - timedelta(days=60)
 
     # Join PinInteraction with Retailer on matching IDs
     # Use full precision coordinates for individual location targeting
@@ -214,14 +214,14 @@ def get_heatmap_data():
     """
     Retrieve aggregated map usage data for heatmap rendering.
 
-    Groups map usage records by latitude and longitude from the last 30 days.
+    Groups map usage records by latitude and longitude from the last 60 days.
 
     Returns:
         A JSON response with a list of objects containing 'lat', 'lng', and 'weight'.
     """
     check_referrer()
 
-    recent_cutoff = datetime.utcnow() - timedelta(days=30)
+    recent_cutoff = datetime.utcnow() - timedelta(days=60)
 
     data = db.session.query(
         func.round(MapUsage.lat, 2).label("lat"),
