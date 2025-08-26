@@ -238,6 +238,50 @@ def sitemap():
     return render_template("sitemap.html")
 
 
+@public_bp.route("/sitemap.xml")
+def sitemap_xml():
+    """Generate dynamic XML sitemap for search engines."""
+    from flask import make_response
+    from datetime import datetime
+    
+    # Get current date
+    now = datetime.utcnow().strftime('%Y-%m-%d')
+    
+    # Base URL
+    base_url = request.url_root.rstrip('/')
+    
+    # Static pages with their priorities and change frequencies
+    pages = [
+        {'url': '/', 'priority': '1.0', 'changefreq': 'daily'},
+        {'url': '/maps', 'priority': '0.9', 'changefreq': 'daily'},
+        {'url': '/learn', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/play', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/about', 'priority': '0.7', 'changefreq': 'monthly'},
+        {'url': '/sitemap', 'priority': '0.5', 'changefreq': 'monthly'},
+    ]
+    
+    # Generate XML sitemap
+    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+'''
+    
+    for page in pages:
+        xml_content += f'''  <url>
+    <loc>{base_url}{page['url']}</loc>
+    <lastmod>{now}</lastmod>
+    <changefreq>{page['changefreq']}</changefreq>
+    <priority>{page['priority']}</priority>
+  </url>
+'''
+    
+    xml_content += '</urlset>'
+    
+    # Create response with proper headers
+    response = make_response(xml_content)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+
 @public_bp.route('/success')
 def success():
     """
@@ -309,3 +353,35 @@ def test_cache():
         str: Rendered HTML for the test-cache page.
     """
     return render_template("test-cache.html")
+
+
+@public_bp.route("/robots.txt")
+def robots_txt():
+    """Generate robots.txt for search engines."""
+    from flask import make_response
+    
+    robots_content = f"""User-agent: *
+Allow: /
+Allow: /maps
+Allow: /learn
+Allow: /play
+Allow: /about
+Allow: /sitemap
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /payment/
+Disallow: /api/
+Disallow: /dev/
+
+# Sitemap location
+Sitemap: {request.url_root.rstrip('/')}/sitemap.xml
+
+# Crawl delay (optional - be respectful to search engines)
+Crawl-delay: 1
+"""
+    
+    response = make_response(robots_content)
+    response.headers['Content-Type'] = 'text/plain'
+    return response
