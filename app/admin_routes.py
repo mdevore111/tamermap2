@@ -640,7 +640,10 @@ def engagement():
 @admin_bp.route('/api/admin/engagement/legend/recent')
 @admin_required
 def api_engagement_legend_recent():
+    days = request.args.get('days', 30, type=int)
     limit = request.args.get('limit', 200, type=int)
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    
     rows = db.session.query(
         LegendClick.created_at,
         LegendClick.session_id,
@@ -650,7 +653,10 @@ def api_engagement_legend_recent():
         LegendClick.zoom,
         LegendClick.center_lat,
         LegendClick.center_lng
+    ).filter(
+        LegendClick.created_at >= cutoff
     ).order_by(LegendClick.created_at.desc()).limit(limit).all()
+    
     data = [
         {
             'created_at': r[0].strftime('%Y-%m-%d %H:%M:%S') if r[0] else '',
@@ -668,6 +674,87 @@ def api_engagement_legend_recent():
         'timezone_info': 'All times shown in UTC (server time)'
     })
 
+@admin_bp.route('/api/admin/engagement/stats')
+@admin_required
+def api_engagement_stats():
+    """AJAX endpoint for engagement statistics."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    
+    try:
+        # Route planner metrics
+        totals_rows = db.session.query(RouteEvent.event, func.count()).filter(
+            RouteEvent.created_at >= cutoff
+        ).group_by(RouteEvent.event).all()
+        totals = {k: v for k, v in totals_rows}
+        
+        sessions_open = db.session.query(func.count(func.distinct(RouteEvent.session_id))).filter(
+            RouteEvent.created_at >= cutoff, 
+            RouteEvent.event == 'open'
+        ).scalar() or 0
+        
+        sessions_go = db.session.query(func.count(func.distinct(RouteEvent.session_id))).filter(
+            RouteEvent.created_at >= cutoff, 
+            RouteEvent.event == 'go'
+        ).scalar() or 0
+        
+        completion_rate = (sessions_go / sessions_open) if sessions_open else 0
+        
+        return jsonify({
+            'success': True,
+            'route_totals': totals,
+            'sessions_open': sessions_open,
+            'sessions_go': sessions_go,
+            'completion_rate': completion_rate
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting engagement stats: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load engagement statistics'
+        }), 500
+
+@admin_bp.route('/api/admin/engagement/legend/chart')
+@admin_required
+def api_engagement_legend_chart():
+    """AJAX endpoint for legend click chart data."""
+    days = request.args.get('days', 30, type=int)
+    if days < 1 or days > 60:
+        days = 30
+    
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    
+    try:
+        # Legend clicks by control (top 10)
+        legend_rows = db.session.query(
+            LegendClick.control_id,
+            func.sum(case((LegendClick.is_pro == True, 1), else_=0)).label('pro'),
+            func.sum(case((LegendClick.is_pro == False, 1), else_=0)).label('non_pro')
+        ).filter(
+            LegendClick.created_at >= cutoff
+        ).group_by(LegendClick.control_id).order_by(func.count().desc()).limit(10).all()
+        
+        legend_data = [
+            {
+                'control_id': cid,
+                'pro': int(pro or 0),
+                'non_pro': int(non_pro or 0)
+            } for cid, pro, non_pro in legend_rows
+        ]
+        
+        return jsonify({
+            'success': True,
+            'data': legend_data
+        })
+    except Exception as e:
+        current_app.logger.error(f"Error getting legend chart data: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to load legend chart data'
+        }), 500
 
 # ---------- Duplicates (place_id) admin UI ----------
 @admin_bp.route('/duplicates/place-id/ui')
