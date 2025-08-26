@@ -1635,3 +1635,185 @@ def get_traffic_by_hour(days=30):
         'days': days,
         'timezone_info': f'Adjusted to Pacific Time ({timezone_name})'
     }
+
+
+def get_traffic_by_day_of_week(days=30):
+    """Return traffic patterns by day of week averaged across the last N days.
+    
+    Args:
+        days (int): Number of days to look back (default: 30, max: 60)
+    
+    Returns:
+        dict: Contains daily data and overall statistics (adjusted to Pacific Time)
+        
+    Note:
+        Automatically detects current Pacific timezone (PST/PDT) and handles
+        daylight saving time transitions. Uses current timezone for all historical
+        data analysis as a reasonable approximation.
+    """
+    if days < 1 or days > 60:
+        days = 30
+    
+    since = datetime.utcnow().date() - timedelta(days=days-1)
+    
+    # Only log if there's an actual issue (not every successful operation)
+    from flask import current_app
+    if current_app.debug and since > datetime.utcnow().date():
+        current_app.logger.warning(f"Invalid date range: since {since} is in the future")
+    
+    # Get admin user IDs to exclude them
+    from app.models import Role
+    admin_user_ids = set()
+    try:
+        admin_users = db.session.query(User.id).join(User.roles).filter(
+            func.lower(text("role.name")) == 'admin'
+        ).all()
+        admin_user_ids = {user.id for user in admin_users}
+    except Exception as e:
+        current_app.logger.warning(f"Could not get admin user IDs: {e}")
+    
+    # Query all visits in the last N days with day of week extraction
+    # Exclude monitor traffic and admin users, but NOT internal traffic
+    query = exclude_monitor_traffic(VisitorLog.query)
+    
+    # Filter out admin users
+    if admin_user_ids:
+        query = query.filter(~VisitorLog.user_id.in_(admin_user_ids))
+    
+    # Convert UTC timestamps to Pacific time for day of week grouping
+    # Pacific time is UTC-8 (PST) or UTC-7 (PDT)
+    # Automatically detect current timezone and handle DST transitions
+    try:
+        from zoneinfo import ZoneInfo
+        pacific_tz = ZoneInfo("America/Los_Angeles")
+        current_pacific = datetime.now(pacific_tz)
+        
+        # Get the current UTC offset (handles DST automatically)
+        if current_pacific.dst():
+            pacific_offset = -7  # PDT (UTC-7)
+            timezone_name = "PDT"
+        else:
+            pacific_offset = -8  # PST (UTC-8)
+            timezone_name = "PST"
+            
+        # Only log timezone issues, not successful detection
+        if current_app.debug and abs(pacific_offset) > 12:
+            current_app.logger.warning(f"Unexpected timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
+        
+    except ImportError:
+        # Fallback for older Python versions - use pytz
+        try:
+            import pytz
+            pacific_tz = pytz.timezone("America/Los_Angeles")
+            current_pacific = datetime.now(pacific_tz)
+            
+            # Get the current UTC offset
+            utc_offset = current_pacific.utcoffset().total_seconds() / 3600
+            pacific_offset = int(utc_offset)
+            
+            if current_pacific.dst():
+                timezone_name = "PDT"
+            else:
+                timezone_name = "PST"
+                
+            # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Unexpected timezone offset (pytz): {timezone_name} (UTC{pacific_offset:+d})")
+            
+        except ImportError:
+            # Final fallback - estimate based on current date
+            current_month = datetime.utcnow().month
+            if 3 <= current_month <= 11:  # March to November (approximate DST period)
+                pacific_offset = -7  # PDT
+                timezone_name = "PDT (estimated)"
+            else:
+                pacific_offset = -8  # PST
+                timezone_name = "PST (estimated)"
+            
+            # Only log timezone issues, not successful detection
+            if current_app.debug and abs(pacific_offset) > 12:
+                current_app.logger.warning(f"Unexpected estimated timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
+    
+    # Query for Pro vs non-Pro traffic by day of week
+    logs = (
+        query
+        .with_entities(
+            # Extract day of week (0=Monday, 6=Sunday in SQLite)
+            func.strftime('%w', VisitorLog.timestamp).label('day_of_week'),
+            VisitorLog.is_pro,
+            func.count(VisitorLog.id).label('count')
+        )
+        .filter(VisitorLog.timestamp >= since)
+        .group_by(func.strftime('%w', VisitorLog.timestamp), VisitorLog.is_pro)
+        .order_by(func.strftime('%w', VisitorLog.timestamp), VisitorLog.is_pro)
+        .all()
+    )
+    
+    # Only log if there's an actual issue (not every successful operation)
+    if current_app.debug and len(logs) == 0:
+        current_app.logger.warning(f"No daily traffic records found for period since {since}")
+    
+    # Initialize daily buckets (0-6) with Pro and non-Pro counts
+    daily_data = {
+        day: {'pro': 0, 'non_pro': 0, 'total': 0} 
+        for day in range(7)
+    }
+    
+    # Count visits by day of week and Pro status
+    for log in logs:
+        day_of_week = int(log.day_of_week)
+        is_pro = bool(log.is_pro)
+        count = int(log.count)
+        
+        if is_pro:
+            daily_data[day_of_week]['pro'] += count
+        else:
+            daily_data[day_of_week]['non_pro'] += count
+        
+        daily_data[day_of_week]['total'] += count
+    
+    # Calculate total visits across all days
+    total_visits = sum(day['total'] for day in daily_data.values())
+    total_pro_visits = sum(day['pro'] for day in daily_data.values())
+    total_non_pro_visits = sum(day['non_pro'] for day in daily_data.values())
+    
+    # Calculate average visits per day across the entire time period
+    avg_visits_per_day = round(total_visits / 7, 2) if total_visits > 0 else 0
+    avg_pro_visits_per_day = round(total_pro_visits / 7, 2) if total_pro_visits > 0 else 0
+    avg_non_pro_visits_per_day = round(total_non_pro_visits / 7, 2) if total_non_pro_visits > 0 else 0
+    
+    # Convert to list with proper day names
+    day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    result = []
+    
+    for day_num in range(7):
+        day_data = daily_data[day_num]
+        
+        # Calculate averages per day for this day of week
+        avg_visits_for_day = round(day_data['total'] / days, 2)
+        avg_pro_for_day = round(day_data['pro'] / days, 2)
+        avg_non_pro_for_day = round(day_data['non_pro'] / days, 2)
+        
+        result.append({
+            'day_num': day_num,
+            'day_name': day_names[day_num],
+            'day_short': day_names[day_num][:3],
+            'pro_visits': day_data['pro'],
+            'non_pro_visits': day_data['non_pro'],
+            'total_visits': day_data['total'],
+            'avg_visits_per_day': avg_visits_for_day,
+            'avg_pro_per_day': avg_pro_for_day,
+            'avg_non_pro_per_day': avg_non_pro_for_day
+        })
+    
+    return {
+        'daily_data': result,
+        'total_visits': total_visits,
+        'total_pro_visits': total_pro_visits,
+        'total_non_pro_visits': total_non_pro_visits,
+        'avg_visits_per_day': avg_visits_per_day,
+        'avg_pro_visits_per_day': avg_pro_visits_per_day,
+        'avg_non_pro_visits_per_day': avg_non_pro_visits_per_day,
+        'days': days,
+        'timezone_info': f'Adjusted to Pacific Time ({timezone_name})'
+    }

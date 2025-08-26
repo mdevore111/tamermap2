@@ -73,6 +73,28 @@
     <canvas id="hourlyChart" class="w-100" style="height:40vh;"></canvas>
   </div>
 
+  {# Traffic by Day of Week chart #}
+  <div class="dashboard-section my-5">
+    <h3 class="dashboard-header">Traffic by Day of Week (<span id="daily-chart-days">{{ days_filter }}</span> Days)</h3>
+    <small class="text-muted" id="dailyTimezoneInfo">Adjusted to Pacific Time (PST)</small>
+    <div class="row mb-2">
+      <div class="col-md-3">
+        <small class="text-muted">Total Visits: <span id="daily-total-visits">-</span></small>
+      </div>
+      <div class="col-md-3">
+        <small class="text-muted">Pro Users: <span id="daily-pro-visits">-</span></small>
+      </div>
+      <div class="col-md-3">
+        <small class="text-muted">Non-Pro Users: <span id="daily-non-pro-visits">-</span></small>
+      </div>
+      <div class="col-md-3">
+        <small class="text-muted">Avg per Day: <span id="daily-avg-per-day">-</span></small>
+      </div>
+    </div>
+    <hr>
+    <canvas id="dailyChart" class="w-100" style="height:40vh;"></canvas>
+  </div>
+
   {# Referral Code Trends bar chart #}
   <div class="dashboard-section my-5">
     <h3 class="dashboard-header">Top Referral Codes (<span id="ref-chart-days">{{ days_filter }}</span> Days)</h3>
@@ -277,6 +299,66 @@
     }
   });
 
+  // Traffic by Day of Week Chart
+  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+  let dailyChart = new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        { 
+          label: 'Pro Users', 
+          data: [], 
+          backgroundColor: 'rgba(75, 192, 192, 0.7)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        },
+        { 
+          label: 'Non-Pro Users', 
+          data: [], 
+          backgroundColor: 'rgba(255, 159, 64, 0.7)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: { 
+      responsive: true, 
+      scales: { 
+        y: { 
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Total Visits'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Day of Week'
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const dayName = context.label;
+              const visits = context.parsed.y;
+              const datasetLabel = context.dataset.label;
+              return `${dayName} - ${datasetLabel}: ${visits} visits`;
+            }
+          }
+        }
+      }
+    }
+  });
+
   // Referral Code Trends Chart
   const refCtx = document.getElementById('referralCodeChart').getContext('2d');
   let referralCodeChart = new Chart(refCtx, {
@@ -335,6 +417,26 @@
       });
   }
 
+  // Initialize traffic by day of week chart
+  function initializeTrafficByDayOfWeek() {
+    fetch('/admin/api/analytics/traffic-by-day-of-week?days={{ days_filter }}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update chart data
+          dailyChart.data.labels = data.data.map(item => item.day_short);
+          dailyChart.data.datasets[0].data = data.data.map(item => item.pro_visits);
+          dailyChart.data.datasets[1].data = data.data.map(item => item.non_pro_visits);
+          
+          // Update the chart
+          dailyChart.update();
+        }
+      })
+      .catch(error => {
+        console.error('Error loading traffic by day of week:', error);
+      });
+  }
+
   // Analytics slider functionality
   let updateTimeout;
   const daysSlider = document.getElementById('daysSlider');
@@ -368,6 +470,7 @@
       updateTopRefCodes(days),
       updateVisitTrends(days),
       updateTrafficByHour(days),
+      updateTrafficByDayOfWeek(days),
       updateReferralCodeTrends(days)
     ]).finally(() => {
       hideLoadingState();
@@ -567,6 +670,45 @@
       });
   }
 
+  // Update traffic by day of week chart
+  function updateTrafficByDayOfWeek(days) {
+    return fetch(`/admin/api/analytics/traffic-by-day-of-week?days=${days}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const daysSpan = document.getElementById('daily-chart-days');
+          const totalVisitsSpan = document.getElementById('daily-total-visits');
+          const proVisitsSpan = document.getElementById('daily-pro-visits');
+          const nonProVisitsSpan = document.getElementById('daily-non-pro-visits');
+          const avgPerDaySpan = document.getElementById('daily-avg-per-day');
+          
+          // Update timezone info if available
+          if (data.timezone_info) {
+            document.getElementById('dailyTimezoneInfo').textContent = data.timezone_info;
+          }
+          
+          // Update stats display
+          daysSpan.textContent = days;
+          totalVisitsSpan.textContent = data.total_visits || '-';
+          proVisitsSpan.textContent = data.total_pro_visits || '-';
+          nonProVisitsSpan.textContent = data.total_non_pro_visits || '-';
+          avgPerDaySpan.textContent = data.avg_visits_per_day || '-';
+          
+          // Update chart data
+          dailyChart.data.labels = data.data.map(item => item.day_short);
+          dailyChart.data.datasets[0].data = data.data.map(item => item.pro_visits);
+          dailyChart.data.datasets[1].data = data.data.map(item => item.non_pro_visits);
+          
+          // Update the chart
+          dailyChart.update();
+        }
+      })
+      .catch(error => {
+        console.error('Error updating traffic by day of week:', error);
+        showError('Failed to update traffic by day of week data');
+      });
+  }
+
   // Update referral code trends chart
   function updateReferralCodeTrends(days) {
     return fetch(`/admin/api/analytics/referral-code-trends?days=${days}`)
@@ -687,6 +829,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     initializeReferralCodeChart();
     initializeTrafficByHour(); // Initialize traffic by hour on page load
+    initializeTrafficByDayOfWeek(); // Initialize traffic by day of week on page load
   });
   
 
