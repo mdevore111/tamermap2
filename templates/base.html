@@ -163,15 +163,18 @@
               <li class="nav-item">
                 <a class="nav-link text-white" href="{{ url_for('security.login') }}">Login</a>
               </li>
-              <li class="nav-item">
-                <a class="btn btn-try-pro" href="{{ url_for('public.learn') }}">Try Pro</a>
-              </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </nav>
-  </header>
+                           <li class="nav-item">
+               <a class="btn btn-try-pro" href="{{ url_for('public.learn') }}">Try Pro</a>
+             </li>
+             <li class="nav-item">
+               <a class="nav-link text-white" href="{{ url_for('public.how_to') }}">How To</a>
+             </li>
+           {% endif %}
+         </ul>
+       </div>
+     </div>
+   </nav>
+ </header>
 
   <main id="main-content" class="flex-grow-1">
     {% block content %}{% endblock %}
@@ -185,12 +188,13 @@
           © 2025 Tamermap.com
         </div>
         <!-- Right Side: Site Info & Legal Links -->
-        <div class="col-auto text-end text-white">
-          <a class="text-white" href="{{ url_for('public.about') }}">About</a>
-          | <a class="text-white" href="{{ url_for('public.privacy') }}">Privacy</a>
-          | <a class="text-white" href="{{ url_for('public.terms') }}">Terms</a>
-          | <a class="text-white" href="{{ url_for('public.sitemap') }}">Sitemap</a>
-        </div>
+                 <div class="col-auto text-end text-white">
+           <a class="text-white" href="{{ url_for('public.about') }}">About</a>
+           | <a class="text-white" href="{{ url_for('public.how_to') }}">How To</a>
+           | <a class="text-white" href="{{ url_for('public.privacy') }}">Privacy</a>
+           | <a class="text-white" href="{{ url_for('public.terms') }}">Terms</a>
+           | <a class="text-white" href="{{ url_for('public.sitemap') }}">Sitemap</a>
+         </div>
       </div>
     </div>
   </footer>
