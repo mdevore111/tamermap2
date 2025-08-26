@@ -10,14 +10,14 @@
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@tamermap">
-  <meta name="twitter:title" content="{% block title %}TAMERMAP.COM{% endblock %}">
+  <meta name="twitter:title" content="{{ self.title() }}">
   <meta name="twitter:description" content="{% block meta_description %}TamerMap - Your interactive map for finding Pokémon cards at kiosks, retail stores, and indie shops nationwide. Plan your card hunting routes and discover events.{% endblock %}">
   <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='logo.png', _external=True) }}{% endblock %}">
   
   <!-- Open Graph Meta Tags -->
   <meta property="og:site_name" content="TamerMap">
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-  <meta property="og:title" content="{% block title %}TAMERMAP.COM{% endblock %}">
+  <meta property="og:title" content="{{ self.title() }}">
   <meta property="og:description" content="{% block meta_description %}TamerMap - Your interactive map for finding Pokémon cards at kiosks, retail stores, and indie shops nationwide. Plan your card hunting routes and discover events.{% endblock %}">
   <meta property="og:url" content="{{ request.url }}">
   <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='logo.png', _external=True) }}{% endblock %}">
