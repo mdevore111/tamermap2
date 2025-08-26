@@ -238,6 +238,18 @@ def sitemap():
     return render_template("sitemap.html")
 
 
+@public_bp.route("/how-to")
+def how_to():
+    """Render the how-to guides page."""
+    return render_template("how-to.html")
+
+
+@public_bp.route("/card-hunting-tips")
+def card_hunting_tips():
+    """Render the advanced card hunting tips page."""
+    return render_template("card-hunting-tips.html")
+
+
 @public_bp.route("/sitemap.xml")
 def sitemap_xml():
     """Generate dynamic XML sitemap for search engines."""
@@ -256,6 +268,8 @@ def sitemap_xml():
         {'url': '/maps', 'priority': '0.9', 'changefreq': 'daily'},
         {'url': '/learn', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/play', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/how-to', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/card-hunting-tips', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/about', 'priority': '0.7', 'changefreq': 'monthly'},
         {'url': '/sitemap', 'priority': '0.5', 'changefreq': 'monthly'},
     ]
@@ -365,6 +379,8 @@ Allow: /
 Allow: /maps
 Allow: /learn
 Allow: /play
+Allow: /how-to
+Allow: /card-hunting-tips
 Allow: /about
 Allow: /sitemap
 
