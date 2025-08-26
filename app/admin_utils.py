@@ -1475,17 +1475,20 @@ def get_traffic_by_hour(days=30):
         days (int): Number of days to look back (default: 30, max: 60)
     
     Returns:
-        dict: Contains hourly data and overall average (adjusted to Pacific Time)
+        dict: Contains hourly data and overall statistics (adjusted to Pacific Time)
         
     Note:
         Automatically detects current Pacific timezone (PST/PDT) and handles
         daylight saving time transitions. Uses current timezone for all historical
         data analysis as a reasonable approximation.
     """
+    print(f"🔍 DEBUG: get_traffic_by_hour called with days={days}")
+    
     if days < 1 or days > 60:
         days = 30
     
     since = datetime.utcnow().date() - timedelta(days=days-1)
+    print(f"🔍 DEBUG: Looking back since {since}")
     
     # Only log if there's an actual issue (not every successful operation)
     from flask import current_app
@@ -1500,8 +1503,10 @@ def get_traffic_by_hour(days=30):
             func.lower(text("role.name")) == 'admin'
         ).all()
         admin_user_ids = {user.id for user in admin_users}
+        print(f"🔍 DEBUG: Found {len(admin_user_ids)} admin users to exclude")
     except Exception as e:
         current_app.logger.warning(f"Could not get admin user IDs: {e}")
+        print(f"🔍 DEBUG: Error getting admin user IDs: {e}")
     
     # Query all visits in the last N days with hour extraction
     # Exclude monitor traffic and admin users, but NOT internal traffic
@@ -1511,6 +1516,8 @@ def get_traffic_by_hour(days=30):
     # Filter out admin users
     if admin_user_ids:
         query = query.filter(~VisitorLog.user_id.in_(admin_user_ids))
+    
+    print(f"🔍 DEBUG: About to execute hourly query for days since {since}")
     
     # Convert UTC timestamps to Pacific time for hour grouping
     # Pacific time is UTC-8 (PST) or UTC-7 (PDT)
@@ -1584,6 +1591,8 @@ def get_traffic_by_hour(days=30):
         .all()
     )
     
+    print(f"🔍 DEBUG: Hourly query returned {len(logs)} grouped records")
+    
     # Only log if there's an actual issue (not every successful operation)
     if current_app.debug and len(logs) == 0:
         current_app.logger.warning(f"No hourly traffic records found for period since {since}")
@@ -1600,20 +1609,28 @@ def get_traffic_by_hour(days=30):
         is_pro = bool(log.is_pro)
         count = int(log.count)
         
+        print(f"🔍 DEBUG: Processing hour {utc_hour}, is_pro={is_pro}, count={count}")
+        
         # Convert to Pacific time: (UTC_hour + offset) % 24
         pacific_hour = (utc_hour + pacific_offset) % 24
         
         if is_pro:
             hourly_data[pacific_hour]['pro'] += count
+            print(f"🔍 DEBUG: Added {count} Pro visits to hour {pacific_hour}")
         else:
             hourly_data[pacific_hour]['non_pro'] += count
+            print(f"🔍 DEBUG: Added {count} non-Pro visits to hour {pacific_hour}")
         
         hourly_data[pacific_hour]['total'] += count
+    
+    print(f"🔍 DEBUG: Final hourly_data: {hourly_data}")
     
     # Calculate total visits across all hours
     total_visits = sum(day['total'] for day in hourly_data.values())
     total_pro_visits = sum(day['pro'] for day in hourly_data.values())
     total_non_pro_visits = sum(day['non_pro'] for day in hourly_data.values())
+    
+    print(f"🔍 DEBUG: Hourly totals - visits: {total_visits}, pro: {total_pro_visits}, non-pro: {total_non_pro_visits}")
     
     # Calculate average visits per hour across the entire time period
     # This is the baseline: total visits / (24 hours × number of days)
@@ -1651,6 +1668,8 @@ def get_traffic_by_hour(days=30):
             'avg_non_pro_per_day': avg_non_pro_per_day
         })
     
+    print(f"🔍 DEBUG: Returning hourly result with {len(result)} hours")
+    
     return {
         'hourly_data': result,
         'total_visits': total_visits,
@@ -1660,7 +1679,6 @@ def get_traffic_by_hour(days=30):
         'days': days,
         'timezone_info': f'Adjusted to Pacific Time ({timezone_name})'
     }
-
 
 def get_traffic_by_day_of_week(days=30):
     """Return traffic patterns by day of week averaged across the last N days.
@@ -1676,10 +1694,13 @@ def get_traffic_by_day_of_week(days=30):
         daylight saving time transitions. Uses current timezone for all historical
         data analysis as a reasonable approximation.
     """
+    print(f"🔍 DEBUG: get_traffic_by_day_of_week called with days={days}")
+    
     if days < 1 or days > 60:
         days = 30
     
     since = datetime.utcnow().date() - timedelta(days=days-1)
+    print(f"🔍 DEBUG: Looking back since {since}")
     
     # Only log if there's an actual issue (not every successful operation)
     from flask import current_app
@@ -1694,8 +1715,10 @@ def get_traffic_by_day_of_week(days=30):
             func.lower(text("role.name")) == 'admin'
         ).all()
         admin_user_ids = {user.id for user in admin_users}
+        print(f"🔍 DEBUG: Found {len(admin_user_ids)} admin users to exclude")
     except Exception as e:
         current_app.logger.warning(f"Could not get admin user IDs: {e}")
+        print(f"🔍 DEBUG: Error getting admin user IDs: {e}")
     
     # Query all visits in the last N days with day of week extraction
     # Exclude monitor traffic and admin users, but NOT internal traffic
@@ -1704,6 +1727,8 @@ def get_traffic_by_day_of_week(days=30):
     # Filter out admin users
     if admin_user_ids:
         query = query.filter(~VisitorLog.user_id.in_(admin_user_ids))
+    
+    print(f"🔍 DEBUG: About to execute query for days since {since}")
     
     # Convert UTC timestamps to Pacific time for day of week grouping
     # Pacific time is UTC-8 (PST) or UTC-7 (PDT)
@@ -1774,6 +1799,8 @@ def get_traffic_by_day_of_week(days=30):
         .all()
     )
     
+    print(f"🔍 DEBUG: Query returned {len(logs)} grouped records")
+    
     # Only log if there's an actual issue (not every successful operation)
     if current_app.debug and len(logs) == 0:
         current_app.logger.warning(f"No daily traffic records found for period since {since}")
@@ -1790,17 +1817,25 @@ def get_traffic_by_day_of_week(days=30):
         is_pro = bool(log.is_pro)
         count = int(log.count)
         
+        print(f"🔍 DEBUG: Processing day {day_of_week}, is_pro={is_pro}, count={count}")
+        
         if is_pro:
             daily_data[day_of_week]['pro'] += count
+            print(f"🔍 DEBUG: Added {count} Pro visits to day {day_of_week}")
         else:
             daily_data[day_of_week]['non_pro'] += count
+            print(f"🔍 DEBUG: Added {count} non-Pro visits to day {day_of_week}")
         
         daily_data[day_of_week]['total'] += count
+    
+    print(f"🔍 DEBUG: Final daily_data: {daily_data}")
     
     # Calculate total visits across all days
     total_visits = sum(day['total'] for day in daily_data.values())
     total_pro_visits = sum(day['pro'] for day in daily_data.values())
     total_non_pro_visits = sum(day['non_pro'] for day in daily_data.values())
+    
+    print(f"🔍 DEBUG: Totals - visits: {total_visits}, pro: {total_pro_visits}, non-pro: {total_non_pro_visits}")
     
     # Calculate average visits per day across the entire time period
     avg_visits_per_day = round(total_visits / 7, 2) if total_visits > 0 else 0
@@ -1830,6 +1865,8 @@ def get_traffic_by_day_of_week(days=30):
             'avg_pro_per_day': avg_pro_for_day,
             'avg_non_pro_per_day': avg_non_pro_for_day
         })
+    
+    print(f"🔍 DEBUG: Returning result with {len(result)} days")
     
     return {
         'daily_data': result,
