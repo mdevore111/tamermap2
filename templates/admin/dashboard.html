@@ -59,14 +59,17 @@
     <h3 class="dashboard-header">Traffic by Hour (<span id="hourly-chart-days">{{ days_filter }}</span> Days)</h3>
     <small class="text-muted" id="timezoneInfo">Adjusted to Pacific Time (PST)</small>
     <div class="row mb-2">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <small class="text-muted">Total Visits: <span id="hourly-total-visits">-</span></small>
       </div>
-      <div class="col-md-4">
-        <small class="text-muted">Avg per Hour: <span id="hourly-avg-per-hour">-</span></small>
+      <div class="col-md-3">
+        <small class="text-muted">Pro Users: <span id="hourly-pro-visits">-</span></small>
       </div>
-      <div class="col-md-4">
-        <small class="text-muted">Avg per Day: <span id="hourly-avg-per-day">-</span></small>
+      <div class="col-md-3">
+        <small class="text-muted">Non-Pro Users: <span id="hourly-non-pro-visits">-</span></small>
+      </div>
+      <div class="col-md-3">
+        <small class="text-muted">Avg per Hour: <span id="hourly-avg-per-hour">-</span></small>
       </div>
     </div>
     <hr>
@@ -240,24 +243,18 @@
       labels: [],
       datasets: [
         { 
-          label: 'Average Visits per Day', 
+          label: 'Pro Users', 
           data: [], 
-          backgroundColor: 'rgba(153, 102, 255, 0.7)',
-          borderColor: 'rgba(153, 102, 255, 1)',
+          backgroundColor: 'rgba(75, 192, 192, 0.7)',
+          borderColor: 'rgba(75, 192, 192, 1)',
           borderWidth: 1
         },
-        {
-          label: 'Overall Average per Hour',
-          data: [],
-          type: 'line',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderWidth: 2,
-          fill: false,
-          tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-          borderDash: [5, 5]
+        { 
+          label: 'Non-Pro Users', 
+          data: [], 
+          backgroundColor: 'rgba(255, 159, 64, 0.7)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1
         }
       ]
     },
@@ -268,7 +265,7 @@
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Average Visits per Day'
+            text: 'Total Visits'
           }
         },
         x: {
@@ -287,11 +284,10 @@
         tooltip: {
           callbacks: {
             label: function(context) {
-              if (context.datasetIndex === 0) {
-                return `Hour ${context.label}: ${context.parsed.y} avg visits/day`;
-              } else {
-                return `Overall average: ${context.parsed.y} visits/hour`;
-              }
+              const hourName = context.label;
+              const visits = context.parsed.y;
+              const datasetLabel = context.dataset.label;
+              return `${hourName} - ${datasetLabel}: ${visits} visits`;
             }
           }
         }
@@ -402,11 +398,8 @@
         if (data.success) {
           // Update chart data
           hourlyChart.data.labels = data.data.map(item => item.hour_display);
-          hourlyChart.data.datasets[0].data = data.data.map(item => item.avg_visits_per_day);
-          
-          // Add average line across all hours
-          const avgLine = new Array(24).fill(data.avg_visits_per_hour);
-          hourlyChart.data.datasets[1].data = avgLine;
+          hourlyChart.data.datasets[0].data = data.data.map(item => item.pro_visits);
+          hourlyChart.data.datasets[1].data = data.data.map(item => item.non_pro_visits);
           
           // Update the chart
           hourlyChart.update();
@@ -635,8 +628,9 @@
         if (data.success) {
           const daysSpan = document.getElementById('hourly-chart-days');
           const totalVisitsSpan = document.getElementById('hourly-total-visits');
+          const proVisitsSpan = document.getElementById('hourly-pro-visits');
+          const nonProVisitsSpan = document.getElementById('hourly-non-pro-visits');
           const avgPerHourSpan = document.getElementById('hourly-avg-per-hour');
-          const avgPerDaySpan = document.getElementById('hourly-avg-per-day');
           
           // Update timezone info if available
           if (data.timezone_info) {
@@ -646,19 +640,14 @@
           // Update days display
           daysSpan.textContent = days;
           totalVisitsSpan.textContent = data.total_visits || '-';
+          proVisitsSpan.textContent = data.total_pro_visits || '-';
+          nonProVisitsSpan.textContent = data.total_non_pro_visits || '-';
           avgPerHourSpan.textContent = data.avg_visits_per_hour || '-';
-          
-          // Calculate average visits per day
-          const avgPerDay = data.total_visits ? (data.total_visits / days).toFixed(1) : '-';
-          avgPerDaySpan.textContent = avgPerDay;
           
           // Update chart data
           hourlyChart.data.labels = data.data.map(item => item.hour_display);
-          hourlyChart.data.datasets[0].data = data.data.map(item => item.avg_visits_per_day);
-          
-          // Add average line across all hours
-          const avgLine = new Array(24).fill(data.avg_visits_per_hour);
-          hourlyChart.data.datasets[1].data = avgLine;
+          hourlyChart.data.datasets[0].data = data.data.map(item => item.pro_visits);
+          hourlyChart.data.datasets[1].data = data.data.map(item => item.non_pro_visits);
           
           // Update the chart
           hourlyChart.update();

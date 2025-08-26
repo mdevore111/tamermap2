@@ -1575,11 +1575,12 @@ def get_traffic_by_hour(days=30):
         .with_entities(
             # Convert UTC hour to Pacific hour: (UTC_hour + offset) % 24
             func.extract('hour', VisitorLog.timestamp).label('utc_hour'),
+            VisitorLog.is_pro,
             func.count(VisitorLog.id).label('count')
         )
         .filter(VisitorLog.timestamp >= since)
-        .group_by(func.extract('hour', VisitorLog.timestamp))
-        .order_by(func.extract('hour', VisitorLog.timestamp))
+        .group_by(func.extract('hour', VisitorLog.timestamp), VisitorLog.is_pro)
+        .order_by(func.extract('hour', VisitorLog.timestamp), VisitorLog.is_pro)
         .all()
     )
     
@@ -1587,18 +1588,32 @@ def get_traffic_by_hour(days=30):
     if current_app.debug and len(logs) == 0:
         current_app.logger.warning(f"No hourly traffic records found for period since {since}")
     
-    # Initialize hourly buckets (0-23) with 0 visits
-    hourly_data = {hour: 0 for hour in range(24)}
+    # Initialize hourly buckets (0-23) with Pro and non-Pro counts
+    hourly_data = {
+        hour: {'pro': 0, 'non_pro': 0, 'total': 0} 
+        for hour in range(24)
+    }
     
-    # Count visits by hour, converting UTC to Pacific time
+    # Count visits by hour and Pro status, converting UTC to Pacific time
     for log in logs:
         utc_hour = int(log.utc_hour)
+        is_pro = bool(log.is_pro)
+        count = int(log.count)
+        
         # Convert to Pacific time: (UTC_hour + offset) % 24
         pacific_hour = (utc_hour + pacific_offset) % 24
-        hourly_data[pacific_hour] += log.count
+        
+        if is_pro:
+            hourly_data[pacific_hour]['pro'] += count
+        else:
+            hourly_data[pacific_hour]['non_pro'] += count
+        
+        hourly_data[pacific_hour]['total'] += count
     
     # Calculate total visits across all hours
-    total_visits = sum(hourly_data.values())
+    total_visits = sum(day['total'] for day in hourly_data.values())
+    total_pro_visits = sum(day['pro'] for day in hourly_data.values())
+    total_non_pro_visits = sum(day['non_pro'] for day in hourly_data.values())
     
     # Calculate average visits per hour across the entire time period
     # This is the baseline: total visits / (24 hours × number of days)
@@ -1608,8 +1623,12 @@ def get_traffic_by_hour(days=30):
     # Convert to list and calculate daily averages
     result = []
     for hour in range(24):
+        hour_data = hourly_data[hour]
+        
         # Calculate average visits per day for this hour
-        avg_visits_per_day = round(hourly_data[hour] / days, 2)
+        avg_visits_per_day = round(hour_data['total'] / days, 2)
+        avg_pro_per_day = round(hour_data['pro'] / days, 2)
+        avg_non_pro_per_day = round(hour_data['non_pro'] / days, 2)
         
         # Format hour for display (12-hour format with AM/PM)
         if hour == 0:
@@ -1624,13 +1643,19 @@ def get_traffic_by_hour(days=30):
         result.append({
             'hour': hour,
             'hour_display': hour_display,
-            'total_visits': hourly_data[hour],
-            'avg_visits_per_day': avg_visits_per_day
+            'pro_visits': hour_data['pro'],
+            'non_pro_visits': hour_data['non_pro'],
+            'total_visits': hour_data['total'],
+            'avg_visits_per_day': avg_visits_per_day,
+            'avg_pro_per_day': avg_pro_per_day,
+            'avg_non_pro_per_day': avg_non_pro_per_day
         })
     
     return {
         'hourly_data': result,
         'total_visits': total_visits,
+        'total_pro_visits': total_pro_visits,
+        'total_non_pro_visits': total_non_pro_visits,
         'avg_visits_per_hour': avg_visits_per_hour,
         'days': days,
         'timezone_info': f'Adjusted to Pacific Time ({timezone_name})'

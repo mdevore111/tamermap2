@@ -444,6 +444,8 @@ def api_traffic_by_hour():
             'success': True,
             'data': result['hourly_data'],
             'total_visits': result['total_visits'],
+            'total_pro_visits': result['total_pro_visits'],
+            'total_non_pro_visits': result['total_non_pro_visits'],
             'avg_visits_per_hour': result['avg_visits_per_hour'],
             'days': result['days']
         })

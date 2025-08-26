@@ -418,9 +418,20 @@ def create_app(config_class=BaseConfig):
                         user = User.query.get(user_id)
                         if user and user.is_pro:
                             is_pro = True
-                    except Exception:
+                            print(f"🔍 DEBUG: User {user_id} is Pro (from database)")
+                        else:
+                            print(f"🔍 DEBUG: User {user_id} is NOT Pro (from database)")
+                    except Exception as e:
+                        print(f"🔍 DEBUG: Error looking up user {user_id}: {e}")
                         # Fall back to session if database lookup fails
                         is_pro = bool(session.get('is_pro'))
+                
+                # Fall back to session if database lookup fails
+                if not is_pro:
+                    is_pro = bool(session.get('is_pro'))
+                    print(f"🔍 DEBUG: Fallback to session: is_pro = {is_pro}")
+                
+                print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
                 # Create visitor log entry with proper internal flags and session tracking
                 log = VisitorLog(**{
@@ -595,3 +606,4 @@ def create_app(config_class=BaseConfig):
         return response
 
     return app
+
