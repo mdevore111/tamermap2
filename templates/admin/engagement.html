@@ -4,8 +4,22 @@
 {% block body %}
 <div class="container-fluid">
   <h2 class="mt-3">Engagement Analytics</h2>
-  <p class="text-muted">Last {{ days }} days</p>
-  <p class="text-muted"><small>Note: All timestamps shown in UTC (server time)</small></p>
+  
+  {# Timeline Slider #}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="form-group mb-0 d-flex align-items-center">
+      <label for="daysSlider" class="form-label me-2">Time Period:</label>
+      <div class="d-flex align-items-center" style="min-width: 200px;">
+        <input type="range" id="daysSlider" class="form-range me-2" min="1" max="60" value="{{ days }}" style="flex: 1;">
+        <span id="daysDisplay" class="badge bg-primary">{{ days }} days</span>
+      </div>
+    </div>
+    <div>
+      <small class="text-muted" id="timezoneInfo">All times shown in UTC (server time)</small>
+    </div>
+  </div>
+  
+  <p class="text-muted">Last <span id="days-display">{{ days }}</span> days</p>
 
   <div class="row g-3">
     <div class="col-md-3">
@@ -128,6 +142,134 @@ fetch('/admin/api/admin/engagement/legend/recent')
       tbody.appendChild(tr);
     });
   });
+
+// Timeline slider functionality
+let updateTimeout;
+const daysSlider = document.getElementById('daysSlider');
+const daysDisplay = document.getElementById('daysDisplay');
+const daysDisplayText = document.getElementById('days-display');
+
+// Update display when slider changes
+daysSlider.addEventListener('input', function() {
+  const days = this.value;
+  daysDisplay.textContent = days + ' days';
+  daysDisplayText.textContent = days;
+  
+  // Clear previous timeout
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
+  
+  // Debounce the AJAX calls (wait 500ms after user stops sliding)
+  updateTimeout = setTimeout(() => {
+    updateEngagementData(days);
+  }, 500);
+});
+
+// Function to update all engagement data
+function updateEngagementData(days) {
+  // Show loading state
+  showLoadingState();
+  
+  // Update all engagement sections
+  Promise.all([
+    updateEngagementStats(days),
+    updateLegendChart(days),
+    updateRecentLegendClicks(days)
+  ]).finally(() => {
+    hideLoadingState();
+  });
+}
+
+// Update engagement statistics
+function updateEngagementStats(days) {
+  return fetch(`/admin/api/admin/engagement/stats?days=${days}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Update the stats cards
+        document.querySelector('.card:nth-child(1) .h4').textContent = data.sessions_open || '-';
+        document.querySelector('.card:nth-child(2) .h4').textContent = data.sessions_go || '-';
+        document.querySelector('.card:nth-child(3) .h4').textContent = 
+          data.completion_rate ? (data.completion_rate * 100).toFixed(1) + '%' : '-';
+        
+        const routeTotals = data.route_totals || {};
+        document.querySelector('.card:nth-child(4) .small').textContent = 
+          `open: ${routeTotals.open || 0}, preview: ${routeTotals.preview || 0}, go: ${routeTotals.go || 0}`;
+      }
+    })
+    .catch(error => {
+      console.error('Error updating engagement stats:', error);
+    });
+}
+
+// Update legend chart
+function updateLegendChart(days) {
+  return fetch(`/admin/api/admin/engagement/legend/chart?days=${days}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Update the chart data
+        const chart = Chart.getChart('legendBar');
+        if (chart) {
+          chart.data.labels = data.data.map(r => r.control_id);
+          chart.data.datasets[0].data = data.data.map(r => r.pro);
+          chart.data.datasets[1].data = data.data.map(r => r.non_pro);
+          chart.update();
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error updating legend chart:', error);
+    });
+}
+
+// Update recent legend clicks
+function updateRecentLegendClicks(days) {
+  return fetch(`/admin/api/admin/engagement/legend/recent?days=${days}`)
+    .then(response => response.json())
+    .then(resp => {
+      // Update timezone info if available
+      if (resp.timezone_info) {
+        document.getElementById('legendTimezoneInfo').textContent = resp.timezone_info;
+      }
+      
+      const tbody = document.querySelector('#recentLegendTable tbody');
+      tbody.innerHTML = '';
+      (resp.data || []).forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.created_at || ''}</td>
+          <td><code>${row.session_id || ''}</code></td>
+          <td>${row.is_pro ? 'Yes' : 'No'}</td>
+          <td>${row.control_id || ''}</td>
+          <td>${row.path || ''}</td>
+          <td>${row.zoom ?? ''}</td>
+          <td>${(row.center_lat ?? '')}${row.center_lat != null ? ',' : ''}${row.center_lng ?? ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => {
+      console.error('Error updating recent legend clicks:', error);
+    });
+}
+
+// Show loading state
+function showLoadingState() {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.style.opacity = '0.6';
+  });
+}
+
+// Hide loading state
+function hideLoadingState() {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.style.opacity = '1';
+  });
+}
 </script>
 {% endblock %}
 
