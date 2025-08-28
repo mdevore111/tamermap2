@@ -40,6 +40,41 @@
             </div>
         </div>
     </div>
+
+    <!-- IP Summary Chart -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <div>
+                <span data-bs-toggle="tooltip" title="Summary of visitor requests grouped by IP address, showing location and request count">IP Address Summary (Last <span id="ip-summary-days">30</span> Days)</span>
+                <small class="text-muted d-block">Grouped by IP address with location and request count</small>
+            </div>
+            <div class="d-flex align-items-center border rounded p-2">
+                <label for="ipSummaryDaysSlider" class="form-label me-2 mb-0">Time Period:</label>
+                <input type="range" class="form-range" id="ipSummaryDaysSlider" min="1" max="60" value="30" style="width: 150px;">
+                <span class="ms-2 text-muted" id="ipSummaryDaysDisplay" style="min-width: 70px; text-align: right;">30 days</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-sm" id="ip-summary-table">
+                    <thead>
+                        <tr>
+                            <th data-bs-toggle="tooltip" title="Visitor's IP address">IP Address</th>
+                            <th data-bs-toggle="tooltip" title="Total number of requests from this IP">Requests</th>
+                            <th data-bs-toggle="tooltip" title="Visitor's city">City</th>
+                            <th data-bs-toggle="tooltip" title="Visitor's region/state">Region</th>
+                            <th data-bs-toggle="tooltip" title="Visitor's country">Country</th>
+                            <th data-bs-toggle="tooltip" title="Combined location information">Location</th>
+                            <th data-bs-toggle="tooltip" title="When this IP last visited">Last Visit</th>
+                            <th data-bs-toggle="tooltip" title="Time span between first and last visit">Time Span</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 <!-- touch -->
@@ -52,7 +87,9 @@
 <script>
 $(document).ready(function() {
     let visitorsDataTable;
+    let ipSummaryDataTable;
     let visitorsUpdateTimeout;
+    let ipSummaryUpdateTimeout;
     
     // Initialize DataTable
     function initializeVisitorsTable() {
@@ -96,8 +133,47 @@ $(document).ready(function() {
     });
     }
     
-    // Initialize the table
+    // Initialize IP Summary DataTable
+    function initializeIpSummaryTable() {
+        ipSummaryDataTable = $('#ip-summary-table').DataTable({
+            paging: true,
+            searching: true,
+            info: true,
+            order: [[1, 'desc']], // Sort by request count descending (highest first)
+            responsive: true,
+            fixedHeader: false,
+            scrollY: '400px',
+            scrollCollapse: true,
+            lengthMenu: [[25, 50, 100, 250, 500], [25, 50, 100, 250, 500]],
+            pageLength: 25,
+            language: { 
+                lengthMenu: 'Show _MENU_ entries per page'
+            },
+            serverSide: true,
+            processing: true,
+            ajax: {
+                url: '/admin/visitors/data/ip-summary',
+                type: 'GET',
+                data: function(d) {
+                    d.days = $('#ipSummaryDaysSlider').val();
+                }
+            },
+            columns: [
+                { data: 'ip_address' },
+                { data: 'request_count' },
+                { data: 'city' },
+                { data: 'region' },
+                { data: 'country' },
+                { data: 'location' },
+                { data: 'last_visit' },
+                { data: 'time_span' }
+            ]
+        });
+    }
+    
+    // Initialize the tables
     initializeVisitorsTable();
+    initializeIpSummaryTable();
     
     // Handle slider changes
     $('#visitorsDaysSlider').on('input', function() {
@@ -113,6 +189,23 @@ $(document).ready(function() {
         // Debounce the reload (wait 500ms after user stops sliding)
         visitorsUpdateTimeout = setTimeout(() => {
             visitorsDataTable.ajax.reload();
+        }, 500);
+    });
+    
+    // Handle IP Summary slider changes
+    $('#ipSummaryDaysSlider').on('input', function() {
+        const days = this.value;
+        $('#ipSummaryDaysDisplay').text(days + ' days');
+        $('#ip-summary-days').text(days);
+        
+        // Clear previous timeout
+        if (ipSummaryUpdateTimeout) {
+            clearTimeout(ipSummaryUpdateTimeout);
+        }
+        
+        // Debounce the reload (wait 500ms after user stops sliding)
+        ipSummaryUpdateTimeout = setTimeout(() => {
+            ipSummaryDataTable.ajax.reload();
         }, 500);
     });
 
