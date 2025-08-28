@@ -385,6 +385,10 @@ def create_app(config_class=BaseConfig):
             if current_user.is_authenticated and any(r.name == "Admin" for r in getattr(current_user, "roles", [])):
                 return
 
+            # Skip tracking for internal IPs (monitoring, server traffic)
+            if is_internal_ip:
+                return
+
             # Track all visitors (both internal and external) but mark them appropriately
             try:
                 # Get IP geolocation data for external IPs only
