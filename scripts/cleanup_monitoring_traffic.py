@@ -2,7 +2,7 @@
 """
 Cleanup Historical Monitoring Traffic Script
 
-This script removes historical traffic data from monitoring IPs (10.x.x.x network)
+This script removes historical traffic data from monitoring IPs (10.x.x.x network and staging server)
 that was collected before the traffic filtering was implemented.
 
 SAFETY FEATURES:
@@ -25,6 +25,7 @@ BACKUP_PATH = f"instance/tamermap_data_backup_monitoring_cleanup_{datetime.now()
 # Monitoring IP patterns to clean up
 MONITORING_IPS = [
     '10.%',  # All 10.x.x.x addresses
+    '146.190.115.141',  # Staging server monitoring traffic
 ]
 
 def backup_database():
@@ -43,7 +44,7 @@ def get_monitoring_traffic_stats():
     cursor.execute("""
         SELECT COUNT(*) as total_monitoring_visits
         FROM visitor_log 
-        WHERE ip_address LIKE '10.%'
+        WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141'
     """)
     total_monitoring = cursor.fetchone()[0]
     
@@ -51,7 +52,7 @@ def get_monitoring_traffic_stats():
     cursor.execute("""
         SELECT path, COUNT(*) as visits
         FROM visitor_log 
-        WHERE ip_address LIKE '10.%'
+        WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141'
         GROUP BY path 
         ORDER BY visits DESC 
         LIMIT 20
@@ -62,7 +63,7 @@ def get_monitoring_traffic_stats():
     cursor.execute("""
         SELECT DATE(timestamp) as date, COUNT(*) as visits
         FROM visitor_log 
-        WHERE ip_address LIKE '10.%'
+        WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141'
         GROUP BY DATE(timestamp)
         ORDER BY date DESC
         LIMIT 10
@@ -90,7 +91,7 @@ def cleanup_monitoring_traffic():
     cursor = conn.cursor()
     
     # Count what will be deleted
-    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%'")
+    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141'")
     to_delete = cursor.fetchone()[0]
     
     if to_delete == 0:
@@ -101,7 +102,7 @@ def cleanup_monitoring_traffic():
     print(f"📊 Found {to_delete} monitoring traffic entries to remove")
     
     # Delete monitoring traffic
-    cursor.execute("DELETE FROM visitor_log WHERE ip_address LIKE '10.%'")
+    cursor.execute("DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141'")
     deleted_count = cursor.rowcount
     
     conn.commit()
@@ -118,7 +119,7 @@ def verify_cleanup():
     cursor = conn.cursor()
     
     # Check if any monitoring IPs remain
-    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%'")
+    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141'")
     remaining = cursor.fetchone()[0]
     
     # Get new total count
