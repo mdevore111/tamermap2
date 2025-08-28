@@ -2,9 +2,15 @@
 """
 Cleanup Historical Monitoring Traffic Script
 
-This script removes historical traffic data from monitoring IPs (10.x.x.x network, 127.x.x.x localhost range, 
-localhost hostname, staging server) and internal referrers (tamermap.com, bareista.com, server IPs) 
-that was collected before the traffic filtering was implemented.
+This script removes historical traffic data from monitoring IPs including:
+- 10.x.x.x network (private IPs)
+- 127.x.x.x localhost range
+- localhost hostname
+- DigitalOcean server ranges (143.198.x.x, 134.209.x.x, 144.126.x.x)
+- Specific server IPs and staging server
+- Internal referrers (tamermap.com, bareista.com, server IPs)
+
+This covers all traffic that was collected before the comprehensive traffic filtering was implemented.
 
 SAFETY FEATURES:
 - Shows what will be deleted before proceeding
@@ -74,6 +80,7 @@ def get_monitoring_traffic_stats():
         SELECT COUNT(*) as total_monitoring_visits
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost'
+        OR ip_address LIKE '143.198.%' OR ip_address LIKE '134.209.%' OR ip_address LIKE '144.126.%'
         OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' 
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
         OR ip_address = '194.113.66.142' OR ip_address = '27.0.0.1' OR ip_address = '134.209.109.200'
@@ -89,6 +96,7 @@ def get_monitoring_traffic_stats():
         SELECT path, COUNT(*) as visits
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost'
+        OR ip_address LIKE '143.198.%' OR ip_address LIKE '134.209.%' OR ip_address LIKE '144.126.%'
         OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54'
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
         OR ip_address = '194.113.66.142' OR ip_address = '27.0.0.1' OR ip_address = '134.209.109.200'
@@ -107,6 +115,7 @@ def get_monitoring_traffic_stats():
         SELECT DATE(timestamp) as date, COUNT(*) as visits
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost'
+        OR ip_address LIKE '143.198.%' OR ip_address LIKE '134.209.%' OR ip_address LIKE '144.126.%'
         OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54'
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
         OR ip_address = '194.113.66.142' OR ip_address = '27.0.0.1' OR ip_address = '134.209.109.200'
@@ -141,7 +150,7 @@ def cleanup_monitoring_traffic():
     
     # Count what will be deleted (IPs + internal referrers)
     internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
-    cursor.execute(f"SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR {internal_refs_condition}")
+    cursor.execute(f"SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost' OR ip_address LIKE '143.198.%' OR ip_address LIKE '134.209.%' OR ip_address LIKE '144.126.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR ip_address = '27.0.0.1' OR ip_address = '134.209.109.200' OR ip_address = '134.209.20.82' OR ip_address = '134.209.235.25' OR ip_address = '134.209.62.203' OR ip_address = '143.198.179.104' OR ip_address = '143.198.185.164' OR {internal_refs_condition}")
     to_delete = cursor.fetchone()[0]
     
     if to_delete == 0:
@@ -153,7 +162,7 @@ def cleanup_monitoring_traffic():
     
     # Delete monitoring traffic (IPs + internal referrers)
     internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
-    cursor.execute(f"DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR {internal_refs_condition}")
+    cursor.execute(f"DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost' OR ip_address LIKE '143.198.%' OR ip_address LIKE '134.209.%' OR ip_address LIKE '144.126.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR ip_address = '27.0.0.1' OR ip_address = '134.209.109.200' OR ip_address = '134.209.20.82' OR ip_address = '134.209.235.25' OR ip_address = '134.209.62.203' OR ip_address = '143.198.179.104' OR ip_address = '143.198.185.164' OR {internal_refs_condition}")
     deleted_count = cursor.rowcount
     
     conn.commit()
@@ -171,7 +180,7 @@ def verify_cleanup():
     
     # Check if any monitoring IPs remain (IPs + internal referrers)
     internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
-    cursor.execute(f"SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR {internal_refs_condition}")
+    cursor.execute(f"SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address LIKE '127.%' OR ip_address = 'localhost' OR ip_address LIKE '143.198.%' OR ip_address LIKE '134.209.%' OR ip_address LIKE '144.126.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR ip_address = '27.0.0.1' OR ip_address = '134.209.109.200' OR ip_address = '134.209.20.82' OR ip_address = '134.209.235.25' OR ip_address = '134.209.62.203' OR ip_address = '143.198.179.104' OR ip_address = '143.198.185.164' OR {internal_refs_condition}")
     remaining = cursor.fetchone()[0]
     
     # Get new total count
