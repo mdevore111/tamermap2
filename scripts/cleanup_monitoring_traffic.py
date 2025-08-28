@@ -30,6 +30,7 @@ MONITORING_IPS = [
     '50.106.23.189',  # High payment page visits (18)
     '50.47.93.228',   # High payment page visits (15)
     '161.35.232.67',  # High payment page visits (8)
+    '194.113.66.142',  # High payment page visits (6)
 ]
 
 def backup_database():
@@ -50,6 +51,7 @@ def get_monitoring_traffic_stats():
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' 
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
+        OR ip_address = '194.113.66.142'
     """)
     total_monitoring = cursor.fetchone()[0]
     
@@ -59,6 +61,7 @@ def get_monitoring_traffic_stats():
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54'
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
+        OR ip_address = '194.113.66.142'
         GROUP BY path 
         ORDER BY visits DESC 
         LIMIT 20
@@ -71,6 +74,7 @@ def get_monitoring_traffic_stats():
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54'
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
+        OR ip_address = '194.113.66.142'
         GROUP BY DATE(timestamp)
         ORDER BY date DESC
         LIMIT 10
@@ -98,7 +102,7 @@ def cleanup_monitoring_traffic():
     cursor = conn.cursor()
     
     # Count what will be deleted
-    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'")
+    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142'")
     to_delete = cursor.fetchone()[0]
     
     if to_delete == 0:
@@ -109,7 +113,7 @@ def cleanup_monitoring_traffic():
     print(f"📊 Found {to_delete} monitoring traffic entries to remove")
     
     # Delete monitoring traffic
-    cursor.execute("DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'")
+    cursor.execute("DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142'")
     deleted_count = cursor.rowcount
     
     conn.commit()
@@ -126,7 +130,7 @@ def verify_cleanup():
     cursor = conn.cursor()
     
     # Check if any monitoring IPs remain
-    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'")
+    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142'")
     remaining = cursor.fetchone()[0]
     
     # Get new total count
