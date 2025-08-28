@@ -3,7 +3,8 @@
 Cleanup Historical Monitoring Traffic Script
 
 This script removes historical traffic data from monitoring IPs (10.x.x.x network and staging server)
-that was collected before the traffic filtering was implemented.
+and internal referrers (tamermap.com, bareista.com, server IPs) that was collected before 
+the traffic filtering was implemented.
 
 SAFETY FEATURES:
 - Shows what will be deleted before proceeding
@@ -33,6 +34,16 @@ MONITORING_IPS = [
     '194.113.66.142',  # High payment page visits (6)
 ]
 
+# Internal referrer patterns to clean up (these should not be logged)
+INTERNAL_REFERRERS = [
+    'tamermap.com',
+    'www.tamermap.com', 
+    'bareista.com',
+    'www.bareista.com',
+    '137.184.244.37',
+    '144.126.210.185'
+]
+
 def backup_database():
     """Create a backup before making changes"""
     print(f"🔒 Creating backup: {BACKUP_PATH}")
@@ -45,36 +56,42 @@ def get_monitoring_traffic_stats():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Get total monitoring traffic count
-    cursor.execute("""
+    # Get total monitoring traffic count (IPs + internal referrers)
+    internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
+    cursor.execute(f"""
         SELECT COUNT(*) as total_monitoring_visits
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' 
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
         OR ip_address = '194.113.66.142'
+        OR {internal_refs_condition}
     """)
     total_monitoring = cursor.fetchone()[0]
     
-    # Get monitoring traffic by path
-    cursor.execute("""
+    # Get monitoring traffic by path (IPs + internal referrers)
+    internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
+    cursor.execute(f"""
         SELECT path, COUNT(*) as visits
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54'
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
         OR ip_address = '194.113.66.142'
+        OR {internal_refs_condition}
         GROUP BY path 
         ORDER BY visits DESC 
         LIMIT 20
     """)
     monitoring_by_path = cursor.fetchall()
     
-    # Get monitoring traffic by date
-    cursor.execute("""
+    # Get monitoring traffic by date (IPs + internal referrers)
+    internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
+    cursor.execute(f"""
         SELECT DATE(timestamp) as date, COUNT(*) as visits
         FROM visitor_log 
         WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54'
         OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67'
         OR ip_address = '194.113.66.142'
+        OR {internal_refs_condition}
         GROUP BY DATE(timestamp)
         ORDER BY date DESC
         LIMIT 10
@@ -101,8 +118,9 @@ def cleanup_monitoring_traffic():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Count what will be deleted
-    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142'")
+    # Count what will be deleted (IPs + internal referrers)
+    internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
+    cursor.execute(f"SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR {internal_refs_condition}")
     to_delete = cursor.fetchone()[0]
     
     if to_delete == 0:
@@ -112,8 +130,9 @@ def cleanup_monitoring_traffic():
     
     print(f"📊 Found {to_delete} monitoring traffic entries to remove")
     
-    # Delete monitoring traffic
-    cursor.execute("DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142'")
+    # Delete monitoring traffic (IPs + internal referrers)
+    internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
+    cursor.execute(f"DELETE FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR {internal_refs_condition}")
     deleted_count = cursor.rowcount
     
     conn.commit()
@@ -129,8 +148,9 @@ def verify_cleanup():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Check if any monitoring IPs remain
-    cursor.execute("SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142'")
+    # Check if any monitoring IPs remain (IPs + internal referrers)
+    internal_refs_condition = " OR ".join([f"referrer LIKE '%{ref}%'" for ref in INTERNAL_REFERRERS])
+    cursor.execute(f"SELECT COUNT(*) FROM visitor_log WHERE ip_address LIKE '10.%' OR ip_address = '146.190.115.141' OR ip_address = '64.23.146.54' OR ip_address = '50.106.23.189' OR ip_address = '50.47.93.228' OR ip_address = '161.35.232.67' OR ip_address = '194.113.66.142' OR {internal_refs_condition}")
     remaining = cursor.fetchone()[0]
     
     # Get new total count
