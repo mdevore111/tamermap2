@@ -2604,6 +2604,122 @@ def visitors_codes_data():
         'data': data
     })
 
+@admin_bp.route('/visitors/data/ip-summary')
+@admin_required
+@rate_limit_data_tables(max_requests=20, window_seconds=60)
+def visitors_ip_summary_data():
+    """Return visitor IP summary data in DataTables format"""
+    draw = request.args.get('draw', type=int)
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    search_value = request.args.get('search[value]', '')
+    days = request.args.get('days', 30, type=int)
+    
+    # Validate days parameter
+    if days < 1 or days > 60:
+        days = 30
+    
+    # Build the query for IP summary
+    from .admin_utils import exclude_monitor_traffic
+    base_query = exclude_monitor_traffic(VisitorLog.query)
+    
+    # Apply days filter
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    base_query = base_query.filter(VisitorLog.timestamp >= cutoff_date)
+    
+    # Group by IP address and get summary data
+    query = db.session.query(
+        VisitorLog.ip_address,
+        func.count(VisitorLog.id).label('request_count'),
+        func.max(VisitorLog.city).label('city'),
+        func.max(VisitorLog.region).label('region'),
+        func.max(VisitorLog.country).label('country'),
+        func.max(VisitorLog.timestamp).label('last_visit'),
+        func.min(VisitorLog.timestamp).label('first_visit')
+    ).filter(
+        VisitorLog.timestamp >= cutoff_date
+    ).group_by(VisitorLog.ip_address)
+    
+    # Apply search filter if provided
+    if search_value:
+        search = f"%{search_value}%"
+        query = query.filter(
+            (VisitorLog.ip_address.ilike(search)) |
+            (VisitorLog.city.ilike(search)) |
+            (VisitorLog.region.ilike(search)) |
+            (VisitorLog.country.ilike(search))
+        )
+    
+    # Handle sorting
+    order_column = request.args.get('order[0][column]', type=int)
+    order_dir = request.args.get('order[0][dir]', 'desc')
+    
+    # Define column mapping for sorting
+    column_map = {
+        0: VisitorLog.ip_address,
+        1: func.count(VisitorLog.id),
+        2: func.max(VisitorLog.city),
+        3: func.max(VisitorLog.region),
+        4: func.max(VisitorLog.country),
+        5: func.max(VisitorLog.timestamp)
+    }
+    
+    if order_column is not None and order_column in column_map:
+        sort_column = column_map[order_column]
+        if order_dir == 'desc':
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
+    else:
+        # Default sorting by request count descending
+        query = query.order_by(func.count(VisitorLog.id).desc())
+    
+    total_records = query.count()
+    ip_summaries = query.offset(start).limit(length).all()
+    
+    data = []
+    for summary in ip_summaries:
+        # Format location
+        location_parts = []
+        if summary.city:
+            location_parts.append(summary.city)
+        if summary.region:
+            location_parts.append(summary.region)
+        if summary.country:
+            location_parts.append(summary.country)
+        location = ', '.join(location_parts) if location_parts else 'Unknown'
+        
+        # Calculate time span
+        time_span = 'N/A'
+        if summary.first_visit and summary.last_visit:
+            time_diff = summary.last_visit - summary.first_visit
+            if time_diff.days > 0:
+                time_span = f"{time_diff.days} days"
+            elif time_diff.seconds > 3600:
+                time_span = f"{time_diff.seconds // 3600} hours"
+            elif time_diff.seconds > 60:
+                time_span = f"{time_diff.seconds // 60} minutes"
+            else:
+                time_span = f"{time_diff.seconds} seconds"
+        
+        data.append({
+            'ip_address': summary.ip_address or '',
+            'request_count': summary.request_count,
+            'city': summary.city or 'Unknown',
+            'region': summary.region or 'Unknown',
+            'country': summary.country or 'Unknown',
+            'location': location,
+            'last_visit': summary.last_visit.strftime('%Y-%m-%d %H:%M:%S') if summary.last_visit else '',
+            'time_span': time_span
+        })
+    
+    return jsonify({
+        'draw': draw,
+        'recordsTotal': total_records,
+        'recordsFiltered': total_records,
+        'data': data
+    })
+
 @admin_bp.route('/visitors/data/locations')
 @admin_required
 def visitors_locations_data():
