@@ -40,7 +40,6 @@ def parse_viewport_bounds():
 
 
 @api_bp.route("/retailers")
-@login_required
 @cache.cached(timeout=300, query_string=True)  # Cache with query parameters
 def retailers_endpoint():
     """
@@ -78,7 +77,6 @@ def retailers_endpoint():
 
 
 @api_bp.route("/events")
-@login_required
 @cache.cached(timeout=180, query_string=True)  # Shorter cache for events (3 min)
 def events_endpoint():
     """
@@ -113,7 +111,6 @@ def events_endpoint():
 
 
 @api_bp.route("/map-data")
-@login_required
 @cache.cached(timeout=300, query_string=True)
 def combined_map_data():
     """
@@ -223,7 +220,6 @@ def route_optimize():
 
 # Keep legacy endpoints for backward compatibility
 @api_bp.route("/retailers-legacy")
-@login_required
 def retailers_legacy():
     """Legacy endpoint - use /retailers instead"""
     check_referrer()
@@ -236,7 +232,6 @@ def retailers_legacy():
 
 
 @api_bp.route("/events-legacy") 
-@login_required
 def events_legacy():
     """Legacy endpoint - use /events instead"""
     check_referrer()

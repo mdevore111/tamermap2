@@ -502,6 +502,7 @@ function showProUpgradeToast() {
       confirmButtonText: 'Try Pro',
       confirmButtonColor: '#667eea',
       showCancelButton: false,
+      showCloseButton: true,
       timer: 5000,
       timerProgressBar: true,
       width: '270px',
@@ -563,6 +564,27 @@ function showProUpgradeToast() {
           buttonElement.addEventListener('mouseleave', () => {
             buttonElement.style.transform = 'translateY(0)';
             buttonElement.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+          });
+        }
+        
+        // Style the close button (X)
+        const closeButton = toast.querySelector('.swal2-close');
+        if (closeButton) {
+          closeButton.style.color = '#6c757d';
+          closeButton.style.fontSize = '18px';
+          closeButton.style.fontWeight = '600';
+          closeButton.style.opacity = '0.7';
+          closeButton.style.transition = 'opacity 0.2s ease';
+          closeButton.style.cursor = 'pointer';
+          
+          // Add hover effect to close button
+          closeButton.addEventListener('mouseenter', () => {
+            closeButton.style.opacity = '1';
+            closeButton.style.color = '#dc3545';
+          });
+          closeButton.addEventListener('mouseleave', () => {
+            closeButton.style.opacity = '0.7';
+            closeButton.style.color = '#6c757d';
           });
         }
       }
