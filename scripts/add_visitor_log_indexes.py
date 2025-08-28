@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Add performance indexes to visitor_log table for IP summary queries
+Add essential performance index to visitor_log table for IP summary queries
 
-This script adds indexes to optimize:
-- IP address grouping and filtering
-- Timestamp-based filtering
-- Location-based searches
-- Combined queries for the IP summary chart
+This script adds ONLY the essential composite index needed for optimal performance:
+- idx_visitor_log_ip_timestamp: Optimizes IP summary queries (timestamp filtering + IP grouping)
+
+We avoid over-engineering with unnecessary indexes that would:
+- Waste storage space
+- Slow down INSERT operations
+- Provide minimal performance benefit
 """
 
 import sqlite3
@@ -43,37 +45,12 @@ def create_indexes(cursor):
     """Create the necessary indexes"""
     print("🔧 Creating performance indexes...")
     
-    # Indexes to create
+    # Indexes to create - ONLY the essential one
     indexes_to_create = [
         {
             'name': 'idx_visitor_log_ip_timestamp',
             'sql': 'CREATE INDEX idx_visitor_log_ip_timestamp ON visitor_log(ip_address, timestamp)',
             'description': 'Composite index for IP address and timestamp (optimizes IP summary queries)'
-        },
-        {
-            'name': 'idx_visitor_log_timestamp',
-            'sql': 'CREATE INDEX idx_visitor_log_timestamp ON visitor_log(timestamp)',
-            'description': 'Index on timestamp for date-based filtering'
-        },
-        {
-            'name': 'idx_visitor_log_ip_location',
-            'sql': 'CREATE INDEX idx_visitor_log_ip_location ON visitor_log(ip_address, city, region, country)',
-            'description': 'Composite index for IP and location data'
-        },
-        {
-            'name': 'idx_visitor_log_city',
-            'sql': 'CREATE INDEX idx_visitor_log_city ON visitor_log(city)',
-            'description': 'Index on city for location-based searches'
-        },
-        {
-            'name': 'idx_visitor_log_region',
-            'sql': 'CREATE INDEX idx_visitor_log_region ON visitor_log(region)',
-            'description': 'Index on region for location-based searches'
-        },
-        {
-            'name': 'idx_visitor_log_country',
-            'sql': 'CREATE INDEX idx_visitor_log_country ON visitor_log(country)',
-            'description': 'Index on country for location-based searches'
         }
     ]
     
