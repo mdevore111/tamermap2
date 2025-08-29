@@ -52,6 +52,10 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<!-- Password Strength Meter CSS and JS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/password-strength.css') }}">
+<script src="{{ url_for('static', filename='js/password-strength.js') }}"></script>
+
 <!-- jQuery (must be loaded before DataTables and custom JS) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- DataTables JS -->
@@ -217,30 +221,31 @@ $(document).ready(function() {
             var passwordInput = $('input[name="password"]');
             var strengthMeter = $('#add-user-password-strength-meter');
             
-            // Wait for PasswordStrengthMeter to be available
-            function initPasswordStrengthMeter() {
+            // Initialize password strength meter
+            setTimeout(function() {
                 if (window.PasswordStrengthMeter) {
                     console.log('Initializing password strength meter...');
-                    new PasswordStrengthMeter(passwordInput[0], {
-                        container: strengthMeter[0],
-                        showRequirements: true,
-                        requirements: {
-                            minLength: 8,
-                            requireUppercase: true,
-                            requireLowercase: true,
-                            requireNumbers: true,
-                            requireSpecialChars: false
-                        }
-                    });
-                    console.log('Password strength meter initialized successfully');
+                    try {
+                        new PasswordStrengthMeter(passwordInput[0], {
+                            container: strengthMeter[0],
+                            showRequirements: true,
+                            requirements: {
+                                minLength: 8,
+                                requireUppercase: true,
+                                requireLowercase: true,
+                                requireNumbers: true,
+                                requireSpecialChars: false
+                            }
+                        });
+                        console.log('Password strength meter initialized successfully');
+                    } catch (error) {
+                        console.error('Error initializing password strength meter:', error);
+                    }
                 } else {
-                    console.log('PasswordStrengthMeter not available, retrying...');
-                    setTimeout(initPasswordStrengthMeter, 100);
+                    console.error('PasswordStrengthMeter not available');
+                    console.log('Available global objects:', Object.keys(window).filter(k => k.includes('Password')));
                 }
-            }
-            
-            // Start initialization
-            initPasswordStrengthMeter();
+            }, 500);
             
             // Add real-time password validation
             $('input[name="password_confirm"]').on('input', function() {
