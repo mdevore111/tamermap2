@@ -52,10 +52,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Password Strength Meter CSS and JS -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/password-strength.css') }}">
-<script src="{{ url_for('static', filename='js/password-strength.js') }}"></script>
-
+{{ super() }}
 <!-- jQuery (must be loaded before DataTables and custom JS) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- DataTables JS -->
