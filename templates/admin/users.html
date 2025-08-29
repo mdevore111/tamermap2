@@ -205,12 +205,31 @@ $(document).ready(function() {
                 <div class='mb-1'><label class='small mb-0'>First Name</label><input name='first_name' class='form-control form-control-sm'></div>
                 <div class='mb-1'><label class='small mb-0'>Last Name</label><input name='last_name' class='form-control form-control-sm'></div>
                 <div class='mb-1'><label class='small mb-0'>Email</label><input name='email' type='email' class='form-control form-control-sm' required></div>
-                <div class='mb-1'><label class='small mb-0'>Password</label><input name='password' type='password' class='form-control form-control-sm' required pattern='(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}' title='Min 8 chars, include upper/lower and a number'></div>
+                <div class='mb-1'><label class='small mb-0'>Password</label><input name='password' type='password' class='form-control form-control-sm' required pattern='(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}' title='Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.'></div>
+                <div id='add-user-password-strength-meter'></div>
                 <div class='mb-1'><label class='small mb-0'>Confirm Password</label><input name='password_confirm' type='password' class='form-control form-control-sm' required></div>
                 <div class='mb-1'><label class='small mb-0'>Active</label><select name='active' class='form-select form-select-sm'><option value='1'>Yes</option><option value='0'>No</option></select></div>
                 <div class='mb-1'><label class='mb-0'>Pro End Date</label><input name='pro_end_date' type='date' class='form-control form-control-sm'></div>
                 <div class='mb-1'><label class='small mb-0'>Roles</label><select name='roles' class='form-select form-select-sm' multiple>${rolesOptions}</select></div>
             `);
+            
+            // Initialize password strength meter
+            var passwordInput = $('input[name="password"]');
+            var strengthMeter = $('#add-user-password-strength-meter');
+            
+            if (window.PasswordStrengthMeter) {
+                new PasswordStrengthMeter(passwordInput[0], {
+                    container: strengthMeter[0],
+                    showRequirements: true,
+                    requirements: {
+                        minLength: 8,
+                        requireUppercase: true,
+                        requireLowercase: true,
+                        requireNumbers: true,
+                        requireSpecialChars: false
+                    }
+                });
+            }
             
             // Add real-time password validation
             $('input[name="password_confirm"]').on('input', function() {
