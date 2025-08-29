@@ -14,15 +14,28 @@ echo "Fixing ownership and permissions for Tamermap app..."
 echo "Setting ownership..."
 sudo chown -R tamermap:tamermap "$APP_DIR"
 
+# 1a. Ensure proper ownership from project folder down
+echo "Setting comprehensive ownership..."
+sudo chown -R tamermap:tamermap /home/tamermap/app
+sudo chown -R tamermap:www-data /home/tamermap/app/static
+sudo chown -R tamermap:www-data /home/tamermap/app/static/*
+sudo chown -R tamermap:www-data /home/tamermap/app/static/*/*
+
 # 2. Make sure Nginx (www-data) can read static files
 echo "Adjusting static file permissions..."
 sudo chown -R tamermap:www-data "$STATIC_DIR"
 sudo find "$STATIC_DIR" -type d -exec chmod 755 {} \;
 sudo find "$STATIC_DIR" -type f -exec chmod 644 {} \;
 
-# 3. Directories: readable/traversable
+# 3. Directories: readable/traversable (but allow www-data to traverse to static)
 echo "Fixing directory permissions..."
 sudo find "$APP_DIR" -type d -exec chmod 750 {} \;
+
+# 3a. Ensure parent directories allow www-data to traverse to static
+echo "Setting parent directory permissions for static file access..."
+sudo chmod 755 /home/tamermap
+sudo chmod 755 /home/tamermap/app
+sudo chmod 755 /home/tamermap/app/static
 
 # 4. Python and shell scripts: executable
 echo "Making Python and shell scripts executable..."
