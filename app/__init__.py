@@ -268,15 +268,24 @@ def create_app(config_class=BaseConfig):
             app.logger.warning(f"Blocked path traversal: {request.path} from {request.remote_addr}")
             return '', 444
         
-        # Block suspicious user agents
+        # Block suspicious user agents (but allow legitimate search engines)
         suspicious_agents = [
-            'bot', 'crawler', 'spider', 'scanner', 'sqlmap', 'nikto', 'nmap'
+            'scanner', 'sqlmap', 'nikto', 'nmap'
         ]
         
         user_agent = request.headers.get('User-Agent', '').lower()
         if any(agent in user_agent for agent in suspicious_agents):
-            app.logger.warning(f"Blocked suspicious user agent: {user_agent} from {request.remote_addr}")
-            return '', 444
+            # Check if it's a legitimate search engine crawler
+            legitimate_crawlers = [
+                'googlebot', 'adsbot', 'apis-google', 'mediapartners-google', 
+                'feedfetcher-google', 'google-read-aloud', 'duplexweb-google',
+                'bingbot', 'slurp', 'duckduckbot', 'facebookexternalhit', 
+                'twitterbot', 'rogerbot', 'linkedinbot'
+            ]
+            
+            if not any(crawler in user_agent for crawler in legitimate_crawlers):
+                app.logger.warning(f"Blocked suspicious user agent: {user_agent} from {request.remote_addr}")
+                return '', 444
 
     # Track visitor activity and handle password reset before each request.
     @app.before_request
