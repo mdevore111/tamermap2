@@ -1,0 +1,542 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Use TamerMap's Route Planning Tool - Complete Step-by-Step Guide{% endblock %}
+
+{% block meta_description %}Master TamerMap's Route Planning Tool with our step-by-step guide. Learn how to create efficient hunting routes, optimize travel time, and maximize your Pokemon card hunting success.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for comprehensive tutorial -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Use TamerMap's Route Planning Tool",
+  "description": "Complete step-by-step guide to using TamerMap's Route Planning Tool for Pokemon card hunting",
+  "image": "{{ url_for('static', filename='images/route-planning-tutorial.png', _external=True) }}",
+  "totalTime": "PT15M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "0"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Account",
+      "description": "Free or Pro account access"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "TamerMap Route Planning Tool",
+      "description": "Advanced route optimization for Pokemon card hunting"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Access Route Planning",
+      "text": "Navigate to the Route Planning section in TamerMap"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Select Locations",
+      "text": "Choose your target hunting locations from the map"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Optimize Route",
+      "text": "Use the AI-powered optimization to create efficient routes"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Save and Follow",
+      "text": "Save your optimized route and follow it for maximum efficiency"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="margin-bottom: 6rem !important;">
+  <!-- Hero Section -->
+  <div class="text-center mb-5">
+    <h1 class="display-4 mb-3">How to Use TamerMap's Route Planning Tool</h1>
+    <p class="lead">Master the ultimate route planning tool for Pokemon card hunting! Learn step-by-step how to create efficient routes, optimize travel time, and maximize your hunting success.</p>
+    
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>Pro Tip:</strong> TamerMap Pro users get access to advanced route optimization algorithms and unlimited route planning!
+    </div>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#getting-started" class="text-decoration-none">1. Getting Started with Route Planning</a></li>
+            <li><a href="#selecting-locations" class="text-decoration-none">2. Selecting Your Hunting Locations</a></li>
+            <li><a href="#route-optimization" class="text-decoration-none">3. Route Optimization Techniques</a></li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#saving-routes" class="text-decoration-none">4. Saving and Managing Routes</a></li>
+            <li><a href="#pro-features" class="text-decoration-none">5. Pro Features & Advanced Options</a></li>
+            <li><a href="#troubleshooting" class="text-decoration-none">6. Troubleshooting Common Issues</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Getting Started Section -->
+  <section id="getting-started" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-play me-2"></i>1. Getting Started with Route Planning</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Route planning is one of TamerMap's most powerful features, helping you visit more locations in less time. Let's get started!</p>
+        
+        <h3>Accessing the Route Planning Tool</h3>
+        <p>Follow these simple steps to access route planning:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-map-marked-alt text-primary me-2"></i>Step 1: Navigate to Maps</h4>
+            <ol>
+              <li>Click on the <strong>"Maps"</strong> link in the main navigation</li>
+              <li>You'll see the interactive map with all available locations</li>
+              <li>Look for the <strong>"Route Planning"</strong> button in the top toolbar</li>
+            </ol>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-route text-success me-2"></i>Step 2: Open Route Planner</h4>
+            <ol>
+              <li>Click the <strong>"Route Planning"</strong> button</li>
+              <li>The route planning interface will open on the right side</li>
+              <li>You'll see options for creating new routes and managing existing ones</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Note</h5>
+          <p>Route planning is available to all TamerMap users, but Pro members get access to advanced optimization algorithms and unlimited route storage!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selecting Locations Section -->
+  <section id="selecting-locations" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-map-pin me-2"></i>2. Selecting Your Hunting Locations</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Choosing the right locations is crucial for creating efficient routes. Learn how to select and prioritize your hunting spots.</p>
+        
+        <h3>Location Selection Methods</h3>
+        <p>There are several ways to add locations to your route:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-primary">
+              <div class="card-body text-center">
+                <i class="fas fa-mouse-pointer fa-2x text-primary mb-2"></i>
+                <h5>Click Selection</h5>
+                <p class="small">Simply click on any location marker on the map to add it to your route.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-success">
+              <div class="card-body text-center">
+                <i class="fas fa-search fa-2x text-success mb-2"></i>
+                <h5>Search & Add</h5>
+                <p class="small">Use the search function to find specific locations and add them to your route.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-warning">
+              <div class="card-body text-center">
+                <i class="fas fa-filter fa-2x text-warning mb-2"></i>
+                <h5>Filter & Select</h5>
+                <p class="small">Apply filters by store type, distance, or success rate, then add multiple locations at once.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Location Prioritization</h3>
+        <p>Smart location selection can make or break your hunting efficiency:</p>
+        
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th>Priority Level</th>
+                <th>Location Type</th>
+                <th>Why It's Important</th>
+                <th>Best Time to Visit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>High Priority</strong></td>
+                <td>High-success rate locations</td>
+                <td>Maximum chance of finding valuable cards</td>
+                <td>First on your route</td>
+              </tr>
+              <tr>
+                <td><strong>Medium Priority</strong></td>
+                <td>Regular restock locations</td>
+                <td>Consistent but predictable finds</td>
+                <td>Middle of your route</td>
+              </tr>
+              <tr>
+                <td><strong>Low Priority</strong></td>
+                <td>Long-shot locations</td>
+                <td>Potential for rare finds</td>
+                <td>End of your route</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-info">
+          <h5><i class="fas fa-lightbulb me-2"></i>Pro Selection Strategy</h5>
+          <p>Use TamerMap Pro's success rate data to identify which locations consistently produce valuable cards. This data-driven approach significantly increases your route efficiency!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Route Optimization Section -->
+  <section id="route-optimization" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h2 class="h3 mb-0"><i class="fas fa-cogs me-2"></i>3. Route Optimization Techniques</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Once you've selected your locations, it's time to optimize your route for maximum efficiency and minimum travel time.</p>
+        
+        <h3>Automatic Route Optimization</h3>
+        <p>TamerMap's intelligent algorithm automatically creates the most efficient route:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-magic text-primary me-2"></i>How It Works</h4>
+            <ul>
+              <li><strong>Distance Calculation:</strong> Analyzes travel distance between all locations</li>
+              <li><strong>Traffic Consideration:</strong> Factors in typical traffic patterns</li>
+              <li><strong>Time Optimization:</strong> Minimizes total travel time</li>
+              <li><strong>Efficiency Rating:</strong> Provides a route efficiency score</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-sliders-h text-success me-2"></i>Customization Options</h4>
+            <ul>
+              <li><strong>Start Location:</strong> Choose where to begin your route</li>
+              <li><strong>End Location:</strong> Select your final destination</li>
+              <li><strong>Waypoint Order:</strong> Manually adjust location sequence</li>
+              <li><strong>Time Constraints:</strong> Set maximum travel time limits</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Manual Route Adjustments</h3>
+        <p>Sometimes you need to fine-tune your route manually:</p>
+        
+        <div class="alert alert-primary">
+          <h5><i class="fas fa-hand-paper me-2"></i>Drag & Drop Reordering</h5>
+          <p>In the route planning interface, you can drag and drop locations to reorder them. This is useful when you want to visit locations in a specific sequence based on your personal preferences or timing constraints.</p>
+        </div>
+
+        <h3>Route Efficiency Metrics</h3>
+        <p>Understanding your route's efficiency helps you make better decisions:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-info">
+              <div class="card-body text-center">
+                <i class="fas fa-road fa-2x text-info mb-2"></i>
+                <h5>Total Distance</h5>
+                <p class="small">The total miles/kilometers you'll travel on your route.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-warning">
+              <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h5>Travel Time</h5>
+                <p class="small">Estimated time spent traveling between locations.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-success">
+              <div class="card-body text-center">
+                <i class="fas fa-percentage fa-2x text-success mb-2"></i>
+                <h5>Efficiency Score</h5>
+                <p class="small">How well-optimized your route is (higher is better).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Saving Routes Section -->
+  <section id="saving-routes" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-save me-2"></i>4. Saving and Managing Routes</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Save your optimized routes for future use and learn how to manage multiple hunting strategies.</p>
+        
+        <h3>Saving Your Route</h3>
+        <p>Don't lose your carefully planned routes! Here's how to save them:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-floppy-disk text-primary me-2"></i>Step-by-Step Saving</h4>
+            <ol>
+              <li>Click the <strong>"Save Route"</strong> button in the route planner</li>
+              <li>Enter a descriptive name for your route</li>
+              <li>Add optional notes about the route's purpose</li>
+              <li>Click <strong>"Save"</strong> to store your route</li>
+            </ol>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-tags text-success me-2"></i>Route Organization</h4>
+            <ul>
+              <li><strong>Naming Convention:</strong> Use descriptive names like "Weekend Walmart Run"</li>
+              <li><strong>Tags:</strong> Add tags like "Weekend," "Big Box Stores," or "High Priority"</li>
+              <li><strong>Notes:</strong> Include details about best times or special considerations</li>
+              <li><strong>Categories:</strong> Group routes by area, store type, or hunting strategy</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Managing Multiple Routes</h3>
+        <p>As you build your hunting strategy, you'll want to manage multiple routes:</p>
+        
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th>Route Type</th>
+                <th>Best For</th>
+                <th>When to Use</th>
+                <th>Example Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Weekend Routes</strong></td>
+                <td>Extended hunting sessions</td>
+                <td>Saturday/Sunday when you have more time</td>
+                <td>"Weekend Power Hunt"</td>
+              </tr>
+              <tr>
+                <td><strong>Quick Routes</strong></td>
+                <td>Limited time hunting</td>
+                <td>Lunch breaks or after work</td>
+                <td>"Lunch Break Quick 3"</td>
+              </tr>
+              <tr>
+                <td><strong>New Area Routes</strong></td>
+                <td>Exploring unfamiliar territory</td>
+                <td>When visiting new cities or areas</td>
+                <td>"Downtown First Time"</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alert alert-success">
+          <h5><i class="fas fa-crown me-2"></i>Pro Route Management</h5>
+          <p>TamerMap Pro users can save unlimited routes and access advanced organization features like route folders, sharing capabilities, and detailed analytics on route performance!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pro Features Section -->
+  <section id="pro-features" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-crown me-2"></i>5. Pro Features & Advanced Options</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Unlock the full potential of route planning with TamerMap Pro's advanced features and optimization algorithms.</p>
+        
+        <h3>Advanced Route Optimization</h3>
+        <p>Pro users get access to sophisticated optimization algorithms:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-warning">
+              <div class="card-body">
+                <h5><i class="fas fa-brain fa-2x text-warning mb-2"></i>AI-Powered Optimization</h5>
+                <p>Machine learning algorithms analyze thousands of successful routes to create optimal paths based on real-world data and user success patterns.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-info">
+              <div class="card-body">
+                <h5><i class="fas fa-chart-line fa-2x text-info mb-2"></i>Success Rate Integration</h5>
+                <p>Routes automatically prioritize locations with higher success rates, ensuring you visit the most promising hunting spots first.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-success">
+              <div class="card-body">
+                <h5><i class="fas fa-traffic-light fa-2x text-success mb-2"></i>Real-Time Traffic</h5>
+                <p>Advanced traffic prediction models adjust routes based on current conditions, helping you avoid delays and optimize travel time.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-primary">
+              <div class="card-body">
+                <h5><i class="fas fa-users fa-2x text-primary mb-2"></i>Collaborative Planning</h5>
+                <p>Share routes with hunting partners, coordinate group expeditions, and pool resources for maximum efficiency.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Route Analytics & Insights</h3>
+        <p>Track your route performance and continuously improve your hunting strategy:</p>
+        
+        <ul>
+          <li><strong>Success Rate Tracking:</strong> Monitor which routes produce the best results</li>
+          <li><strong>Time Efficiency Analysis:</strong> Track time spent vs. cards found</li>
+          <li><strong>Cost-Benefit Analysis:</strong> Calculate ROI for different route types</li>
+          <li><strong>Seasonal Pattern Analysis:</strong> Identify the best times for specific routes</li>
+        </ul>
+
+        <div class="text-center mt-4">
+          <div class="alert alert-primary">
+            <h4><i class="fas fa-rocket me-2"></i>Ready to Upgrade to Pro?</h4>
+            <p class="mb-3">Get access to AI-powered route optimization, unlimited route storage, and advanced analytics that will transform your hunting efficiency!</p>
+            <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-lg">
+              <i class="fas fa-crown me-2"></i>Upgrade to Pro Now
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Troubleshooting Section -->
+  <section id="troubleshooting" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-wrench me-2"></i>6. Troubleshooting Common Issues</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Encountering issues with route planning? Here are solutions to the most common problems.</p>
+        
+        <h3>Common Issues & Solutions</h3>
+        
+        <div class="accordion" id="troubleshootingAccordion">
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <i class="fas fa-question-circle me-2"></i>Route Planning Button Not Visible
+              </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#troubleshootingAccordion">
+              <div class="accordion-body">
+                <strong>Solution:</strong> Make sure you're on the Maps page and not on other sections. The route planning button only appears when viewing the interactive map. If you still don't see it, try refreshing the page or clearing your browser cache.
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                <i class="fas fa-exclamation-triangle me-2"></i>Route Optimization Not Working
+              </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#troubleshootingAccordion">
+              <div class="accordion-body">
+                <strong>Solution:</strong> Ensure you have at least 2 locations selected. Route optimization requires multiple points to calculate efficient paths. Also check that your locations are within reasonable distance of each other (typically within the same city or region).
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                <i class="fas fa-save me-2"></i>Can't Save Routes
+              </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#troubleshootingAccordion">
+              <div class="accordion-body">
+                <strong>Solution:</strong> Free users can save up to 3 routes. If you've reached this limit, consider upgrading to Pro for unlimited route storage. Also ensure you're logged in and have a stable internet connection.
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="headingFour">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                <i class="fas fa-map-marker-alt me-2"></i>Locations Not Appearing on Map
+              </button>
+            </h2>
+            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#troubleshootingAccordion">
+              <div class="accordion-body">
+                <strong>Solution:</strong> Check your filters - you may have accidentally filtered out certain location types. Also ensure you're zoomed in enough to see individual markers. If using Pro, make sure you haven't accidentally hidden certain retailer categories.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+          <h5><i class="fas fa-life-ring me-2"></i>Still Having Issues?</h5>
+          <p>If you're experiencing problems not covered here, contact our support team. We're here to help you get the most out of TamerMap's route planning tools!</p>
+          <a href="{{ url_for('public.send_message', type='contact') }}" class="btn btn-info">Contact Support</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <div class="text-center mt-5">
+    <h2>Ready to Master Route Planning?</h2>
+    <p class="lead mb-4">Start using TamerMap's Route Planning Tool today and transform your Pokemon card hunting efficiency!</p>
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <a href="{{ url_for('public.maps') }}" class="btn btn-success btn-lg w-100">
+          <i class="fas fa-map-marked-alt me-2"></i>Try Route Planning Now
+        </a>
+      </div>
+      <div class="col-md-6 mb-3">
+        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-lg w-100">
+          <i class="fas fa-crown me-2"></i>Upgrade to Pro
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

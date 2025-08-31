@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Use TamerMap's Heatmap Feature - Find the Best Hunting Spots{% endblock %}
+
+{% block meta_description %}Master TamerMap's heatmap feature to find the best Pokemon card hunting locations. Learn how to read activity data, identify hot spots, and maximize your hunting success rate.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for comprehensive tutorial -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Use TamerMap's Heatmap Feature",
+  "description": "Complete guide to using TamerMap's heatmap feature to find the best Pokemon card hunting locations",
+  "image": "{{ url_for('static', filename='images/heatmap-tutorial.png', _external=True) }}",
+  "totalTime": "PT12M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "0"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Account",
+      "description": "Free or Pro account access"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "TamerMap Heatmap Feature",
+      "description": "Activity visualization tool for Pokemon card hunting locations"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Access Heatmap",
+      "text": "Navigate to the Maps section and enable the heatmap overlay"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Read Activity Data",
+      "text": "Understand what the different colors and intensities mean"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Identify Hot Spots",
+      "text": "Find high-activity areas that indicate successful hunting locations"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Plan Your Strategy",
+      "text": "Use heatmap data to plan efficient hunting routes and maximize success"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="margin-bottom: 6rem !important;">
+  <!-- Hero Section -->
+  <div class="text-center mb-5">
+    <h1 class="display-4 mb-3">How to Use TamerMap's Heatmap Feature</h1>
+    <p class="lead">Discover the secret weapon of successful Pokemon card hunters! Learn how to read activity heatmaps, identify the best hunting spots, and maximize your success rate.</p>
+    
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle me-2"></i>
+      <strong>Pro Tip:</strong> TamerMap Pro users get access to detailed heatmap data and advanced filtering options!
+    </div>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#what-is-heatmap" class="text-decoration-none">1. What is the Heatmap Feature?</a></li>
+            <li><a href="#accessing-heatmap" class="text-decoration-none">2. How to Access Heatmaps</a></li>
+            <li><a href="#reading-data" class="text-decoration-none">3. Reading Heatmap Data</a></li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#finding-hotspots" class="text-decoration-none">4. Finding Hot Spots</a></li>
+            <li><a href="#strategic-planning" class="text-decoration-none">5. Strategic Planning with Heatmaps</a></li>
+            <li><a href="#pro-features" class="text-decoration-none">6. Pro Heatmap Features</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What is Heatmap Section -->
+  <section id="what-is-heatmap" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-fire me-2"></i>1. What is the Heatmap Feature?</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">The heatmap feature is TamerMap's visual representation of hunting activity across different locations, helping you identify where other hunters are finding success.</p>
+        
+        <h3>Understanding Heatmap Basics</h3>
+        <p>Think of the heatmap as a "success radar" for Pokemon card hunting:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-lightbulb text-warning me-2"></i>What It Shows</h4>
+            <ul>
+              <li><strong>Activity Levels:</strong> How frequently locations are visited</li>
+              <li><strong>Success Patterns:</strong> Where hunters find valuable cards</li>
+              <li><strong>Popular Areas:</strong> High-traffic hunting zones</li>
+              <li><strong>Trending Locations:</strong> Recently discovered hot spots</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-chart-line text-success me-2"></i>Why It's Valuable</h4>
+            <ul>
+              <li><strong>Data-Driven Decisions:</strong> Base hunting choices on real activity</li>
+              <li><strong>Efficiency Boost:</strong> Focus on proven successful locations</li>
+              <li><strong>Time Savings:</strong> Avoid low-success areas</li>
+              <li><strong>Success Rate Increase:</strong> Learn from community experience</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Note</h5>
+          <p>The heatmap shows <strong>activity patterns</strong>, not guaranteed finds. High activity usually indicates better inventory or success rates, but individual results may vary.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Accessing Heatmap Section -->
+  <section id="accessing-heatmap" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-map-marked-alt me-2"></i>2. How to Access Heatmaps</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Accessing the heatmap feature is simple and intuitive. Follow these steps to start using this powerful tool.</p>
+        
+        <h3>Step-by-Step Access Guide</h3>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-compass text-primary me-2"></i>Step 1: Navigate to Maps</h4>
+            <ol>
+              <li>Click on the <strong>"Maps"</strong> link in the main navigation</li>
+              <li>Wait for the interactive map to load completely</li>
+              <li>Look for the <strong>heatmap toggle button</strong> in the toolbar</li>
+            </ol>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-toggle-on text-success me-2"></i>Step 2: Enable Heatmap</h4>
+            <ol>
+              <li>Click the <strong>heatmap toggle button</strong> (usually looks like a flame icon)</li>
+              <li>The map will overlay with colored activity data</li>
+              <li>You can adjust heatmap intensity using the slider</li>
+            </ol>
+          </div>
+        </div>
+
+        <h3>Heatmap Controls and Options</h3>
+        <p>Once enabled, you'll have several options to customize your heatmap view:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-primary">
+              <div class="card-body text-center">
+                <i class="fas fa-sliders-h fa-2x text-primary mb-2"></i>
+                <h5>Intensity Slider</h5>
+                <p class="small">Adjust how prominent the heatmap colors appear on the map.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-success">
+              <div class="card-body text-center">
+                <i class="fas fa-calendar fa-2x text-success mb-2"></i>
+                <h5>Time Range</h5>
+                <p class="small">Select activity data from different time periods (day, week, month).</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-warning">
+              <div class="card-body text-center">
+                <i class="fas fa-eye fa-2x text-warning mb-2"></i>
+                <h5>Layer Toggle</h5>
+                <p class="small">Turn heatmap on/off without losing your current map view.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <h5><i class="fas fa-lightbulb me-2"></i>Pro Tip</h5>
+          <p>Pro users can access advanced heatmap features like historical data analysis, custom time ranges, and detailed activity breakdowns by location type!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reading Data Section -->
+  <section id="reading-data" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h2 class="h3 mb-0"><i class="fas fa-chart-bar me-2"></i>3. Reading Heatmap Data</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Understanding how to read heatmap data is crucial for making informed hunting decisions. Learn the color coding and what different patterns mean.</p>
+        
+        <h3>Color Coding System</h3>
+        <p>The heatmap uses a color-coded system to represent activity levels:</p>
+        
+        <div class="table-responsive mb-4">
+          <table class="table table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th>Color</th>
+                <th>Activity Level</th>
+                <th>What It Means</th>
+                <th>Hunting Strategy</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge bg-danger">Red</span></td>
+                <td><strong>Very High</strong></td>
+                <td>Extremely active location with frequent visits</td>
+                <td>High priority - visit early and often</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-warning">Orange</span></td>
+                <td><strong>High</strong></td>
+                <td>Active location with regular hunting activity</td>
+                <td>Good priority - reliable hunting spot</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-info">Blue</span></td>
+                <td><strong>Medium</strong></td>
+                <td>Moderate activity with occasional visits</td>
+                <td>Medium priority - worth checking periodically</td>
+              </tr>
+              <tr>
+                <td><span class="badge bg-secondary">Gray</span></td>
+                <td><strong>Low</strong></td>
+                <td>Minimal activity or newly added location</td>
+                <td>Low priority - check when convenient</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Understanding Activity Patterns</h3>
+        <p>Beyond just colors, the heatmap reveals important patterns:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-bullseye text-primary me-2"></i>Concentration Patterns</h4>
+            <ul>
+              <li><strong>Hot Spots:</strong> Small, intense red areas indicate very successful locations</li>
+              <li><strong>Activity Zones:</strong> Larger colored areas show popular hunting regions</li>
+              <li><strong>Activity Trails:</strong> Linear patterns suggest popular travel routes</li>
+              <li><strong>Activity Clusters:</strong> Multiple nearby hot spots indicate rich hunting areas</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-clock text-success me-2"></i>Temporal Patterns</h4>
+            <ul>
+              <li><strong>Peak Times:</strong> Activity intensity varies throughout the day</li>
+              <li><strong>Weekly Patterns:</strong> Some locations are busier on weekends</li>
+              <li><strong>Seasonal Changes:</strong> Activity levels may vary by season</li>
+              <li><strong>Trending Locations:</strong> New hot spots that are gaining popularity</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="alert alert-primary">
+          <h5><i class="fas fa-search me-2"></i>Reading Strategy</h5>
+          <p>Start by identifying the reddest (hottest) areas on your map. These represent the most active hunting locations and typically offer the best chances for finding valuable cards. Then look for patterns - are there clusters of hot spots? Activity trails? This information helps you plan efficient hunting routes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Finding Hot Spots Section -->
+  <section id="finding-hotspots" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-fire me-2"></i>4. Finding Hot Spots</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Hot spots are the gold mines of Pokemon card hunting. Learn how to identify, analyze, and capitalize on these high-activity locations.</p>
+        
+        <h3>Identifying Prime Hot Spots</h3>
+        <p>Not all red areas are created equal. Here's how to identify the best hot spots:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-star text-warning me-2"></i>Characteristics of Great Hot Spots</h4>
+            <ul>
+              <li><strong>Consistent Activity:</strong> Red color that doesn't fade over time</li>
+              <li><strong>Focused Intensity:</strong> Small, concentrated red areas (not spread out)</li>
+              <li><strong>Strategic Location:</strong> Easy access, good parking, convenient hours</li>
+              <li><strong>Store Type Match:</strong> Aligns with your hunting preferences</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-exclamation-triangle text-danger me-2"></i>Red Flags to Watch For</h4>
+            <ul>
+              <li><strong>Fading Activity:</strong> Red areas that are becoming orange/blue</li>
+              <li><strong>Scattered Patterns:</strong> Large, diffuse red areas (may indicate past success)</li>
+              <li><strong>Inconsistent Timing:</strong> Activity that varies wildly day-to-day</li>
+              <li><strong>Poor Accessibility:</strong> Difficult to reach or inconvenient hours</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Analyzing Hot Spot Quality</h3>
+        <p>Use these criteria to evaluate potential hot spots:</p>
+        
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead class="table-dark">
+              <tr>
+                <th>Quality Factor</th>
+                <th>High Quality</th>
+                <th>Low Quality</th>
+                <th>Why It Matters</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Activity Consistency</strong></td>
+                <td class="text-success">Steady red over time</td>
+                <td class="text-danger">Fading or fluctuating</td>
+                <td>Indicates reliable success</td>
+              </tr>
+              <tr>
+                <td><strong>Location Concentration</strong></td>
+                <td class="text-success">Focused, intense red</td>
+                <td class="text-danger">Spread out, diffuse</td>
+                <td>Shows specific success spots</td>
+              </tr>
+              <tr>
+                <td><strong>Accessibility</strong></td>
+                <td class="text-success">Easy access, good hours</td>
+                <td class="text-danger">Difficult to reach</td>
+                <td>Affects hunting frequency</td>
+              </tr>
+              <tr>
+                <td><strong>Store Type</strong></td>
+                <td class="text-success">Matches your preferences</td>
+                <td class="text-danger">Not your preferred type</td>
+                <td>Aligns with hunting strategy</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Hot Spot Discovery Strategies</h3>
+        <p>Use these techniques to find the best hunting locations:</p>
+        
+        <div class="alert alert-success">
+          <h5><i class="fas fa-lightbulb me-2"></i>Discovery Techniques</h5>
+          <p><strong>Zoom In:</strong> Get close to see individual location markers within hot spots. <strong>Check Time Ranges:</strong> Compare daily, weekly, and monthly views to see which locations maintain consistent activity. <strong>Cross-Reference:</strong> Use the heatmap with other TamerMap features like success rate data and user reviews to validate hot spots.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Strategic Planning Section -->
+  <section id="strategic-planning" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-chess me-2"></i>5. Strategic Planning with Heatmaps</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Transform heatmap data into actionable hunting strategies. Learn how to plan efficient routes and maximize your success rate.</p>
+        
+        <h3>Route Planning with Heatmap Data</h3>
+        <p>Use heatmap information to create optimal hunting routes:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <h4><i class="fas fa-route text-primary me-2"></i>Route Optimization Strategy</h4>
+            <ul>
+              <li><strong>Start with Hot Spots:</strong> Begin your route at the reddest locations</li>
+              <li><strong>Cluster by Color:</strong> Group nearby locations of similar activity levels</li>
+              <li><strong>Time Your Visits:</strong> Visit high-activity spots during peak times</li>
+              <li><strong>Include Variety:</strong> Mix hot spots with medium-activity locations</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h4><i class="fas fa-clock text-success me-2"></i>Timing Optimization</h4>
+            <ul>
+              <li><strong>Peak Activity Times:</strong> Visit hot spots when activity is highest</li>
+              <li><strong>Competition Avoidance:</strong> Time visits to minimize competition</li>
+              <li><strong>Restock Alignment:</strong> Coordinate with known restock schedules</li>
+              <li><strong>Weather Considerations:</strong> Plan indoor routes for bad weather</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Building Your Hunting Strategy</h3>
+        <p>Create a comprehensive strategy based on heatmap analysis:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-warning">
+              <div class="card-body text-center">
+                <i class="fas fa-bullseye fa-2x text-warning mb-2"></i>
+                <h5>Primary Targets</h5>
+                <p class="small">Focus on consistent red hot spots for maximum success probability.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-info">
+              <div class="card-body text-center">
+                <i class="fas fa-compass fa-2x text-info mb-2"></i>
+                <h5>Secondary Locations</h5>
+                <p class="small">Include orange and blue areas to maximize route efficiency.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="card h-100 border-secondary">
+              <div class="card-body text-center">
+                <i class="fas fa-dice fa-2x text-secondary mb-2"></i>
+                <h5>Exploration Spots</h5>
+                <p class="small">Check gray areas occasionally for hidden gems and new discoveries.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Adapting to Heatmap Changes</h3>
+        <p>Heatmaps evolve over time. Stay flexible and adapt your strategy:</p>
+        
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-sync-alt me-2"></i>Adaptation Strategies</h5>
+          <p><strong>Monitor Changes:</strong> Check heatmaps regularly to spot new hot spots or fading locations. <strong>Adjust Routes:</strong> Modify your hunting routes based on changing activity patterns. <strong>Test New Areas:</strong> Don't get stuck in old patterns - explore emerging hot spots. <strong>Seasonal Adjustments:</strong> Be aware that activity patterns may change with seasons or events.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pro Features Section -->
+  <section id="pro-features" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h2 class="h3 mb-0"><i class="fas fa-crown me-2"></i>6. Pro Heatmap Features</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Unlock the full potential of heatmap analysis with TamerMap Pro's advanced features and detailed insights.</p>
+        
+        <h3>Advanced Heatmap Capabilities</h3>
+        <p>Pro users get access to sophisticated heatmap analysis tools:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-warning">
+              <div class="card-body">
+                <h5><i class="fas fa-chart-line fa-2x text-warning mb-2"></i>Historical Data Analysis</h5>
+                <p>Access detailed activity data from the past 30, 60, or 90 days to identify long-term trends and seasonal patterns.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-info">
+              <div class="card-body">
+                <h5><i class="fas fa-filter fa-2x text-info mb-2"></i>Advanced Filtering</h5>
+                <p>Filter heatmap data by store type, time of day, day of week, or specific date ranges for precise analysis.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-success">
+              <div class="card-body">
+                <h5><i class="fas fa-users fa-2x text-success mb-2"></i>Community Insights</h5>
+                <p>See detailed breakdowns of what types of cards are found at each location and success rates by hunter experience level.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="card h-100 border-primary">
+              <div class="card-body">
+                <h5><i class="fas fa-bell fa-2x text-primary mb-2"></i>Hot Spot Alerts</h5>
+                <p>Get notified when new hot spots emerge or when activity levels change significantly at your favorite locations.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Pro-Exclusive Analytics</h3>
+        <p>Advanced insights that give Pro users a competitive edge:</p>
+        
+        <ul>
+          <li><strong>Success Rate Correlation:</strong> See how activity levels correlate with actual card finds</li>
+          <li><strong>Competition Analysis:</strong> Understand how many other hunters are targeting the same locations</li>
+          <li><strong>Optimal Timing Data:</strong> Get specific recommendations for the best times to visit each location</li>
+          <li><strong>Route Efficiency Scoring:</strong> Rate your hunting routes based on heatmap data integration</li>
+        </ul>
+
+        <div class="text-center mt-4">
+          <div class="alert alert-primary">
+            <h4><i class="fas fa-rocket me-2"></i>Ready to Upgrade to Pro?</h4>
+            <p class="mb-3">Get access to advanced heatmap analytics, historical data, and detailed insights that will transform your hunting strategy!</p>
+            <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-lg">
+              <i class="fas fa-crown me-2"></i>Upgrade to Pro Now
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <div class="text-center mt-5">
+    <h2>Start Using Heatmaps Today!</h2>
+    <p class="lead mb-4">Master TamerMap's heatmap feature and discover the best Pokemon card hunting locations in your area!</p>
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <a href="{{ url_for('public.maps') }}" class="btn btn-success btn-lg w-100">
+          <i class="fas fa-map-marked-alt me-2"></i>Explore Heatmaps Now
+        </a>
+      </div>
+      <div class="col-md-6 mb-3">
+        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-lg w-100">
+          <i class="fas fa-crown me-2"></i>Upgrade to Pro
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
