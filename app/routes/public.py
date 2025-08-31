@@ -54,67 +54,308 @@ def states_index():
     if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
         return "Page not found", 404
     
-    # Define all available states with their metadata
+    # Define all available states with their metadata and keyword-rich descriptions
     states = [
+        # West Coast
         {
             'name': 'Washington',
             'slug': 'washington',
-            'description': 'Pacific Northwest Pokemon card hunting paradise',
+            'description': 'Find Pokemon cards early in Washington - Premier card hunting spots in Pacific Northwest with fresh Pokemon card inventory and rare finds',
             'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'Oregon',
+            'slug': 'oregon',
+            'description': 'Discover Pokemon cards first in Oregon - Top card hunting locations in Beaver State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-tree'
         },
         {
             'name': 'California',
             'slug': 'california',
-            'description': 'Golden State with diverse card hunting opportunities',
+            'description': 'Get Pokemon cards before anyone else in California - Best card hunting destinations in Golden State with first pick of rare Pokemon cards and fresh stock',
             'icon': 'fas fa-sun'
         },
         {
+            'name': 'Nevada',
+            'slug': 'nevada',
+            'description': 'Find Pokemon cards early in Nevada - Premier card hunting spots in Silver State with fresh Pokemon card inventory and exclusive finds',
+            'icon': 'fas fa-diamond'
+        },
+        {
+            'name': 'Arizona',
+            'slug': 'arizona',
+            'description': 'Discover Pokemon cards first in Arizona - Top card hunting locations in Grand Canyon State with early access to new releases and rare Pokemon cards',
+            'icon': 'fas fa-mountain'
+        },
+        
+        # Southwest
+        {
             'name': 'Texas',
             'slug': 'texas',
-            'description': 'Lone Star State with wide coverage',
+            'description': 'Get Pokemon cards before anyone else in Texas - Best card hunting destinations in Lone Star State with first pick of rare Pokemon cards and fresh inventory',
             'icon': 'fas fa-star'
         },
         {
+            'name': 'New Mexico',
+            'slug': 'new-mexico',
+            'description': 'Find Pokemon cards early in New Mexico - Premier card hunting spots in Land of Enchantment with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-sun'
+        },
+        
+        # Southeast
+        {
             'name': 'Florida',
             'slug': 'florida',
-            'description': 'Sunshine State card hunting destinations',
+            'description': 'Discover Pokemon cards first in Florida - Top card hunting locations in Sunshine State with early access to new releases and exclusive Pokemon cards',
             'icon': 'fas fa-umbrella-beach'
-        },
-        {
-            'name': 'New York',
-            'slug': 'new-york',
-            'description': 'Empire State with urban and suburban locations',
-            'icon': 'fas fa-city'
-        },
-        {
-            'name': 'Illinois',
-            'slug': 'illinois',
-            'description': 'Prairie State with Chicago area coverage',
-            'icon': 'fas fa-building'
-        },
-        {
-            'name': 'Pennsylvania',
-            'slug': 'pennsylvania',
-            'description': 'Keystone State card hunting spots',
-            'icon': 'fas fa-key'
-        },
-        {
-            'name': 'Ohio',
-            'slug': 'ohio',
-            'description': 'Buckeye State with diverse locations',
-            'icon': 'fas fa-leaf'
-        },
-        {
-            'name': 'Michigan',
-            'slug': 'michigan',
-            'description': 'Great Lakes State card hunting',
-            'icon': 'fas fa-water'
         },
         {
             'name': 'Georgia',
             'slug': 'georgia',
-            'description': 'Peach State with growing coverage',
+            'description': 'Get Pokemon cards before anyone else in Georgia - Best card hunting destinations in Peach State with first pick of rare Pokemon cards and fresh stock',
             'icon': 'fas fa-tree'
+        },
+        {
+            'name': 'North Carolina',
+            'slug': 'north-carolina',
+            'description': 'Find Pokemon cards early in North Carolina - Premier card hunting spots in Tar Heel State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-leaf'
+        },
+        {
+            'name': 'South Carolina',
+            'slug': 'south-carolina',
+            'description': 'Discover Pokemon cards first in South Carolina - Top card hunting locations in Palmetto State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-palm-tree'
+        },
+        {
+            'name': 'Tennessee',
+            'slug': 'tennessee',
+            'description': 'Get Pokemon cards before anyone else in Tennessee - Best card hunting destinations in Volunteer State with first pick of rare Pokemon cards and fresh inventory',
+            'icon': 'fas fa-music'
+        },
+        {
+            'name': 'Alabama',
+            'slug': 'alabama',
+            'description': 'Find Pokemon cards early in Alabama - Premier card hunting spots in Yellowhammer State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-bird'
+        },
+        {
+            'name': 'Mississippi',
+            'slug': 'mississippi',
+            'description': 'Discover Pokemon cards first in Mississippi - Top card hunting locations in Magnolia State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-flower'
+        },
+        {
+            'name': 'Louisiana',
+            'slug': 'louisiana',
+            'description': 'Get Pokemon cards before anyone else in Louisiana - Best card hunting destinations in Pelican State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-water'
+        },
+        {
+            'name': 'Arkansas',
+            'slug': 'arkansas',
+            'description': 'Find Pokemon cards early in Arkansas - Premier card hunting spots in Natural State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-mountain'
+        },
+        
+        # Northeast
+        {
+            'name': 'New York',
+            'slug': 'new-york',
+            'description': 'Discover Pokemon cards first in New York - Top card hunting locations in Empire State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-city'
+        },
+        {
+            'name': 'New Jersey',
+            'slug': 'new-jersey',
+            'description': 'Get Pokemon cards before anyone else in New Jersey - Best card hunting destinations in Garden State with first pick of rare Pokemon cards and fresh inventory',
+            'icon': 'fas fa-flower'
+        },
+        {
+            'name': 'Pennsylvania',
+            'slug': 'pennsylvania',
+            'description': 'Find Pokemon cards early in Pennsylvania - Premier card hunting spots in Keystone State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-key'
+        },
+        {
+            'name': 'Delaware',
+            'slug': 'delaware',
+            'description': 'Discover Pokemon cards first in Delaware - Top card hunting locations in First State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-flag'
+        },
+        {
+            'name': 'Maryland',
+            'slug': 'maryland',
+            'description': 'Get Pokemon cards before anyone else in Maryland - Best card hunting destinations in Old Line State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-crab'
+        },
+        {
+            'name': 'Virginia',
+            'slug': 'virginia',
+            'description': 'Find Pokemon cards early in Virginia - Premier card hunting spots in Old Dominion with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'West Virginia',
+            'slug': 'west-virginia',
+            'description': 'Discover Pokemon cards first in West Virginia - Top card hunting locations in Mountain State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'Massachusetts',
+            'slug': 'massachusetts',
+            'description': 'Get Pokemon cards before anyone else in Massachusetts - Best card hunting destinations in Bay State with first pick of rare Pokemon cards and fresh inventory',
+            'icon': 'fas fa-ship'
+        },
+        {
+            'name': 'Connecticut',
+            'slug': 'connecticut',
+            'description': 'Find Pokemon cards early in Connecticut - Premier card hunting spots in Constitution State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-book'
+        },
+        {
+            'name': 'Rhode Island',
+            'slug': 'rhode-island',
+            'description': 'Discover Pokemon cards first in Rhode Island - Top card hunting locations in Ocean State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-water'
+        },
+        {
+            'name': 'Vermont',
+            'slug': 'vermont',
+            'description': 'Get Pokemon cards before anyone else in Vermont - Best card hunting destinations in Green Mountain State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'New Hampshire',
+            'slug': 'new-hampshire',
+            'description': 'Find Pokemon cards early in New Hampshire - Premier card hunting spots in Granite State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'Maine',
+            'slug': 'maine',
+            'description': 'Discover Pokemon cards first in Maine - Top card hunting locations in Pine Tree State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-tree'
+        },
+        
+        # Midwest
+        {
+            'name': 'Illinois',
+            'slug': 'illinois',
+            'description': 'Get Pokemon cards before anyone else in Illinois - Best card hunting destinations in Prairie State with first pick of rare Pokemon cards and fresh inventory',
+            'icon': 'fas fa-building'
+        },
+        {
+            'name': 'Indiana',
+            'slug': 'indiana',
+            'description': 'Find Pokemon cards early in Indiana - Premier card hunting spots in Hoosier State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-basketball'
+        },
+        {
+            'name': 'Michigan',
+            'slug': 'michigan',
+            'description': 'Discover Pokemon cards first in Michigan - Top card hunting locations in Great Lakes State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-water'
+        },
+        {
+            'name': 'Ohio',
+            'slug': 'ohio',
+            'description': 'Get Pokemon cards before anyone else in Ohio - Best card hunting destinations in Buckeye State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-leaf'
+        },
+        {
+            'name': 'Wisconsin',
+            'slug': 'wisconsin',
+            'description': 'Find Pokemon cards early in Wisconsin - Premier card hunting spots in Badger State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-cheese'
+        },
+        {
+            'name': 'Minnesota',
+            'slug': 'minnesota',
+            'description': 'Discover Pokemon cards first in Minnesota - Top card hunting locations in North Star State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-star'
+        },
+        {
+            'name': 'Iowa',
+            'slug': 'iowa',
+            'description': 'Get Pokemon cards before anyone else in Iowa - Best card hunting destinations in Hawkeye State with first pick of rare Pokemon cards and fresh inventory',
+            'icon': 'fas fa-eye'
+        },
+        {
+            'name': 'Missouri',
+            'slug': 'missouri',
+            'description': 'Find Pokemon cards early in Missouri - Premier card hunting spots in Show Me State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-hand'
+        },
+        {
+            'name': 'Kansas',
+            'slug': 'kansas',
+            'description': 'Discover Pokemon cards first in Kansas - Top card hunting locations in Sunflower State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-sun'
+        },
+        {
+            'name': 'Nebraska',
+            'slug': 'nebraska',
+            'description': 'Get Pokemon cards before anyone else in Nebraska - Best card hunting destinations in Cornhusker State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-seedling'
+        },
+        {
+            'name': 'North Dakota',
+            'slug': 'north-dakota',
+            'description': 'Find Pokemon cards early in North Dakota - Premier card hunting spots in Peace Garden State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-flower'
+        },
+        {
+            'name': 'South Dakota',
+            'slug': 'south-dakota',
+            'description': 'Discover Pokemon cards first in South Dakota - Top card hunting locations in Mount Rushmore State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-mountain'
+        },
+        
+        # Mountain West
+        {
+            'name': 'Colorado',
+            'slug': 'colorado',
+            'description': 'Get Pokemon cards before anyone else in Colorado - Best card hunting destinations in Centennial State with first pick of rare Pokemon cards and fresh inventory',
+            'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'Utah',
+            'slug': 'utah',
+            'description': 'Find Pokemon cards early in Utah - Premier card hunting spots in Beehive State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-bee'
+        },
+        {
+            'name': 'Wyoming',
+            'slug': 'wyoming',
+            'description': 'Discover Pokemon cards first in Wyoming - Top card hunting locations in Equality State with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-balance-scale'
+        },
+        {
+            'name': 'Montana',
+            'slug': 'montana',
+            'description': 'Get Pokemon cards before anyone else in Montana - Best card hunting destinations in Treasure State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-gem'
+        },
+        {
+            'name': 'Idaho',
+            'slug': 'idaho',
+            'description': 'Find Pokemon cards early in Idaho - Premier card hunting spots in Gem State with fresh Pokemon card inventory and rare finds',
+            'icon': 'fas fa-gem'
+        },
+        
+        # Alaska & Hawaii
+        {
+            'name': 'Alaska',
+            'slug': 'alaska',
+            'description': 'Discover Pokemon cards first in Alaska - Top card hunting locations in Last Frontier with early access to new releases and exclusive Pokemon cards',
+            'icon': 'fas fa-snowflake'
+        },
+        {
+            'name': 'Hawaii',
+            'slug': 'hawaii',
+            'description': 'Get Pokemon cards before anyone else in Hawaii - Best card hunting destinations in Aloha State with first pick of rare Pokemon cards and fresh stock',
+            'icon': 'fas fa-umbrella-beach'
         }
     ]
     
@@ -182,10 +423,10 @@ def state_page(state_name):
     # Get state variations for search
     search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
     
-    # Build query for KIOSKS ONLY (retailer_type = 'kiosk') with multiple state name variations
+    # Build query for KIOSKS AND CARD SHOPS with multiple state name variations
     query = db.session.query(Retailer).filter(
         Retailer.enabled == True,
-        Retailer.retailer_type.ilike('kiosk')  # ONLY kiosks (case-insensitive)
+        Retailer.retailer_type.ilike('kiosk') | Retailer.retailer_type.ilike('card_shop')  # Both kiosks and card shops
     )
     
     # Use OR conditions for multiple state name variations
@@ -480,19 +721,70 @@ def sitemap_xml():
         {'url': '/sitemap', 'priority': '0.5', 'changefreq': 'monthly'},
     ]
     
-    # Add state pages for major states with Pokemon card KIOSKS ONLY
-    # These will be dynamically generated XML pages showing kiosks by city (search engines only)
+    # Add state pages for ALL states with Pokemon card KIOSKS AND CARD SHOPS
+    # These will be dynamically generated XML pages showing kiosks and card shops by city (search engines only)
     state_pages = [
+        # West Coast
         {'url': '/state/washington', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/oregon', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/state/california', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/nevada', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/arizona', 'priority': '0.8', 'changefreq': 'weekly'},
+        
+        # Southwest
         {'url': '/state/texas', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/new-mexico', 'priority': '0.8', 'changefreq': 'weekly'},
+        
+        # Southeast
         {'url': '/state/florida', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/new-york', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/illinois', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/pennsylvania', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/ohio', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/michigan', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/state/georgia', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/north-carolina', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/south-carolina', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/tennessee', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/alabama', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/mississippi', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/louisiana', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/arkansas', 'priority': '0.8', 'changefreq': 'weekly'},
+        
+        # Northeast
+        {'url': '/state/new-york', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/new-jersey', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/pennsylvania', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/delaware', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/maryland', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/virginia', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/west-virginia', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/massachusetts', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/connecticut', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/rhode-island', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/vermont', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/new-hampshire', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/maine', 'priority': '0.8', 'changefreq': 'weekly'},
+        
+        # Midwest
+        {'url': '/state/illinois', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/indiana', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/michigan', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/ohio', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/wisconsin', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/minnesota', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/iowa', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/missouri', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/kansas', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/nebraska', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/north-dakota', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/south-dakota', 'priority': '0.8', 'changefreq': 'weekly'},
+        
+        # Mountain West
+        {'url': '/state/colorado', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/utah', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/wyoming', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/montana', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/idaho', 'priority': '0.8', 'changefreq': 'weekly'},
+        
+        # Alaska & Hawaii
+        {'url': '/state/alaska', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/hawaii', 'priority': '0.8', 'changefreq': 'weekly'}
     ]
     
     # Combine all pages
