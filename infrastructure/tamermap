@@ -36,7 +36,7 @@ server {
 
     ## 2.1) Stripe webhooks (no IP restrictions for dev/testing)
     location /webhooks/stripe {
-        # limit_req      zone=api burst=30 nodelay;  # TEMPORARILY DISABLED
+        # limit_req      zone=api burst=30 nodelay;  # DISABLED - Cloudflare handles rate limiting
         client_max_body_size 10m;
         
         proxy_http_version 1.1;
@@ -49,7 +49,7 @@ server {
 
     ## 2.2) API endpoints (no auth)
     location /api/ {
-        # limit_req      zone=api burst=30 nodelay;  # TEMPORARILY DISABLED
+        # limit_req      zone=api burst=30 nodelay;  # DISABLED - Cloudflare handles rate limiting
         client_max_body_size 10m;
         
         proxy_http_version 1.1;
