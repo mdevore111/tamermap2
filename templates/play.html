@@ -1,11 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Upgrade to Tamermap Pro - Enhance Your Pokémon Kiosk Experience{% endblock %}
+{% block title %}
+TamerMap Pro - Advanced Pokemon Card Hunting Tools & Route Planning
+{% endblock %}
+
+{% block meta_description %}
+Discover TamerMap Pro's advanced Pokemon card hunting tools! Get real-time inventory updates, custom route planning, heatmaps, and exclusive features to find Pokemon cards before anyone else.{% endblock %}
 
 {% block extra_head %}
 <!-- Include Font Awesome for icons and Google Fonts for Inter -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Schema.org markup for TamerMap Pro features page -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "TamerMap Pro - Advanced Pokemon Card Hunting Tools",
+  "description": "Discover TamerMap Pro's advanced Pokemon card hunting tools with real-time inventory updates, custom route planning, and heatmaps.",
+  "url": "{{ request.url }}",
+  "mainEntity": {
+    "@type": "SoftwareApplication",
+    "name": "TamerMap Pro",
+    "description": "Premium Pokemon card hunting platform with advanced tools and real-time updates",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "Web Browser",
+    "featureList": [
+      "Real-time Pokemon card inventory updates",
+      "Advanced route planning for card hunting",
+      "Custom heatmaps and analytics",
+      "Exclusive Pro features and tools"
+    ]
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ request.url_root.rstrip('/') }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "TamerMap Pro",
+        "item": "{{ request.url }}"
+      }
+    ]
+  }
+}
+</script>
 <style>
   /* Global Styles */
   body {

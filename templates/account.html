@@ -1,11 +1,51 @@
 {% extends "base.html" %}
 
+{% block title %}My Account - Manage Profile, Membership & Settings | TamerMap{% endblock %}
+
+{% block meta_description %}Manage your TamerMap account settings, profile information, membership status, and Pokemon card hunting preferences. Update your personal details and subscription settings.{% endblock %}
+
 {% block extra_head %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Schema.org markup for account management page -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "My Account - TamerMap",
+    "description": "Manage your TamerMap account settings, profile information, and membership status",
+    "url": "{{ request.url }}",
+    "mainEntity": {
+      "@type": "Person",
+      "name": "{{ current_user.first_name }} {{ current_user.last_name }}",
+      "email": "{{ current_user.email }}",
+      "memberOf": {
+        "@type": "Organization",
+        "name": "TamerMap",
+        "description": "Pokemon card hunting platform"
+      }
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "{{ request.url_root.rstrip('/') }}"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "My Account",
+          "item": "{{ request.url }}"
+        }
+      ]
+    }
+  }
+  </script>
 {% endblock %}
-
-{% block title %}Account - Tamermap.com{% endblock %}
 
 {% block content %}
 <div class="form-container">

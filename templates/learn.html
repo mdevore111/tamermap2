@@ -1,11 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Upgrade to Tamermap Pro - Enhance Your Pokémon Kiosk Experience{% endblock %}
+{% block title %}
+Upgrade to TamerMap Pro - Find Pokemon Cards First & Maximize Your Card Hunting Success
+{% endblock %}
+
+{% block meta_description %}
+Upgrade to TamerMap Pro and get early access to Pokemon card inventory! Find Pokemon cards before anyone else with real-time updates, advanced route planning, and exclusive card hunting tools. Maximize your Pokemon card hunting success and discover rare cards first.
+{% endblock %}
 
 {% block extra_head %}
 <!-- Include Font Awesome for icons and Google Fonts for Inter -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Schema.org markup for TamerMap Pro upgrade page -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Upgrade to TamerMap Pro - Find Pokemon Cards First",
+  "description": "Upgrade to TamerMap Pro and get early access to Pokemon card inventory with real-time updates and advanced route planning tools.",
+  "url": "{{ request.url }}",
+  "mainEntity": {
+    "@type": "SoftwareApplication",
+    "name": "TamerMap Pro",
+    "description": "Premium Pokemon card hunting tool with real-time inventory updates and advanced route planning",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "Web Browser",
+    "offers": {
+      "@type": "Offer",
+      "description": "Premium subscription for Pokemon card hunters",
+      "category": "Pokemon Card Hunting Tools"
+    }
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ request.url_root.rstrip('/') }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Upgrade to Pro",
+        "item": "{{ request.url }}"
+      }
+    ]
+  }
+}
+</script>
 <style>
   /* Global Styles */
   body {

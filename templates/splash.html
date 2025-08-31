@@ -1,8 +1,44 @@
 {% extends "base.html" %}
 
 {% block body_class %} splash-page{% endblock %}
-{% block title %}TamerMap Landing Page{% endblock %}
+
+{% block title %}Find Pokemon Cards Near Me - Interactive Map & Route Planner | TamerMap{% endblock %}
+
+{% block meta_description %}Discover Pokemon cards near you with TamerMap's interactive map! Find kiosks, retail stores, and card shops nationwide. Plan your card hunting routes and maximize your success.{% endblock %}
 {% block extra_head %}
+<!-- Schema.org markup for TamerMap landing page -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Find Pokemon Cards Near Me - TamerMap",
+  "description": "Interactive map and route planner for finding Pokemon cards at kiosks, retail stores, and card shops nationwide",
+  "url": "{{ request.url }}",
+  "mainEntity": {
+    "@type": "WebSite",
+    "name": "TamerMap",
+    "description": "Pokemon card hunting platform with interactive maps and route planning",
+    "url": "{{ request.url_root.rstrip('/') }}",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "{{ request.url_root.rstrip('/') }}/maps",
+      "query-input": "required name=location"
+    }
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ request.url }}"
+      }
+    ]
+  }
+}
+</script>
+
 <style>
 .landing-page {
   background-image: url('/static/map.png');

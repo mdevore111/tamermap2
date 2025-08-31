@@ -3,12 +3,74 @@
 {% block body_class %} map-page{% endblock %}
 
 {% block title %}
-Tamermap.com - Map
+Find Pokemon Cards Near Me - Interactive Map of Kiosks & Card Shops | TamerMap
+{% endblock %}
+
+{% block meta_description %}
+Find Pokemon cards near you with our interactive map! Discover Pokemon card kiosks, retail stores, and indie shops nationwide. Plan your card hunting routes, locate fresh inventory, and find rare Pokemon cards. Use our route planner to maximize your Pokemon card hunting success.
 {% endblock %}
 
 {% block extra_head %}
   <!-- Load map-specific CSS styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/maps.css') }}">
+  
+  <!-- Schema.org LocalBusiness markup for Pokemon card hunting -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Find Pokemon Cards Near Me - Interactive Map",
+    "description": "Interactive map for finding Pokemon cards at kiosks, retail stores, and indie shops nationwide. Plan your card hunting routes and discover fresh Pokemon card inventory.",
+    "url": "{{ request.url }}",
+    "mainEntity": {
+      "@type": "ItemList",
+      "name": "Pokemon Card Locations",
+      "description": "Comprehensive list of Pokemon card kiosks, retail stores, and specialty shops across the United States",
+      "numberOfItems": "1000+",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "LocalBusiness",
+            "name": "Pokemon Card Kiosks",
+            "description": "Find Pokemon card vending machines and kiosks with fresh inventory",
+            "category": "Pokemon Card Retail",
+            "serviceType": "Pokemon Card Sales"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "LocalBusiness",
+            "name": "Pokemon Card Shops",
+            "description": "Specialty stores and card shops with Pokemon TCG inventory",
+            "category": "Trading Card Games",
+            "serviceType": "Pokemon Card Sales"
+          }
+        }
+      ]
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "{{ request.url_root.rstrip('/') }}"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Pokemon Card Map",
+          "item": "{{ request.url }}"
+        }
+      ]
+    }
+  }
+  </script>
 {% endblock %}
 
 {% block content %}
