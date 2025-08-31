@@ -125,14 +125,14 @@
                         <a href="{{ url_for('public.how_to') }}" class="nav-link">How To</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ url_for('public.contact') }}" class="nav-link">Contact</a>
+                        <a href="{{ url_for('public.send_message', type='contact') }}" class="nav-link">Contact</a>
                     </li>
                 </ul>
             </div>
         </nav>
     </header>
 
-    <main class="guide-container">
+    <main class="guide-container" style="margin-bottom: 6rem;">
         <!-- Breadcrumb Navigation -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
             <ol>
@@ -158,7 +158,7 @@
                     <div class="pro-content">
                         <h3>Unlock Advanced Timing Insights with TamerMap Pro</h3>
                         <p>Get real-time market data, seasonal trend analysis, and personalized hunting schedules to perfect your timing strategy.</p>
-                        <a href="{{ url_for('public.contact') }}" class="btn btn-primary">Get Pro Access</a>
+                        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary">Get Pro Access</a>
                     </div>
                 </div>
             </header>
@@ -362,7 +362,7 @@
                 <div class="cta-section">
                     <h3>Ready to Master Card Hunting Timing?</h3>
                     <p>Join TamerMap Pro today and get access to advanced timing tools, market analytics, and personalized hunting strategies that will transform your success rate.</p>
-                    <a href="{{ url_for('public.contact') }}" class="btn btn-primary btn-large">Start Your Pro Trial</a>
+                                            <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-large">Start Your Pro Trial</a>
                 </div>
             </section>
 
@@ -443,7 +443,7 @@
                     <div class="next-step">
                         <h3>🛠️ Get Pro Tools</h3>
                         <p>Upgrade to TamerMap Pro for advanced timing analytics, market predictions, and personalized hunting strategies.</p>
-                        <a href="{{ url_for('public.contact') }}" class="btn btn-secondary">Learn About Pro</a>
+                        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-secondary">Learn About Pro</a>
                     </div>
                     
                     <div class="next-step">
@@ -487,7 +487,7 @@
                     <li><a href="{{ url_for('public.maps') }}">Maps</a></li>
                     <li><a href="{{ url_for('public.learn') }}">Learn</a></li>
                     <li><a href="{{ url_for('public.how_to') }}">How To</a></li>
-                    <li><a href="{{ url_for('public.contact') }}">Contact</a></li>
+                    <li><a href="{{ url_for('public.send_message', type='contact') }}">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-section">
@@ -495,7 +495,7 @@
                 <ul>
                     <li><a href="{{ url_for('public.card_hunting_tips') }}">Card Hunting Tips</a></li>
                     <li><a href="{{ url_for('public.states') }}">State Guides</a></li>
-                    <li><a href="{{ url_for('public.contact') }}">Pro Access</a></li>
+                    <li><a href="{{ url_for('public.send_message', type='pro') }}">Pro Access</a></li>
                 </ul>
             </div>
         </div>
