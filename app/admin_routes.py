@@ -70,8 +70,8 @@ except ImportError:
 admin_bp = Blueprint('admin', __name__)
 authorize = Authorize()
 
-# Simple rate limiting for DataTables requests
-request_timestamps = defaultdict(list)
+# Simple rate limiting for DataTables requests (DISABLED - Cloudflare handles this)
+# request_timestamps = defaultdict(list)
 
 # Simple cache for DataTables responses
 data_cache = {}
@@ -97,37 +97,11 @@ def cache_response(cache_key, response):
     data_cache[cache_key] = (time.time(), response)
 
 def rate_limit_data_tables(max_requests=10, window_seconds=60):
-    """Simple rate limiting decorator for DataTables endpoints"""
+    """Simple rate limiting decorator for DataTables endpoints (DISABLED - Cloudflare handles this)"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Get client IP or user ID for rate limiting
-            client_id = current_user.id if current_user.is_authenticated else request.remote_addr
-            
-            # Initialize timestamps list if not exists
-            if client_id not in request_timestamps:
-                request_timestamps[client_id] = []
-            
-            current_time = time.time()
-            timestamps = request_timestamps[client_id]
-            
-            # Remove old timestamps outside the window
-            timestamps[:] = [ts for ts in timestamps if current_time - ts < window_seconds]
-            
-            # Check if rate limit exceeded
-            if len(timestamps) >= max_requests:
-                # Return a more DataTables-friendly error response
-                return jsonify({
-                    'error': 'Rate limit exceeded. Please wait before making more requests.',
-                    'draw': request.args.get('draw', 1),
-                    'recordsTotal': 0,
-                    'recordsFiltered': 0,
-                    'data': []
-                }), 429
-            
-            # Add current timestamp
-            timestamps.append(current_time)
-            
+            # Rate limiting disabled - Cloudflare handles this
             return f(*args, **kwargs)
         return decorated_function
     return decorator

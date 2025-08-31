@@ -24,8 +24,8 @@ def splash():  # Or rename to 'index' for clarity
 
 @public_bp.route("/maps")
 def maps():
-    google_api_key = current_app.config.get("GOOGLE_API_KEY")
-    return render_template("maps.html", google_api_key=google_api_key)
+    """Redirect /maps to root for SEO consolidation."""
+    return redirect(url_for("public.splash"), code=301)
 
 
 @public_bp.route("/learn")
@@ -40,20 +40,11 @@ def learn():
     return render_template("learn.html", stripe_public_key=stripe_public_key)
 
 
-@public_bp.route("/play")
-def play():
-    """
-    Render the play page, which contains educational or informational content.
 
-    Returns:
-        str: Rendered HTML for the play page.
-    """
-    stripe_public_key = current_app.config.get('STRIPE_PUBLISHABLE_KEY')
-    return render_template("play.html", stripe_public_key=stripe_public_key)
 
 
 @public_bp.route("/message", methods=["GET", "POST"])
-@limiter.limit("5 per minute")  # Rate limit message submissions
+# @limiter.limit("5 per minute")  # Rate limit message submissions (DISABLED - Cloudflare handles this)
 def send_message():
     """
     Display and process the message form.
@@ -267,7 +258,6 @@ def sitemap_xml():
         {'url': '/', 'priority': '1.0', 'changefreq': 'daily'},
         {'url': '/maps', 'priority': '0.9', 'changefreq': 'daily'},
         {'url': '/learn', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/play', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/how-to', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/card-hunting-tips', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/about', 'priority': '0.7', 'changefreq': 'monthly'},
@@ -378,7 +368,6 @@ def robots_txt():
 Allow: /
 Allow: /maps
 Allow: /learn
-Allow: /play
 Allow: /how-to
 Allow: /card-hunting-tips
 Allow: /about
