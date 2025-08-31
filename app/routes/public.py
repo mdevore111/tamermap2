@@ -697,6 +697,30 @@ def card_hunting_tips():
     return render_template("card-hunting-tips.html")
 
 
+@public_bp.route("/how-to-make-money")
+def how_to_make_money():
+    """Render the comprehensive guide for making money flipping Pokemon cards."""
+    return render_template("how-to-make-money.html")
+
+
+@public_bp.route("/how-to-hunt-cards")
+def how_to_hunt_cards():
+    """Render the comprehensive guide for Pokemon card hunting strategies."""
+    return render_template("how-to-hunt-cards.html")
+
+
+@public_bp.route("/how-to-timing")
+def how_to_timing():
+    """Render the comprehensive guide for optimal timing in Pokemon card hunting."""
+    return render_template("how-to-timing.html")
+
+
+@public_bp.route("/how-to-routes")
+def how_to_routes():
+    """Render the comprehensive guide for route planning in Pokemon card hunting."""
+    return render_template("how-to-routes.html")
+
+
 @public_bp.route("/sitemap.xml")
 def sitemap_xml():
     """Generate dynamic XML sitemap for search engines."""
@@ -715,6 +739,10 @@ def sitemap_xml():
         {'url': '/maps', 'priority': '0.9', 'changefreq': 'daily'},
         {'url': '/learn', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/how-to', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/how-to-make-money', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'url': '/how-to-hunt-cards', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'url': '/how-to-timing', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'url': '/how-to-routes', 'priority': '0.9', 'changefreq': 'weekly'},
         {'url': '/card-hunting-tips', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/states', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/about', 'priority': '0.7', 'changefreq': 'monthly'},
