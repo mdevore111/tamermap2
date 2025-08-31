@@ -743,6 +743,31 @@ def how_to_routes():
     return render_template("how-to-routes.html")
 
 
+# Site Tutorials - Functional guides for using TamerMap features
+@public_bp.route("/site-tutorials")
+def site_tutorials():
+    """Render the site tutorials hub page."""
+    return render_template("site-tutorials.html")
+
+
+@public_bp.route("/how-to-route-planning-tool")
+def how_to_route_planning_tool():
+    """Render the comprehensive guide for using TamerMap's route planning tool."""
+    return render_template("how-to-route-planning-tool.html")
+
+
+@public_bp.route("/how-to-use-heatmaps")
+def how_to_use_heatmaps():
+    """Render the comprehensive guide for using TamerMap's heatmap feature."""
+    return render_template("how-to-use-heatmaps.html")
+
+
+@public_bp.route("/how-to-reset-password")
+def how_to_reset_password():
+    """Render the comprehensive guide for resetting TamerMap passwords."""
+    return render_template("how-to-reset-password.html")
+
+
 @public_bp.route("/sitemap.xml")
 def sitemap_xml():
     """Generate dynamic XML sitemap for search engines with caching for performance."""
@@ -777,6 +802,10 @@ def sitemap_xml():
         ('/how-to-hunt-cards', '0.9', 'weekly'),
         ('/how-to-timing', '0.9', 'weekly'),
         ('/how-to-routes', '0.9', 'weekly'),
+        ('/site-tutorials', '0.8', 'weekly'),
+        ('/how-to-route-planning-tool', '0.9', 'weekly'),
+        ('/how-to-use-heatmaps', '0.9', 'weekly'),
+        ('/how-to-reset-password', '0.8', 'weekly'),
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),

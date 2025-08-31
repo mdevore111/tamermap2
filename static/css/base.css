@@ -130,6 +130,34 @@ body {
   }
 }
 
+/* Medium screen responsive adjustments - show hamburger menu earlier */
+@media (max-width: 991px) {
+  .navbar-nav {
+    text-align: center;
+  }
+  
+  .navbar-nav .nav-item {
+    margin: 0.5rem 0;
+  }
+  
+  .navbar-nav .dropdown-menu {
+    text-align: center;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  
+  .navbar-nav .dropdown-item {
+    color: #fff !important;
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar-nav .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff !important;
+  }
+}
+
 /* Plain Text Links (e.g., Suggestions) */
 .nav-link {
   color: #fff;
