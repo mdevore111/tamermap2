@@ -12,6 +12,28 @@ from app.communication_forms import MessageForm
 from app.routes.security import check_referrer
 from app.custom_email import send_email_with_context
 
+import time
+from threading import Lock
+
+# Simple in-memory cache for sitemap
+_sitemap_cache = {}
+_sitemap_cache_lock = Lock()
+_sitemap_cache_ttl = 3600  # 1 hour in seconds
+
+def _get_cached_sitemap(cache_key):
+    """Get cached sitemap if it exists and is not expired."""
+    with _sitemap_cache_lock:
+        if cache_key in _sitemap_cache:
+            cached_data, timestamp = _sitemap_cache[cache_key]
+            if time.time() - timestamp < _sitemap_cache_ttl:
+                return cached_data
+        return None
+
+def _set_cached_sitemap(cache_key, data):
+    """Cache sitemap data with timestamp."""
+    with _sitemap_cache_lock:
+        _sitemap_cache[cache_key] = (data, time.time())
+
 # Create a blueprint for public (unprotected) routes
 public_bp = Blueprint("public", __name__)
 
@@ -723,7 +745,7 @@ def how_to_routes():
 
 @public_bp.route("/sitemap.xml")
 def sitemap_xml():
-    """Generate dynamic XML sitemap for search engines."""
+    """Generate dynamic XML sitemap for search engines with caching for performance."""
     from flask import make_response
     from datetime import datetime
     
@@ -733,110 +755,90 @@ def sitemap_xml():
     # Base URL
     base_url = request.url_root.rstrip('/')
     
-    # Static pages with their priorities and change frequencies
-    pages = [
-        {'url': '/', 'priority': '1.0', 'changefreq': 'daily'},
-        {'url': '/maps', 'priority': '0.9', 'changefreq': 'daily'},
-        {'url': '/learn', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/how-to', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/how-to-make-money', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'url': '/how-to-hunt-cards', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'url': '/how-to-timing', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'url': '/how-to-routes', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'url': '/card-hunting-tips', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/states', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/about', 'priority': '0.7', 'changefreq': 'monthly'},
-        {'url': '/sitemap', 'priority': '0.5', 'changefreq': 'monthly'},
-    ]
+    # Create a cache key based on the current date (changes daily)
+    cache_key = f"sitemap_{now}"
     
-    # Add state pages for ALL states with Pokemon card KIOSKS AND CARD SHOPS
-    # These will be dynamically generated XML pages showing kiosks and card shops by city (search engines only)
-    state_pages = [
+    # Check if we have a cached version
+    cached_content = _get_cached_sitemap(cache_key)
+    if cached_content:
+        response = make_response(cached_content)
+        response.headers['Content-Type'] = 'application/xml; charset=utf-8'
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+        response.headers['X-Cache'] = 'HIT'
+        return response
+    
+    # Use tuples for better memory efficiency
+    static_pages = (
+        ('/', '1.0', 'daily'),
+        ('/maps', '0.9', 'daily'),
+        ('/learn', '0.8', 'weekly'),
+        ('/how-to', '0.8', 'weekly'),
+        ('/how-to-make-money', '0.9', 'weekly'),
+        ('/how-to-hunt-cards', '0.9', 'weekly'),
+        ('/how-to-timing', '0.9', 'weekly'),
+        ('/how-to-routes', '0.9', 'weekly'),
+        ('/card-hunting-tips', '0.8', 'weekly'),
+        ('/states', '0.8', 'weekly'),
+        ('/about', '0.7', 'monthly'),
+        ('/sitemap', '0.5', 'monthly'),
+    )
+    
+    # Pre-define state slugs for efficiency
+    state_slugs = (
         # West Coast
-        {'url': '/state/washington', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/oregon', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/california', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/nevada', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/arizona', 'priority': '0.8', 'changefreq': 'weekly'},
-        
+        'washington', 'oregon', 'california', 'nevada', 'arizona',
         # Southwest
-        {'url': '/state/texas', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/new-mexico', 'priority': '0.8', 'changefreq': 'weekly'},
-        
+        'texas', 'new-mexico',
         # Southeast
-        {'url': '/state/florida', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/georgia', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/north-carolina', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/south-carolina', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/tennessee', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/alabama', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/mississippi', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/louisiana', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/arkansas', 'priority': '0.8', 'changefreq': 'weekly'},
-        
+        'florida', 'georgia', 'north-carolina', 'south-carolina', 'tennessee', 
+        'alabama', 'mississippi', 'louisiana', 'arkansas',
         # Northeast
-        {'url': '/state/new-york', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/new-jersey', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/pennsylvania', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/delaware', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/maryland', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/virginia', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/west-virginia', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/massachusetts', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/connecticut', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/rhode-island', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/vermont', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/new-hampshire', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/maine', 'priority': '0.8', 'changefreq': 'weekly'},
-        
+        'new-york', 'new-jersey', 'pennsylvania', 'delaware', 'maryland', 
+        'virginia', 'west-virginia', 'massachusetts', 'connecticut', 
+        'rhode-island', 'vermont', 'new-hampshire', 'maine',
         # Midwest
-        {'url': '/state/illinois', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/indiana', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/michigan', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/ohio', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/wisconsin', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/minnesota', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/iowa', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/missouri', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/kansas', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/nebraska', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/north-dakota', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/south-dakota', 'priority': '0.8', 'changefreq': 'weekly'},
-        
+        'illinois', 'indiana', 'michigan', 'ohio', 'wisconsin', 'minnesota', 
+        'iowa', 'missouri', 'kansas', 'nebraska', 'north-dakota', 'south-dakota',
         # Mountain West
-        {'url': '/state/colorado', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/utah', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/wyoming', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/montana', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/idaho', 'priority': '0.8', 'changefreq': 'weekly'},
-        
+        'colorado', 'utah', 'wyoming', 'montana', 'idaho',
         # Alaska & Hawaii
-        {'url': '/state/alaska', 'priority': '0.8', 'changefreq': 'weekly'},
-        {'url': '/state/hawaii', 'priority': '0.8', 'changefreq': 'weekly'}
+        'alaska', 'hawaii'
+    )
+    
+    # Generate XML content efficiently using string building
+    xml_parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
     ]
     
-    # Combine all pages
-    all_pages = pages + state_pages
+    # Add static pages
+    for url, priority, changefreq in static_pages:
+        xml_parts.append(
+            f'<url><loc>{base_url}{url}</loc><lastmod>{now}</lastmod>'
+            f'<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>'
+        )
     
-    # Generate XML sitemap
-    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-'''
+    # Add state pages efficiently
+    for state_slug in state_slugs:
+        xml_parts.append(
+            f'<url><loc>{base_url}/state/{state_slug}</loc><lastmod>{now}</lastmod>'
+            f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
+        )
     
-    for page in all_pages:
-        xml_content += f'''  <url>
-    <loc>{base_url}{page['url']}</loc>
-    <lastmod>{now}</lastmod>
-    <changefreq>{page['changefreq']}</changefreq>
-    <priority>{page['priority']}</priority>
-  </url>
-'''
+    xml_parts.append('</urlset>')
     
-    xml_content += '</urlset>'
+    # Join all parts efficiently
+    xml_content = ''.join(xml_parts)
+    
+    # Cache the generated content
+    _set_cached_sitemap(cache_key, xml_content)
     
     # Create response with proper headers
     response = make_response(xml_content)
-    response.headers['Content-Type'] = 'application/xml'
+    response.headers['Content-Type'] = 'application/xml; charset=utf-8'
+    response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+    response.headers['X-Cache'] = 'MISS'
+    
     return response
 
 

@@ -4,214 +4,221 @@
 
 {% block meta_description %}Navigate TamerMap's features easily with our comprehensive sitemap. Find Pokémon card stores, kiosks, events, and plan your card hunting routes with our interactive tools.{% endblock %}
 
-{% block extra_head %}
-<!-- Open Graph tags -->
+{% block og_meta %}
 <meta property="og:title" content="TamerMap Sitemap - Find Pokémon Card Stores & Events">
 <meta property="og:description" content="Navigate TamerMap's features easily with our comprehensive sitemap. Find Pokémon card stores, kiosks, events, and plan your card hunting routes.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ url_for('public.sitemap', _external=True) }}">
-<meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+<meta property="og:image" content="{{ url_for('static', filename='images/tamermap-og.jpg', _external=True) }}">
+{% endblock %}
 
-<!-- Additional SEO tags -->
-<meta name="keywords" content="Pokemon cards, store locator, Pokemon kiosks, card shops, trading card stores, Pokemon events, card hunting">
+{% block canonical %}
 <link rel="canonical" href="{{ url_for('public.sitemap', _external=True) }}">
+{% endblock %}
 
-<!-- Schema.org markup for Google -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "TamerMap",
-  "url": "{{ url_for('public.splash', _external=True) }}",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "{{ url_for('public.maps', _external=True) }}?search={search_term_string}",
-    "query-input": "required name=search_term_string"
-  },
-  "mainEntity": {
-    "@type": "ItemList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Interactive Map",
-        "description": "Find Pokémon card locations and plan your routes",
-        "url": "{{ url_for('public.maps', _external=True) }}"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "About TamerMap",
-        "description": "Learn about our mission and story",
-        "url": "{{ url_for('public.about', _external=True) }}"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Route Planner",
-        "description": "Plan efficient routes to multiple card locations",
-        "url": "{{ url_for('public.maps', _anchor='route-planner', _external=True) }}"
-      }
-    ]
-  }
-}
-</script>
+{% block extra_css %}
 <style>
-.sitemap-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    margin-bottom: 3rem; /* Add bottom margin to prevent touching footer */
-}
-
-.sitemap-section {
-    margin-bottom: 2rem;
-}
-
-.sitemap-section h2 {
-    color: #333;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #667eea;
-}
-
-.sitemap-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sitemap-list li {
-    margin-bottom: 0.5rem;
-}
-
-.sitemap-list a {
-    color: #555;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.sitemap-list a:hover {
-    background: #f8f9fa;
-    color: #667eea;
-}
-
-.sitemap-list i {
-    color: #667eea;
-    width: 20px;
-    text-align: center;
-}
-
-/* Dropdown styles */
-.dropdown-container {
-    position: relative;
-}
-
-.dropdown-trigger {
-    cursor: pointer;
-}
-
-.dropdown-arrow {
-    margin-left: 0.5rem;
-    font-size: 0.8rem;
-    transition: transform 0.2s ease;
-}
-
-.dropdown-container:hover .dropdown-arrow {
-    transform: rotate(180deg);
-}
-
-.contact-dropdown {
-    position: absolute;
-    left: 0;
-    top: 100%;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 0.5rem;
-    min-width: 200px;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
-    z-index: 100;
-    list-style: none;
-}
-
-.dropdown-container:hover .contact-dropdown {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.contact-dropdown li {
-    margin: 0;
-}
-
-.contact-dropdown a {
-    padding: 0.5rem 0.75rem;
-    color: #555;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.contact-dropdown a:hover {
-    background: #f8f9fa;
-    color: #667eea;
-}
-
-.contact-dropdown i {
-    width: 16px;
-    font-size: 0.9rem;
-}
-
-.sitemap-description {
-    font-size: 0.9rem;
-    color: #666;
-    margin-left: 1.8rem;
-}
-
-.newsletter-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: #667eea;
-    color: white !important;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-
-.newsletter-link:hover {
-    background: #5a6fd6;
-    color: white !important;
-    text-decoration: none;
-}
-
-.newsletter-link i {
-    color: white;
-}
-
-@media (max-width: 768px) {
     .sitemap-container {
-        margin: 1rem auto;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-}
-
-/* Ensure the last section has proper spacing */
-.sitemap-section:last-child {
-    margin-bottom: 3rem;
-}
+    
+    .sitemap-section {
+        margin-bottom: 3rem;
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .sitemap-section h2 {
+        color: #2c3e50;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+    
+    .sitemap-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .sitemap-list li {
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+    }
+    
+    .sitemap-list a {
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        transition: color 0.3s ease;
+    }
+    
+    .sitemap-list a:hover {
+        color: #2980b9;
+        text-decoration: underline;
+    }
+    
+    .sitemap-list i {
+        margin-right: 0.75rem;
+        width: 20px;
+        text-align: center;
+        color: #7f8c8d;
+    }
+    
+    .sitemap-description {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+        margin-left: 2.75rem;
+        line-height: 1.4;
+    }
+    
+    .contact-dropdown {
+        list-style: none;
+        padding-left: 2rem;
+        margin-top: 0.5rem;
+        border-left: 2px solid #ecf0f1;
+    }
+    
+    .contact-dropdown li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .contact-dropdown a {
+        font-size: 0.9rem;
+        color: #95a5a6;
+    }
+    
+    .dropdown-container {
+        position: relative;
+    }
+    
+    .dropdown-trigger {
+        cursor: pointer;
+    }
+    
+    .dropdown-arrow {
+        margin-left: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .dropdown-trigger:hover .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .state-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .state-item {
+        background: #f8f9fa;
+        padding: 0.75rem;
+        border-radius: 6px;
+        border-left: 4px solid #3498db;
+        transition: all 0.3s ease;
+    }
+    
+    .state-item:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .state-item a {
+        color: #2c3e50;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    
+    .state-item a:hover {
+        color: #3498db;
+    }
+    
+    .guide-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .guide-item {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .guide-item:hover {
+        background: #fff;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        transform: translateY(-3px);
+    }
+    
+    .guide-item h3 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .guide-item p {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+    
+    .guide-item .btn {
+        background: #3498db;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: background 0.3s ease;
+    }
+    
+    .guide-item .btn:hover {
+        background: #2980b9;
+        text-decoration: none;
+    }
+    
+    .priority-high {
+        border-left-color: #e74c3c;
+    }
+    
+    .priority-medium {
+        border-left-color: #f39c12;
+    }
+    
+    .priority-low {
+        border-left-color: #27ae60;
+    }
+    
+    @media (max-width: 768px) {
+        .sitemap-container {
+            padding: 1rem;
+        }
+        
+        .state-grid {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+        
+        .guide-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -223,7 +230,7 @@
         <h2>Main Navigation</h2>
         <ul class="sitemap-list">
             <li>
-                <a href="{{ url_for('public.splash') }}">
+                <a href="{{ url_for('public.index') }}">
                     <i class="fas fa-home"></i>
                     Home
                 </a>
@@ -237,6 +244,13 @@
                 <div class="sitemap-description">Find Pokémon card locations and plan your routes</div>
             </li>
             <li>
+                <a href="{{ url_for('public.learn') }}">
+                    <i class="fas fa-graduation-cap"></i>
+                    Learn
+                </a>
+                <div class="sitemap-description">Educational resources and card hunting knowledge</div>
+            </li>
+            <li>
                 <a href="{{ url_for('public.about') }}">
                     <i class="fas fa-info-circle"></i>
                     About Us
@@ -247,7 +261,33 @@
     </div>
 
     <div class="sitemap-section">
-        <h2>Features</h2>
+        <h2>Comprehensive How-To Guides</h2>
+        <div class="guide-grid">
+            <div class="guide-item priority-high">
+                <h3>💰 How to Make Money Flipping Pokemon Cards</h3>
+                <p>Master the business side of card hunting and flipping for profit. Learn pricing strategies, market analysis, and business fundamentals.</p>
+                <a href="{{ url_for('public.how_to_make_money') }}" class="btn">Read Guide</a>
+            </div>
+            <div class="guide-item priority-high">
+                <h3>🔍 How to Hunt Pokemon Cards Like a Pro</h3>
+                <p>Master the fundamentals of successful card hunting. Learn where to look, what to look for, and how to maximize your finds.</p>
+                <a href="{{ url_for('public.how_to_hunt_cards') }}" class="btn">Read Guide</a>
+            </div>
+            <div class="guide-item priority-high">
+                <h3>⏰ How to Time Your Card Hunting</h3>
+                <p>Master the art of timing for maximum hunting success. Learn seasonal patterns, market cycles, and optimal hunting schedules.</p>
+                <a href="{{ url_for('public.how_to_timing') }}" class="btn">Read Guide</a>
+            </div>
+            <div class="guide-item priority-high">
+                <h3>🗺️ How to Plan Your Card Hunting Routes</h3>
+                <p>Optimize your hunting trips for maximum efficiency. Learn route planning, scheduling, and advanced optimization strategies.</p>
+                <a href="{{ url_for('public.how_to_routes') }}" class="btn">Read Guide</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Features & Tools</h2>
         <ul class="sitemap-list">
             <li>
                 <a href="{{ url_for('public.maps', _anchor='kiosks') }}">
@@ -277,12 +317,6 @@
                 </a>
                 <div class="sitemap-description">Find upcoming Pokémon card events and tournaments</div>
             </li>
-        </ul>
-    </div>
-
-    <div class="sitemap-section">
-        <h2>Pro Features</h2>
-        <ul class="sitemap-list">
             <li>
                 <a href="{{ url_for('public.maps', _anchor='route-planner') }}">
                     <i class="fas fa-route"></i>
@@ -301,7 +335,67 @@
     </div>
 
     <div class="sitemap-section">
-        <h2>Support</h2>
+        <h2>State-Specific Guides</h2>
+        <p style="margin-bottom: 1rem; color: #7f8c8d;">Find Pokemon card hunting locations and strategies for each state:</p>
+        <div class="state-grid">
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='california') }}">California</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='texas') }}">Texas</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='florida') }}">Florida</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='new-york') }}">New York</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='illinois') }}">Illinois</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='pennsylvania') }}">Pennsylvania</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='ohio') }}">Ohio</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='georgia') }}">Georgia</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='north-carolina') }}">North Carolina</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.state', state_name='michigan') }}">Michigan</a>
+            </div>
+            <div class="state-item">
+                <a href="{{ url_for('public.states') }}">View All States</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Resources & Tips</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.card_hunting_tips') }}">
+                    <i class="fas fa-lightbulb"></i>
+                    Card Hunting Tips
+                </a>
+                <div class="sitemap-description">Essential tips and tricks for successful Pokemon card hunting</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.how_to') }}">
+                    <i class="fas fa-book-open"></i>
+                    How-To Guides
+                </a>
+                <div class="sitemap-description">Comprehensive guides for Pokemon card hunting success</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Support & Contact</h2>
         <ul class="sitemap-list">
             <li class="dropdown-container">
                 <a href="#" class="dropdown-trigger">
@@ -318,25 +412,31 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('public.send_message', type='suggestion') }}">
-                            <i class="fas fa-lightbulb"></i>
-                            Suggestions
-                        </a>
-                    </li>
-                    <li>
                         <a href="{{ url_for('public.send_message', type='bug') }}">
                             <i class="fas fa-bug"></i>
-                            Report Bug
+                            Report a Bug
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('public.send_message', type='business') }}">
-                            <i class="fas fa-briefcase"></i>
-                            Business Inquiry
+                        <a href="{{ url_for('public.send_message', type='feature') }}">
+                            <i class="fas fa-lightbulb"></i>
+                            Feature Request
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('public.send_message', type='pro') }}">
+                            <i class="fas fa-star"></i>
+                            Pro Access
                         </a>
                     </li>
                 </ul>
             </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Legal & Information</h2>
+        <ul class="sitemap-list">
             <li>
                 <a href="{{ url_for('public.privacy') }}">
                     <i class="fas fa-shield-alt"></i>
@@ -353,17 +453,25 @@
             </li>
         </ul>
     </div>
-
-    <div class="sitemap-section">
-        <h2>Stay Connected</h2>
-        <p class="text-center">Help us make TamerMap even better! If you know of a store or event that's not listed, or if you spot any information that needs updating, please use our contact form to let us know.</p>
-        
-        <div class="text-center mt-4">
-            <a href="{{ url_for('public.send_message', type='newsletter') }}" class="newsletter-link">
-                <i class="fas fa-envelope"></i>
-                Subscribe to Updates
-            </a>
-        </div>
-    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple dropdown functionality for contact section
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdownTriggers = document.querySelectorAll('.dropdown-trigger');
+        
+        dropdownTriggers.forEach(trigger => {
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                const dropdown = this.nextElementSibling.nextElementSibling;
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+                
+                const arrow = this.querySelector('.dropdown-arrow');
+                arrow.style.transform = dropdown.style.display === 'block' ? 'rotate(180deg)' : 'rotate(0deg)';
+            });
+        });
+    });
+</script>
 {% endblock %}
