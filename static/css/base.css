@@ -778,3 +778,27 @@ body:not(.map-page):not(.splash-page) .chapter:last-child,
 body:not(.map-page):not(.splash-page) .part:last-child {
   margin-bottom: 3rem !important;
 }
+
+/* ==========================================================================
+   HOW-TO GUIDE SPECIFIC SPACING
+   ========================================================================== */
+
+/* Ensure how-to guide containers have proper bottom spacing */
+.guide-container,
+.container[style*="margin-bottom: 6rem"],
+.container[style*="margin-bottom: 6rem !important"] {
+  margin-bottom: 6rem !important;
+  padding-bottom: 2rem !important;
+}
+
+/* Ensure the last section in how-to guides has extra spacing */
+.guide-container > *:last-child,
+.guide-content > *:last-child {
+  margin-bottom: 4rem !important;
+}
+
+/* Specific spacing for how-to guide main containers */
+.guide-container .container,
+.guide-content .container {
+  margin-bottom: 6rem !important;
+}
