@@ -40,6 +40,188 @@ def learn():
     return render_template("learn.html", stripe_public_key=stripe_public_key)
 
 
+@public_bp.route("/states")
+def states_index():
+    """
+    States index page showing all available state pages.
+    
+    Returns:
+        str: Rendered HTML template with links to all state pages
+    """
+    # Define all available states with their metadata
+    states = [
+        {
+            'name': 'Washington',
+            'slug': 'washington',
+            'description': 'Pacific Northwest Pokemon card hunting paradise',
+            'icon': 'fas fa-mountain'
+        },
+        {
+            'name': 'California',
+            'slug': 'california',
+            'description': 'Golden State with diverse card hunting opportunities',
+            'icon': 'fas fa-sun'
+        },
+        {
+            'name': 'Texas',
+            'slug': 'texas',
+            'description': 'Lone Star State with wide coverage',
+            'icon': 'fas fa-star'
+        },
+        {
+            'name': 'Florida',
+            'slug': 'florida',
+            'description': 'Sunshine State card hunting destinations',
+            'icon': 'fas fa-umbrella-beach'
+        },
+        {
+            'name': 'New York',
+            'slug': 'new-york',
+            'description': 'Empire State with urban and suburban locations',
+            'icon': 'fas fa-city'
+        },
+        {
+            'name': 'Illinois',
+            'slug': 'illinois',
+            'description': 'Prairie State with Chicago area coverage',
+            'icon': 'fas fa-building'
+        },
+        {
+            'name': 'Pennsylvania',
+            'slug': 'pennsylvania',
+            'description': 'Keystone State card hunting spots',
+            'icon': 'fas fa-key'
+        },
+        {
+            'name': 'Ohio',
+            'slug': 'ohio',
+            'description': 'Buckeye State with diverse locations',
+            'icon': 'fas fa-leaf'
+        },
+        {
+            'name': 'Michigan',
+            'slug': 'michigan',
+            'description': 'Great Lakes State card hunting',
+            'icon': 'fas fa-water'
+        },
+        {
+            'name': 'Georgia',
+            'slug': 'georgia',
+            'description': 'Peach State with growing coverage',
+            'icon': 'fas fa-tree'
+        }
+    ]
+    
+    return render_template("states_index.html", states=states)
+
+
+@public_bp.route("/state/<state_name>")
+def state_page(state_name):
+    """
+    Dynamic state page showing all kiosks in a specific state organized by city.
+    
+    Args:
+        state_name (str): The state name (e.g., 'washington', 'california')
+    
+    Returns:
+        str: Rendered HTML template with state kiosks organized by city
+    """
+    # Normalize state name for database query
+    state_name_normalized = state_name.title()
+    
+    # Handle common state name variations
+    state_variations = {
+        'washington': ['Washington', 'WA', 'Wash'],
+        'california': ['California', 'CA', 'Calif'],
+        'texas': ['Texas', 'TX', 'Tex'],
+        'florida': ['Florida', 'FL', 'Fla'],
+        'new-york': ['New York', 'NY', 'New York State'],
+        'illinois': ['Illinois', 'IL', 'Ill'],
+        'pennsylvania': ['Pennsylvania', 'PA', 'Penn'],
+        'ohio': ['Ohio', 'OH'],
+        'michigan': ['Michigan', 'MI', 'Mich'],
+        'georgia': ['Georgia', 'GA']
+    }
+    
+    # Get state variations for search
+    search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
+    
+    # Build query with multiple state name variations
+    query = db.session.query(Retailer).filter(Retailer.enabled == True)
+    
+    # Use OR conditions for multiple state name variations
+    from sqlalchemy import or_
+    state_filters = []
+    for term in search_terms:
+        state_filters.append(Retailer.full_address.ilike(f'%{term}%'))
+    
+    retailers = query.filter(or_(*state_filters)).all()
+    
+    # Group retailers by city with better address parsing
+    cities = {}
+    for retailer in retailers:
+        # Extract city from address (assuming format: "Street, City, State ZIP")
+        address_parts = retailer.full_address.split(',')
+        if len(address_parts) >= 2:
+            city = address_parts[1].strip()
+            # Clean up city name (remove extra spaces, etc.)
+            city = ' '.join(city.split())
+            if city and city not in cities:
+                cities[city] = []
+            if city:
+                cities[city].append(retailer)
+    
+    # Sort cities alphabetically
+    sorted_cities = dict(sorted(cities.items()))
+    
+    # Generate structured data for SEO
+    structured_data = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": f"Pokemon Card Kiosks in {state_name_normalized}",
+        "description": f"Find Pokemon card kiosks and retail locations in {state_name_normalized}. Browse locations by city with addresses, phone numbers, and hours.",
+        "url": request.url,
+        "mainEntity": {
+            "@type": "ItemList",
+            "name": f"Pokemon Card Locations in {state_name_normalized}",
+            "numberOfItems": len(retailers),
+            "itemListElement": []
+        }
+    }
+    
+    # Add each retailer to structured data
+    for i, retailer in enumerate(retailers):
+        item_data = {
+            "@type": "ListItem",
+            "position": i + 1,
+            "item": {
+                "@type": "LocalBusiness",
+                "name": retailer.retailer,
+                "address": retailer.full_address,
+                "telephone": retailer.phone_number,
+                "url": retailer.website
+            }
+        }
+        
+        # Add geo coordinates if available
+        if retailer.latitude and retailer.longitude:
+            item_data["item"]["geo"] = {
+                "@type": "GeoCoordinates",
+                "latitude": retailer.latitude,
+                "longitude": retailer.longitude
+            }
+        
+        structured_data["mainEntity"]["itemListElement"].append(item_data)
+    
+    return render_template(
+        "state.html", 
+        state_name=state_name_normalized,
+        cities=sorted_cities,
+        total_locations=len(retailers),
+        structured_data=structured_data
+    )
+
+
 
 
 
@@ -260,16 +442,35 @@ def sitemap_xml():
         {'url': '/learn', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/how-to', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/card-hunting-tips', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/states', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/about', 'priority': '0.7', 'changefreq': 'monthly'},
         {'url': '/sitemap', 'priority': '0.5', 'changefreq': 'monthly'},
     ]
+    
+    # Add state pages for major states with Pokemon card locations
+    # These will be dynamically generated pages showing kiosks by city
+    state_pages = [
+        {'url': '/state/washington', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/california', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/texas', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/florida', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/new-york', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/illinois', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/pennsylvania', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/ohio', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/michigan', 'priority': '0.8', 'changefreq': 'weekly'},
+        {'url': '/state/georgia', 'priority': '0.8', 'changefreq': 'weekly'},
+    ]
+    
+    # Combine all pages
+    all_pages = pages + state_pages
     
     # Generate XML sitemap
     xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 '''
     
-    for page in pages:
+    for page in all_pages:
         xml_content += f'''  <url>
     <loc>{base_url}{page['url']}</loc>
     <lastmod>{now}</lastmod>

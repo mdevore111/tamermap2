@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Pokemon Card Kiosks in {{ state_name }} - TamerMap{% endblock %}
+
+{% block meta_description %}Find Pokemon card kiosks and retail locations in {{ state_name }}. Browse {{ total_locations }} locations by city with addresses, phone numbers, and hours. Plan your card hunting routes efficiently.{% endblock %}
+
+{% block og_type %}website{% endblock %}
+
+{% block extra_head %}
+<!-- Structured Data for SEO -->
+<script type="application/ld+json">
+{{ structured_data | tojson | safe }}
+</script>
+
+<style>
+.state-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+}
+
+.state-stats {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid #007bff;
+}
+
+.city-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.city-header {
+    background: #e9ecef;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+}
+
+.city-locations {
+    padding: 1.5rem;
+}
+
+.location-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease;
+}
+
+.location-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.15);
+}
+
+.location-name {
+    font-weight: 600;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.location-address {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.location-details {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.location-details i {
+    width: 16px;
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+.no-locations {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.back-to-map {
+    background: #28a745;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    display: inline-block;
+    margin-bottom: 2rem;
+    transition: all 0.2s ease;
+}
+
+.back-to-map:hover {
+    background: #218838;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- State Header -->
+    <div class="state-header text-center">
+        <div class="container">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-map-marker-alt me-3"></i>
+                Pokemon Card Kiosks in {{ state_name }}
+            </h1>
+            <p class="lead mb-0">
+                Find {{ total_locations }} locations across {{ cities|length }} cities
+            </p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Back to Map Button -->
+        <a href="{{ url_for('public.splash') }}" class="back-to-map">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Interactive Map
+        </a>
+
+        <!-- State Statistics -->
+        <div class="state-stats">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <h4 class="text-primary mb-2">{{ total_locations }}</h4>
+                    <p class="mb-0">Total Locations</p>
+                </div>
+                <div class="col-md-4">
+                    <h4 class="text-primary mb-2">{{ cities|length }}</h4>
+                    <p class="mb-0">Cities Covered</p>
+                </div>
+                <div class="col-md-4">
+                    <h4 class="text-primary mb-2">
+                        <i class="fas fa-clock me-2"></i>
+                        Updated Daily
+                    </h4>
+                    <p class="mb-0">Fresh Data</p>
+                </div>
+            </div>
+        </div>
+
+        {% if cities %}
+            <!-- Cities and Locations -->
+            {% for city, locations in cities.items() %}
+            <div class="city-section">
+                <div class="city-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-city me-2"></i>
+                        {{ city }}
+                        <span class="badge bg-primary ms-2">{{ locations|length }} locations</span>
+                    </h3>
+                </div>
+                <div class="city-locations">
+                    {% for location in locations %}
+                    <div class="location-card">
+                        <div class="location-name">
+                            <i class="fas fa-store me-2"></i>
+                            {{ location.retailer }}
+                        </div>
+                        <div class="location-address">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            {{ location.full_address }}
+                        </div>
+                        <div class="location-details">
+                            {% if location.phone_number %}
+                            <div class="mb-1">
+                                <i class="fas fa-phone"></i>
+                                <a href="tel:{{ location.phone_number }}" class="text-decoration-none">
+                                    {{ location.phone_number }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if location.website %}
+                            <div class="mb-1">
+                                <i class="fas fa-globe"></i>
+                                <a href="{{ location.website }}" target="_blank" rel="noopener" class="text-decoration-none">
+                                    Visit Website
+                                </a>
+                            </div>
+                            {% endif %}
+                            {% if location.opening_hours %}
+                            <div class="mb-1">
+                                <i class="fas fa-clock"></i>
+                                {{ location.opening_hours }}
+                            </div>
+                            {% endif %}
+                            {% if location.machine_count > 0 %}
+                            <div class="mb-1">
+                                <i class="fas fa-gamepad"></i>
+                                {{ location.machine_count }} machine{% if location.machine_count != 1 %}s{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <!-- No Locations Found -->
+            <div class="no-locations">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h3>No locations found in {{ state_name }}</h3>
+                <p class="lead">We're constantly adding new locations. Check back soon or explore our interactive map!</p>
+                <a href="{{ url_for('public.splash') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-map me-2"></i>
+                    Explore Interactive Map
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- SEO Content -->
+        <div class="mt-5 p-4 bg-light rounded">
+            <h2>Find Pokemon Cards in {{ state_name }}</h2>
+            <p class="lead">
+                Discover the best Pokemon card hunting spots across {{ state_name }} with TamerMap's comprehensive directory. 
+                Whether you're looking for kiosks, retail stores, or special events, we've got you covered.
+            </p>
+            
+            <h3>Why Use TamerMap for {{ state_name }}?</h3>
+            <ul>
+                <li><strong>Comprehensive Coverage:</strong> {{ total_locations }}+ verified locations across {{ cities|length }} cities</li>
+                <li><strong>Real-time Updates:</strong> Fresh data on machine counts, hours, and availability</li>
+                <li><strong>Route Planning:</strong> Optimize your card hunting trips with our advanced route planner</li>
+                <li><strong>Local Insights:</strong> Find hidden gems and popular spots in your area</li>
+            </ul>
+
+            <h3>Popular Cities in {{ state_name }}</h3>
+            <p>
+                {% for city in cities.keys() %}
+                    <span class="badge bg-secondary me-2 mb-2">{{ city }}</span>
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
