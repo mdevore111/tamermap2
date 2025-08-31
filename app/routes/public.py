@@ -44,10 +44,16 @@ def learn():
 def states_index():
     """
     States index page showing all available state pages.
+    BLOCKED: This route is for search engines only, not user access.
     
     Returns:
-        str: Rendered HTML template with links to all state pages
+        str: 404 error for users, XML for search engines
     """
+    # Block user access - this is for search engines only
+    user_agent = request.headers.get('User-Agent', '').lower()
+    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+        return "Page not found", 404
+    
     # Define all available states with their metadata
     states = [
         {
@@ -112,20 +118,50 @@ def states_index():
         }
     ]
     
-    return render_template("states_index.html", states=states)
+    # Return XML for search engines instead of HTML template
+    from flask import make_response
+    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<states xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <title>Pokemon Card Kiosks by State</title>
+    <description>Find Pokemon card kiosks across the United States</description>
+    <total_states>{len(states)}</total_states>
+    <states_list>
+'''
+    
+    for state in states:
+        xml_content += f'''        <state>
+            <name>{state['name']}</name>
+            <slug>{state['slug']}</slug>
+            <description>{state['description']}</description>
+            <url>{request.url_root.rstrip('/')}/state/{state['slug']}</url>
+        </state>
+'''
+    
+    xml_content += '''    </states_list>
+</states>'''
+    
+    response = make_response(xml_content)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
 
 
 @public_bp.route("/state/<state_name>")
 def state_page(state_name):
     """
-    Dynamic state page showing all kiosks in a specific state organized by city.
+    Dynamic state page showing all KIOSKS ONLY in a specific state organized by city.
+    BLOCKED: This route is for search engines only, not user access.
     
     Args:
         state_name (str): The state name (e.g., 'washington', 'california')
     
     Returns:
-        str: Rendered HTML template with state kiosks organized by city
+        str: 404 error for users, XML for search engines
     """
+    # Block user access - this is for search engines only
+    user_agent = request.headers.get('User-Agent', '').lower()
+    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+        return "Page not found", 404
+    
     # Normalize state name for database query
     state_name_normalized = state_name.title()
     
@@ -146,8 +182,11 @@ def state_page(state_name):
     # Get state variations for search
     search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
     
-    # Build query with multiple state name variations
-    query = db.session.query(Retailer).filter(Retailer.enabled == True)
+    # Build query for KIOSKS ONLY (retailer_type = 'kiosk') with multiple state name variations
+    query = db.session.query(Retailer).filter(
+        Retailer.enabled == True,
+        Retailer.retailer_type.ilike('kiosk')  # ONLY kiosks (case-insensitive)
+    )
     
     # Use OR conditions for multiple state name variations
     from sqlalchemy import or_
@@ -174,52 +213,46 @@ def state_page(state_name):
     # Sort cities alphabetically
     sorted_cities = dict(sorted(cities.items()))
     
-    # Generate structured data for SEO
-    structured_data = {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "name": f"Pokemon Card Kiosks in {state_name_normalized}",
-        "description": f"Find Pokemon card kiosks and retail locations in {state_name_normalized}. Browse locations by city with addresses, phone numbers, and hours.",
-        "url": request.url,
-        "mainEntity": {
-            "@type": "ItemList",
-            "name": f"Pokemon Card Locations in {state_name_normalized}",
-            "numberOfItems": len(retailers),
-            "itemListElement": []
-        }
-    }
+    # Return XML for search engines instead of HTML template
+    from flask import make_response
+    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<state_kiosks xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <state_name>{state_name_normalized}</state_name>
+    <total_kiosks>{len(retailers)}</total_kiosks>
+    <total_cities>{len(sorted_cities)}</total_cities>
+    <cities>
+'''
     
-    # Add each retailer to structured data
-    for i, retailer in enumerate(retailers):
-        item_data = {
-            "@type": "ListItem",
-            "position": i + 1,
-            "item": {
-                "@type": "LocalBusiness",
-                "name": retailer.retailer,
-                "address": retailer.full_address,
-                "telephone": retailer.phone_number,
-                "url": retailer.website
-            }
-        }
-        
-        # Add geo coordinates if available
-        if retailer.latitude and retailer.longitude:
-            item_data["item"]["geo"] = {
-                "@type": "GeoCoordinates",
-                "latitude": retailer.latitude,
-                "longitude": retailer.longitude
-            }
-        
-        structured_data["mainEntity"]["itemListElement"].append(item_data)
+    for city, city_retailers in sorted_cities.items():
+        xml_content += f'''        <city>
+            <name>{city}</name>
+            <kiosk_count>{len(city_retailers)}</kiosk_count>
+            <kiosks>
+'''
+        for retailer in city_retailers:
+            xml_content += f'''                <kiosk>
+                    <name>{retailer.retailer}</name>
+                    <address>{retailer.full_address}</address>
+                    <phone>{retailer.phone_number or 'N/A'}</phone>
+                    <website>{retailer.website or 'N/A'}</website>
+                    <machine_count>{retailer.machine_count}</machine_count>
+                    <hours>{retailer.opening_hours or 'N/A'}</hours>
+                    <coordinates>
+                        <latitude>{retailer.latitude or 'N/A'}</latitude>
+                        <longitude>{retailer.longitude or 'N/A'}</longitude>
+                    </coordinates>
+                </kiosk>
+'''
+        xml_content += '''            </kiosks>
+        </city>
+'''
     
-    return render_template(
-        "state.html", 
-        state_name=state_name_normalized,
-        cities=sorted_cities,
-        total_locations=len(retailers),
-        structured_data=structured_data
-    )
+    xml_content += '''    </cities>
+</state_kiosks>'''
+    
+    response = make_response(xml_content)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
 
 
 
@@ -447,8 +480,8 @@ def sitemap_xml():
         {'url': '/sitemap', 'priority': '0.5', 'changefreq': 'monthly'},
     ]
     
-    # Add state pages for major states with Pokemon card locations
-    # These will be dynamically generated pages showing kiosks by city
+    # Add state pages for major states with Pokemon card KIOSKS ONLY
+    # These will be dynamically generated XML pages showing kiosks by city (search engines only)
     state_pages = [
         {'url': '/state/washington', 'priority': '0.8', 'changefreq': 'weekly'},
         {'url': '/state/california', 'priority': '0.8', 'changefreq': 'weekly'},
@@ -573,6 +606,10 @@ Allow: /how-to
 Allow: /card-hunting-tips
 Allow: /about
 Allow: /sitemap
+
+# State pages are search engine only (XML) - users get 404
+Disallow: /states
+Disallow: /state/
 
 # Disallow admin and private areas
 Disallow: /admin/
