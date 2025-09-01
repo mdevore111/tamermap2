@@ -81,69 +81,9 @@
         line-height: 1.4;
     }
     
-    .contact-dropdown {
-        list-style: none;
-        padding-left: 2rem;
-        margin-top: 0.5rem;
-        border-left: 2px solid #ecf0f1;
-    }
+
     
-    .contact-dropdown li {
-        margin-bottom: 0.5rem;
-    }
-    
-    .contact-dropdown a {
-        font-size: 0.9rem;
-        color: #95a5a6;
-    }
-    
-    .dropdown-container {
-        position: relative;
-    }
-    
-    .dropdown-trigger {
-        cursor: pointer;
-    }
-    
-    .dropdown-arrow {
-        margin-left: 0.5rem;
-        transition: transform 0.3s ease;
-    }
-    
-    .dropdown-trigger:hover .dropdown-arrow {
-        transform: rotate(180deg);
-    }
-    
-    .state-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .state-item {
-        background: #f8f9fa;
-        padding: 0.75rem;
-        border-radius: 6px;
-        border-left: 4px solid #3498db;
-        transition: all 0.3s ease;
-    }
-    
-    .state-item:hover {
-        background: #e9ecef;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .state-item a {
-        color: #2c3e50;
-        font-weight: 500;
-        text-decoration: none;
-    }
-    
-    .state-item a:hover {
-        color: #3498db;
-    }
+
     
     .guide-grid {
         display: grid;
@@ -211,9 +151,7 @@
             padding: 1rem;
         }
         
-        .state-grid {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        }
+
         
         .guide-grid {
             grid-template-columns: 1fr;
@@ -377,45 +315,7 @@
         </ul>
     </div>
 
-    <div class="sitemap-section">
-        <h2>State-Specific Guides</h2>
-        <p style="margin-bottom: 1rem; color: #7f8c8d;">Find Pokemon card hunting locations and strategies for each state:</p>
-        <div class="state-grid">
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='california') }}">California</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='texas') }}">Texas</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='florida') }}">Florida</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='new-york') }}">New York</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='illinois') }}">Illinois</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='pennsylvania') }}">Pennsylvania</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='ohio') }}">Ohio</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='georgia') }}">Georgia</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='north-carolina') }}">North Carolina</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.state_page', state_name='michigan') }}">Michigan</a>
-            </div>
-            <div class="state-item">
-                <a href="{{ url_for('public.states_index') }}">View All States</a>
-            </div>
-        </div>
-    </div>
+
 
     <div class="sitemap-section">
         <h2>Resources & Tips</h2>
@@ -440,39 +340,67 @@
     <div class="sitemap-section">
         <h2>Support & Contact</h2>
         <ul class="sitemap-list">
-            <li class="dropdown-container">
-                <a href="#" class="dropdown-trigger">
-                    <i class="fas fa-envelope"></i>
-                    Contact Us
-                    <i class="fas fa-chevron-down dropdown-arrow"></i>
+            <li>
+                <a href="{{ url_for('public.send_message', type='contact') }}">
+                    <i class="fas fa-question-circle"></i>
+                    General Support
                 </a>
-                <div class="sitemap-description">Get in touch with our support team</div>
-                <ul class="contact-dropdown">
-                    <li>
-                        <a href="{{ url_for('public.send_message', type='contact') }}">
-                            <i class="fas fa-question-circle"></i>
-                            General Contact
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('public.send_message', type='bug') }}">
-                            <i class="fas fa-bug"></i>
-                            Report a Bug
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('public.send_message', type='feature') }}">
-                            <i class="fas fa-lightbulb"></i>
-                            Feature Request
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('public.send_message', type='pro') }}">
-                            <i class="fas fa-star"></i>
-                            Pro Access
-                        </a>
-                    </li>
-                </ul>
+                <div class="sitemap-description">Get help with technical issues, account problems, or general questions</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='bug') }}">
+                    <i class="fas fa-bug"></i>
+                    Report a Bug
+                </a>
+                <div class="sitemap-description">Found an issue? Help us improve by reporting bugs</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='feature') }}">
+                    <i class="fas fa-lightbulb"></i>
+                    Feature Request
+                </a>
+                <div class="sitemap-description">Have an idea for a new feature? Let us know!</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='partnership') }}">
+                    <i class="fas fa-handshake"></i>
+                    Partnership Opportunities
+                </a>
+                <div class="sitemap-description">Interested in collaborating or becoming a partner?</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='press') }}">
+                    <i class="fas fa-newspaper"></i>
+                    Press & Media
+                </a>
+                <div class="sitemap-description">Media inquiries, press releases, and interview requests</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>TamerMap Pro</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.send_message', type='pro') }}">
+                    <i class="fas fa-crown"></i>
+                    Pro Access & Pricing
+                </a>
+                <div class="sitemap-description">Learn about TamerMap Pro features, pricing, and upgrade options</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='demo') }}">
+                    <i class="fas fa-play-circle"></i>
+                    Request Pro Demo
+                </a>
+                <div class="sitemap-description">See TamerMap Pro in action with a personalized demo</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='enterprise') }}">
+                    <i class="fas fa-building"></i>
+                    Enterprise Solutions
+                </a>
+                <div class="sitemap-description">Custom solutions for businesses and organizations</div>
             </li>
         </ul>
     </div>
@@ -499,22 +427,3 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-    // Simple dropdown functionality for contact section
-    document.addEventListener('DOMContentLoaded', function() {
-        const dropdownTriggers = document.querySelectorAll('.dropdown-trigger');
-        
-        dropdownTriggers.forEach(trigger => {
-            trigger.addEventListener('click', function(e) {
-                e.preventDefault();
-                const dropdown = this.nextElementSibling.nextElementSibling;
-                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-                
-                const arrow = this.querySelector('.dropdown-arrow');
-                arrow.style.transform = dropdown.style.display === 'block' ? 'rotate(180deg)' : 'rotate(0deg)';
-            });
-        });
-    });
-</script>
-{% endblock %}
