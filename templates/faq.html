@@ -57,39 +57,41 @@
     {% block content %}
     <main class="container my-5" style="margin-bottom: 6rem;">
         <div class="row">
-            <div class="col-lg-8 mx-auto">
+            <div class="col-12">
                 <!-- Header Section -->
                 <div class="text-center mb-5">
-                    <h1 class="display-4 fw-bold text-primary mb-3">
-                        <img src="{{ url_for('static', filename='images/heatmap.png') }}" alt="TamerMap FAQ Icon" class="me-3" style="width: 60px; height: 60px;">
-                        TamerMap FAQ
-                    </h1>
-                    <p class="lead text-muted">Get answers to common questions about Pokemon card hunting, TamerMap features, and troubleshooting. Everything you need to know about finding Pokemon cards near you.</p>
+                    <h1 class="display-4 mb-3">TamerMap FAQ</h1>
+                    <p class="lead">Get answers to common questions about Pokemon card hunting, TamerMap features, and troubleshooting. Everything you need to know about finding Pokemon cards near you.</p>
                 </div>
 
                 <!-- Quick Navigation -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="h5 mb-3">Quick Navigation</h3>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <a href="#getting-started" class="btn btn-outline-primary btn-sm w-100">Getting Started</a>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <a href="#pro-features" class="btn btn-outline-primary btn-sm w-100">Pro Features</a>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <a href="#account-help" class="btn btn-outline-primary btn-sm w-100">Account Help</a>
-                            </div>
-                        </div>
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex flex-wrap gap-2 justify-content-center">
+                        <a href="#getting-started" class="btn btn-outline-primary btn-sm px-3 py-2">
+                            <i class="fas fa-rocket me-1"></i>Getting Started
+                        </a>
+                        <a href="#pro-features" class="btn btn-outline-primary btn-sm px-3 py-2">
+                            <i class="fas fa-crown me-1"></i>Pro Features
+                        </a>
+                        <a href="#account-help" class="btn btn-outline-primary btn-sm px-3 py-2">
+                            <i class="fas fa-user-cog me-1"></i>Account Help
+                        </a>
                     </div>
+                </div>
+
+                <!-- Alert Box -->
+                <div class="alert alert-info mb-5">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Need Help?</strong> Can't find your answer here? Check out our <a href="{{ url_for('public.site_tutorials') }}">Help & Tutorials</a> or <a href="{{ url_for('public.send_message', type='contact') }}">contact our support team</a>.
                 </div>
 
                 <!-- Getting Started Section -->
                 <div id="getting-started" class="faq-section mb-5">
-                    <h2 class="h3 text-primary mb-4">
-                        <i class="fas fa-rocket me-2"></i>Getting Started with TamerMap
-                    </h2>
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h2 class="h3 mb-0"><i class="fas fa-rocket me-2"></i>Getting Started with TamerMap</h2>
+                        </div>
+                        <div class="card-body">
                     
                     <div class="accordion" id="gettingStartedAccordion">
                         <div class="accordion-item">
@@ -168,13 +170,17 @@
                             </div>
                         </div>
                     </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Pro Features Section -->
                 <div id="pro-features" class="faq-section mb-5">
-                    <h2 class="h3 text-primary mb-4">
-                        <i class="fas fa-crown me-2"></i>TamerMap Pro Features
-                    </h2>
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h2 class="h3 mb-0"><i class="fas fa-crown me-2"></i>TamerMap Pro Features</h2>
+                        </div>
+                        <div class="card-body">
                     
                     <div class="accordion" id="proFeaturesAccordion">
                         <div class="accordion-item">
@@ -267,13 +273,17 @@
                             </div>
                         </div>
                     </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Account Help Section -->
                 <div id="account-help" class="faq-section mb-5">
-                    <h2 class="h3 text-primary mb-4">
-                        <i class="fas fa-user-cog me-2"></i>Account & Technical Help
-                    </h2>
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h2 class="h3 mb-0"><i class="fas fa-user-cog me-2"></i>Account & Technical Help</h2>
+                        </div>
+                        <div class="card-body">
                     
                     <div class="accordion" id="accountHelpAccordion">
                         <div class="accordion-item">
@@ -425,13 +435,17 @@
                             </div>
                         </div>
                     </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Additional Help Section -->
                 <div class="faq-section mb-5">
-                    <h2 class="h3 text-primary mb-4">
-                        <i class="fas fa-question-circle me-2"></i>Still Need Help?
-                    </h2>
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h2 class="h3 mb-0"><i class="fas fa-question-circle me-2"></i>Still Need Help?</h2>
+                        </div>
+                        <div class="card-body">
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -472,6 +486,8 @@
                                     </a>
                                 </div>
                             </div>
+                        </div>
+                    </div>
                         </div>
                     </div>
                 </div>

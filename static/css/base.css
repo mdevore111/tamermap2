@@ -241,6 +241,70 @@ body {
   color: var(--bs-warning) !important;
 }
 
+/* FAQ Page Consistency */
+.faq-section .card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.faq-section .card-header {
+  border-bottom: none;
+  padding: 1rem 1.5rem;
+}
+
+.faq-section .card-body {
+  padding: 1.5rem;
+}
+
+.faq-section .accordion-item {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.faq-section .accordion-button {
+  background-color: #f8f9fa;
+  border: none;
+  font-weight: 600;
+  color: var(--bs-primary);
+  padding: 1rem 1.5rem;
+}
+
+.faq-section .accordion-button:not(.collapsed) {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.faq-section .accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.faq-section .accordion-body {
+  background-color: white;
+  padding: 1.5rem;
+}
+
+/* Quick Navigation Improvements */
+.quick-navigation .btn {
+  transition: all 0.3s ease;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.quick-navigation .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quick-navigation .btn.active {
+  background-color: var(--bs-primary);
+  color: white;
+  border-color: var(--bs-primary);
+}
+
 /* Plain Text Links (e.g., Suggestions) */
 .nav-link {
   color: #fff;
