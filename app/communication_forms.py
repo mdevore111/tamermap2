@@ -25,6 +25,7 @@ class MessageForm(FlaskForm):
         choices=[
             ('suggestion', 'Suggestion / Site Improvement'),
             ('contact', 'Let\'s Connect'),
+            ('location', 'Report Location'),
             ('report', 'Report Missing or Incorrect Vendor Data'),
             ('support', 'Customer Support'),
             ('business', 'Business Inquiry')
@@ -66,6 +67,7 @@ class MessageForm(FlaskForm):
     reported_website = StringField('Reported Website', validators=[Optional()])
     reported_hours   = StringField('Reported Hours',   validators=[Optional()])
     out_of_business = BooleanField('Appears to be out of business')
+    is_new_location = BooleanField('This is a new location')
 
     # Spam prevention fields
     honeypot = HiddenField('Honeypot')  # Hidden field to catch bots

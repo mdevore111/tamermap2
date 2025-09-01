@@ -546,7 +546,7 @@ def send_message():
     if request.method == "GET":
         pre = request.args.get("type", "")
         form.communication_type.data = (
-            pre if pre in ["suggestion", "contact", "report", "support", "business"] else "contact"
+            pre if pre in ["suggestion", "contact", "location", "report", "support", "business"] else "contact"
         )
         if form.communication_type.data == "report":
             addr = request.args.get("address", "")
@@ -611,6 +611,11 @@ def send_message():
                 extra_lines.append(f"Website: {form.company_website.data}")
             if form.company_size.data:
                 extra_lines.append(f"Company Size: {form.company_size.data}")
+        if form.communication_type.data == 'location':
+            if form.is_new_location.data:
+                extra_lines.append("Type: NEW LOCATION")
+            else:
+                extra_lines.append("Type: CORRECTION TO EXISTING LOCATION")
         extra = "\n".join(extra_lines) + "\n"
 
         try:
@@ -625,6 +630,7 @@ def send_message():
                 reported_website=form.reported_website.data,
                 reported_hours=form.reported_hours.data,
                 out_of_business=form.out_of_business.data,
+                is_new_location=form.is_new_location.data,
                 name=form.name.data,
                 address=form.address.data
             )
@@ -646,6 +652,7 @@ def send_message():
                 reported_website=form.reported_website.data,
                 reported_hours=form.reported_hours.data,
                 out_of_business=form.out_of_business.data,
+                is_new_location=form.is_new_location.data,
                 config=current_app.config
             )
 
