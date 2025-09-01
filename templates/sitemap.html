@@ -252,11 +252,7 @@
                 <p>Get help with technical issues, account problems, or questions about TamerMap features.</p>
                 <a href="{{ url_for('public.send_message', type='contact') }}" class="btn">Contact Us</a>
                 </div>
-            <div class="guide-item">
-                <h3>👑 Pro Inquiries</h3>
-                <p>Learn about TamerMap Pro features, pricing, and how to upgrade your account for maximum hunting success.</p>
-                <a href="{{ url_for('public.send_message', type='pro') }}" class="btn">Pro Info</a>
-            </div>
+
         </div>
     </div>
 
@@ -272,67 +268,42 @@
             <li>
                 <a href="{{ url_for('public.send_message', type='contact') }}">
                     <i class="fas fa-question-circle"></i>
-                    General Support
+                    General Contact
                 </a>
-                <div class="sitemap-description">Get help with technical issues, account problems, or general questions</div>
+                <div class="sitemap-description">Get help with general questions and support</div>
             </li>
             <li>
-                <a href="{{ url_for('public.send_message', type='bug') }}">
-                    <i class="fas fa-bug"></i>
-                    Report a Bug
-                </a>
-                <div class="sitemap-description">Found an issue? Help us improve by reporting bugs</div>
-            </li>
-            <li>
-                <a href="{{ url_for('public.send_message', type='feature') }}">
+                <a href="{{ url_for('public.send_message', type='suggestions') }}">
                     <i class="fas fa-lightbulb"></i>
-                    Feature Request
+                    Site/Feature Suggestions
                 </a>
-                <div class="sitemap-description">Have an idea for a new feature? Let us know!</div>
+                <div class="sitemap-description">Share ideas and suggestions for improving TamerMap features and functionality</div>
             </li>
             <li>
-                <a href="{{ url_for('public.send_message', type='partnership') }}">
-                    <i class="fas fa-handshake"></i>
-                    Partnership Opportunities
+                <a href="{{ url_for('public.send_message', type='location') }}">
+                    <i class="fas fa-map-pin"></i>
+                    Report Location
                 </a>
-                <div class="sitemap-description">Interested in collaborating or becoming a partner?</div>
+                <div class="sitemap-description">Report incorrect location information (missing hours, wrong address, store name, etc.) or add new Pokemon card locations</div>
             </li>
             <li>
-                <a href="{{ url_for('public.send_message', type='press') }}">
-                    <i class="fas fa-newspaper"></i>
-                    Press & Media
+                <a href="{{ url_for('public.send_message', type='support') }}">
+                    <i class="fas fa-cog"></i>
+                    Customer Support
                 </a>
-                <div class="sitemap-description">Media inquiries, press releases, and interview requests</div>
+                <div class="sitemap-description">Get technical help and account support</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.send_message', type='business') }}">
+                    <i class="fas fa-briefcase"></i>
+                    Business Inquiry
+                </a>
+                <div class="sitemap-description">Business partnerships, advertising, and commercial inquiries</div>
             </li>
         </ul>
     </div>
 
-    <div class="sitemap-section">
-        <h2>TamerMap Pro</h2>
-        <ul class="sitemap-list">
-            <li>
-                <a href="{{ url_for('public.send_message', type='pro') }}">
-                    <i class="fas fa-crown"></i>
-                    Pro Access & Pricing
-                </a>
-                <div class="sitemap-description">Learn about TamerMap Pro features, pricing, and upgrade options</div>
-            </li>
-            <li>
-                <a href="{{ url_for('public.send_message', type='demo') }}">
-                    <i class="fas fa-play-circle"></i>
-                    Request Pro Demo
-                </a>
-                <div class="sitemap-description">See TamerMap Pro in action with a personalized demo</div>
-            </li>
-            <li>
-                <a href="{{ url_for('public.send_message', type='enterprise') }}">
-                    <i class="fas fa-building"></i>
-                    Enterprise Solutions
-                </a>
-                <div class="sitemap-description">Custom solutions for businesses and organizations</div>
-            </li>
-        </ul>
-    </div>
+
 
     <div class="sitemap-section">
         <h2>Legal & Information</h2>
