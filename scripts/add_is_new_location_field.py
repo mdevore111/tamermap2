@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def add_is_new_location_field():
     """Add is_new_location field to Message table."""
     
-    # Get database path
-    db_path = os.path.join(os.path.dirname(__file__), '..', 'app', 'instance', 'tamermap.db')
+    # Get database path - use Unix path for server deployment
+    db_path = '/home/tamermap/app/instance/tamermap_data.db'
     
     if not os.path.exists(db_path):
         print(f"Database not found at {db_path}")
