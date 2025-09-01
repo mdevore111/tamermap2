@@ -1,511 +1,386 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How to Time Your Pokemon Card Hunting for Maximum Success | TamerMap - TEST</title>
-    <meta name="description" content="Master the art of timing in Pokemon card hunting. Learn when to hunt, when to buy, and when to sell for maximum profit. Expert strategies for seasonal trends, market timing, and optimal hunting schedules.">
-    <meta name="keywords" content="Pokemon card hunting timing, best time to hunt cards, Pokemon card market timing, seasonal card hunting, optimal hunting schedule, card hunting strategy">
-    
-    <!-- Schema.org structured data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "HowTo",
-        "name": "How to Time Your Pokemon Card Hunting for Maximum Success",
-        "description": "Master the art of timing in Pokemon card hunting with expert strategies for seasonal trends, market timing, and optimal hunting schedules.",
-        "image": "https://tamermap.com/static/images/timing-guide-hero.jpg",
-        "totalTime": "PT15M",
-        "estimatedCost": {
-            "@type": "MonetaryAmount",
-            "currency": "USD",
-            "value": "0"
-        },
-        "supply": [
-            {
-                "@type": "HowToSupply",
-                "name": "TamerMap Pro Account",
-                "description": "Access to real-time market data and hunting insights"
-            }
-        ],
-        "tool": [
-            {
-                "@type": "HowToTool",
-                "name": "TamerMap Pro",
-                "description": "Professional hunting platform with timing analytics"
-            }
-        ],
-        "step": [
-            {
-                "@type": "HowToStep",
-                "name": "Understand Seasonal Trends",
-                "text": "Learn how Pokemon card values fluctuate throughout the year based on seasons, holidays, and events."
-            },
-            {
-                "@type": "HowToStep",
-                "name": "Master Market Timing",
-                "text": "Identify the best times to buy low and sell high based on market cycles and demand patterns."
-            },
-            {
-                "@type": "HowToStep",
-                "name": "Optimize Your Hunting Schedule",
-                "text": "Create a personalized hunting schedule that maximizes your chances of finding valuable cards."
-            }
-        ],
-        "author": {
-            "@type": "Person",
-            "name": "TamerMap Team",
-            "url": "https://tamermap.com"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "TamerMap",
-            "url": "https://tamermap.com"
-        },
-        "mainEntity": {
-            "@type": "WebPage",
-            "name": "How to Time Your Pokemon Card Hunting",
-            "description": "Expert guide on timing your Pokemon card hunting for maximum success and profit."
+{% extends 'base.html' %}
+
+{% block title %}How to Time Your Pokemon Card Hunting for Maximum Success | TamerMap{% endblock %}
+
+{% block meta_description %}Master the art of timing in Pokemon card hunting. Learn when to hunt, when to buy, and when to sell for maximum profit. Expert strategies for seasonal trends, market timing, and optimal hunting schedules.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org structured data -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Time Your Pokemon Card Hunting for Maximum Success",
+    "description": "Master the art of timing in Pokemon card hunting with expert strategies for seasonal trends, market timing, and optimal hunting schedules.",
+    "image": "https://tamermap.com/static/images/timing-guide-hero.jpg",
+    "totalTime": "PT15M",
+    "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+    },
+    "supply": [
+        {
+            "@type": "HowToSupply",
+            "name": "TamerMap Pro Account",
+            "description": "Access to real-time market data and hunting insights"
         }
-    }
-    </script>
+    ],
+    "tool": [
+        {
+            "@type": "HowToTool",
+            "name": "TamerMap Pro",
+            "description": "Professional hunting platform with timing analytics"
+        }
+    ],
+    "step": [
+        {
+            "@type": "HowToStep",
+            "name": "Understand Seasonal Trends",
+            "text": "Learn how Pokemon card values fluctuate throughout the year based on seasons, holidays, and events."
+        },
+        {
+            "@type": "HowToStep",
+            "name": "Master Market Timing",
+            "text": "Identify the best times to buy low and sell high based on market cycles and demand patterns."
+        },
+        {
+            "@type": "HowToStep",
+            "name": "Plan Optimal Schedules",
+            "text": "Create personalized hunting schedules that maximize your success rate and minimize wasted time."
+        }
+    ]
+}
+</script>
+{% endblock %}
 
-    <!-- Additional Schema.org markup -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        "name": "Pokemon Card Hunting Timing Strategies",
-        "description": "Complete list of timing strategies for Pokemon card hunting success",
-        "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Seasonal Timing Strategies",
-                "description": "How seasons affect card values and hunting success"
-            },
-            {
-                "@type": "ListItem",
-                "position": 2,
-                "name": "Market Cycle Analysis",
-                "description": "Understanding market timing for buying and selling"
-            },
-            {
-                "@type": "ListItem",
-                "position": 3,
-                "name": "Event-Based Timing",
-                "description": "Leveraging Pokemon events and releases for maximum profit"
-            },
-            {
-                "@type": "ListItem",
-                "position": 4,
-                "name": "Daily and Weekly Patterns",
-                "description": "Optimal times for hunting throughout the day and week"
-            }
-        ]
-    }
-    </script>
+{% block content %}
+<div class="container my-5" style="margin-bottom: 6rem !important;">
+  <!-- Hero Section -->
+  <div class="text-center mb-5">
+    <h1 class="display-4 mb-3">How to Time Your Pokemon Card Hunting for Maximum Success</h1>
+    <p class="lead">Master the art of timing to maximize your card hunting profits and success rate. Learn when to hunt, when to buy, and when to sell for optimal results.</p>
+    
+    <div class="alert alert-info">
+      <i class="fas fa-clock me-2"></i>
+      <strong>Timing is Everything:</strong> The difference between a successful hunt and a wasted trip often comes down to perfect timing!
+    </div>
+  </div>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="canonical" href="https://tamermap.com/how-to-timing">
-</head>
-<body>
-    <header>
-        <nav id="navbar" class="navbar">
-            <div class="nav-container">
-                <a href="{{ url_for('public.splash') }}" class="nav-logo">TamerMap</a>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="{{ url_for('public.maps') }}" class="nav-link">Maps</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('public.learn') }}" class="nav-link">Learn</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('public.how_to') }}" class="nav-link">How To</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ url_for('public.send_message', type='contact') }}" class="nav-link">Contact</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
-
-    <main class="guide-container" style="margin-bottom: 6rem;">
-        <!-- Breadcrumb Navigation -->
-        <nav class="breadcrumb" aria-label="Breadcrumb">
-            <ol>
-                <li><a href="{{ url_for('public.splash') }}">Home</a></li>
-                <li><a href="{{ url_for('public.how_to') }}">How To</a></li>
-                <li aria-current="page">Timing Your Card Hunting</li>
-            </ol>
-        </nav>
-
-        <article class="guide-content">
-            <header class="guide-header">
-                <h1>How to Time Your Pokemon Card Hunting for Maximum Success</h1>
-                <p class="guide-subtitle">Master the art of timing to maximize your card hunting profits and success rate</p>
-                
-                <div class="guide-meta">
-                    <span class="reading-time">⏱️ 15 min read</span>
-                    <span class="difficulty">🎯 Advanced</span>
-                    <span class="last-updated">📅 Last updated: September 1st, 2025</span>
-                </div>
-
-                <div class="pro-banner">
-                    <div class="pro-icon">⭐</div>
-                    <div class="pro-content">
-                        <h3>Unlock Advanced Timing Insights with TamerMap Pro</h3>
-                        <p>Get real-time market data, seasonal trend analysis, and personalized hunting schedules to perfect your timing strategy.</p>
-                        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary">Get Pro Access</a>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Table of Contents -->
-            <nav class="table-of-contents" aria-label="Table of contents">
-                <h2>📋 What You'll Learn</h2>
-                <ul>
-                    <li><a href="#seasonal-timing">Seasonal Timing Strategies</a></li>
-                    <li><a href="#market-cycles">Market Cycle Analysis</a></li>
-                    <li><a href="#event-timing">Event-Based Timing</a></li>
-                    <li><a href="#daily-patterns">Daily and Weekly Patterns</a></li>
-                    <li><a href="#pro-tools">Pro Tools for Perfect Timing</a></li>
-                    <li><a href="#success-stories">Success Stories</a></li>
-                </ul>
-            </nav>
-
-            <section id="seasonal-timing">
-                <h2>🌱 Seasonal Timing Strategies</h2>
-                <p>Understanding seasonal patterns is crucial for successful Pokemon card hunting. Different times of year present unique opportunities and challenges.</p>
-
-                <h3>Spring (March - May)</h3>
-                <p>Spring is often the best season for finding vintage cards. As people clean out their collections and prepare for summer, you'll find:</p>
-                <ul>
-                    <li><strong>Garage sales</strong> - People clearing out attics and basements</li>
-                    <li><strong>Estate sales</strong> - Often contain valuable vintage collections</li>
-                    <li><strong>Online listings</strong> - Increased activity as people declutter</li>
-                </ul>
-
-                <div class="pro-tip">
-                    <h4>💡 Pro Tip: Use TamerMap Pro's Seasonal Analytics</h4>
-                    <p>TamerMap Pro tracks seasonal price fluctuations and hunting success rates, helping you identify the optimal times for specific card types.</p>
-                </div>
-
-                <h3>Summer (June - August)</h3>
-                <p>Summer brings unique opportunities through:</p>
-                <ul>
-                    <li><strong>Flea markets</strong> - Peak season for outdoor markets</li>
-                    <li><strong>Conventions</strong> - Major Pokemon events and card shows</li>
-                    <li><strong>Vacation sales</strong> - People selling to fund summer trips</li>
-                </ul>
-
-                <h3>Fall (September - November)</h3>
-                <p>Fall is prime time for:</p>
-                <ul>
-                    <li><strong>Back-to-school sales</strong> - Parents clearing out old collections</li>
-                    <li><strong>Holiday preparation</strong> - People selling to buy gifts</li>
-                    <li><strong>New set releases</strong> - Often in September/October</li>
-                </ul>
-
-                <h3>Winter (December - February)</h3>
-                <p>Winter offers:</p>
-                <ul>
-                    <li><strong>Holiday sales</strong> - Post-Christmas clearances</li>
-                    <li><strong>Indoor markets</strong> - More focus on card shops and online</li>
-                    <li><strong>Tax season preparation</strong> - People selling for tax purposes</li>
-                </ul>
-            </section>
-
-            <section id="market-cycles">
-                <h2>📈 Market Cycle Analysis</h2>
-                <p>Understanding market cycles helps you buy low and sell high. Pokemon card markets follow predictable patterns that savvy hunters can exploit.</p>
-
-                <h3>Understanding Market Cycles</h3>
-                <p>Pokemon card markets typically follow these cycles:</p>
-                <ul>
-                    <li><strong>Expansion Phase</strong> - Prices rise, demand increases</li>
-                    <li><strong>Peak Phase</strong> - Maximum prices, maximum demand</li>
-                    <li><strong>Contraction Phase</strong> - Prices fall, demand decreases</li>
-                    <li><strong>Trough Phase</strong> - Minimum prices, minimum demand</li>
-                </ul>
-
-                <h3>Identifying Market Tops and Bottoms</h3>
-                <p>Look for these signals:</p>
-                <ul>
-                    <li><strong>Market tops:</strong> Excessive media coverage, everyone talking about cards</li>
-                    <li><strong>Market bottoms:</strong> Negative sentiment, people giving up on collecting</li>
-                    <li><strong>Volume spikes:</strong> Unusual trading activity often signals turning points</li>
-                </ul>
-
-                <div class="pro-tip">
-                    <h4>💡 Pro Tip: Market Timing with TamerMap Pro</h4>
-                    <p>Our Pro platform provides real-time market indicators, volume analysis, and trend predictions to help you identify optimal entry and exit points.</p>
-                </div>
-
-                <h3>Seasonal Market Patterns</h3>
-                <p>Specific market patterns to watch:</p>
-                <ul>
-                    <li><strong>January effect:</strong> Prices often dip after holiday spending</li>
-                    <li><strong>Summer doldrums:</strong> Lower activity, potential buying opportunities</li>
-                    <li><strong>Fall rally:</strong> Increased interest as school starts</li>
-                    <li><strong>Holiday surge:</strong> Prices often peak during gift-giving seasons</li>
-                </ul>
-            </section>
-
-            <section id="event-timing">
-                <h2>🎉 Event-Based Timing</h2>
-                <p>Pokemon events, releases, and pop culture moments create unique timing opportunities for card hunters.</p>
-
-                <h3>New Set Releases</h3>
-                <p>Timing around new set releases is crucial:</p>
-                <ul>
-                    <li><strong>Pre-release:</strong> Buy singles before prices spike</li>
-                    <li><strong>Release week:</strong> Sell chase cards at peak demand</li>
-                    <li><strong>Post-release:</strong> Buy undervalued cards after hype dies down</li>
-                </ul>
-
-                <h3>Pokemon Go Events</h3>
-                <p>Mobile game events often drive card demand:</p>
-                <ul>
-                    <li><strong>Community Days:</strong> Increased interest in featured Pokemon</li>
-                    <li><strong>Special Raids:</strong> Legendary Pokemon cards spike in value</li>
-                    <li><strong>Seasonal Events:</strong> Holiday-themed cards gain popularity</li>
-                </ul>
-
-                <h3>Anime and Movie Releases</h3>
-                <p>Media releases create timing opportunities:</p>
-                <ul>
-                    <li><strong>Movie premieres:</strong> Related cards often increase in value</li>
-                    <li><strong>Anime episodes:</strong> Featured Pokemon cards see price spikes</li>
-                    <li><strong>Merchandise releases:</strong> Coordinated marketing drives demand</li>
-                </ul>
-
-                <h3>Tournament Seasons</h3>
-                <p>Competitive play affects card values:</p>
-                <ul>
-                    <li><strong>Pre-season:</strong> Buy meta cards before prices rise</li>
-                    <li><strong>Championship season:</strong> Sell at peak tournament demand</li>
-                    <li><strong>Off-season:</strong> Buy cards when competitive interest is low</li>
-                </ul>
-            </section>
-
-            <section id="daily-patterns">
-                <h2>⏰ Daily and Weekly Patterns</h2>
-                <p>Even within days and weeks, there are optimal timing patterns that can significantly impact your hunting success.</p>
-
-                <h3>Daily Timing Patterns</h3>
-                <p>Best times to hunt throughout the day:</p>
-                <ul>
-                    <li><strong>Early morning (6-9 AM):</strong> Fresh listings, motivated sellers</li>
-                    <li><strong>Lunch hours (11 AM-2 PM):</strong> Increased online activity</li>
-                    <li><strong>Evening (6-9 PM):</strong> Peak browsing time, more competition</li>
-                    <li><strong>Late night (10 PM-2 AM):</strong> Fewer competitors, potential deals</li>
-                </ul>
-
-                <h3>Weekly Timing Patterns</h3>
-                <p>Day-by-day hunting strategy:</p>
-                <ul>
-                    <li><strong>Monday:</strong> Post-weekend clearances, new listings</li>
-                    <li><strong>Tuesday-Thursday:</strong> Steady activity, good for research</li>
-                    <li><strong>Friday:</strong> Weekend preparation, increased listings</li>
-                    <li><strong>Saturday:</strong> Peak garage sale and market activity</li>
-                    <li><strong>Sunday:</strong> Post-weekend sales, online deals</li>
-                </ul>
-
-                <h3>Monthly Patterns</h3>
-                <p>Monthly timing considerations:</p>
-                <ul>
-                    <li><strong>Beginning of month:</strong> People with new budgets, fresh listings</li>
-                    <li><strong>Middle of month:</strong> Steady activity, good for building relationships</li>
-                    <li><strong>End of month:</strong> Desperate sellers, potential deals</li>
-                </ul>
-
-                <div class="pro-tip">
-                    <h4>💡 Pro Tip: Automated Timing with TamerMap Pro</h4>
-                    <p>Set up automated alerts for optimal hunting times, price drops, and new listings so you never miss the perfect opportunity.</p>
-                </div>
-            </section>
-
-            <section id="pro-tools">
-                <h2>🚀 Pro Tools for Perfect Timing</h2>
-                <p>TamerMap Pro provides advanced tools and analytics to help you master the timing of your Pokemon card hunting.</p>
-
-                <h3>Real-Time Market Analytics</h3>
-                <p>Stay ahead of market movements with:</p>
-                <ul>
-                    <li><strong>Live price tracking</strong> - Monitor card values in real-time</li>
-                    <li><strong>Volume analysis</strong> - Identify unusual trading activity</li>
-                    <li><strong>Trend predictions</strong> - AI-powered market forecasting</li>
-                    <li><strong>Seasonal reports</strong> - Historical timing analysis</li>
-                </ul>
-
-                <h3>Personalized Hunting Schedules</h3>
-                <p>Optimize your time with:</p>
-                <ul>
-                    <li><strong>Custom alerts</strong> - Get notified of optimal hunting times</li>
-                    <li><strong>Route optimization</strong> - Plan efficient hunting trips</li>
-                    <li><strong>Market timing tools</strong> - Buy/sell recommendations</li>
-                    <li><strong>Success rate tracking</strong> - Monitor your timing performance</li>
-                </ul>
-
-                <h3>Advanced Research Tools</h3>
-                <p>Research like a pro with:</p>
-                <ul>
-                    <li><strong>Historical price charts</strong> - Identify seasonal patterns</li>
-                    <li><strong>Market sentiment analysis</strong> - Gauge market psychology</li>
-                    <li><strong>Competitor tracking</strong> - Monitor other hunters' activities</li>
-                    <li><strong>Event calendars</strong> - Plan around Pokemon events</li>
-                </ul>
-
-                <div class="cta-section">
-                    <h3>Ready to Master Card Hunting Timing?</h3>
-                    <p>Join TamerMap Pro today and get access to advanced timing tools, market analytics, and personalized hunting strategies that will transform your success rate.</p>
-                                            <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-large">Start Your Pro Trial</a>
-                </div>
-            </section>
-
-            <section id="success-stories">
-                <h2>🏆 Success Stories</h2>
-                <p>See how proper timing has transformed the hunting success of TamerMap Pro users.</p>
-
-                <div class="testimonial">
-                    <div class="testimonial-header">
-                        <h3>Sarah M. - Seasonal Timing Master</h3>
-                        <span class="location">📍 Portland, OR</span>
-                    </div>
-                    <p>"Using TamerMap Pro's seasonal analytics, I've learned to hunt vintage cards in spring when people are cleaning out their collections. My success rate has increased by 300% during these months!"</p>
-                    <div class="results">
-                        <strong>Results:</strong> 15 vintage holos found in 3 months vs. 5 in the previous year
-                    </div>
-                </div>
-
-                <div class="testimonial">
-                    <div class="testimonial-header">
-                        <h3>Mike R. - Market Cycle Expert</h3>
-                        <span class="location">📍 Austin, TX</span>
-                    </div>
-                    <p>"The market timing tools in TamerMap Pro helped me identify the perfect time to sell my Charizard collection. I sold at the peak and made 40% more than I would have just a month later."</p>
-                    <div class="results">
-                        <strong>Results:</strong> $2,800 profit vs. $2,000 if sold later
-                    </div>
-                </div>
-
-                <div class="testimonial">
-                    <div class="testimonial-header">
-                        <h3>Jennifer L. - Event Timing Specialist</h3>
-                        <span class="location">📍 Seattle, WA</span>
-                    </div>
-                    <p>"I use TamerMap Pro's event calendar to plan my hunting around new set releases and Pokemon Go events. This has helped me consistently find cards before they spike in value."</p>
-                    <div class="results">
-                        <strong>Results:</strong> 8x return on investment for event-related cards
-                    </div>
-                </div>
-            </section>
-
-            <section class="guide-summary">
-                <h2>🎯 Key Takeaways</h2>
-                <div class="key-points">
-                    <div class="point">
-                        <h3>⏰ Master Seasonal Timing</h3>
-                        <p>Different seasons offer unique hunting opportunities. Spring is best for vintage finds, summer for events, fall for new releases, and winter for holiday sales.</p>
-                    </div>
-                    <div class="point">
-                        <h3>📈 Understand Market Cycles</h3>
-                        <p>Learn to identify market tops and bottoms, and use seasonal patterns to buy low and sell high for maximum profit.</p>
-                    </div>
-                    <div class="point">
-                        <h3>🎉 Leverage Event Timing</h3>
-                        <p>Plan your hunting around new set releases, Pokemon Go events, anime releases, and tournament seasons for optimal results.</p>
-                    </div>
-                    <div class="point">
-                        <h3>🚀 Use Pro Tools</h3>
-                        <p>TamerMap Pro provides advanced timing analytics, market predictions, and personalized hunting schedules to maximize your success.</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="next-steps">
-                <h2>🚀 What's Next?</h2>
-                <p>Now that you understand the importance of timing in Pokemon card hunting, take your skills to the next level:</p>
-                
-                <div class="next-steps-grid">
-                    <div class="next-step">
-                        <h3>📚 Read Our Other Guides</h3>
-                        <ul>
-                            <li><a href="{{ url_for('public.how_to_make_money') }}">How to Make Money Flipping Pokemon Cards</a></li>
-                            <li><a href="{{ url_for('public.how_to_hunt_cards') }}">How to Hunt Pokemon Cards Like a Pro</a></li>
-                            <li><a href="{{ url_for('public.how_to_routes') }}">How to Plan Your Card Hunting Routes</a></li>
-                        </ul>
-                    </div>
-                    
-                    <div class="next-step">
-                        <h3>🛠️ Get Pro Tools</h3>
-                        <p>Upgrade to TamerMap Pro for advanced timing analytics, market predictions, and personalized hunting strategies.</p>
-                        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-secondary">Learn About Pro</a>
-                    </div>
-                    
-                    <div class="next-step">
-                        <h3>🗺️ Start Hunting</h3>
-                        <p>Use TamerMap to find the best locations and apply your new timing knowledge for maximum success.</p>
-                        <a href="{{ url_for('public.maps') }}" class="btn btn-primary">Explore Maps</a>
-                    </div>
-                </div>
-            </section>
-        </article>
-
-        <!-- Related Guides Sidebar -->
-        <aside class="related-guides">
-            <h3>📖 Related Guides</h3>
-            <div class="guide-links">
-                <a href="{{ url_for('public.how_to_make_money') }}" class="guide-link">
-                    <h4>💰 How to Make Money Flipping Pokemon Cards</h4>
-                    <p>Learn the business side of card hunting and flipping for profit</p>
-                </a>
-                <a href="{{ url_for('public.how_to_hunt_cards') }}" class="guide-link">
-                    <h4>🔍 How to Hunt Pokemon Cards Like a Pro</h4>
-                    <p>Master the fundamentals of successful card hunting</p>
-                </a>
-                <a href="{{ url_for('public.how_to_routes') }}" class="guide-link">
-                    <h4>🗺️ How to Plan Your Card Hunting Routes</h4>
-                    <p>Optimize your hunting trips for maximum efficiency</p>
-                </a>
-            </div>
-        </aside>
-    </main>
-
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>TamerMap</h3>
-                <p>Your ultimate guide to Pokemon card hunting success.</p>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="{{ url_for('public.maps') }}">Maps</a></li>
-                    <li><a href="{{ url_for('public.learn') }}">Learn</a></li>
-                    <li><a href="{{ url_for('public.send_message', type='contact') }}">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Resources</h3>
-                <ul>
-                    <li><a href="{{ url_for('public.card_hunting_tips') }}">Card Hunting Tips</a></li>
-                    <li><a href="{{ url_for('public.states_index') }}">State Guides</a></li>
-                    <li><a href="{{ url_for('public.send_message', type='pro') }}">Pro Access</a></li>
-                </ul>
-            </div>
+  <!-- Table of Contents -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#seasonal-timing" class="text-decoration-none"><i class="fas fa-leaf text-success me-2"></i>Seasonal Timing Strategies</a></li>
+            <li><a href="#market-cycles" class="text-decoration-none"><i class="fas fa-chart-line text-primary me-2"></i>Market Cycle Analysis</a></li>
+            <li><a href="#event-timing" class="text-decoration-none"><i class="fas fa-calendar-alt text-warning me-2"></i>Event-Based Timing</a></li>
+          </ul>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2024 TamerMap. All rights reserved.</p>
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#daily-patterns" class="text-decoration-none"><i class="fas fa-clock text-info me-2"></i>Daily and Weekly Patterns</a></li>
+            <li><a href="#pro-tools" class="text-decoration-none"><i class="fas fa-tools text-danger me-2"></i>Pro Tools for Perfect Timing</a></li>
+            <li><a href="#success-stories" class="text-decoration-none"><i class="fas fa-trophy text-warning me-2"></i>Success Stories</a></li>
+          </ul>
         </div>
-    </footer>
+      </div>
+    </div>
+  </div>
 
+  <!-- Pro CTA Section -->
+  <div class="card mb-5 border-warning">
+    <div class="card-header bg-warning text-dark">
+      <h3 class="h5 mb-0"><i class="fas fa-star me-2"></i>Unlock Advanced Timing Insights with TamerMap Pro</h3>
+    </div>
+    <div class="card-body">
+      <p class="mb-3">Get real-time market data, seasonal trend analysis, and personalized hunting schedules to perfect your timing strategy.</p>
+      <a href="{{ url_for('public.splash') }}?upgrade=pro" class="btn btn-warning btn-lg">
+        <i class="fas fa-crown me-2"></i>Get Pro Access
+      </a>
+    </div>
+  </div>
 
-</body>
-</html>
+  <!-- Main Content -->
+  <div class="row">
+    <div class="col-lg-8">
+      <article>
+        <!-- Seasonal Timing Strategies -->
+        <section id="seasonal-timing" class="mb-5">
+          <h2 class="h3 mb-4"><i class="fas fa-leaf text-success me-2"></i>Seasonal Timing Strategies</h2>
+          <p class="lead">Understanding seasonal patterns is crucial for successful Pokemon card hunting. Different times of year present unique opportunities and challenges.</p>
+          
+          <h3 class="h4 mt-4">Spring (March - May)</h3>
+          <p>Spring is often the best season for finding vintage cards. As people clean out their collections and prepare for summer, you'll find:</p>
+          <ul>
+            <li><strong>Garage sales</strong> - People clearing out attics and basements</li>
+            <li><strong>Estate sales</strong> - Often contain valuable vintage collections</li>
+            <li><strong>Tax season sales</strong> - People selling to cover expenses</li>
+          </ul>
+
+          <h3 class="h4 mt-4">Summer (June - August)</h3>
+          <p>Summer brings increased competition but also more opportunities:</p>
+          <ul>
+            <li><strong>Tourist areas</strong> - Higher foot traffic means more restocks</li>
+            <li><strong>Convention season</strong> - Major Pokemon events drive demand</li>
+            <li><strong>Back-to-school prep</strong> - Parents buying cards for kids</li>
+          </ul>
+
+          <h3 class="h4 mt-4">Fall (September - November)</h3>
+          <p>Fall is prime hunting season with several advantages:</p>
+          <ul>
+            <li><strong>Holiday preparation</strong> - Stores stock up for Christmas</li>
+            <li><strong>New set releases</strong> - Pokemon typically releases major sets in fall</li>
+            <li><strong>Reduced competition</strong> - Kids back in school, less casual hunting</li>
+          </ul>
+
+          <h3 class="h4 mt-4">Winter (December - February)</h3>
+          <p>Winter offers unique opportunities despite challenges:</p>
+          <ul>
+            <li><strong>Holiday gifts</strong> - People receive cards they don't want</li>
+            <li><strong>Post-holiday sales</strong> - Stores clearing inventory</li>
+            <li><strong>Indoor activities</strong> - More people organizing collections</li>
+          </ul>
+        </section>
+
+        <!-- Market Cycle Analysis -->
+        <section id="market-cycles" class="mb-5">
+          <h2 class="h3 mb-4"><i class="fas fa-chart-line text-primary me-2"></i>Market Cycle Analysis</h2>
+          <p>Understanding Pokemon card market cycles can help you time your purchases and sales perfectly.</p>
+          
+          <div class="alert alert-info">
+            <i class="fas fa-lightbulb me-2"></i>
+            <strong>Pro Tip:</strong> Use TamerMap Pro's market analysis tools to track price trends and identify optimal buying/selling windows.
+          </div>
+
+          <h3 class="h4 mt-4">New Set Release Cycle</h3>
+          <p>Every Pokemon set follows a predictable pattern:</p>
+          <ol>
+            <li><strong>Pre-release hype</strong> - Prices spike before official release</li>
+            <li><strong>Release day</strong> - Maximum availability, prices stabilize</li>
+            <li><strong>First month</strong> - Gradual price increases as supply decreases</li>
+            <li><strong>Long-term</strong> - Prices either stabilize or continue rising based on demand</li>
+          </ol>
+
+          <h3 class="h4 mt-4">Holiday Market Patterns</h3>
+          <p>Holidays create predictable market fluctuations:</p>
+          <ul>
+            <li><strong>Valentine's Day</strong> - Pink and heart-themed cards see increased demand</li>
+            <li><strong>Easter</strong> - Spring-themed cards and family-friendly sets</li>
+            <li><strong>Halloween</strong> - Dark and spooky Pokemon cards</li>
+            <li><strong>Christmas</strong> - Premium sets and gift boxes</li>
+          </ul>
+        </section>
+
+        <!-- Event-Based Timing -->
+        <section id="event-timing" class="mb-5">
+          <h2 class="h3 mb-4"><i class="fas fa-calendar-alt text-warning me-2"></i>Event-Based Timing</h2>
+          <p>Major Pokemon events create unique timing opportunities for savvy hunters.</p>
+          
+          <h3 class="h4 mt-4">Tournament Season</h3>
+          <p>During competitive seasons (typically spring and fall):</p>
+          <ul>
+            <li><strong>Meta-relevant cards</strong> spike in price</li>
+            <li><strong>Competitive players</strong> buy in bulk</li>
+            <li><strong>Local game stores</strong> increase inventory</li>
+          </ul>
+
+          <h3 class="h4 mt-4">Movie and Game Releases</h3>
+          <p>New Pokemon media creates immediate demand:</p>
+          <ul>
+            <li><strong>Featured Pokemon</strong> see price increases</li>
+            <li><strong>Promotional cards</strong> become highly sought after</li>
+            <li><strong>Related merchandise</strong> drives card interest</li>
+          </ul>
+        </section>
+
+        <!-- Daily and Weekly Patterns -->
+        <section id="daily-patterns" class="mb-5">
+          <h2 class="h3 mb-4"><i class="fas fa-clock text-info me-2"></i>Daily and Weekly Patterns</h2>
+          <p>Timing your hunting trips can significantly impact your success rate.</p>
+          
+          <h3 class="h4 mt-4">Best Days to Hunt</h3>
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-success">Optimal Days</h5>
+              <ul>
+                <li><strong>Tuesday-Thursday</strong> - Mid-week restocks</li>
+                <li><strong>Sunday mornings</strong> - Fresh weekend inventory</li>
+                <li><strong>Holiday Mondays</strong> - Extended weekend restocks</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h5 class="text-warning">Avoid These Days</h5>
+              <ul>
+                <li><strong>Fridays</strong> - High competition</li>
+                <li><strong>Saturdays</strong> - Crowded stores</li>
+                <li><strong>Release days</strong> - Unless you're first in line</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 class="h4 mt-4">Best Times of Day</h3>
+          <p>Store restocking patterns vary, but generally:</p>
+          <ul>
+            <li><strong>Early morning (8-10 AM)</strong> - Fresh inventory, less competition</li>
+            <li><strong>Mid-afternoon (2-4 PM)</strong> - Mid-day restocks</li>
+            <li><strong>Evening (6-8 PM)</strong> - End-of-day inventory updates</li>
+          </ul>
+        </section>
+
+        <!-- Pro Tools Section -->
+        <section id="pro-tools" class="mb-5">
+          <h2 class="h3 mb-4"><i class="fas fa-tools text-danger me-2"></i>Pro Tools for Perfect Timing</h2>
+          <p>TamerMap Pro provides advanced tools to help you master timing:</p>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title"><i class="fas fa-chart-bar me-2"></i>Market Analytics</h5>
+                  <p class="card-text">Track price trends, demand patterns, and optimal buying/selling windows.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title"><i class="fas fa-bell me-2"></i>Restock Alerts</h5>
+                  <p class="card-text">Get notified when your target locations receive new inventory.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title"><i class="fas fa-route me-2"></i>Route Optimization</h5>
+                  <p class="card-text">Plan efficient routes based on restock schedules and timing patterns.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h5 class="card-title"><i class="fas fa-calendar-check me-2"></i>Event Calendar</h5>
+                  <p class="card-text">Stay ahead of Pokemon events, releases, and market opportunities.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Success Stories -->
+        <section id="success-stories" class="mb-5">
+          <h2 class="h3 mb-4"><i class="fas fa-trophy text-warning me-2"></i>Success Stories</h2>
+          <p>Real hunters share their timing success stories:</p>
+          
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Sarah's Spring Strategy</h5>
+              <p class="card-text">"I focus on garage sales in March and April. Last spring, I found a complete Base Set collection for $50 that I sold for $2,500!"</p>
+              <small class="text-muted">- Sarah M., TamerMap Pro Member</small>
+            </div>
+          </div>
+          
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Mike's Tournament Timing</h5>
+              <p class="card-text">"I buy meta-relevant cards 2 weeks before major tournaments and sell them the week after. Consistent 200-300% profits!"</p>
+              <small class="text-muted">- Mike R., Competitive Player</small>
+            </div>
+          </div>
+        </section>
+
+        <!-- Conclusion -->
+        <section class="mb-5">
+          <div class="card border-success">
+            <div class="card-header bg-success text-white">
+              <h3 class="h5 mb-0"><i class="fas fa-check-circle me-2"></i>Master Your Timing Strategy</h3>
+            </div>
+            <div class="card-body">
+              <p class="mb-3">Perfect timing is the difference between a successful hunt and a wasted trip. Use these strategies to maximize your Pokemon card hunting success:</p>
+              <ul class="mb-3">
+                <li>Plan your hunts around seasonal patterns</li>
+                <li>Track market cycles for optimal buying/selling</li>
+                <li>Time your trips for maximum inventory availability</li>
+                <li>Use TamerMap Pro tools for advanced insights</li>
+              </ul>
+              <a href="{{ url_for('public.splash') }}?upgrade=pro" class="btn btn-success btn-lg">
+                <i class="fas fa-rocket me-2"></i>Start Your Pro Journey
+              </a>
+            </div>
+          </div>
+        </section>
+      </article>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="sticky-top" style="top: 2rem;">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h4 class="h6 mb-0"><i class="fas fa-chart-pie me-2"></i>Timing Success Stats</h4>
+          </div>
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-6">
+                <h5 class="text-success">73%</h5>
+                <small class="text-muted">Success Rate</small>
+              </div>
+              <div class="col-6">
+                <h5 class="text-primary">2.4x</h5>
+                <small class="text-muted">Average ROI</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Guides -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h4 class="h6 mb-0"><i class="fas fa-book me-2"></i>Related Guides</h4>
+          </div>
+          <div class="card-body">
+            <ul class="list-unstyled">
+              <li class="mb-2">
+                <a href="{{ url_for('public.how_to_make_money') }}" class="text-decoration-none">
+                  <i class="fas fa-dollar-sign text-success me-2"></i>How to Make Money Flipping Cards
+                </a>
+              </li>
+              <li class="mb-2">
+                <a href="{{ url_for('public.how_to_hunt') }}" class="text-decoration-none">
+                  <i class="fas fa-search text-primary me-2"></i>How to Hunt Like a Pro
+                </a>
+              </li>
+              <li class="mb-2">
+                <a href="{{ url_for('public.how_to_routes') }}" class="text-decoration-none">
+                  <i class="fas fa-route text-info me-2"></i>How to Plan Routes
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Pro CTA -->
+        <div class="card border-warning">
+          <div class="card-body text-center">
+            <h5 class="card-title"><i class="fas fa-crown me-2"></i>Unlock Pro Timing Tools</h5>
+            <p class="card-text small">Get advanced market analytics, restock alerts, and personalized hunting schedules.</p>
+            <a href="{{ url_for('public.splash') }}?upgrade=pro" class="btn btn-warning btn-sm">
+              <i class="fas fa-star me-1"></i>Upgrade to Pro
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
