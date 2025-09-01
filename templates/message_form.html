@@ -58,6 +58,20 @@
               }
             });
           }
+
+          // Dynamic label update for location type
+          var locationCheckbox = document.querySelector('#is_new_location');
+          var locationBodyLabel = document.querySelector('#location-body-label');
+          
+          if (locationCheckbox && locationBodyLabel) {
+            locationCheckbox.addEventListener('change', function() {
+              if (this.checked) {
+                locationBodyLabel.textContent = 'Describe the NEW location details, what Pokemon cards they carry, and any other relevant information:';
+              } else {
+                locationBodyLabel.textContent = 'Describe the incorrect information and provide the correct details below:';
+              }
+            });
+          }
         });
       </script>
 
@@ -84,11 +98,30 @@
         </div>
       {% endif %}
 
+      {# Location-specific checkbox for location type #}
+      {% if form.communication_type.data == 'location' %}
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="is_new_location" name="is_new_location" value="1">
+            <label class="form-check-label" for="is_new_location">
+              <strong>This is a NEW location</strong> (not reporting incorrect information about an existing location)
+            </label>
+          </div>
+          <div class="form-text text-muted">
+            Check this box if you're adding a completely new Pokemon card location. Leave unchecked if you're reporting incorrect information about an existing location.
+          </div>
+        </div>
+      {% endif %}
+
       {# body field with dynamic label #}
       <div class="mb-3">
         {% if form.communication_type.data == 'report' %}
           <label for="{{ form.body.id }}" class="form-label">
             Describe Your Changes Here and Correct Data Below:
+          </label>
+        {% elif form.communication_type.data == 'location' %}
+          <label for="{{ form.body.id }}" class="form-label">
+            <span id="location-body-label">Describe the location details, what Pokemon cards they carry, and any other relevant information:</span>
           </label>
         {% else %}
           {{ form.body.label(class="form-label") }}
