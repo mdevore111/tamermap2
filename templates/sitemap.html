@@ -299,15 +299,32 @@
                 <p>Learn how to read activity heatmaps to find the best hunting spots and identify hot spots.</p>
                 <a href="{{ url_for('public.how_to_use_heatmaps') }}" class="btn">Read Tutorial</a>
             </div>
-            <div class="guide-item">
-                <h3>🔑 How to Reset Your Password</h3>
-                <p>Step-by-step guide to resetting your TamerMap password and managing account security.</p>
-                <a href="{{ url_for('public.how_to_reset_password') }}" class="btn">Read Tutorial</a>
-            </div>
+
             <div class="guide-item">
                 <h3>📚 All Site Tutorials</h3>
                 <p>Complete collection of tutorials for using every TamerMap feature and tool.</p>
                 <a href="{{ url_for('public.site_tutorials') }}" class="btn">View All Tutorials</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>FAQ & Support</h2>
+        <div class="guide-grid">
+            <div class="guide-item priority-high">
+                <h3>❓ Frequently Asked Questions</h3>
+                <p>Quick answers to common questions about TamerMap, Pokemon card hunting, Pro features, and account help.</p>
+                <a href="{{ url_for('public.faq') }}" class="btn">View FAQ</a>
+            </div>
+            <div class="guide-item">
+                <h3>📧 Contact Support</h3>
+                <p>Get help with technical issues, account problems, or questions about TamerMap features.</p>
+                <a href="{{ url_for('public.send_message', type='contact') }}" class="btn">Contact Us</a>
+                </div>
+            <div class="guide-item">
+                <h3>👑 Pro Inquiries</h3>
+                <p>Learn about TamerMap Pro features, pricing, and how to upgrade your account for maximum hunting success.</p>
+                <a href="{{ url_for('public.send_message', type='pro') }}" class="btn">Pro Info</a>
             </div>
         </div>
     </div>

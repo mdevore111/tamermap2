@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TamerMap FAQ - Pokemon Card Hunting Questions & Answers | Find Pokemon Cards Near Me</title>
+    <meta name="description" content="Get answers to common questions about TamerMap, Pokemon card hunting, Pro features, account management, and troubleshooting. Expert advice for finding Pokemon cards near you.">
+    <meta name="keywords" content="TamerMap FAQ, Pokemon card hunting questions, Pokemon card finder help, TamerMap Pro features, Pokemon card hunting tips, find Pokemon cards near me, Pokemon card hunting guide">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="TamerMap FAQ - Pokemon Card Hunting Questions & Answers">
+    <meta property="og:description" content="Get answers to common questions about TamerMap, Pokemon card hunting, Pro features, and troubleshooting. Expert advice for finding Pokemon cards near you.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    
+    <!-- Canonical -->
+    <link rel="canonical" href="{{ request.url }}">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What is TamerMap and how does it help with Pokemon card hunting?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "TamerMap is the ultimate Pokemon card hunting platform that helps you find Pokemon cards near you. Our interactive map shows kiosks, card shops, and events with real-time data, heatmaps, and route planning tools to maximize your hunting success."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What features do TamerMap Pro members get?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "TamerMap Pro members get advanced filtering, priority access, exclusive location insights, route optimization tools, detailed heatmaps, and premium support to enhance their Pokemon card hunting experience."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "How do I reset my TamerMap password?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "To reset your TamerMap password, go to the login page and click 'Forgot Password'. Enter your email address and follow the instructions sent to your inbox to create a new secure password."
+                }
+            }
+        ]
+    }
+    </script>
+    
+    {% extends "base.html" %}
+    {% block title %}FAQ - TamerMap{% endblock %}
+</head>
+<body>
+    {% block content %}
+    <main class="container my-5" style="margin-bottom: 6rem;">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Header Section -->
+                <div class="text-center mb-5">
+                    <h1 class="display-4 fw-bold text-primary mb-3">
+                        <img src="{{ url_for('static', filename='images/heatmap.png') }}" alt="TamerMap FAQ Icon" class="me-3" style="width: 60px; height: 60px;">
+                        TamerMap FAQ
+                    </h1>
+                    <p class="lead text-muted">Get answers to common questions about Pokemon card hunting, TamerMap features, and troubleshooting. Everything you need to know about finding Pokemon cards near you.</p>
+                </div>
+
+                <!-- Quick Navigation -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="h5 mb-3">Quick Navigation</h3>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <a href="#getting-started" class="btn btn-outline-primary btn-sm w-100">Getting Started</a>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <a href="#pro-features" class="btn btn-outline-primary btn-sm w-100">Pro Features</a>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <a href="#account-help" class="btn btn-outline-primary btn-sm w-100">Account Help</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Getting Started Section -->
+                <div id="getting-started" class="faq-section mb-5">
+                    <h2 class="h3 text-primary mb-4">
+                        <i class="fas fa-rocket me-2"></i>Getting Started with TamerMap
+                    </h2>
+                    
+                    <div class="accordion" id="gettingStartedAccordion">
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    What is TamerMap and how does it help with Pokemon card hunting?
+                                </button>
+                            </h3>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#gettingStartedAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>TamerMap</strong> is the ultimate Pokemon card hunting platform designed to help you find Pokemon cards near you with maximum efficiency. Our interactive map shows:</p>
+                                    <ul>
+                                        <li><strong>Kiosks and Card Shops:</strong> Find all Pokemon card locations in your area</li>
+                                        <li><strong>Real-time Data:</strong> Get current information about locations and availability</li>
+                                        <li><strong>Heatmaps:</strong> See which areas have the most hunting activity</li>
+                                        <li><strong>Route Planning:</strong> Optimize your hunting trips to save time and gas</li>
+                                    </ul>
+                                    <p>Whether you're looking for <a href="{{ url_for('public.how_to_make_money') }}">Pokemon cards to flip for profit</a> or building your collection, TamerMap gives you the edge you need.</p>
+                                    <div class="alert alert-info">
+                                        <strong>Pro Tip:</strong> Check out our <a href="{{ url_for('public.how_to_hunt_cards') }}">complete Pokemon card hunting guide</a> for expert strategies and tips.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    How do I find Pokemon cards near me using TamerMap?
+                                </button>
+                            </h3>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#gettingStartedAccordion">
+                                <div class="accordion-body">
+                                    <p>Finding Pokemon cards near you is simple with TamerMap:</p>
+                                    <ol>
+                                        <li><strong>Visit the Map:</strong> Go to our <a href="{{ url_for('public.index') }}">interactive map</a></li>
+                                        <li><strong>Set Your Location:</strong> Allow location access or enter your city/zip code</li>
+                                        <li><strong>Browse Locations:</strong> See all nearby kiosks, card shops, and events</li>
+                                        <li><strong>Use Filters:</strong> Narrow down by retailer type, distance, or features</li>
+                                        <li><strong>Plan Your Route:</strong> Use our <a href="{{ url_for('public.how_to_route_planning_tool') }}">route planning tool</a> to optimize your trip</li>
+                                    </ol>
+                                    <p>Our <a href="{{ url_for('public.how_to_use_heatmaps') }}">heatmap feature</a> shows you which areas have the most hunting activity, helping you identify the best spots for finding Pokemon cards.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    What types of locations does TamerMap show?
+                                </button>
+                            </h3>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#gettingStartedAccordion">
+                                <div class="accordion-body">
+                                    <p>TamerMap shows comprehensive Pokemon card hunting locations:</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5 class="text-success">Kiosks</h5>
+                                            <ul>
+                                                <li>Pokemon card vending machines</li>
+                                                <li>24/7 access locations</li>
+                                                <li>Real-time inventory updates</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5 class="text-info">Card Shops</h5>
+                                            <ul>
+                                                <li>Local game stores</li>
+                                                <li>Comic book shops</li>
+                                                <li>Specialty retailers</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p>We also track <a href="{{ url_for('public.how_to_timing') }}">Pokemon card events</a> and conventions to help you plan your hunting calendar.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pro Features Section -->
+                <div id="pro-features" class="faq-section mb-5">
+                    <h2 class="h3 text-primary mb-4">
+                        <i class="fas fa-crown me-2"></i>TamerMap Pro Features
+                    </h2>
+                    
+                    <div class="accordion" id="proFeaturesAccordion">
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                    What features do TamerMap Pro members get?
+                                </button>
+                            </h3>
+                            <div id="faq4" class="accordion-collapse collapse show" data-bs-parent="#proFeaturesAccordion">
+                                <div class="accordion-body">
+                                    <p><strong>TamerMap Pro</strong> gives you exclusive access to advanced Pokemon card hunting tools:</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5 class="text-warning">Advanced Features</h5>
+                                            <ul>
+                                                <li><strong>Priority Access:</strong> Get first access to new locations and updates</li>
+                                                <li><strong>Advanced Filtering:</strong> Filter by machine count, success rates, and more</li>
+                                                <li><strong>Route Optimization:</strong> AI-powered route planning for maximum efficiency</li>
+                                                <li><strong>Exclusive Insights:</strong> Detailed analytics and hunting strategies</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5 class="text-success">Premium Tools</h5>
+                                            <ul>
+                                                <li><strong>Detailed Heatmaps:</strong> Advanced activity and success data</li>
+                                                <li><strong>Success Tracking:</strong> Monitor your hunting results</li>
+                                                <li><strong>Priority Support:</strong> Get help when you need it most</li>
+                                                <li><strong>Early Access:</strong> Try new features before anyone else</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-warning">
+                                        <strong>Ready to upgrade?</strong> <a href="{{ url_for('public.send_message', type='pro') }}">Contact us about TamerMap Pro</a> and start hunting like a professional.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    How much does TamerMap Pro cost?
+                                </button>
+                            </h3>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#proFeaturesAccordion">
+                                <div class="accordion-body">
+                                    <p>TamerMap Pro pricing is designed to be accessible for serious Pokemon card hunters:</p>
+                                    <ul>
+                                        <li><strong>Monthly Plan:</strong> Affordable monthly subscription for regular hunters</li>
+                                        <li><strong>Annual Plan:</strong> Save money with our discounted yearly option</li>
+                                        <li><strong>No Hidden Fees:</strong> Transparent pricing with no surprises</li>
+                                        <li><strong>Cancel Anytime:</strong> No long-term commitments required</li>
+                                    </ul>
+                                    <p>For detailed pricing and to discuss which plan is right for you, <a href="{{ url_for('public.send_message', type='pro') }}">contact our Pro team</a>. We'll help you choose the best option based on your hunting frequency and needs.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                    Is TamerMap Pro worth it for casual hunters?
+                                </button>
+                            </h3>
+                            <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#proFeaturesAccordion">
+                                <div class="accordion-body">
+                                    <p>Great question! TamerMap Pro is designed for hunters at all levels:</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5 class="text-info">For Casual Hunters</h5>
+                                            <ul>
+                                                <li>Better route planning saves time and gas</li>
+                                                <li>Advanced filters help find the best locations</li>
+                                                <li>Success tracking improves your hunting skills</li>
+                                                <li>Priority support when you need help</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5 class="text-success">For Serious Hunters</h5>
+                                            <ul>
+                                                <li>Maximum efficiency and success rates</li>
+                                                <li>Exclusive location insights</li>
+                                                <li>Advanced analytics and strategies</li>
+                                                <li>Professional hunting tools</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p>Even casual hunters benefit from our <a href="{{ url_for('public.how_to_routes') }}">route optimization</a> and <a href="{{ url_for('public.how_to_use_heatmaps') }}">heatmap features</a> that make every hunting trip more successful.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Help Section -->
+                <div id="account-help" class="faq-section mb-5">
+                    <h2 class="h3 text-primary mb-4">
+                        <i class="fas fa-user-cog me-2"></i>Account & Technical Help
+                    </h2>
+                    
+                    <div class="accordion" id="accountHelpAccordion">
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                    How do I reset my TamerMap password?
+                                </button>
+                            </h3>
+                            <div id="faq7" class="accordion-collapse collapse show" data-bs-parent="#accountHelpAccordion">
+                                <div class="accordion-body">
+                                    <p>Resetting your TamerMap password is quick and secure:</p>
+                                    <ol>
+                                        <li><strong>Go to Login:</strong> Visit the <a href="{{ url_for('auth.login') }}">login page</a></li>
+                                        <li><strong>Click Forgot Password:</strong> Look for the "Forgot Password?" link</li>
+                                        <li><strong>Enter Email:</strong> Provide the email address associated with your account</li>
+                                        <li><strong>Check Email:</strong> Look for our password reset email</li>
+                                        <li><strong>Create New Password:</strong> Click the link and set a new secure password</li>
+                                    </ol>
+                                    <p>For detailed step-by-step instructions, check out our <a href="{{ url_for('public.how_to_reset_password') }}">complete password reset guide</a>.</p>
+                                    <div class="alert alert-warning">
+                                        <strong>Security Tip:</strong> Use a strong, unique password and never share your login credentials.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                                    What if I can't log in to my TamerMap account?
+                                </button>
+                            </h3>
+                            <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#accountHelpAccordion">
+                                <div class="accordion-body">
+                                    <p>If you're having trouble logging into TamerMap, try these troubleshooting steps:</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5 class="text-warning">Common Issues</h5>
+                                            <ul>
+                                                <li><strong>Wrong Password:</strong> Double-check your password</li>
+                                                <li><strong>Email Typo:</strong> Verify your email address</li>
+                                                <li><strong>Browser Issues:</strong> Clear cookies and cache</li>
+                                                <li><strong>Account Locked:</strong> Too many failed attempts</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5 class="text-success">Solutions</h5>
+                                            <ul>
+                                                <li><strong>Reset Password:</strong> Use our <a href="{{ url_for('public.how_to_reset_password') }}">password reset tool</a></li>
+                                                <li><strong>Check Email:</strong> Verify your email is correct</li>
+                                                <li><strong>Try Different Browser:</strong> Test with Chrome, Firefox, or Safari</li>
+                                                <li><strong>Contact Support:</strong> Get help from our team</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p>If none of these solutions work, <a href="{{ url_for('public.send_message', type='contact') }}">contact our support team</a> and we'll help you get back into your account quickly.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq9">
+                                    How do I update my TamerMap account information?
+                                </button>
+                            </h3>
+                            <div id="faq9" class="accordion-collapse collapse" data-bs-parent="#accountHelpAccordion">
+                                <div class="accordion-body">
+                                    <p>Updating your TamerMap account information is easy:</p>
+                                    <ol>
+                                        <li><strong>Log In:</strong> Access your account dashboard</li>
+                                        <li><strong>Go to Settings:</strong> Navigate to your account settings</li>
+                                        <li><strong>Edit Information:</strong> Update your name, email, or preferences</li>
+                                        <li><strong>Save Changes:</strong> Confirm your updates</li>
+                                    </ol>
+                                    <p>You can also update your hunting preferences, notification settings, and Pro subscription details from your account dashboard.</p>
+                                    <div class="alert alert-info">
+                                        <strong>Need Help?</strong> Our <a href="{{ url_for('public.site_tutorials') }}">Help & Tutorials section</a> has detailed guides for managing your account.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq10">
+                                    How often is TamerMap data updated?
+                                </button>
+                            </h3>
+                            <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#accountHelpAccordion">
+                                <div class="accordion-body">
+                                    <p>TamerMap provides comprehensive and up-to-date Pokemon card hunting information:</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5 class="text-success">Location Data</h5>
+                                            <ul>
+                                                <li><strong>New Locations:</strong> Added within 24-48 hours</li>
+                                                <li><strong>Status Updates:</strong> Verified weekly</li>
+                                                <li><strong>Contact Info:</strong> Updated monthly</li>
+                                                <li><strong>Hours & Features:</strong> Checked quarterly</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5 class="text-info">Real-time Features</h5>
+                                            <ul>
+                                                <li><strong>Heatmaps:</strong> Updated daily</li>
+                                                <li><strong>User Activity:</strong> Live tracking</li>
+                                                <li><strong>Route Data:</strong> Real-time optimization</li>
+                                                <li><strong>Pro Features:</strong> Instant access</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p>Our team continuously monitors and updates information to ensure you have the most accurate Pokemon card hunting data available.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h3 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq11">
+                                    What makes TamerMap different from other Pokemon card finders?
+                                </button>
+                            </h3>
+                            <div id="faq11" class="accordion-collapse collapse" data-bs-parent="#accountHelpAccordion">
+                                <div class="accordion-body">
+                                    <p>TamerMap stands out as the premier Pokemon card hunting platform for several key reasons:</p>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h5 class="text-primary">Advanced Technology</h5>
+                                            <ul>
+                                                <li><strong>AI Route Planning:</strong> Optimize your hunting trips</li>
+                                                <li><strong>Smart Heatmaps:</strong> Data-driven location insights</li>
+                                                <li><strong>Real-time Updates:</strong> Current information when you need it</li>
+                                                <li><strong>Mobile-First Design:</strong> Hunt on any device</li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h5 class="text-success">Community Focus</h5>
+                                            <ul>
+                                                <li><strong>Hunter Community:</strong> Connect with fellow collectors</li>
+                                                <li><strong>Success Tracking:</strong> Learn from your hunting history</li>
+                                                <li><strong>Expert Strategies:</strong> Proven hunting techniques</li>
+                                                <li><strong>Local Knowledge:</strong> Community-driven insights</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <p>Unlike basic finders, TamerMap provides comprehensive tools for <a href="{{ url_for('public.how_to_make_money') }}">making money flipping cards</a>, <a href="{{ url_for('public.how_to_hunt_cards') }}">building collections</a>, and <a href="{{ url_for('public.how_to_timing') }}">timing your hunts perfectly</a>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Help Section -->
+                <div class="faq-section mb-5">
+                    <h2 class="h3 text-primary mb-4">
+                        <i class="fas fa-question-circle me-2"></i>Still Need Help?
+                    </h2>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-book fa-2x text-primary mb-3"></i>
+                                    <h4 class="h5">Comprehensive Guides</h4>
+                                    <p>Check out our detailed <a href="{{ url_for('public.how_to') }}">Pokemon hunting guides</a> for expert strategies and tips.</p>
+                                    <a href="{{ url_for('public.how_to') }}" class="btn btn-primary">View Guides</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tools fa-2x text-primary mb-3"></i>
+                                    <h4 class="h5">Site Tutorials</h4>
+                                    <p>Learn how to use every TamerMap feature with our <a href="{{ url_for('public.site_tutorials') }}">step-by-step tutorials</a>.</p>
+                                    <a href="{{ url_for('public.site_tutorials') }}" class="btn btn-primary">View Tutorials</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h4 class="h5 mb-3">Can't Find Your Answer?</h4>
+                            <p class="mb-3">Our support team is here to help with any questions about TamerMap, Pokemon card hunting, or technical issues.</p>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <a href="{{ url_for('public.send_message', type='contact') }}" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-envelope me-2"></i>Contact Support
+                                    </a>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-outline-success w-100">
+                                        <i class="fas fa-crown me-2"></i>Pro Inquiries
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add active state to navigation buttons
+        document.querySelectorAll('.btn-outline-primary').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.btn-outline-primary').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+    {% endblock %}
+</body>
+</html>

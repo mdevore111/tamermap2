@@ -750,6 +750,12 @@ def site_tutorials():
     return render_template("site-tutorials.html")
 
 
+@public_bp.route("/faq")
+def faq():
+    """Render the FAQ page with common questions and answers."""
+    return render_template("faq.html")
+
+
 @public_bp.route("/how-to-route-planning-tool")
 def how_to_route_planning_tool():
     """Render the comprehensive guide for using TamerMap's route planning tool."""
@@ -803,6 +809,7 @@ def sitemap_xml():
         ('/how-to-timing', '0.9', 'weekly'),
         ('/how-to-routes', '0.9', 'weekly'),
         ('/site-tutorials', '0.8', 'weekly'),
+        ('/faq', '0.8', 'weekly'),
         ('/how-to-route-planning-tool', '0.9', 'weekly'),
         ('/how-to-use-heatmaps', '0.9', 'weekly'),
         ('/how-to-reset-password', '0.8', 'weekly'),
