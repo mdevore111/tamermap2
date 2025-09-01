@@ -697,6 +697,7 @@ def about():
 
 
 @public_bp.route("/sitemap")
+@public_bp.route("/sitemap.html")
 def sitemap():
     """
     Render the 'sitemap' page.
