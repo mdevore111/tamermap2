@@ -98,7 +98,7 @@
         </div>
       {% endif %}
 
-      {# Location-specific checkbox for location type #}
+      {# Location-specific checkboxes for location type #}
       {% if form.communication_type.data == 'location' %}
         <div class="mb-3">
           <div class="form-check">
@@ -109,6 +109,17 @@
           </div>
           <div class="form-text text-muted">
             Check this box if you're adding a completely new Pokemon card location. Leave unchecked if you're reporting incorrect information about an existing location.
+          </div>
+        </div>
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="is_admin_report" name="is_admin_report" value="1">
+            <label class="form-check-label" for="is_admin_report">
+              <strong>This is for Admin review</strong> (not updating/correcting a location)
+            </label>
+          </div>
+          <div class="form-text text-muted">
+            Check this box if you're submitting this for admin review rather than updating or correcting location information.
           </div>
         </div>
       {% endif %}
@@ -186,6 +197,49 @@
           <div class="mb-3">
             {{ form.company_size.label(class="form-label") }}
             {{ form.company_size(class="form-select") }}
+          </div>
+        {% endif %}
+
+        {# Post Wins specific fields #}
+        {% if form.communication_type.data == 'post_wins' %}
+          <div class="mb-3">
+            {{ form.win_type.label(class="form-label") }}
+            {{ form.win_type(class="form-select") }}
+          </div>
+          <div class="mb-3">
+            {{ form.location_used.label(class="form-label") }}
+            {{ form.location_used(class="form-control") }}
+            <div class="form-text">Which TamerMap locations did you use?</div>
+          </div>
+          <div class="mb-3">
+            {{ form.cards_found.label(class="form-label") }}
+            {{ form.cards_found(class="form-control") }}
+            <div class="form-text">What cards did you find? (e.g., "Charizard VMAX, Pikachu V")</div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                {{ form.time_saved.label(class="form-label") }}
+                {{ form.time_saved(class="form-control") }}
+                <div class="form-text">How much time did you save?</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                {{ form.money_saved.label(class="form-label") }}
+                {{ form.money_saved(class="form-control") }}
+                <div class="form-text">How much money did you save?</div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.allow_feature(class="form-check-input") }}
+              <label class="form-check-label" for="{{ form.allow_feature.id }}">
+                {{ form.allow_feature.label.text }}
+              </label>
+            </div>
+            <div class="form-text">We may feature your win on our User Wins page (with your permission)</div>
           </div>
         {% endif %}
 

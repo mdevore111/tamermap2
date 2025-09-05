@@ -157,6 +157,11 @@
                     <i class="fas fa-briefcase me-2"></i> Business Inquiry
                   </a>
                 </li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('public.send_message', type='post_wins') }}">
+                    <i class="fas fa-trophy me-2"></i> Post Wins
+                  </a>
+                </li>
               </ul>
             </li>
             {% if current_user.is_authenticated %}

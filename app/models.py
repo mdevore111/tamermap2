@@ -444,11 +444,19 @@ class Message(db.Model):
     reported_hours = db.Column(db.String(255), nullable=True)
     out_of_business = db.Column(db.Boolean, default=False)
     is_new_location = db.Column(db.Boolean, default=False)
+    is_admin_report = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     name = db.Column(db.String(255), nullable=True)
     address = db.Column(db.String(255), nullable=True)
     email = db.Column(db.String(255), nullable=True)
+    # Post Wins fields
+    win_type = db.Column(db.String(50), nullable=True)
+    location_used = db.Column(db.String(255), nullable=True)
+    cards_found = db.Column(db.String(255), nullable=True)
+    time_saved = db.Column(db.String(100), nullable=True)
+    money_saved = db.Column(db.String(100), nullable=True)
+    allow_feature = db.Column(db.Boolean, default=False)
 
 
 class LoginEvent(db.Model):

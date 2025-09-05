@@ -335,6 +335,14 @@ $(document).ready(function() {
             <div class='mb-3'><label>Reported Website</label><input name='reported_website' class='form-control'></div>
             <div class='mb-3'><label>Reported Hours</label><input name='reported_hours' class='form-control'></div>
             <div class='mb-3'><label>Reported Out of Business</label><select name='out_of_business' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
+            <div class='mb-3'><label>Is New Location</label><select name='is_new_location' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
+            <div class='mb-3'><label>Admin Report</label><select name='is_admin_report' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
+            <div class='mb-3'><label>Win Type</label><input name='win_type' class='form-control'></div>
+            <div class='mb-3'><label>Location Used</label><input name='location_used' class='form-control'></div>
+            <div class='mb-3'><label>Cards Found</label><input name='cards_found' class='form-control'></div>
+            <div class='mb-3'><label>Time Saved</label><input name='time_saved' class='form-control'></div>
+            <div class='mb-3'><label>Money Saved</label><input name='money_saved' class='form-control'></div>
+            <div class='mb-3'><label>Allow Feature</label><select name='allow_feature' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
             <div class='mb-3'><label>Email</label><input name='email' type='email' class='form-control'></div>
             <div class='mb-3'><label>Read</label><select name='read' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
         `);
@@ -432,6 +440,13 @@ $(document).ready(function() {
                         <div class='mb-3'><strong>Reported Website:</strong> ${data.reported_website || 'N/A'}</div>
                         <div class='mb-3'><strong>Reported Hours:</strong> ${data.reported_hours || 'N/A'}</div>
                         <div class='mb-3'><strong>Reported Out of Business:</strong> ${data.out_of_business ? 'Yes' : 'No'}</div>
+                        <div class='mb-3'><strong>Admin Report:</strong> ${data.is_admin_report ? 'Yes' : 'No'}</div>
+                        <div class='mb-3'><strong>Win Type:</strong> ${data.win_type || 'N/A'}</div>
+                        <div class='mb-3'><strong>Location Used:</strong> ${data.location_used || 'N/A'}</div>
+                        <div class='mb-3'><strong>Cards Found:</strong> ${data.cards_found || 'N/A'}</div>
+                        <div class='mb-3'><strong>Time Saved:</strong> ${data.time_saved || 'N/A'}</div>
+                        <div class='mb-3'><strong>Money Saved:</strong> ${data.money_saved || 'N/A'}</div>
+                        <div class='mb-3'><strong>Allow Feature:</strong> ${data.allow_feature ? 'Yes' : 'No'}</div>
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -480,6 +495,23 @@ $(document).ready(function() {
                 <div class='mb-1'><label>Reported Out of Business</label><select name='out_of_business' class='form-control form-control-sm'>
                     <option value='false' ${!data.out_of_business ? 'selected' : ''}>No</option>
                     <option value='true' ${data.out_of_business ? 'selected' : ''}>Yes</option>
+                </select></div>
+                <div class='mb-1'><label>Is New Location</label><select name='is_new_location' class='form-control form-control-sm'>
+                    <option value='false' ${!data.is_new_location ? 'selected' : ''}>No</option>
+                    <option value='true' ${data.is_new_location ? 'selected' : ''}>Yes</option>
+                </select></div>
+                <div class='mb-1'><label>Admin Report</label><select name='is_admin_report' class='form-control form-control-sm'>
+                    <option value='false' ${!data.is_admin_report ? 'selected' : ''}>No</option>
+                    <option value='true' ${data.is_admin_report ? 'selected' : ''}>Yes</option>
+                </select></div>
+                <div class='mb-1'><label>Win Type</label><input name='win_type' class='form-control form-control-sm' value='${data.win_type || ''}'></div>
+                <div class='mb-1'><label>Location Used</label><input name='location_used' class='form-control form-control-sm' value='${data.location_used || ''}'></div>
+                <div class='mb-1'><label>Cards Found</label><input name='cards_found' class='form-control form-control-sm' value='${data.cards_found || ''}'></div>
+                <div class='mb-1'><label>Time Saved</label><input name='time_saved' class='form-control form-control-sm' value='${data.time_saved || ''}'></div>
+                <div class='mb-1'><label>Money Saved</label><input name='money_saved' class='form-control form-control-sm' value='${data.money_saved || ''}'></div>
+                <div class='mb-1'><label>Allow Feature</label><select name='allow_feature' class='form-control form-control-sm'>
+                    <option value='false' ${!data.allow_feature ? 'selected' : ''}>No</option>
+                    <option value='true' ${data.allow_feature ? 'selected' : ''}>Yes</option>
                 </select></div>
                 <div class='mb-1'><label>Timestamp</label><input class='form-control form-control-sm' value='${data.timestamp ? data.timestamp.replace("T", " ").slice(0, 16) : ''}' readonly></div>
                 <div class='mb-1'><label>Read</label><select name='read' class='form-control form-control-sm'>

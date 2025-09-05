@@ -1916,10 +1916,20 @@ def get_message(id):
         'reported_website': message.reported_website,
         'reported_hours': message.reported_hours,
         'out_of_business': message.out_of_business,
+        'is_new_location': message.is_new_location,
+        'is_admin_report': message.is_admin_report,
         'read': message.read,
         'name': message.name,
         'address': message.address,
-        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M') if message.timestamp else ''
+        'email': message.email,
+        'timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M') if message.timestamp else '',
+        # Post Wins fields
+        'win_type': message.win_type,
+        'location_used': message.location_used,
+        'cards_found': message.cards_found,
+        'time_saved': message.time_saved,
+        'money_saved': message.money_saved,
+        'allow_feature': message.allow_feature
     })
 
 @admin_bp.route('/messages/<int:id>', methods=['DELETE'])
@@ -1946,10 +1956,19 @@ def add_message():
         reported_website=data.get('reported_website'),
         reported_hours=data.get('reported_hours'),
         out_of_business=data.get('out_of_business') == 'true',
+        is_new_location=data.get('is_new_location') == 'true',
+        is_admin_report=data.get('is_admin_report') == 'true',
         read=data.get('read') == 'true',
         name=data.get('name'),
         address=data.get('address'),
-        email=data.get('email')
+        email=data.get('email'),
+        # Post Wins fields
+        win_type=data.get('win_type'),
+        location_used=data.get('location_used'),
+        cards_found=data.get('cards_found'),
+        time_saved=data.get('time_saved'),
+        money_saved=data.get('money_saved'),
+        allow_feature=data.get('allow_feature') == 'true'
     )
     
     db.session.add(message)
@@ -1984,6 +2003,10 @@ def edit_message(id):
         message.reported_hours = data['reported_hours']
     if 'out_of_business' in data:
         message.out_of_business = data['out_of_business'] == 'true'
+    if 'is_new_location' in data:
+        message.is_new_location = data['is_new_location'] == 'true'
+    if 'is_admin_report' in data:
+        message.is_admin_report = data['is_admin_report'] == 'true'
     if 'read' in data:
         message.read = data['read'] == 'true'
     if 'name' in data:
@@ -1992,6 +2015,19 @@ def edit_message(id):
         message.address = data['address']
     if 'email' in data:
         message.email = data['email']
+    # Post Wins fields
+    if 'win_type' in data:
+        message.win_type = data['win_type']
+    if 'location_used' in data:
+        message.location_used = data['location_used']
+    if 'cards_found' in data:
+        message.cards_found = data['cards_found']
+    if 'time_saved' in data:
+        message.time_saved = data['time_saved']
+    if 'money_saved' in data:
+        message.money_saved = data['money_saved']
+    if 'allow_feature' in data:
+        message.allow_feature = data['allow_feature'] == 'true'
     
     db.session.commit()
     return jsonify({'message': 'Message updated successfully'})

@@ -546,7 +546,7 @@ def send_message():
     if request.method == "GET":
         pre = request.args.get("type", "")
         form.communication_type.data = (
-            pre if pre in ["suggestion", "contact", "location", "report", "support", "business"] else "contact"
+            pre if pre in ["suggestion", "contact", "location", "report", "support", "business", "post_wins"] else "contact"
         )
         if form.communication_type.data == "report":
             addr = request.args.get("address", "")
@@ -616,6 +616,21 @@ def send_message():
                 extra_lines.append("Type: NEW LOCATION")
             else:
                 extra_lines.append("Type: CORRECTION TO EXISTING LOCATION")
+            if form.is_admin_report.data:
+                extra_lines.append("ADMIN REVIEW REQUESTED")
+        if form.communication_type.data == 'post_wins':
+            if form.win_type.data:
+                extra_lines.append(f"Win Type: {form.win_type.data}")
+            if form.location_used.data:
+                extra_lines.append(f"Location Used: {form.location_used.data}")
+            if form.cards_found.data:
+                extra_lines.append(f"Cards Found: {form.cards_found.data}")
+            if form.time_saved.data:
+                extra_lines.append(f"Time Saved: {form.time_saved.data}")
+            if form.money_saved.data:
+                extra_lines.append(f"Money Saved: {form.money_saved.data}")
+            if form.allow_feature.data:
+                extra_lines.append("Permission to Feature: YES")
         extra = "\n".join(extra_lines) + "\n"
 
         try:
@@ -631,8 +646,16 @@ def send_message():
                 reported_hours=form.reported_hours.data,
                 out_of_business=form.out_of_business.data,
                 is_new_location=form.is_new_location.data,
+                is_admin_report=form.is_admin_report.data,
                 name=form.name.data,
-                address=form.address.data
+                address=form.address.data,
+                # Post Wins fields
+                win_type=form.win_type.data,
+                location_used=form.location_used.data,
+                cards_found=form.cards_found.data,
+                time_saved=form.time_saved.data,
+                money_saved=form.money_saved.data,
+                allow_feature=form.allow_feature.data
             )
             db.session.add(msg_record)
             db.session.commit()

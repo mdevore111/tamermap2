@@ -28,7 +28,8 @@ class MessageForm(FlaskForm):
             ('location', 'Report Location'),
             ('report', 'Report Missing or Incorrect Vendor Data'),
             ('support', 'Customer Support'),
-            ('business', 'Business Inquiry')
+            ('business', 'Business Inquiry'),
+            ('post_wins', 'Post Wins')
         ],
         default='contact',
         validators=[DataRequired()]
@@ -62,12 +63,30 @@ class MessageForm(FlaskForm):
         ('1-10', '1-10'), ('11-50', '11-50'), ('51-200', '51-200'), ('200+', '200+')
     ], validators=[Optional()])
 
+    # Post Wins
+    win_type = SelectField('Type of Win', choices=[
+        ('single_trip', 'Single Trip Success'),
+        ('route_planning', 'Route Planning Success'),
+        ('heatmap_usage', 'Heat Map Success'),
+        ('collection_building', 'Collection Building'),
+        ('time_saved', 'Time Saved'),
+        ('money_saved', 'Money Saved'),
+        ('rare_find', 'Rare Card Find'),
+        ('other', 'Other')
+    ], validators=[Optional()])
+    location_used = StringField('Location(s) Used', validators=[Optional(), Length(max=255)])
+    cards_found = StringField('Cards Found', validators=[Optional(), Length(max=255)])
+    time_saved = StringField('Time Saved', validators=[Optional(), Length(max=100)])
+    money_saved = StringField('Money Saved', validators=[Optional(), Length(max=100)])
+    allow_feature = BooleanField('Allow us to feature your win (with permission)')
+
     reported_address = StringField('Reported Address', validators=[Optional()])
     reported_phone   = StringField('Reported Phone',   validators=[Optional()])
     reported_website = StringField('Reported Website', validators=[Optional()])
     reported_hours   = StringField('Reported Hours',   validators=[Optional()])
     out_of_business = BooleanField('Appears to be out of business')
     is_new_location = BooleanField('This is a new location')
+    is_admin_report = BooleanField('This is for Admin review (not updating/correcting a location)')
 
     # Spam prevention fields
     honeypot = HiddenField('Honeypot')  # Hidden field to catch bots
