@@ -764,6 +764,12 @@ def faq():
     return render_template("faq.html")
 
 
+@public_bp.route("/user-wins")
+def user_wins():
+    """Render the User Wins testimonials page."""
+    return render_template("user-wins.html")
+
+
 @public_bp.route("/how-to-route-planning-tool")
 def how_to_route_planning_tool():
     """Render the comprehensive guide for using TamerMap's route planning tool."""
@@ -812,6 +818,7 @@ def sitemap_xml():
         ('/maps', '0.9', 'daily'),
         ('/learn', '0.8', 'weekly'),
         ('/how-to', '0.8', 'weekly'),
+        ('/user-wins', '0.8', 'weekly'),
         ('/how-to-make-money', '0.9', 'weekly'),
         ('/how-to-hunt-cards', '0.9', 'weekly'),
         ('/how-to-timing', '0.9', 'weekly'),
