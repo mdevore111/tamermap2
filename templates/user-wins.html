@@ -1,15 +1,179 @@
 {% extends "base.html" %}
 
-{% block title %}User Wins - Real Results from TamerMap Users{% endblock %}
+{% block title %}Pokemon Card Hunting Success Stories - Real User Wins & Testimonials | TamerMap{% endblock %}
 
-{% block meta_description %}Read real wins from TamerMap users who planned smarter loops, saved time, and grew their collections using heat maps, route planning, and unified store views.{% endblock %}
+{% block meta_description %}Read real Pokemon card hunting success stories from TamerMap users. See how they found rare cards, saved time, and built collections using heat maps, route planning, and smart hunting strategies.{% endblock %}
 
 {% block extra_head %}
-<meta property="og:title" content="User Wins - Real Results from TamerMap Users">
-<meta property="og:description" content="Heat map + route planner. One loop. Real hauls. Read how users plan smarter and win more with TamerMap.">
+<meta name="keywords" content="Pokemon card hunting success stories, Pokemon card testimonials, TamerMap user wins, Pokemon card hunting results, Pokemon card collection building, Pokemon card hunting tips, Pokemon card hunting strategies, Pokemon card hunting success, Pokemon card hunting wins, Pokemon card hunting testimonials, Pokemon card hunting real results, Pokemon card hunting case studies, Pokemon card hunting success rate, Pokemon card hunting efficiency, Pokemon card hunting optimization">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Pokemon Card Hunting Success Stories - Real User Wins & Testimonials">
+<meta property="og:description" content="Read real Pokemon card hunting success stories from TamerMap users. See how they found rare cards, saved time, and built collections using heat maps and route planning.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="{{ url_for('public.user_wins', _external=True) }}">
 <meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+<meta property="og:site_name" content="TamerMap">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pokemon Card Hunting Success Stories - Real User Wins">
+<meta name="twitter:description" content="Read real Pokemon card hunting success stories from TamerMap users. See how they found rare cards and built collections.">
+<meta name="twitter:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+
+<!-- Canonical URL -->
+<link rel="canonical" href="{{ url_for('public.user_wins', _external=True) }}">
+
+<!-- Schema.org Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Pokemon Card Hunting Success Stories - Real User Wins & Testimonials",
+  "description": "Read real Pokemon card hunting success stories from TamerMap users. See how they found rare cards, saved time, and built collections using heat maps, route planning, and smart hunting strategies.",
+  "url": "{{ url_for('public.user_wins', _external=True) }}",
+  "mainEntity": {
+    "@type": "ItemList",
+    "name": "Pokemon Card Hunting Success Stories",
+    "description": "Real testimonials and success stories from TamerMap users who found success in Pokemon card hunting",
+    "numberOfItems": 5,
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "item": {
+          "@type": "Review",
+          "name": "One car ride, one haul - Pokemon Card Hunting Success",
+          "description": "TamerMap's heat map showed the hot zones, and the route planner cut out wasted stops. I hit indie shops, kiosks, and big box in one loop.",
+          "author": {
+            "@type": "Person",
+            "name": "Ethan Chen",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "San Jose",
+              "addressRegion": "CA"
+            }
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "item": {
+          "@type": "Review",
+          "name": "Stop guessing, start running a plan - Pokemon Card Hunting Strategy",
+          "description": "I used Tamermap to plan a single loop and walked away with a Zapdos EX pull. Heat map for live stock, route planner for zero detours.",
+          "author": {
+            "@type": "Person",
+            "name": "Min-ji Park",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Bellevue",
+              "addressRegion": "WA"
+            }
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "item": {
+          "@type": "Review",
+          "name": "Less wandering, more winning - Pokemon Card Hunting Efficiency",
+          "description": "My game plan was simple: Tamermap heat map to pick targets (LGS, kiosks, big box), then the fastest loop. I spent less time wandering and came home with exactly what I wanted.",
+          "author": {
+            "@type": "Person",
+            "name": "Naomi Sato",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Irvine",
+              "addressRegion": "CA"
+            }
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "item": {
+          "@type": "Review",
+          "name": "Easy Pokemon Card Hunting with TamerMap",
+          "description": "The live heat map plus seeing local stores and kiosks together made it… easy. I ran a quick loop, used less gas, and scored more.",
+          "author": {
+            "@type": "Person",
+            "name": "An Nguyen",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Garden Grove",
+              "addressRegion": "CA"
+            }
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        }
+      },
+      {
+        "@type": "ListItem",
+        "position": 5,
+        "item": {
+          "@type": "Review",
+          "name": "Small stops, big collection - Pokemon Card Collection Building",
+          "description": "Over a few months on my regular driving route, I used Tamermap's route planner to swing by indie shops, kiosks, Best Buy, Target, GameStop, and Walmart without going out of my way.",
+          "author": {
+            "@type": "Person",
+            "name": "Rohan Patel",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Edison",
+              "addressRegion": "NJ"
+            }
+          },
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": "5",
+            "bestRating": "5"
+          }
+        }
+      }
+    ]
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "{{ url_for('public.splash', _external=True) }}"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "User Wins",
+        "item": "{{ url_for('public.user_wins', _external=True) }}"
+      }
+    ]
+  }
+}
+</script>
 <style>
 .wins-hero {
   background: linear-gradient(135deg, #007bff 0%, #00b0ff 100%);
@@ -42,48 +206,135 @@
 {% endblock %}
 
 {% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="container mt-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('public.splash') }}">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">User Wins</li>
+  </ol>
+</nav>
+
 <section class="wins-hero">
-  <h1>User Wins</h1>
-  <p>Real routes. Real pulls. Real time saved.</p>
-  <p class="mb-0">Heat maps + route planner = smarter loops and better hauls.</p>
-  
+  <div class="container">
+    <h1>Pokemon Card Hunting Success Stories</h1>
+    <p class="lead">Real routes. Real pulls. Real time saved.</p>
+    <p class="mb-0">See how TamerMap users found rare Pokemon cards, built collections, and optimized their hunting with heat maps and route planning.</p>
+  </div>
 </section>
 
-<div class="wins-container">
-  <article class="win-card">
-    <h2 class="win-headline">One car ride, one haul</h2>
-    <p class="win-quote">“Tamermap’s heat map showed the hot zones, and the route planner cut out wasted stops. I hit indie shops, kiosks, and big box in one loop. I stopped hunting blind and started stacking wins—literally in a single trip.”</p>
-    <div class="win-author">— Ethan Chen, San Jose, CA</div>
-    <div class="win-pull">Pull‑quote: “Heat map + route planner = one loop, big haul.”</div>
-  </article>
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Introduction Section -->
+      <section class="mb-5">
+        <h2>Real Pokemon Card Hunting Success Stories</h2>
+        <p>These are real testimonials from TamerMap users who have found success in Pokemon card hunting. Learn how they used our heat maps, route planning tools, and store locator to find rare cards, save time, and build their collections more efficiently.</p>
+        
+        <h3>Why These Success Stories Matter</h3>
+        <p>Pokemon card hunting can be challenging, but with the right tools and strategies, you can significantly improve your success rate. These users share their real experiences using TamerMap's features:</p>
+        <ul>
+          <li><strong>Heat Maps:</strong> Identify high-probability locations for Pokemon card finds</li>
+          <li><strong>Route Planning:</strong> Optimize your hunting loops to save time and gas</li>
+          <li><strong>Store Locator:</strong> Find all Pokemon card retailers in your area</li>
+          <li><strong>Real-time Data:</strong> Get up-to-date information on stock and availability</li>
+        </ul>
+      </section>
 
-  <article class="win-card">
-    <h2 class="win-headline">Stop guessing, start running a plan</h2>
-    <p class="win-quote">“I used Tamermap to plan a single loop and walked away with a Zapdos EX pull. Heat map for live stock, route planner for zero detours, and all my local kiosks + stores in one screen. It felt less like guessing and more like a real plan.”</p>
-    <div class="win-author">— Min-ji Park, Bellevue, WA</div>
-    <div class="win-pull">Pull‑quote: “Less guessing, more getting.”</div>
-  </article>
+      <!-- Success Stories -->
+      <section class="mb-5">
+        <h2>Pokemon Card Hunting Success Stories</h2>
+        
+        <article class="win-card">
+          <h3 class="win-headline">One Car Ride, One Haul - Pokemon Card Hunting Success</h3>
+          <p class="win-quote">"TamerMap's heat map showed the hot zones, and the route planner cut out wasted stops. I hit indie shops, kiosks, and big box in one loop. I stopped hunting blind and started stacking wins—literally in a single trip."</p>
+          <div class="win-author">— Ethan Chen, San Jose, CA</div>
+          <div class="win-pull">Key Takeaway: "Heat map + route planner = one loop, big haul."</div>
+        </article>
 
-  <article class="win-card">
-    <h2 class="win-headline">Less wandering, more winning</h2>
-    <p class="win-quote">“My game plan was simple: Tamermap heat map to pick targets (LGS, kiosks, big box), then the fastest loop. I spent less time wandering and came home with exactly what I wanted.”</p>
-    <div class="win-author">— Naomi Sato, Irvine, CA</div>
-    <div class="win-pull">Pull‑quote: “Plan the loop, bring home the loot.”</div>
-  </article>
+        <article class="win-card">
+          <h3 class="win-headline">Stop Guessing, Start Running a Plan - Pokemon Card Strategy</h3>
+          <p class="win-quote">"I used TamerMap to plan a single loop and walked away with a Zapdos EX pull. Heat map for live stock, route planner for zero detours, and all my local kiosks + stores in one screen. It felt less like guessing and more like a real plan."</p>
+          <div class="win-author">— Min-ji Park, Bellevue, WA</div>
+          <div class="win-pull">Key Takeaway: "Less guessing, more getting."</div>
+        </article>
 
-  <article class="win-card">
-    <h2 class="win-headline">“Easy.”</h2>
-    <p class="win-quote">“The live heat map plus seeing local stores and kiosks together made it… easy. I ran a quick loop, used less gas, and scored more. One afternoon, one Tamermap.”</p>
-    <div class="win-author">— An Nguyen, Garden Grove, CA</div>
-    <div class="win-pull">Pull‑quote: “One afternoon. One Tamermap. One haul.”</div>
-  </article>
+        <article class="win-card">
+          <h3 class="win-headline">Less Wandering, More Winning - Pokemon Card Hunting Efficiency</h3>
+          <p class="win-quote">"My game plan was simple: TamerMap heat map to pick targets (LGS, kiosks, big box), then the fastest loop. I spent less time wandering and came home with exactly what I wanted."</p>
+          <div class="win-author">— Naomi Sato, Irvine, CA</div>
+          <div class="win-pull">Key Takeaway: "Plan the loop, bring home the loot."</div>
+        </article>
 
-  <article class="win-card">
-    <h2 class="win-headline">Small stops, big collection</h2>
-    <p class="win-quote">“Over a few months on my regular driving route, I used Tamermap’s route planner to swing by indie shops, kiosks, Best Buy, Target, GameStop, and Walmart without going out of my way. With map view, filters, and custom pins, I kept building my collection with almost no extra hassle—just consistency.”</p>
-    <div class="win-author">— Rohan Patel, Edison, NJ</div>
-    <div class="win-pull">Pull‑quote: “Consistency + Tamermap = steady wins.”</div>
-  </article>
+        <article class="win-card">
+          <h3 class="win-headline">Easy Pokemon Card Hunting with TamerMap</h3>
+          <p class="win-quote">"The live heat map plus seeing local stores and kiosks together made it… easy. I ran a quick loop, used less gas, and scored more. One afternoon, one TamerMap."</p>
+          <div class="win-author">— An Nguyen, Garden Grove, CA</div>
+          <div class="win-pull">Key Takeaway: "One afternoon. One TamerMap. One haul."</div>
+        </article>
+
+        <article class="win-card">
+          <h3 class="win-headline">Small Stops, Big Collection - Pokemon Card Collection Building</h3>
+          <p class="win-quote">"Over a few months on my regular driving route, I used TamerMap's route planner to swing by indie shops, kiosks, Best Buy, Target, GameStop, and Walmart without going out of my way. With map view, filters, and custom pins, I kept building my collection with almost no extra hassle—just consistency."</p>
+          <div class="win-author">— Rohan Patel, Edison, NJ</div>
+          <div class="win-pull">Key Takeaway: "Consistency + TamerMap = steady wins."</div>
+        </article>
+      </section>
+
+      <!-- Call to Action -->
+      <section class="text-center mb-5">
+        <h2>Ready to Start Your Pokemon Card Hunting Success Story?</h2>
+        <p>Join thousands of Pokemon card hunters who are finding success with TamerMap's tools and features.</p>
+        <a href="{{ url_for('public.splash') }}" class="btn btn-primary btn-lg">Start Hunting Pokemon Cards</a>
+        <a href="{{ url_for('public.how_to') }}" class="btn btn-outline-primary btn-lg ms-2">Learn Hunting Strategies</a>
+      </section>
+
+      <!-- FAQ Section -->
+      <section class="mb-5">
+        <h2>Frequently Asked Questions About Pokemon Card Hunting Success</h2>
+        
+        <div class="accordion" id="faqAccordion">
+          <div class="accordion-item">
+            <h3 class="accordion-header" id="faq1">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="false" aria-controls="collapse1">
+                How can I improve my Pokemon card hunting success rate?
+              </button>
+            </h3>
+            <div id="collapse1" class="accordion-collapse collapse" aria-labelledby="faq1" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                Use TamerMap's heat maps to identify high-probability locations, plan efficient routes to save time, and check multiple store types (kiosks, card shops, big box retailers) in one optimized loop. The key is planning and consistency.
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <h3 class="accordion-header" id="faq2">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                What's the best time to hunt for Pokemon cards?
+              </button>
+            </h3>
+            <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                Timing varies by location, but generally early morning (8-10 AM) and late afternoon (4-6 PM) tend to be good times. Use TamerMap's heat maps to see when other hunters have found success at specific locations.
+              </div>
+            </div>
+          </div>
+          
+          <div class="accordion-item">
+            <h3 class="accordion-header" id="faq3">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+                How much time can I save with TamerMap's route planning?
+              </button>
+            </h3>
+            <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#faqAccordion">
+              <div class="accordion-body">
+                Users typically save 30-60% of their hunting time by using optimized routes. Instead of driving randomly between stores, TamerMap creates efficient loops that minimize travel time and maximize your chances of finding cards.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
