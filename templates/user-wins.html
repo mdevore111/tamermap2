@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}User Wins - Real Results from TamerMap Users{% endblock %}
+
+{% block meta_description %}Read real wins from TamerMap users who planned smarter loops, saved time, and grew their collections using heat maps, route planning, and unified store views.{% endblock %}
+
+{% block extra_head %}
+<meta property="og:title" content="User Wins - Real Results from TamerMap Users">
+<meta property="og:description" content="Heat map + route planner. One loop. Real hauls. Read how users plan smarter and win more with TamerMap.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{ url_for('public.user_wins', _external=True) }}">
+<meta property="og:image" content="{{ url_for('static', filename='logo.png', _external=True) }}">
+<style>
+.wins-hero {
+  background: linear-gradient(135deg, #007bff 0%, #00b0ff 100%);
+  color: white;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.wins-hero h1 { font-size: 2.2rem; margin-bottom: .5rem; }
+.wins-hero p { opacity: 0.95; }
+
+.wins-container { max-width: 900px; margin: 0 auto; padding: 0 1rem 3rem; }
+.win-card {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  border-left: 6px solid #007bff;
+}
+.win-headline { font-weight: 700; color: #222; margin-bottom: .5rem; }
+.win-quote { font-style: italic; color: #444; }
+.win-author { margin-top: .75rem; color: #666; font-weight: 500; }
+.win-pull { margin-top: .75rem; color: #0a58ca; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .wins-hero h1 { font-size: 1.8rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="wins-hero">
+  <h1>User Wins</h1>
+  <p>Real routes. Real pulls. Real time saved.</p>
+  <p class="mb-0">Heat maps + route planner = smarter loops and better hauls.</p>
+  
+</section>
+
+<div class="wins-container">
+  <article class="win-card">
+    <h2 class="win-headline">One car ride, one haul</h2>
+    <p class="win-quote">“Tamermap’s heat map showed the hot zones, and the route planner cut out wasted stops. I hit indie shops, kiosks, and big box in one loop. I stopped hunting blind and started stacking wins—literally in a single trip.”</p>
+    <div class="win-author">— Ethan Chen, San Jose, CA</div>
+    <div class="win-pull">Pull‑quote: “Heat map + route planner = one loop, big haul.”</div>
+  </article>
+
+  <article class="win-card">
+    <h2 class="win-headline">Stop guessing, start running a plan</h2>
+    <p class="win-quote">“I used Tamermap to plan a single loop and walked away with a Zapdos EX pull. Heat map for live stock, route planner for zero detours, and all my local kiosks + stores in one screen. It felt less like guessing and more like a real plan.”</p>
+    <div class="win-author">— Min-ji Park, Bellevue, WA</div>
+    <div class="win-pull">Pull‑quote: “Less guessing, more getting.”</div>
+  </article>
+
+  <article class="win-card">
+    <h2 class="win-headline">Less wandering, more winning</h2>
+    <p class="win-quote">“My game plan was simple: Tamermap heat map to pick targets (LGS, kiosks, big box), then the fastest loop. I spent less time wandering and came home with exactly what I wanted.”</p>
+    <div class="win-author">— Naomi Sato, Irvine, CA</div>
+    <div class="win-pull">Pull‑quote: “Plan the loop, bring home the loot.”</div>
+  </article>
+
+  <article class="win-card">
+    <h2 class="win-headline">“Easy.”</h2>
+    <p class="win-quote">“The live heat map plus seeing local stores and kiosks together made it… easy. I ran a quick loop, used less gas, and scored more. One afternoon, one Tamermap.”</p>
+    <div class="win-author">— An Nguyen, Garden Grove, CA</div>
+    <div class="win-pull">Pull‑quote: “One afternoon. One Tamermap. One haul.”</div>
+  </article>
+
+  <article class="win-card">
+    <h2 class="win-headline">Small stops, big collection</h2>
+    <p class="win-quote">“Over a few months on my regular driving route, I used Tamermap’s route planner to swing by indie shops, kiosks, Best Buy, Target, GameStop, and Walmart without going out of my way. With map view, filters, and custom pins, I kept building my collection with almost no extra hassle—just consistency.”</p>
+    <div class="win-author">— Rohan Patel, Edison, NJ</div>
+    <div class="win-pull">Pull‑quote: “Consistency + Tamermap = steady wins.”</div>
+  </article>
+</div>
+{% endblock %}
+
+
