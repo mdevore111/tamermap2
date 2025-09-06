@@ -4,15 +4,26 @@
 
 // Entry point called by Google Maps API - expose to global scope immediately
 function initApp() {
+  // Ensure userCoords is always set
+  if (!window.userCoords) {
+    window.userCoords = DEFAULT_COORDS;
+  }
+  
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => {
         window.userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         renderMap();
       },
-      () => { renderMap(); }
+      () => { 
+        // Fallback to default coordinates if geolocation fails
+        window.userCoords = DEFAULT_COORDS;
+        renderMap(); 
+      }
     );
-  } else { renderMap(); }
+  } else { 
+    renderMap(); 
+  }
 }
 
 // Explicitly expose initApp to global scope for Google Maps callback
@@ -504,11 +515,32 @@ function refreshHeatmapData(days) {
           const actualBounds = dataService.getMapBounds(window.map);
           if (window.__TM_DEBUG__) {
             console.log('Map settled, actual bounds:', actualBounds);
-
           }
           
-          window.dataLoaded = true;
-          loadOptimizedMapData();
+          // If bounds are still not available, use a fallback approach
+          if (!actualBounds) {
+            console.warn('Map bounds not available, using fallback bounds around user location');
+            const fallbackBounds = {
+              north: window.userCoords.lat + 0.1,
+              south: window.userCoords.lat - 0.1,
+              east: window.userCoords.lng + 0.1,
+              west: window.userCoords.lng - 0.1
+            };
+            if (window.__TM_DEBUG__) {
+              console.log('Using fallback bounds:', fallbackBounds);
+            }
+            // Temporarily override getMapBounds to return fallback bounds
+            const originalGetMapBounds = dataService.getMapBounds;
+            dataService.getMapBounds = () => fallbackBounds;
+            loadOptimizedMapData();
+            // Restore original function after loading
+            setTimeout(() => {
+              dataService.getMapBounds = originalGetMapBounds;
+            }, 1000);
+          } else {
+            window.dataLoaded = true;
+            loadOptimizedMapData();
+          }
         }
       }, 1000); // Increased wait time to ensure map is fully settled
     }
@@ -527,13 +559,12 @@ async function loadOptimizedMapData() {
     // Get initial viewport bounds for filtering
     const bounds = dataService.getMapBounds(window.map);
     
-        if (window.__TM_DEBUG__) {
-        console.log('Map bounds from dataService:', bounds);
-    }
+    console.log('Loading map data with bounds:', bounds);
     
     // The map should now be properly initialized, so bounds should be reasonable
     if (!bounds) {
       console.error('No map bounds available - this should not happen after proper initialization');
+      hideLoadingOverlay();
       return;
     }
     
@@ -543,10 +574,13 @@ async function loadOptimizedMapData() {
 
     
     // Load combined data in a single request
+    console.log('Fetching map data with bounds:', effectiveBounds);
     const mapData = await dataService.loadMapData(effectiveBounds, {
       includeEvents: true,
       daysAhead: 30
     });
+    
+    console.log('Received map data:', mapData);
     
 
     
