@@ -383,7 +383,8 @@ function renderMap() {
       const bsToast = new bootstrap.Toast(toast);
       bsToast.show();
     });
-}
+
+  console.log('[map-init] Heatmap fetch initiated, continuing with renderMap');
 
 /**
  * Refresh heatmap data with specified time range
@@ -559,7 +560,9 @@ function refreshHeatmapData(days) {
   console.log('[map-init] loading overlay initialized');
 
   // Initialize UI components (legend, search, filters)
+  console.log('[map-init] About to check/call window.initUI');
   if (window.initUI) {
+    console.log('[map-init] window.initUI found, calling it');
     window.initUI();
     console.log('[map-init] window.initUI called');
   } else {
