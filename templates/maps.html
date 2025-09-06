@@ -131,15 +131,15 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
 
 <!-- Load our modules first (static include to avoid race with Google callback) -->
 <script>
-  console.log('[maps.html] about to load map-init-v2.js module');
+  console.log('[maps.html] about to load map-core.js module');
   window.__TM_DEBUG__ = true;
   window.tmDiag = [];
   window.tmLog = function(msg, data) { try { window.tmDiag.push({ t: Date.now(), msg, data }); } catch(e) {} console.log(msg, data||''); };
   // Static include ensures initAppImpl is available before Google callback runs
 </script>
-<script type="module" src="{{ url_for('static', filename='js/map-init.js') }}?v=20250107c" 
-       onerror="console.error('Failed to load map-init.js')" 
-       onload="console.log('map-init.js loaded successfully')"></script>
+<script type="module" src="{{ url_for('static', filename='js/map-core.js') }}" 
+       onerror="console.error('Failed to load map-core.js')" 
+       onload="console.log('map-core.js loaded successfully')"></script>
 <script type="module" src="{{ url_for('static', filename='js/routePlanner.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/cacheManager.js') }}"></script>
 
