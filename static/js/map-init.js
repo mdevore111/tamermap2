@@ -40,6 +40,29 @@ console.log('[map-init] initAppImpl exposed');
 // Define global variables before imports
 window.is_pro = window.is_pro || false;
 
+/**
+ * Sync UI controls (slider containers) with current filter state
+ * MUST be defined before imports since map-ui.js calls it during module load
+ */
+function updateFilterUI(filters) {
+    try {
+        const heatCont = document.getElementById('heatmap-days-slider-container');
+        if (heatCont) {
+            heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
+        }
+
+        const eventCont = document.getElementById('event-days-slider-container');
+        if (eventCont) {
+            eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
+        }
+    } catch (e) {
+        if (window.__TM_DEBUG__) console.warn('updateFilterUI error', e);
+    }
+}
+
+// Bind globally before imports
+window.updateFilterUI = updateFilterUI;
+
 // Side-effect imports
 import './map-utils.js';   // getPinColor, formatHours
 import './map-ui.js';      // initUI(), domCache, isOpenNow
@@ -860,10 +883,7 @@ function setupFilterControls() {
     if (popularToggle) popularToggle.addEventListener('change', handleFilterChange);
 }
 
-// Early shim - will be replaced by real implementation below
-window.updateFilterUI = window.updateFilterUI || function(filters) {
-    if (window.__TM_DEBUG__) console.log('updateFilterUI early shim called');
-};
+// updateFilterUI is now defined at the top of this file before imports
 
 /**
  * Apply filters using the marker manager
@@ -949,27 +969,7 @@ function hideLoadingOverlay() {
     }
 }
 
-/**
- * Sync UI controls (slider containers) with current filter state
- */
-function _updateFilterUIInternal(filters) {
-    try {
-        const heatCont = document.getElementById('heatmap-days-slider-container');
-        if (heatCont) {
-            heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
-        }
-
-        const eventCont = document.getElementById('event-days-slider-container');
-        if (eventCont) {
-            eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
-        }
-    } catch (e) {
-        if (window.__TM_DEBUG__) console.warn('updateFilterUI error', e);
-    }
-}
-
-// Bind real implementation globally (overrides early shim)
-window.updateFilterUI = _updateFilterUIInternal;
+// updateFilterUI moved to top of file before imports
 
 /**
  * Update map UI elements
