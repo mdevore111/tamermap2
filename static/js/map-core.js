@@ -381,9 +381,11 @@ function refreshHeatmapData(days) {
   }
 
   // Show loading indicator
-  if (window.__TM_DEBUG__) console.log(`Refreshing heatmap data for ${days} days`);
+  if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Refreshing heatmap data for ${days} days`);
+  const url = `${ENDPOINTS.popularAreas}?days=${days}`;
+  if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Fetching URL: ${url}`);
   
-  fetch(`${ENDPOINTS.popularAreas}?days=${days}`)
+  fetch(url)
     .then(res => { 
       if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); 
       return res.json(); 
