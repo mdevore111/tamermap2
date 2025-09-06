@@ -166,9 +166,9 @@ export function renderRetailerInfoWindow(retailer, isPro) {
   }
 
   const reportLink = `<p style=\"margin-top:12px; font-size:12px;\">` +
-    `<a href=\"/message?type=report&address=${encodeURIComponent(retailer.full_address || '')}` +
+    `<a href=\"/correct-location?address=${encodeURIComponent(retailer.full_address || '')}` +
       `&phone=${encodeURIComponent(phoneRaw)}&website=${encodeURIComponent(websiteRaw)}` +
-      `&hours=${encodeURIComponent(retailer.opening_hours || '')}\">Report Missing or Incorrect Data</a></p>`;
+      `&hours=${encodeURIComponent(retailer.opening_hours || '')}\">Correct Data</a></p>`;
 
   const inner = `
     <p style="margin:8px 0; font-size:16px;">${displayType(retailer, isPro)}</p>

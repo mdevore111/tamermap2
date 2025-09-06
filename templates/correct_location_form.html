@@ -1,0 +1,178 @@
+{# correct_location_form.html #}
+{% extends "base.html" %}
+
+{% block title %}Correct Location Data - Fix Store Information on TamerMap{% endblock %}
+
+{% block meta_description %}Help improve TamerMap by correcting incorrect store information. Update address, phone, hours, or other details for existing Pokemon card locations.{% endblock %}
+
+{% block content %}
+<div class="page-content">
+  <div class="form-container">
+    <h1>Correct Location Data</h1>
+    <p class="lead">Help us keep our map accurate by correcting information for this location.</p>
+    <p>Please update the fields below with the correct information. Only change what needs to be corrected.</p>
+
+    <form method="POST" action="{{ url_for('public.send_message') }}">
+      {{ form.hidden_tag() }}
+
+      {# Hidden fields for form configuration #}
+      <input type="hidden" name="communication_type" value="location">
+      <input type="hidden" name="form_type" value="correct_existing">
+      <input type="hidden" name="is_admin_report" value="true">
+      <input type="hidden" name="is_new_location" value="false">
+      <input type="hidden" name="subject" value="Location Data Correction">
+      
+      {# Spam prevention fields #}
+      {{ form.honeypot(class="honeypot-field") }}
+      {{ form.timestamp(value=request.args.get('ts', '')) }}
+      {{ form.website(class="honeypot-field") }}
+      {{ form.phone(class="honeypot-field") }}
+      
+      <script>
+        // Add timestamp to form for spam prevention
+        document.addEventListener('DOMContentLoaded', function() {
+          var timestampField = document.querySelector('input[name="timestamp"]');
+          if (timestampField) {
+            timestampField.value = Date.now();
+          }
+          
+          // Add random delay to prevent instant submissions
+          var submitButton = document.querySelector('input[type="submit"]');
+          if (submitButton) {
+            submitButton.disabled = true;
+            setTimeout(function() {
+              submitButton.disabled = false;
+            }, 2000);
+          }
+        });
+      </script>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="name" class="form-label">Your Name <span class="text-danger">*</span></label>
+            {{ form.name(class="form-control", placeholder="Enter your name") }}
+            {% if form.name.errors %}
+              <div class="text-danger">
+                {% for error in form.name.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="address" class="form-label">Your Email <span class="text-danger">*</span></label>
+            {{ form.address(class="form-control", placeholder="Enter your email address") }}
+            {% if form.address.errors %}
+              <div class="text-danger">
+                {% for error in form.address.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        <h6><i class="fas fa-info-circle me-2"></i>Current Location Data</h6>
+        <p class="mb-0">The fields below show the current information for this location. Please update only what needs to be corrected.</p>
+      </div>
+
+      <div class="mb-3">
+        <label for="reported_address" class="form-label">Store Address <span class="text-danger">*</span></label>
+        {{ form.reported_address(class="form-control", placeholder="Enter the complete store address") }}
+        {% if form.reported_address.errors %}
+          <div class="text-danger">
+            {% for error in form.reported_address.errors %}
+              <small>{{ error }}</small>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="form-text">Update the address if it's incorrect</div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="reported_phone" class="form-label">Phone Number</label>
+            {{ form.reported_phone(class="form-control", placeholder="(555) 123-4567") }}
+            {% if form.reported_phone.errors %}
+              <div class="text-danger">
+                {% for error in form.reported_phone.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div class="form-text">Update if the phone number is wrong</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="reported_website" class="form-label">Website</label>
+            {{ form.reported_website(class="form-control", placeholder="https://store-website.com") }}
+            {% if form.reported_website.errors %}
+              <div class="text-danger">
+                {% for error in form.reported_website.errors %}
+                  <small>{{ error }}</small>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div class="form-text">Update if the website is wrong</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="reported_hours" class="form-label">Store Hours</label>
+        {{ form.reported_hours(class="form-control", placeholder="Mon-Fri: 9AM-9PM, Sat: 10AM-8PM, Sun: 11AM-6PM") }}
+        {% if form.reported_hours.errors %}
+          <div class="text-danger">
+            {% for error in form.reported_hours.errors %}
+              <small>{{ error }}</small>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="form-text">Update if the hours are incorrect</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="body" class="form-label">What needs to be corrected? <span class="text-danger">*</span></label>
+        {{ form.body(class="form-control", rows="5", placeholder="Please describe what information is incorrect and what the correct information should be. Be as specific as possible.") }}
+        {% if form.body.errors %}
+          <div class="text-danger">
+            {% for error in form.body.errors %}
+              <small>{{ error }}</small>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="form-text">Explain what's wrong and what the correct information should be</div>
+      </div>
+
+      <div class="mb-3">
+        <div class="form-check">
+          {{ form.out_of_business(class="form-check-input") }}
+          <label class="form-check-label" for="out_of_business">
+            This location is now out of business
+          </label>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <a href="{{ url_for('public.splash') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+        {{ form.submit(class="btn btn-primary") }}
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.honeypot-field {
+  display: none !important;
+  position: absolute;
+  left: -9999px;
+}
+</style>
+{% endblock %}

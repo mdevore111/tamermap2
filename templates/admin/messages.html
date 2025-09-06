@@ -313,7 +313,16 @@ $(document).ready(function() {
             },
             { data: 'id' },
             { data: 'email' },
-            { data: 'communication_type' },
+            { 
+                data: 'communication_type',
+                render: function(data, type, row) {
+                    let typeDisplay = data || 'N/A';
+                    if (row.form_type) {
+                        typeDisplay += ` (${row.form_type})`;
+                    }
+                    return typeDisplay;
+                }
+            },
             { data: 'subject' },
             { data: 'body' },
             { data: 'timestamp' },
@@ -337,6 +346,7 @@ $(document).ready(function() {
             <div class='mb-3'><label>Reported Out of Business</label><select name='out_of_business' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
             <div class='mb-3'><label>Is New Location</label><select name='is_new_location' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
             <div class='mb-3'><label>Admin Report</label><select name='is_admin_report' class='form-control'><option value='false'>No</option><option value='true'>Yes</option></select></div>
+            <div class='mb-3'><label>Form Type</label><select name='form_type' class='form-control'><option value=''>None</option><option value='add_new'>Add New Location</option><option value='correct_existing'>Correct Existing Location</option></select></div>
             <div class='mb-3'><label>Win Type</label><input name='win_type' class='form-control'></div>
             <div class='mb-3'><label>Location Used</label><input name='location_used' class='form-control'></div>
             <div class='mb-3'><label>Cards Found</label><input name='cards_found' class='form-control'></div>
@@ -428,6 +438,7 @@ $(document).ready(function() {
                     <div class="col-md-6">
                         <div class='mb-3'><strong>Sender ID:</strong> ${data.sender_id || 'N/A'}</div>
                         <div class='mb-3'><strong>Type:</strong> ${data.communication_type || 'N/A'}</div>
+                        <div class='mb-3'><strong>Form Type:</strong> ${data.form_type || 'N/A'}</div>
                         <div class='mb-3'><strong>Subject:</strong> ${data.subject || 'N/A'}</div>
                         <div class='mb-3'><strong>Name:</strong> ${data.name || 'N/A'}</div>
                         <div class='mb-3'><strong>Email:</strong> ${data.address || 'N/A'}</div>
@@ -503,6 +514,11 @@ $(document).ready(function() {
                 <div class='mb-1'><label>Admin Report</label><select name='is_admin_report' class='form-control form-control-sm'>
                     <option value='false' ${!data.is_admin_report ? 'selected' : ''}>No</option>
                     <option value='true' ${data.is_admin_report ? 'selected' : ''}>Yes</option>
+                </select></div>
+                <div class='mb-1'><label>Form Type</label><select name='form_type' class='form-control form-control-sm'>
+                    <option value='' ${!data.form_type ? 'selected' : ''}>None</option>
+                    <option value='add_new' ${data.form_type === 'add_new' ? 'selected' : ''}>Add New Location</option>
+                    <option value='correct_existing' ${data.form_type === 'correct_existing' ? 'selected' : ''}>Correct Existing Location</option>
                 </select></div>
                 <div class='mb-1'><label>Win Type</label><input name='win_type' class='form-control form-control-sm' value='${data.win_type || ''}'></div>
                 <div class='mb-1'><label>Location Used</label><input name='location_used' class='form-control form-control-sm' value='${data.location_used || ''}'></div>

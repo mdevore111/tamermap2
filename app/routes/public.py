@@ -612,10 +612,10 @@ def send_message():
             if form.company_size.data:
                 extra_lines.append(f"Company Size: {form.company_size.data}")
         if form.communication_type.data == 'location':
-            if form.is_new_location.data:
-                extra_lines.append("Type: NEW LOCATION")
-            else:
-                extra_lines.append("Type: CORRECTION TO EXISTING LOCATION")
+            if form.form_type.data == 'add_new':
+                extra_lines.append("Form Type: ADD NEW LOCATION")
+            elif form.form_type.data == 'correct_existing':
+                extra_lines.append("Form Type: CORRECT EXISTING LOCATION")
             if form.is_admin_report.data:
                 extra_lines.append("ADMIN REVIEW REQUESTED")
         if form.communication_type.data == 'post_wins':
@@ -647,6 +647,7 @@ def send_message():
                 out_of_business=form.out_of_business.data,
                 is_new_location=form.is_new_location.data,
                 is_admin_report=form.is_admin_report.data,
+                form_type=form.form_type.data,
                 name=form.name.data,
                 address=form.address.data,
                 # Post Wins fields
@@ -691,6 +692,52 @@ def send_message():
 
     # Render the message form template (on GET or if form submission fails)
     return render_template("message_form.html", form=form)
+
+
+@public_bp.route("/add-location")
+def add_location():
+    """
+    Display the 'Add New Location' form.
+    
+    This form is for users to submit completely new locations that aren't in the database.
+    It's accessible from the header contact dropdown.
+    """
+    form = MessageForm()
+    form.communication_type.data = 'location'
+    form.form_type.data = 'add_new'
+    form.is_admin_report.data = True  # New locations always need admin review
+    form.is_new_location.data = True  # This is a new location
+    form.subject.data = "New Location Submission"
+    
+    return render_template("add_location_form.html", form=form)
+
+
+@public_bp.route("/correct-location")
+def correct_location():
+    """
+    Display the 'Correct Existing Location' form with pre-populated data.
+    
+    This form is for users to fix incorrect data for existing locations.
+    It's only accessible from Info Windows and pre-populates with current location data.
+    """
+    form = MessageForm()
+    form.communication_type.data = 'location'
+    form.form_type.data = 'correct_existing'
+    form.is_admin_report.data = True  # Corrections need admin review
+    form.is_new_location.data = False  # This is correcting an existing location
+    form.subject.data = "Location Data Correction"
+    
+    # Pre-populate with location data from URL parameters
+    if request.args.get("address"):
+        form.reported_address.data = request.args.get("address")
+    if request.args.get("phone"):
+        form.reported_phone.data = request.args.get("phone")
+    if request.args.get("website"):
+        form.reported_website.data = request.args.get("website")
+    if request.args.get("hours"):
+        form.reported_hours.data = request.args.get("hours")
+    
+    return render_template("correct_location_form.html", form=form)
 
 
 @public_bp.route("/terms")

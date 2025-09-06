@@ -1918,6 +1918,7 @@ def get_message(id):
         'out_of_business': message.out_of_business,
         'is_new_location': message.is_new_location,
         'is_admin_report': message.is_admin_report,
+        'form_type': message.form_type,
         'read': message.read,
         'name': message.name,
         'address': message.address,
@@ -1958,6 +1959,7 @@ def add_message():
         out_of_business=data.get('out_of_business') == 'true',
         is_new_location=data.get('is_new_location') == 'true',
         is_admin_report=data.get('is_admin_report') == 'true',
+        form_type=data.get('form_type'),
         read=data.get('read') == 'true',
         name=data.get('name'),
         address=data.get('address'),
@@ -2007,6 +2009,8 @@ def edit_message(id):
         message.is_new_location = data['is_new_location'] == 'true'
     if 'is_admin_report' in data:
         message.is_admin_report = data['is_admin_report'] == 'true'
+    if 'form_type' in data:
+        message.form_type = data['form_type']
     if 'read' in data:
         message.read = data['read'] == 'true'
     if 'name' in data:

@@ -87,6 +87,10 @@ class MessageForm(FlaskForm):
     out_of_business = BooleanField('Appears to be out of business')
     is_new_location = BooleanField('This is a new location')
     is_admin_report = BooleanField('This is for Admin review (not updating/correcting a location)')
+    form_type = SelectField('Form Type', choices=[
+        ('add_new', 'Add New Location'),
+        ('correct_existing', 'Correct Existing Location')
+    ], validators=[Optional()])
 
     # Spam prevention fields
     honeypot = HiddenField('Honeypot')  # Hidden field to catch bots

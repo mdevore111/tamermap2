@@ -445,6 +445,7 @@ class Message(db.Model):
     out_of_business = db.Column(db.Boolean, default=False)
     is_new_location = db.Column(db.Boolean, default=False)
     is_admin_report = db.Column(db.Boolean, default=False)
+    form_type = db.Column(db.String(50), nullable=True)  # 'add_new' or 'correct_existing' for location forms
     timestamp = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
     read = db.Column(db.Boolean, default=False)
     name = db.Column(db.String(255), nullable=True)
