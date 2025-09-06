@@ -123,29 +123,17 @@ def get_pin_heatmap_data():
     days = max(1, min(60, int(request.args.get('days', 60))))
     recent_cutoff = datetime.utcnow() - timedelta(days=days)
 
-    # Prefer aggregated popularity by place_id; fallback to recent clicks if popularity empty
-    pop_rows = db.session.query(
-        func.round(func.coalesce(PinPopularity.last_lat, Retailer.latitude), 2).label("lat"),
-        func.round(func.coalesce(PinPopularity.last_lng, Retailer.longitude), 2).label("lng"),
-        PinPopularity.total_clicks.label("weight")
-    ).select_from(PinPopularity).join(
-        Retailer, Retailer.place_id == PinPopularity.place_id
-    ).all()
-
-    if pop_rows:
-        data = pop_rows
-    else:
-        # Fallback: aggregate recent clicks by retailer.place_id
-        data = db.session.query(
-            func.round(Retailer.latitude, 2).label("lat"),
-            func.round(Retailer.longitude, 2).label("lng"),
-            func.count().label("weight")
-        ).select_from(PinInteraction).join(
-            Retailer,
-            Retailer.place_id == PinInteraction.marker_id
-        ).filter(
-            PinInteraction.timestamp >= recent_cutoff
-        ).group_by("lat", "lng").all()
+    # Use time-filtered PinInteraction data to respect the days parameter
+    data = db.session.query(
+        func.round(Retailer.latitude, 2).label("lat"),
+        func.round(Retailer.longitude, 2).label("lng"),
+        func.count().label("weight")
+    ).select_from(PinInteraction).join(
+        Retailer,
+        Retailer.place_id == PinInteraction.marker_id
+    ).filter(
+        PinInteraction.timestamp >= recent_cutoff
+    ).group_by("lat", "lng").all()
 
     heatmap = [[lat, lng, weight] for lat, lng, weight in data]
     return jsonify(heatmap)
