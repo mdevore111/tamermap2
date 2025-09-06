@@ -154,6 +154,15 @@ function initUI() {
       DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? 'block' : 'none';
     });
   }
+
+  // Ensure initial slider visibility syncs with current state
+  try {
+    const filters = {
+      showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
+      showEvents: DB.filterEvents ? DB.filterEvents.checked : false
+    };
+    (window.updateFilterUI || function(){ })(filters);
+  } catch (_) {}
   
   // Handle slider input events
   if (DB.eventDaysSlider && DB.eventDaysValue) {

@@ -859,6 +859,16 @@ function setupFilterControls() {
     if (popularToggle) popularToggle.addEventListener('change', handleFilterChange);
 }
 
+// Ensure updateFilterUI exists early (shim); real function is defined below
+window.updateFilterUI = window.updateFilterUI || function(filters) {
+    try {
+        const heatCont = document.getElementById('heatmap-days-slider-container');
+        if (heatCont) heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
+        const eventCont = document.getElementById('event-days-slider-container');
+        if (eventCont) eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
+    } catch (_) {}
+};
+
 /**
  * Apply filters using the marker manager
  */
@@ -898,7 +908,8 @@ function applyFilters() {
             window.popularAreasHeatmap?.setMap(null);
         }
 
-        updateFilterUI(filters);
+        // Update slider UI safely
+        (window.updateFilterUI || function(){ })(filters);
     }, DEBOUNCE_TIMINGS.FILTER_APPLY); // Use constant for consistent timing
 }
 
