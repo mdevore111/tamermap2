@@ -161,7 +161,10 @@ function renderMap() {
       console.log('[map-init] window.initUI called (early)');
     }
     // Kick off data load immediately
-    loadOptimizedMapData();
+    console.log('[map-init] About to call loadOptimizedMapData');
+    loadOptimizedMapData().catch(err => {
+      console.error('[map-init] loadOptimizedMapData failed:', err);
+    });
     console.log('[map-init] loadOptimizedMapData triggered (early)');
   } catch (e) {
     console.warn('[map-init] Early wiring/load failed:', e);
@@ -385,6 +388,11 @@ function renderMap() {
     });
 
   console.log('[map-init] Heatmap fetch initiated, continuing with renderMap');
+
+  // Set up viewport change listeners for progressive loading - MUST be in renderMap()
+  console.log('[renderMap] About to call setupMapEventListeners');
+  setupMapEventListeners();
+  console.log('[renderMap] setupMapEventListeners call completed');
 }
 
 /**
