@@ -174,13 +174,20 @@ function initUI() {
     });
   }
   
-  // Handle heatmap slider input events
+  // Handle heatmap slider input events with debouncing
   if (DB.heatmapDaysSlider && DB.heatmapDaysValue) {
+    let sliderDebounceTimer;
+    
     DB.heatmapDaysSlider.addEventListener('input', () => {
       const days = DB.heatmapDaysSlider.value;
       DB.heatmapDaysValue.textContent = `${days} days`;
       localStorage.setItem('heatmap_days_slider', days);
-      refreshHeatmapData(days);
+      
+      // Debounce the API call to prevent rate limiting
+      clearTimeout(sliderDebounceTimer);
+      sliderDebounceTimer = setTimeout(() => {
+        refreshHeatmapData(days);
+      }, 500); // 500ms debounce
     });
   }
 

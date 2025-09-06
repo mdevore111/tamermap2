@@ -214,11 +214,16 @@ function renderMap() {
           window.map.setCenter(newCoords);
         }
       },
-      err => { if (window.__TM_DEBUG__) console.error('Error watching position:', err); },
+      err => { 
+        // Only log timeout errors in debug mode, they're non-critical
+        if (window.__TM_DEBUG__ && err.code !== 3) {
+          console.warn('Geolocation error (non-critical):', err.message);
+        }
+      },
       { 
         enableHighAccuracy: false, // Use network location instead of GPS
-        maximumAge: 30000,         // Accept 30-second old location
-        timeout: 15000             // Longer timeout
+        maximumAge: 60000,         // Accept 60-second old location
+        timeout: 30000             // Much longer timeout (30s)
       }
     );
   }
@@ -772,9 +777,13 @@ function setupMapEventListeners() {
     // REMOVED duplicate bounds_changed listener - marker manager handles this
     // Only handle idle events for data loading, not marker updates
     
-    // Idle event for loading new data when user stops moving
+    // Idle event for loading new data when user stops moving (debounced)
+    let idleDebounceTimer;
     window.map.addListener('idle', () => {
-        handleMapIdle();
+        clearTimeout(idleDebounceTimer);
+        idleDebounceTimer = setTimeout(() => {
+            handleMapIdle();
+        }, 300); // 300ms debounce for map idle
     });
 }
 
