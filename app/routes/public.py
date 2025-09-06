@@ -1,6 +1,6 @@
 # app/routes/public.py
 import stripe
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify, Response
 from flask import session
 from flask_login import current_user
 from datetime import datetime
@@ -13,6 +13,7 @@ from app.routes.security import check_referrer
 from app.custom_email import send_email_with_context
 
 import time
+import json
 from threading import Lock
 
 # Simple in-memory cache for sitemap
@@ -1070,4 +1071,43 @@ Crawl-delay: 1
     
     response = make_response(robots_content)
     response.headers['Content-Type'] = 'text/plain'
+    return response
+
+
+@public_bp.route("/manifest.json")
+def manifest_json():
+    """Serve manifest.json with proper CORS headers to avoid Cloudflare Access issues."""
+    manifest_content = {
+        "name": "TamerMap - Pokemon Card Hunting",
+        "short_name": "TamerMap",
+        "icons": [
+            {
+                "src": "/static/android-chrome-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "/static/android-chrome-512x512.png", 
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ],
+        "theme_color": "#ffffff",
+        "background_color": "#ffffff",
+        "display": "standalone",
+        "start_url": "/",
+        "scope": "/"
+    }
+    
+    response = Response(
+        json.dumps(manifest_content, indent=2),
+        mimetype='application/json'
+    )
+    
+    # Add CORS headers to prevent Cloudflare Access issues
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+    
     return response
