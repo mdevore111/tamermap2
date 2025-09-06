@@ -802,8 +802,9 @@ async function handleMapIdle() {
 
   // Only fetch if viewport really changed significantly
   const hasChanged = dataService.hasViewportChanged(bounds, 0.02);
-  if (window.__TM_DEBUG__) console.log('[handleMapIdle] called; hasChanged=', hasChanged, 'bounds=', bounds);
+  console.log('[handleMapIdle] called; hasChanged=', hasChanged, 'bounds=', bounds);
   if (!hasChanged) {
+    console.log('[handleMapIdle] No significant change, skipping fetch');
     updateMapUI();
     return;
   }
@@ -816,7 +817,14 @@ async function handleMapIdle() {
     const currentLatRange = Math.abs(currentBounds.north - currentBounds.south);
     const currentLngRange = Math.abs(currentBounds.east - currentBounds.west);
     const isSmaller = latRange <= currentLatRange && lngRange <= currentLngRange;
+    console.log('[handleMapIdle] Viewport comparison:', {
+      isSmaller, 
+      latRange, currentLatRange, 
+      lngRange, currentLngRange,
+      markerCacheSize: markerManager.markerCache.size
+    });
     if (isSmaller && markerManager.markerCache.size > 200) {
+      console.log('[handleMapIdle] Skipping fetch - viewport smaller and enough markers');
       updateMapUI();
       return;
     }
@@ -824,6 +832,7 @@ async function handleMapIdle() {
 
   // Only load new data if we don't have it already
   try {
+    console.log('[handleMapIdle] Proceeding with data fetch for expanded viewport');
     const daysAhead = parseInt(document.getElementById('event-days-slider')?.value, 10) || 30;
 
     // Fetch fresh data for the new viewport
