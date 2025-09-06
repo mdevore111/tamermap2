@@ -1,6 +1,9 @@
-// ==== static/js/map-init.js ====
+// ==== static/js/map-init-v2.js ====
 // Initializes the Google Map, handles geolocation, marker creation,
 // data fetching, heatmaps, and orchestrates filtering.
+
+console.error('[map-init-v2] ===== FILE STARTING TO PARSE =====');
+window.__V2_LOADED__ = true;
 
 // Entry point called by Google Maps API - expose to global scope immediately
 function initApp() {
@@ -35,7 +38,7 @@ function initApp() {
 // Change: expose as initAppImpl so maps.html wrapper can call it when ready
 window.initAppImpl = initApp;
 // updateFilterUI will be defined later in this file
-console.log('[map-init] initAppImpl exposed');
+console.log('[map-init-v2] FILE LOADING - initAppImpl exposed');
 
 // Define global variables before imports
 window.is_pro = window.is_pro || false;
@@ -45,23 +48,27 @@ window.is_pro = window.is_pro || false;
  * MUST be defined before imports since map-ui.js calls it during module load
  */
 function updateFilterUI(filters) {
+    console.log('[map-init-v2] updateFilterUI called with:', filters);
     try {
         const heatCont = document.getElementById('heatmap-days-slider-container');
         if (heatCont) {
             heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
+            console.log('[map-init-v2] set heatmap container display to:', filters && filters.showPopular ? 'block' : 'none');
         }
 
         const eventCont = document.getElementById('event-days-slider-container');
         if (eventCont) {
             eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
+            console.log('[map-init-v2] set event container display to:', filters && filters.showEvents ? 'block' : 'none');
         }
     } catch (e) {
-        if (window.__TM_DEBUG__) console.warn('updateFilterUI error', e);
+        console.error('[map-init-v2] updateFilterUI error:', e);
     }
 }
 
 // Bind globally before imports
 window.updateFilterUI = updateFilterUI;
+console.log('[map-init-v2] updateFilterUI bound globally before imports');
 
 // Side-effect imports
 import './map-utils.js';   // getPinColor, formatHours
