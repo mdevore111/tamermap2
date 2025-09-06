@@ -746,9 +746,12 @@ if (document.readyState === 'loading') {
 
 // Expose function to sync slider visibility
 window.syncSliderVisibility = function() {
+  const filterPopularAreas = document.getElementById('filter-popular-areas');
+  const filterEvents = document.getElementById('filter-events');
+  
   const filters = {
-    showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
-    showEvents: DB.filterEvents ? DB.filterEvents.checked : false
+    showPopular: filterPopularAreas ? filterPopularAreas.checked : false,
+    showEvents: filterEvents ? filterEvents.checked : false
   };
   if (window.__TM_DEBUG__) console.log('[map-ui] syncSliderVisibility called with filters:', filters);
   (window.updateFilterUI || function(){ })(filters);

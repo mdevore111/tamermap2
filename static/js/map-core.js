@@ -780,17 +780,21 @@ function setupMapStacking() {
  * Set up optimized map event listeners
  */
 function setupMapEventListeners() {
+    console.log('[setupMapEventListeners] Setting up map idle listener');
     // REMOVED duplicate bounds_changed listener - marker manager handles this
     // Only handle idle events for data loading, not marker updates
     
     // Idle event for loading new data when user stops moving (debounced)
     let idleDebounceTimer;
     window.map.addListener('idle', () => {
+        console.log('[map idle event] Map idle event fired, starting debounce timer');
         clearTimeout(idleDebounceTimer);
         idleDebounceTimer = setTimeout(() => {
+            console.log('[map idle event] Debounce timer expired, calling handleMapIdle');
             handleMapIdle();
         }, 300); // 300ms debounce for map idle
     });
+    console.log('[setupMapEventListeners] Map idle listener setup complete');
 }
 
 /**
