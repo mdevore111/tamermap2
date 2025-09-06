@@ -53,6 +53,7 @@ function resetFilters() {
  * Initialize UI: cache DOM nodes and wire all filter controls.
  */
 function initUI() {
+  console.log('[map-ui] initUI start');
   const DB = window.domCache;
 
   // Cache legend controls
@@ -60,7 +61,7 @@ function initUI() {
   DB.legendResetBtn      = document.getElementById('legend-reset');
   DB.legend              = document.getElementById('legend');
   
-  console.log('Legend elements found:', {
+  console.log('[map-ui] Legend elements found:', {
     legendToggleBtn: !!DB.legendToggleBtn,
     legendResetBtn: !!DB.legendResetBtn,
     legend: !!DB.legend
@@ -80,16 +81,27 @@ function initUI() {
   DB.filterOpenNow       = document.getElementById('filter-open-now');
   DB.filterEvents        = document.getElementById('filter-events');
   DB.filterPopularAreas  = document.getElementById('filter-popular-areas');
+  console.log('[map-ui] Filter checkbox presence:', {
+    kiosk: !!DB.filterKiosk,
+    retail: !!DB.filterRetail,
+    indie: !!DB.filterIndie,
+    newOnly: !!DB.filterNew,
+    openNow: !!DB.filterOpenNow,
+    events: !!DB.filterEvents,
+    popular: !!DB.filterPopularAreas
+  });
 
   // Cache slider and related elements
   DB.eventDaysSlider     = document.getElementById('event-days-slider');
   DB.eventDaysValue      = document.getElementById('event-days-value');
   DB.eventDaysContainer  = document.getElementById('event-days-slider-container');
+  console.log('[map-ui] Event slider present:', !!DB.eventDaysSlider, 'container:', !!DB.eventDaysContainer);
   
   // Cache heatmap slider elements
   DB.heatmapDaysSlider     = document.getElementById('heatmap-days-slider');
   DB.heatmapDaysValue      = document.getElementById('heatmap-days-value');
   DB.heatmapDaysContainer  = document.getElementById('heatmap-days-slider-container');
+  console.log('[map-ui] Heatmap slider present:', !!DB.heatmapDaysSlider, 'container:', !!DB.heatmapDaysContainer);
 
   // Cache the text-search field
   DB.legendFilter        = document.getElementById('legend_filter');
@@ -479,10 +491,10 @@ if (DB.legendToggleBtn) {
 
 // Reset button in header
 if (DB.legendResetBtn) {
-  console.log('Setting up reset button event listener');
+  console.log('[map-ui] setting up reset button event listener');
   DB.legendResetBtn.addEventListener('click', resetFilters);
 } else {
-  console.error('Reset button not found!');
+  console.error('[map-ui] Reset button not found!');
 }
 
 // Pro‑only guard

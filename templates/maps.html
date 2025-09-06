@@ -109,17 +109,20 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
   
   // Define initApp function immediately to ensure it's available for Google Maps API
   window.initApp = function() {
+    console.log('[maps.html] window.initApp called');
     // This will be called by Google Maps API
     // The actual implementation will be loaded by the module
     if (window.initAppImpl) {
+      console.log('[maps.html] initAppImpl present, invoking');
       window.initAppImpl();
     } else {
-      console.warn('initApp implementation not loaded yet, retrying...');
+      console.warn('[maps.html] initAppImpl not loaded yet, retrying...');
       setTimeout(() => {
         if (window.initAppImpl) {
+          console.log('[maps.html] initAppImpl now present, invoking');
           window.initAppImpl();
         } else {
-          console.error('initApp implementation failed to load');
+          console.error('[maps.html] initAppImpl failed to load');
         }
       }, 100);
     }
@@ -127,6 +130,12 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
 </script>
 
 <!-- Load our modules first -->
+<script>
+  console.log('[maps.html] about to load map-init.js module');
+  window.__TM_DEBUG__ = true;
+  window.tmDiag = [];
+  window.tmLog = function(msg, data) { try { window.tmDiag.push({ t: Date.now(), msg, data }); } catch(e) {} console.log(msg, data||''); };
+</script>
 <script type="module" src="{{ url_for('static', filename='js/map-init.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/routePlanner.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/cacheManager.js') }}"></script>

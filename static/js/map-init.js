@@ -4,24 +4,29 @@
 
 // Entry point called by Google Maps API - expose to global scope immediately
 function initApp() {
+  console.log('[map-init] initApp start');
   // Ensure userCoords is always set
   if (!window.userCoords) {
     window.userCoords = DEFAULT_COORDS;
   }
+  console.log('[map-init] userCoords initial', window.userCoords);
   
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => {
         window.userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        console.log('[map-init] geolocation success');
         renderMap();
       },
       () => { 
         // Fallback to default coordinates if geolocation fails
         window.userCoords = DEFAULT_COORDS;
+        console.warn('[map-init] geolocation failed, using default coords');
         renderMap(); 
       }
     );
   } else { 
+    console.log('[map-init] geolocation not available, rendering map');
     renderMap(); 
   }
 }
@@ -29,6 +34,7 @@ function initApp() {
 // Explicitly expose initApp to global scope for Google Maps callback
 // Change: expose as initAppImpl so maps.html wrapper can call it when ready
 window.initAppImpl = initApp;
+console.log('[map-init] initAppImpl exposed');
 
 // Define global variables before imports
 window.is_pro = window.is_pro || false;
@@ -77,6 +83,7 @@ let loadingOverlay;
 
 // Create the map, markers, heatmap, and listeners
 function renderMap() {
+  console.log('[map-init] renderMap start');
   // Initialize map
   window.map = new google.maps.Map(
     document.getElementById('map'),
@@ -101,6 +108,7 @@ function renderMap() {
       ]
     }
   );
+  console.log('[map-init] map object created');
 
   // Auto‑center flag
   let autoCenter = true;
@@ -472,15 +480,18 @@ function refreshHeatmapData(days) {
   
   // Initialize loading overlay
   initLoadingOverlay();
+  console.log('[map-init] loading overlay initialized');
 
   // Initialize UI components (legend, search, filters)
   initUI();
+  console.log('[map-init] initUI called');
   
       // Set up filter controls to wire up checkbox event listeners
     if (window.__TM_DEBUG__) {
         console.log('Setting up filter controls...');
     }
   setupFilterControls();
+  console.log('[map-init] setupFilterControls called');
   
   if (window.__TM_DEBUG__) {
         console.log('Filter controls setup complete');
@@ -557,16 +568,17 @@ function refreshHeatmapData(days) {
  */
 async function loadOptimizedMapData() {
   try {
+    console.log('[map-init] loadOptimizedMapData start');
     showLoadingOverlay();
     
     // Get initial viewport bounds for filtering
     const bounds = dataService.getMapBounds(window.map);
     
-    console.log('Loading map data with bounds:', bounds);
+    console.log('[map-init] Loading map data with bounds:', bounds);
     
     // The map should now be properly initialized, so bounds should be reasonable
     if (!bounds) {
-      console.error('No map bounds available - this should not happen after proper initialization');
+      console.error('[map-init] No map bounds available - this should not happen after proper initialization');
       hideLoadingOverlay();
       return;
     }
@@ -577,13 +589,16 @@ async function loadOptimizedMapData() {
 
     
     // Load combined data in a single request
-    console.log('Fetching map data with bounds:', effectiveBounds);
+    console.log('[map-init] Fetching map data with bounds:', effectiveBounds);
     const mapData = await dataService.loadMapData(effectiveBounds, {
       includeEvents: true,
       daysAhead: 30
     });
     
-    console.log('Received map data:', mapData);
+    console.log('[map-init] Received map data counts:', {
+      retailers: mapData && mapData.retailers ? mapData.retailers.length : -1,
+      events: mapData && mapData.events ? mapData.events.length : -1
+    });
     
 
     
