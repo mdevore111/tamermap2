@@ -567,7 +567,9 @@ function refreshHeatmapData(days) {
   setupMapStacking();
 
   // Set up viewport change listeners for progressive loading
+  console.log('[renderMap] About to call setupMapEventListeners');
   setupMapEventListeners();
+  console.log('[renderMap] setupMapEventListeners call completed');
 
   // Early data load with safe fallback bounds (do not wait on timers)
   try {
@@ -781,6 +783,11 @@ function setupMapStacking() {
  */
 function setupMapEventListeners() {
     console.log('[setupMapEventListeners] Setting up map idle listener');
+    console.log('[setupMapEventListeners] window.map exists:', !!window.map);
+    if (!window.map) {
+        console.error('[setupMapEventListeners] ERROR: window.map is not defined!');
+        return;
+    }
     // REMOVED duplicate bounds_changed listener - marker manager handles this
     // Only handle idle events for data loading, not marker updates
     
