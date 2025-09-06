@@ -286,6 +286,57 @@ function renderMap() {
       const bsToast = new bootstrap.Toast(toast);
       bsToast.show();
     });
+}
+
+/**
+ * Refresh heatmap data with specified time range
+ */
+function refreshHeatmapData(days) {
+  if (!window.popularAreasHeatmap) {
+    console.warn('Heatmap not initialized yet');
+    return;
+  }
+
+  // Show loading indicator
+  if (window.__TM_DEBUG__) console.log(`Refreshing heatmap data for ${days} days`);
+  
+  fetch(`${ENDPOINTS.popularAreas}?days=${days}`)
+    .then(res => { 
+      if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); 
+      return res.json(); 
+    })
+    .then(points => {
+      // Convert array format [lat, lng, weight] to LatLng objects with weight for Google Maps
+      const heatmapData = points.map(point => ({
+        location: new google.maps.LatLng(point[0], point[1]),
+        weight: point[2]
+      }));
+
+      // Update the heatmap data
+      window.popularAreasHeatmap.setData(heatmapData);
+      
+      if (window.__TM_DEBUG__) console.log(`Heatmap updated with ${points.length} data points for ${days} days`);
+    })
+    .catch(err => {
+      if (window.__TM_DEBUG__) console.error('Error refreshing heatmap data:', err);
+      // Notify user of error
+      const toast = document.createElement('div');
+      toast.className = 'toast align-items-center text-white bg-danger border-0';
+      toast.setAttribute('role', 'alert');
+      toast.setAttribute('aria-live', 'assertive');
+      toast.setAttribute('aria-atomic', 'true');
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">
+            Failed to refresh heatmap data. Please try again.
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+    });
 
   // Fetch individual popularity data (for routing with full precision)
   fetch(ENDPOINTS.individualPopularity)

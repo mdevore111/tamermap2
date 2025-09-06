@@ -101,22 +101,27 @@ def track_pin_click():
 
 
 @map_bp.route("/api/pin-heatmap-data", methods=["GET"])
-@cache.cached(timeout=300)  # cache for 5 minutes
+@cache.cached(timeout=300, query_string=True)  # cache with query parameters
 @limiter.limit("30/minute")
 def get_pin_heatmap_data():
     """
     Retrieve aggregated pin click data for heatmap rendering.
 
     Joins PinInteraction with Retailer to match coordinates using Google Places IDs,
-    aggregating the number of clicks for data within the last 60 days.
+    aggregating the number of clicks for data within the specified time range.
     This endpoint is for heatmap display only - coordinates are rounded to 2 decimals.
+
+    Query Parameters:
+        days (int): Number of days to look back (1-60, default: 60)
 
     Returns:
         A JSON response with a list of objects containing 'lat', 'lng', and 'weight'.
     """
     check_referrer()
 
-    recent_cutoff = datetime.utcnow() - timedelta(days=60)
+    # Get days parameter, default to 60, clamp between 1-60
+    days = max(1, min(60, int(request.args.get('days', 60))))
+    recent_cutoff = datetime.utcnow() - timedelta(days=days)
 
     # Prefer aggregated popularity by place_id; fallback to recent clicks if popularity empty
     pop_rows = db.session.query(
@@ -208,20 +213,25 @@ def get_individual_popularity_data():
 
 
 @map_bp.route("/api/heatmap-data", methods=["GET"])
-@cache.cached(timeout=300)
+@cache.cached(timeout=300, query_string=True)  # cache with query parameters
 @limiter.limit("30/minute")
 def get_heatmap_data():
     """
     Retrieve aggregated map usage data for heatmap rendering.
 
-    Groups map usage records by latitude and longitude from the last 60 days.
+    Groups map usage records by latitude and longitude from the specified time range.
+
+    Query Parameters:
+        days (int): Number of days to look back (1-60, default: 60)
 
     Returns:
         A JSON response with a list of objects containing 'lat', 'lng', and 'weight'.
     """
     check_referrer()
 
-    recent_cutoff = datetime.utcnow() - timedelta(days=60)
+    # Get days parameter, default to 60, clamp between 1-60
+    days = max(1, min(60, int(request.args.get('days', 60))))
+    recent_cutoff = datetime.utcnow() - timedelta(days=days)
 
     data = db.session.query(
         func.round(MapUsage.lat, 2).label("lat"),

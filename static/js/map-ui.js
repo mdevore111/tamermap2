@@ -44,6 +44,7 @@ function resetFilters() {
   });
   localStorage.setItem('checkbox_legend_filter', '');
   localStorage.setItem('event_days_slider', '30'); // Reset slider value in localStorage
+  localStorage.setItem('heatmap_days_slider', '60'); // Reset heatmap slider value in localStorage
 
   window.applyFilters();
 }
@@ -78,6 +79,11 @@ function initUI() {
   DB.eventDaysSlider     = document.getElementById('event-days-slider');
   DB.eventDaysValue      = document.getElementById('event-days-value');
   DB.eventDaysContainer  = document.getElementById('event-days-slider-container');
+  
+  // Cache heatmap slider elements
+  DB.heatmapDaysSlider     = document.getElementById('heatmap-days-slider');
+  DB.heatmapDaysValue      = document.getElementById('heatmap-days-value');
+  DB.heatmapDaysContainer  = document.getElementById('heatmap-days-slider-container');
 
   // Cache the text-search field
   DB.legendFilter        = document.getElementById('legend_filter');
@@ -95,6 +101,17 @@ function initUI() {
     }
   }
   
+  // Restore heatmap days slider value from localStorage
+  if (DB.heatmapDaysSlider) {
+    const savedDays = localStorage.getItem('heatmap_days_slider');
+    if (savedDays !== null) {
+      DB.heatmapDaysSlider.value = savedDays;
+      if (DB.heatmapDaysValue) {
+        DB.heatmapDaysValue.textContent = `${savedDays} days`;
+      }
+    }
+  }
+  
   // Update slider display and toggle container visibility based on events checkbox
   if (DB.filterEvents && DB.eventDaysContainer) {
     // Initialize container visibility
@@ -106,6 +123,16 @@ function initUI() {
     });
   }
   
+  if (DB.filterPopularAreas && DB.heatmapDaysContainer) {
+    // Initialize container visibility
+    DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? 'block' : 'none';
+    
+    // Toggle visibility when popular areas checkbox changes
+    DB.filterPopularAreas.addEventListener('change', () => {
+      DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? 'block' : 'none';
+    });
+  }
+  
   // Handle slider input events
   if (DB.eventDaysSlider && DB.eventDaysValue) {
     DB.eventDaysSlider.addEventListener('input', () => {
@@ -113,6 +140,16 @@ function initUI() {
       DB.eventDaysValue.textContent = `${days} days`;
       localStorage.setItem('event_days_slider', days);
       window.applyFilters();
+    });
+  }
+  
+  // Handle heatmap slider input events
+  if (DB.heatmapDaysSlider && DB.heatmapDaysValue) {
+    DB.heatmapDaysSlider.addEventListener('input', () => {
+      const days = DB.heatmapDaysSlider.value;
+      DB.heatmapDaysValue.textContent = `${days} days`;
+      localStorage.setItem('heatmap_days_slider', days);
+      refreshHeatmapData(days);
     });
   }
 
