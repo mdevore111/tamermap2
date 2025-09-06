@@ -870,14 +870,9 @@ function setupFilterControls() {
     if (popularToggle) popularToggle.addEventListener('change', handleFilterChange);
 }
 
-// Ensure updateFilterUI exists early (shim); real function is defined below
+// Early shim - will be replaced by real implementation below
 window.updateFilterUI = window.updateFilterUI || function(filters) {
-    try {
-        const heatCont = document.getElementById('heatmap-days-slider-container');
-        if (heatCont) heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
-        const eventCont = document.getElementById('event-days-slider-container');
-        if (eventCont) eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
-    } catch (_) {}
+    if (window.__TM_DEBUG__) console.log('updateFilterUI early shim called');
 };
 
 /**
