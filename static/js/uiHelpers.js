@@ -170,12 +170,24 @@ export function renderRetailerInfoWindow(retailer, isPro) {
       `&phone=${encodeURIComponent(phoneRaw)}&website=${encodeURIComponent(websiteRaw)}` +
       `&hours=${encodeURIComponent(retailer.opening_hours || '')}\">Correct Data</a></p>`;
 
+  // User Notes Section (only for logged-in users)
+  const notesSection = retailer.user_notes ? 
+    `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #007bff;">
+      <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#007bff;">Your Notes:</p>
+      <p style="margin:0; font-size:12px; color:#333;">${retailer.user_notes}</p>
+      <button onclick="editNote(${retailer.id})" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#007bff; color:white; border:none; border-radius:2px; cursor:pointer;">Edit</button>
+    </div>` : 
+    `<div style="margin-top:12px; font-size:12px;">
+      <button onclick="addNote(${retailer.id})" style="padding:4px 8px; font-size:10px; background:#28a745; color:white; border:none; border-radius:2px; cursor:pointer;">Add Note</button>
+    </div>`;
+
   const inner = `
     <p style="margin:8px 0; font-size:16px;">${displayType(retailer, isPro)}</p>
     <p style="margin:8px 0; line-height:1.2; font-size:14px;"><a href=\"https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(retailer.full_address || '')}\" target=\"_blank\">${addressText}</a></p>
     ${phoneSection}
     ${websiteSection}
     ${hoursSection}
+    ${notesSection}
     ${reportLink}
   `;
 
@@ -200,4 +212,53 @@ export function renderEventInfoWindow(evt) {
   `;
 
   return wrapInfoWindow(inner, '/static/map-pins/event.png', titleText, 18);
+}
+
+// User Notes Management Functions
+window.addNote = function(retailerId) {
+  const notes = prompt('Add your notes for this location:');
+  if (notes !== null) {
+    saveUserNote(retailerId, notes);
+  }
+};
+
+window.editNote = function(retailerId) {
+  // First get the current note
+  fetch(`/api/user-notes/${retailerId}`)
+    .then(response => response.json())
+    .then(data => {
+      const notes = prompt('Edit your notes for this location:', data.notes || '');
+      if (notes !== null) {
+        saveUserNote(retailerId, notes);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching note:', error);
+      alert('Error loading note. Please try again.');
+    });
+};
+
+function saveUserNote(retailerId, notes) {
+  fetch(`/api/user-notes/${retailerId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ notes: notes })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      alert('Error saving note: ' + data.error);
+    } else {
+      // Refresh the map to show updated notes
+      if (window.refreshMap) {
+        window.refreshMap();
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error saving note:', error);
+    alert('Error saving note. Please try again.');
+  });
 }

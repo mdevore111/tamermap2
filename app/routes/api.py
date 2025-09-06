@@ -6,7 +6,7 @@ from sqlalchemy import func
 from datetime import datetime
 
 from ..extensions import db, cache
-from ..models import Retailer, Event
+from ..models import Retailer, Event, UserNote
 from app.routes.security import check_referrer
 from app.utils import get_retailer_locations, get_event_locations
 import requests
@@ -68,6 +68,16 @@ def retailers_endpoint():
         r for r in retailers
         if r.get("place_id") and r["place_id"].strip().lower() != "none"
     ]
+
+    # Add user notes for logged-in users
+    from flask_login import current_user
+    if current_user.is_authenticated:
+        for retailer in filtered_retailers:
+            note = UserNote.query.filter_by(
+                user_id=current_user.id, 
+                retailer_id=retailer['id']
+            ).first()
+            retailer['user_notes'] = note.notes if note else None
 
     return jsonify({
         'retailers': filtered_retailers,
@@ -237,3 +247,100 @@ def events_legacy():
     check_referrer()
     events = get_event_locations(db)
     return jsonify(events)
+
+
+# User Notes API Endpoints
+@api_bp.route("/user-notes/<int:retailer_id>", methods=['GET'])
+@login_required
+def get_user_note(retailer_id):
+    """Get user's note for a specific retailer location"""
+    from flask_login import current_user
+    
+    note = UserNote.query.filter_by(
+        user_id=current_user.id, 
+        retailer_id=retailer_id
+    ).first()
+    
+    if note:
+        return jsonify({
+            'id': note.id,
+            'notes': note.notes,
+            'created_at': note.created_at.isoformat(),
+            'updated_at': note.updated_at.isoformat()
+        })
+    else:
+        return jsonify({'notes': ''})
+
+
+@api_bp.route("/user-notes/<int:retailer_id>", methods=['POST', 'PUT'])
+@login_required
+def save_user_note(retailer_id):
+    """Create or update user's note for a specific retailer location"""
+    from flask_login import current_user
+    
+    data = request.get_json()
+    notes = data.get('notes', '').strip()
+    
+    if not notes:
+        # Delete note if empty
+        note = UserNote.query.filter_by(
+            user_id=current_user.id, 
+            retailer_id=retailer_id
+        ).first()
+        if note:
+            db.session.delete(note)
+            db.session.commit()
+        return jsonify({'message': 'Note deleted'})
+    
+    # Check if retailer exists
+    retailer = Retailer.query.get(retailer_id)
+    if not retailer:
+        return jsonify({'error': 'Retailer not found'}), 404
+    
+    # Create or update note
+    note = UserNote.query.filter_by(
+        user_id=current_user.id, 
+        retailer_id=retailer_id
+    ).first()
+    
+    if note:
+        note.notes = notes
+        note.updated_at = datetime.utcnow()
+    else:
+        note = UserNote(
+            user_id=current_user.id,
+            retailer_id=retailer_id,
+            notes=notes
+        )
+        db.session.add(note)
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'id': note.id,
+            'notes': note.notes,
+            'created_at': note.created_at.isoformat(),
+            'updated_at': note.updated_at.isoformat()
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to save note'}), 500
+
+
+@api_bp.route("/user-notes/<int:retailer_id>", methods=['DELETE'])
+@login_required
+def delete_user_note(retailer_id):
+    """Delete user's note for a specific retailer location"""
+    from flask_login import current_user
+    
+    note = UserNote.query.filter_by(
+        user_id=current_user.id, 
+        retailer_id=retailer_id
+    ).first()
+    
+    if note:
+        db.session.delete(note)
+        db.session.commit()
+        return jsonify({'message': 'Note deleted'})
+    else:
+        return jsonify({'error': 'Note not found'}), 404

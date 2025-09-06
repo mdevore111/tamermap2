@@ -602,3 +602,28 @@ class Location(db.Model):
 
     def __repr__(self):
         return f"<Location {self.city}, {self.region}, {self.country}>"
+
+
+class UserNote(db.Model):
+    """
+    Model representing user notes for locations.
+    
+    Attributes:
+        id (int): Primary key.
+        user_id (int): Foreign key linking to the user.
+        retailer_id (int): Foreign key linking to the retailer.
+        notes (str): The user's notes about this location.
+        created_at (datetime): When the note was created.
+        updated_at (datetime): When the note was last updated.
+    """
+    __tablename__ = 'user_notes'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    retailer_id = db.Column(db.Integer, db.ForeignKey('retailer.id'), nullable=False)
+    notes = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, onupdate=_datetime.datetime.utcnow)
+
+    def __repr__(self):
+        return f"<UserNote {self.user_id} -> {self.retailer_id}>"
