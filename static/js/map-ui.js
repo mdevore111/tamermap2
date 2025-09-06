@@ -59,6 +59,12 @@ function initUI() {
   DB.legendToggleBtn     = document.getElementById('legend-toggle');
   DB.legendResetBtn      = document.getElementById('legend-reset');
   DB.legend              = document.getElementById('legend');
+  
+  console.log('Legend elements found:', {
+    legendToggleBtn: !!DB.legendToggleBtn,
+    legendResetBtn: !!DB.legendResetBtn,
+    legend: !!DB.legend
+  });
 
   // Ensure legend is visible by default
   if (DB.legend) {
@@ -473,7 +479,10 @@ if (DB.legendToggleBtn) {
 
 // Reset button in header
 if (DB.legendResetBtn) {
+  console.log('Setting up reset button event listener');
   DB.legendResetBtn.addEventListener('click', resetFilters);
+} else {
+  console.error('Reset button not found!');
 }
 
 // Pro‑only guard

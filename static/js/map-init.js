@@ -29,6 +29,9 @@ function initApp() {
 // Explicitly expose initApp to global scope for Google Maps callback
 window.initApp = initApp;
 
+// Define global variables before imports
+window.is_pro = window.is_pro || false;
+
 // Side-effect imports
 import './map-utils.js';   // getPinColor, formatHours
 import './map-ui.js';      // initUI(), domCache, isOpenNow
@@ -63,7 +66,6 @@ window.userCoords        = DEFAULT_COORDS;
 window.map               = null;
 window.infoWindow        = null;
 window.currentOpenMarker = null;
-window.is_pro            = window.is_pro || false;
 
 // Global variables
 let markerManager;
@@ -750,6 +752,8 @@ function debounce(func, wait) {
  * Setup filter controls and bind event listeners
  */
 function setupFilterControls() {
+    console.log('Setting up filter controls...');
+    
     // Get filter elements using the correct IDs from the HTML
     const kioskToggle = document.getElementById('filter-kiosk');
     const retailToggle = document.getElementById('filter-retail');
@@ -758,6 +762,16 @@ function setupFilterControls() {
     const openNowToggle = document.getElementById('filter-open-now');
     const newToggle = document.getElementById('filter-new');
     const popularToggle = document.getElementById('filter-popular-areas');
+    
+    console.log('Filter elements found:', {
+        kioskToggle: !!kioskToggle,
+        retailToggle: !!retailToggle,
+        indieToggle: !!indieToggle,
+        eventsToggle: !!eventsToggle,
+        openNowToggle: !!openNowToggle,
+        newToggle: !!newToggle,
+        popularToggle: !!popularToggle
+    });
     
     // Debounced filter change handler
     const handleFilterChange = debounce(() => {
