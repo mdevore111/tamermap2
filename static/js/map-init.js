@@ -967,7 +967,7 @@ function hideLoadingOverlay() {
 /**
  * Sync UI controls (slider containers) with current filter state
  */
-function updateFilterUI(filters) {
+function _updateFilterUIInternal(filters) {
     try {
         const heatCont = document.getElementById('heatmap-days-slider-container');
         if (heatCont) {
@@ -982,6 +982,9 @@ function updateFilterUI(filters) {
         if (window.__TM_DEBUG__) console.warn('updateFilterUI error', e);
     }
 }
+
+// Bind real implementation globally (overrides early shim)
+window.updateFilterUI = _updateFilterUIInternal;
 
 /**
  * Update map UI elements
