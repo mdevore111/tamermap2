@@ -943,6 +943,25 @@ function hideLoadingOverlay() {
 }
 
 /**
+ * Sync UI controls (slider containers) with current filter state
+ */
+function updateFilterUI(filters) {
+    try {
+        const heatCont = document.getElementById('heatmap-days-slider-container');
+        if (heatCont) {
+            heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
+        }
+
+        const eventCont = document.getElementById('event-days-slider-container');
+        if (eventCont) {
+            eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
+        }
+    } catch (e) {
+        if (window.__TM_DEBUG__) console.warn('updateFilterUI error', e);
+    }
+}
+
+/**
  * Update map UI elements
  */
 function updateMapUI() {
