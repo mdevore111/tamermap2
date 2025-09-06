@@ -483,8 +483,12 @@ function refreshHeatmapData(days) {
   console.log('[map-init] loading overlay initialized');
 
   // Initialize UI components (legend, search, filters)
-  initUI();
-  console.log('[map-init] initUI called');
+  if (window.initUI) {
+    window.initUI();
+    console.log('[map-init] window.initUI called');
+  } else {
+    console.error('[map-init] window.initUI not found');
+  }
   
       // Set up filter controls to wire up checkbox event listeners
     if (window.__TM_DEBUG__) {
