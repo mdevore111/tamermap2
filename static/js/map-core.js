@@ -387,23 +387,29 @@ function refreshHeatmapData(days) {
   
   fetch(url)
     .then(res => { 
+      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Response status: ${res.status}`);
       if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); 
       return res.json(); 
     })
     .then(points => {
+      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Raw response data:`, points);
+      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Data points count: ${points.length}`);
+      
       // Convert array format [lat, lng, weight] to LatLng objects with weight for Google Maps
       const heatmapData = points.map(point => ({
         location: new google.maps.LatLng(point[0], point[1]),
         weight: point[2]
       }));
 
+      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Converted heatmap data:`, heatmapData.slice(0, 3)); // Show first 3 points
+      
       // Update the heatmap data
       window.popularAreasHeatmap.setData(heatmapData);
       
-      if (window.__TM_DEBUG__) console.log(`Heatmap updated with ${points.length} data points for ${days} days`);
+      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] ✅ Heatmap updated with ${points.length} data points for ${days} days`);
     })
     .catch(err => {
-      if (window.__TM_DEBUG__) console.error('Error refreshing heatmap data:', err);
+      console.error(`[refreshHeatmapData] ❌ Failed to refresh heatmap data for ${days} days:`, err);
       // Notify user of error
       const toast = document.createElement('div');
       toast.className = 'toast align-items-center text-white bg-danger border-0';
