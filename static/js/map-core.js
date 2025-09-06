@@ -249,6 +249,7 @@ function renderMap() {
   console.log('[map-init] Map interaction listeners setup complete');
 
   // "My Location" button
+  console.log('[map-init] Creating My Location button');
   const myLocationButton = document.createElement('button');
   myLocationButton.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -266,7 +267,10 @@ function renderMap() {
   });
   window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);
 
+  console.log('[map-init] My Location button added to map controls');
+
   // Initialize InfoWindow with better positioning behavior
+  console.log('[map-init] Creating InfoWindow');
   window.infoWindow = new google.maps.InfoWindow({
     disableAutoPan: false, // Allow Google Maps to handle positioning
     pixelOffset: new google.maps.Size(0, -5),
@@ -322,7 +326,10 @@ function renderMap() {
     }
   });
 
+  console.log('[map-init] InfoWindow setup complete');
+
   // Fetch and build Popular Areas heatmap layer (for display)
+  console.log('[map-init] About to fetch heatmap data');
   fetch(ENDPOINTS.popularAreas)
     .then(res => { if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); return res.json(); })
     .then(points => {
