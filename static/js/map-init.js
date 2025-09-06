@@ -27,7 +27,8 @@ function initApp() {
 }
 
 // Explicitly expose initApp to global scope for Google Maps callback
-window.initApp = initApp;
+// Change: expose as initAppImpl so maps.html wrapper can call it when ready
+window.initAppImpl = initApp;
 
 // Define global variables before imports
 window.is_pro = window.is_pro || false;
