@@ -683,7 +683,8 @@ async function loadOptimizedMapData() {
     
     // Markers are already visible from the loadRetailers/loadEvents calls
     // No need to apply filters again - just update viewport tracking
-    dataService.updateLastViewport(bounds);
+    // Track the viewport we actually used to fetch
+    dataService.updateLastViewport(effectiveBounds);
     
     hideLoadingOverlay();
     
@@ -753,9 +754,9 @@ async function handleMapIdle() {
   const bounds = dataService.getMapBounds(window.map);
   if (!bounds) return;
 
-  // Only fetch if viewport really changed significantly (larger threshold to prevent excessive loading)
-  const hasChanged = dataService.hasViewportChanged(bounds, 0.08); // Slightly more sensitive and respects expansions
-  
+  // Only fetch if viewport really changed significantly
+  const hasChanged = dataService.hasViewportChanged(bounds, 0.02);
+  if (window.__TM_DEBUG__) console.log('[handleMapIdle] called; hasChanged=', hasChanged, 'bounds=', bounds);
   if (!hasChanged) {
     updateMapUI();
     return;
