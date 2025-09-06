@@ -434,15 +434,22 @@ class DataService {
     hasViewportChanged(newBounds, threshold = 0.1) {
         if (!this.lastViewport || !newBounds) return true;
 
-        const latDiff = Math.abs(newBounds.north - this.lastViewport.north) + 
-                      Math.abs(newBounds.south - this.lastViewport.south);
-        const lngDiff = Math.abs(newBounds.east - this.lastViewport.east) + 
-                      Math.abs(newBounds.west - this.lastViewport.west);
+        const prev = this.lastViewport;
+        const latRangePrev = Math.max(Math.abs(prev.north - prev.south), 1e-6);
+        const lngRangePrev = Math.max(Math.abs(prev.east - prev.west), 1e-6);
 
-        const latRange = newBounds.north - newBounds.south;
-        const lngRange = newBounds.east - newBounds.west;
+        const latDiff = Math.abs(newBounds.north - prev.north) + Math.abs(newBounds.south - prev.south);
+        const lngDiff = Math.abs(newBounds.east - prev.east) + Math.abs(newBounds.west - prev.west);
 
-        return (latDiff / latRange > threshold) || (lngDiff / lngRange > threshold);
+        const latRangeNew = Math.abs(newBounds.north - newBounds.south);
+        const lngRangeNew = Math.abs(newBounds.east - newBounds.west);
+
+        const movedEnough = (latDiff / latRangePrev > threshold) || (lngDiff / lngRangePrev > threshold);
+        const expandedEnough = (latRangeNew / latRangePrev > (1 + threshold)) || (lngRangeNew / lngRangePrev > (1 + threshold));
+
+        const changed = movedEnough || expandedEnough;
+        if (window.__TM_DEBUG__) console.log('[dataService] hasViewportChanged', { movedEnough, expandedEnough, changed, prev, newBounds });
+        return changed;
     }
 
     /**

@@ -754,23 +754,22 @@ async function handleMapIdle() {
   if (!bounds) return;
 
   // Only fetch if viewport really changed significantly (larger threshold to prevent excessive loading)
-  const hasChanged = dataService.hasViewportChanged(bounds, 0.15); // Increased from 0.05 to 0.15
+  const hasChanged = dataService.hasViewportChanged(bounds, 0.08); // Slightly more sensitive and respects expansions
   
   if (!hasChanged) {
     updateMapUI();
     return;
   }
 
-  // Check if we already have data for this area
+  // If new viewport is smaller AND we have plenty of markers, skip fetch; otherwise allow fetching on expansion
   const currentBounds = dataService.lastViewport;
   if (currentBounds) {
     const latRange = Math.abs(bounds.north - bounds.south);
     const lngRange = Math.abs(bounds.east - bounds.west);
     const currentLatRange = Math.abs(currentBounds.north - currentBounds.south);
     const currentLngRange = Math.abs(currentBounds.east - currentBounds.west);
-    
-    // If the new bounds are smaller than current bounds, we probably already have the data
-    if (latRange <= currentLatRange && lngRange <= currentLngRange) {
+    const isSmaller = latRange <= currentLatRange && lngRange <= currentLngRange;
+    if (isSmaller && markerManager.markerCache.size > 200) {
       updateMapUI();
       return;
     }
