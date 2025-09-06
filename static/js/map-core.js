@@ -348,7 +348,7 @@ function renderMap() {
       }
     })
     .catch(err => {
-      if (window.__TM_DEBUG__) console.error('Error fetching heatmap data:', err);
+      console.error('[renderMap] Error fetching heatmap data:', err);
       // Notify user of error
       const toast = document.createElement('div');
       toast.className = 'toast align-items-center text-white bg-danger border-0';
@@ -561,6 +561,7 @@ function refreshHeatmapData(days) {
         console.log('Filter controls setup complete');
     }
     
+  console.log('[renderMap] Reached end of renderMap function, about to setup event listeners');
 
   
   // Set up proper stacking immediately and on idle
