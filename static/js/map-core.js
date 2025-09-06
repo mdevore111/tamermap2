@@ -385,6 +385,7 @@ function renderMap() {
     });
 
   console.log('[map-init] Heatmap fetch initiated, continuing with renderMap');
+}
 
 /**
  * Refresh heatmap data with specified time range
