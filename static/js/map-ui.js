@@ -1,5 +1,8 @@
 // static/js/map-ui.js
 import { isOpenNow } from './utils.js';
+console.log('[map-ui] module loaded');
+
+let __tm_ui_initialized = false;
 
 window.domCache = {};
 
@@ -53,6 +56,7 @@ function resetFilters() {
  * Initialize UI: cache DOM nodes and wire all filter controls.
  */
 function initUI() {
+  if (__tm_ui_initialized) { console.log('[map-ui] initUI skipped (already initialized)'); return; }
   console.log('[map-ui] initUI start');
   const DB = window.domCache;
 
@@ -522,6 +526,8 @@ if (!is_pro) {
     });
   });
 }
+
+  __tm_ui_initialized = true;
 }
 
 /**
@@ -683,6 +689,15 @@ function openRoutePanel() {
 window.openRoutePanel = openRoutePanel;
 window.showProUpgradeToast = showProUpgradeToast;
 window.initUI = initUI;
+
+// Fallback: ensure UI wiring after DOM is ready (idempotent)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    try { window.initUI(); } catch(e) { console.error('[map-ui] initUI DOMContentLoaded error', e); }
+  });
+} else {
+  try { window.initUI(); } catch(e) { console.error('[map-ui] initUI immediate error', e); }
+}
 
 // Don't auto-initialize - let map-init.js handle it
 // if (document.readyState === 'loading') {
