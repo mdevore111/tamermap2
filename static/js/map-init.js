@@ -618,15 +618,18 @@ async function loadOptimizedMapData() {
     
     console.log('[map-init] Loading map data with bounds:', bounds);
     
-    // The map should now be properly initialized, so bounds should be reasonable
-    if (!bounds) {
-      console.error('[map-init] No map bounds available - this should not happen after proper initialization');
-      hideLoadingOverlay();
-      return;
+    // Ensure we have bounds; if not, synthesize fallback around user coords
+    let effectiveBounds = bounds;
+    if (!effectiveBounds) {
+      const uc = window.userCoords || DEFAULT_COORDS;
+      effectiveBounds = {
+        north: uc.lat + 0.25,
+        south: uc.lat - 0.25,
+        east:  uc.lng + 0.25,
+        west:  uc.lng - 0.25
+      };
+      console.warn('[map-init] No bounds yet; using fallback:', effectiveBounds);
     }
-    
-    // Use the actual map bounds - they should be correct now
-    const effectiveBounds = bounds;
     
 
     
