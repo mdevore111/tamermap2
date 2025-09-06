@@ -167,6 +167,8 @@ function renderMap() {
     console.warn('[map-init] Early wiring/load failed:', e);
   }
 
+  console.log('[map-init] About to create user location marker');
+
   // User location marker
   const userLocationMarker = new google.maps.Marker({
     position: window.userCoords,
@@ -183,7 +185,10 @@ function renderMap() {
     zIndex: Z_INDICES.ui
   });
 
+  console.log('[map-init] User location marker created');
+
   // Continuously update user location with mobile-friendly settings
+  console.log('[map-init] Setting up continuous user location tracking');
   let lastLocationUpdate = 0;
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
@@ -226,6 +231,8 @@ function renderMap() {
     );
   }
 
+  console.log('[map-init] Geolocation watch setup complete');
+
   // Listen for manual interactions to disable auto-centering and track interaction time
   window.map.addListener('dragstart', () => { 
     autoCenter = false; 
@@ -238,6 +245,8 @@ function renderMap() {
   window.map.addListener('click', () => { 
     window.lastMapInteraction = Date.now();
   });
+
+  console.log('[map-init] Map interaction listeners setup complete');
 
   // "My Location" button
   const myLocationButton = document.createElement('button');
