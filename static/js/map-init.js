@@ -113,6 +113,31 @@ function renderMap() {
   // Auto‑center flag
   let autoCenter = true;
 
+  // Early wiring: create managers and kick off data load ASAP
+  try {
+    if (!markerManager) {
+      markerManager = new MarkerManager(window.map);
+      console.log('[map-init] MarkerManager constructed early');
+    }
+    if (!dataService) {
+      dataService = new DataService();
+      console.log('[map-init] DataService constructed early');
+    }
+    if (!loadingOverlay) {
+      initLoadingOverlay();
+      console.log('[map-init] loading overlay initialized (early)');
+    }
+    if (window.initUI) {
+      window.initUI();
+      console.log('[map-init] window.initUI called (early)');
+    }
+    // Kick off data load immediately
+    loadOptimizedMapData();
+    console.log('[map-init] loadOptimizedMapData triggered (early)');
+  } catch (e) {
+    console.warn('[map-init] Early wiring/load failed:', e);
+  }
+
   // User location marker
   const userLocationMarker = new google.maps.Marker({
     position: window.userCoords,
