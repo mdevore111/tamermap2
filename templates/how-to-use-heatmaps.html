@@ -90,7 +90,6 @@
           <ul class="list-unstyled">
             <li><a href="#finding-hotspots" class="text-decoration-none">4. Finding Hot Spots</a></li>
             <li><a href="#strategic-planning" class="text-decoration-none">5. Strategic Planning with Heatmaps</a></li>
-            <li><a href="#pro-features" class="text-decoration-none">6. Pro Heatmap Features</a></li>
           </ul>
         </div>
       </div>
@@ -116,6 +115,7 @@
               <li><strong>Activity Levels:</strong> How frequently locations are visited</li>
               <li><strong>Success Patterns:</strong> Where hunters find valuable cards</li>
               <li><strong>Popular Areas:</strong> High-traffic hunting zones</li>
+              <li><strong>Hidden Gems:</strong> Less popular but potentially profitable locations</li>
               <li><strong>Trending Locations:</strong> Recently discovered hot spots</li>
             </ul>
           </div>
@@ -124,6 +124,7 @@
             <ul>
               <li><strong>Data-Driven Decisions:</strong> Base hunting choices on real activity</li>
               <li><strong>Efficiency Boost:</strong> Focus on proven successful locations</li>
+              <li><strong>Competitive Advantage:</strong> Discover less crowded spots for better finds</li>
               <li><strong>Time Savings:</strong> Avoid low-success areas</li>
               <li><strong>Success Rate Increase:</strong> Learn from community experience</li>
             </ul>
@@ -163,7 +164,7 @@
             <ol>
               <li>Click the <strong>heatmap toggle button</strong> (usually looks like a flame icon)</li>
               <li>The map will overlay with colored activity data</li>
-              <li>You can adjust heatmap intensity using the slider</li>
+              <li>You can adjust the time range using the slider (1-60 days)</li>
             </ol>
           </div>
         </div>
@@ -456,74 +457,6 @@
   </section>
 
   <!-- Pro Features Section -->
-  <section id="pro-features" class="mb-5">
-    <div class="card">
-      <div class="card-header bg-dark text-white">
-        <h2 class="h3 mb-0"><i class="fas fa-crown me-2"></i>6. Pro Heatmap Features</h2>
-      </div>
-      <div class="card-body">
-        <p class="lead">Unlock the full potential of heatmap analysis with TamerMap Pro's advanced features and detailed insights.</p>
-        
-        <h3>Advanced Heatmap Capabilities</h3>
-        <p>Pro users get access to sophisticated heatmap analysis tools:</p>
-        
-        <div class="row mb-4">
-          <div class="col-md-6 mb-3">
-            <div class="card h-100 border-warning">
-              <div class="card-body">
-                <h5><i class="fas fa-chart-line fa-2x text-warning mb-2"></i>Historical Data Analysis</h5>
-                <p>Access detailed activity data from the past 30, 60, or 90 days to identify long-term trends and seasonal patterns.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="card h-100 border-info">
-              <div class="card-body">
-                <h5><i class="fas fa-filter fa-2x text-info mb-2"></i>Advanced Filtering</h5>
-                <p>Filter heatmap data by store type, time of day, day of week, or specific date ranges for precise analysis.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="card h-100 border-success">
-              <div class="card-body">
-                <h5><i class="fas fa-users fa-2x text-success mb-2"></i>Community Insights</h5>
-                <p>See detailed breakdowns of what types of cards are found at each location and success rates by hunter experience level.</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6 mb-3">
-            <div class="card h-100 border-primary">
-              <div class="card-body">
-                <h5><i class="fas fa-bell fa-2x text-primary mb-2"></i>Hot Spot Alerts</h5>
-                <p>Get notified when new hot spots emerge or when activity levels change significantly at your favorite locations.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <h3>Pro-Exclusive Analytics</h3>
-        <p>Advanced insights that give Pro users a competitive edge:</p>
-        
-        <ul>
-          <li><strong>Success Rate Correlation:</strong> See how activity levels correlate with actual card finds</li>
-          <li><strong>Competition Analysis:</strong> Understand how many other hunters are targeting the same locations</li>
-          <li><strong>Optimal Timing Data:</strong> Get specific recommendations for the best times to visit each location</li>
-          <li><strong>Route Efficiency Scoring:</strong> Rate your hunting routes based on heatmap data integration</li>
-        </ul>
-
-        <div class="text-center mt-4">
-          <div class="alert alert-primary">
-            <h4><i class="fas fa-rocket me-2"></i>Ready to Upgrade to Pro?</h4>
-            <p class="mb-3">Get access to advanced heatmap analytics, historical data, and detailed insights that will transform your hunting strategy!</p>
-            <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-lg">
-              <i class="fas fa-crown me-2"></i>Upgrade to Pro Now
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- Call to Action -->
   <div class="text-center mt-5">
