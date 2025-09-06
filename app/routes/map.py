@@ -112,15 +112,15 @@ def get_pin_heatmap_data():
     This endpoint is for heatmap display only - coordinates are rounded to 2 decimals.
 
     Query Parameters:
-        days (int): Number of days to look back (1-60, default: 60)
+        days (int): Number of days to look back (1-90, default: 60)
 
     Returns:
         A JSON response with a list of objects containing 'lat', 'lng', and 'weight'.
     """
     check_referrer()
 
-    # Get days parameter, default to 60, clamp between 1-60
-    days = max(1, min(60, int(request.args.get('days', 60))))
+    # Get days parameter, default to 60, clamp between 1-90
+    days = max(1, min(90, int(request.args.get('days', 60))))
     recent_cutoff = datetime.utcnow() - timedelta(days=days)
     
     # Debug logging  
@@ -214,15 +214,15 @@ def get_heatmap_data():
     Groups map usage records by latitude and longitude from the specified time range.
 
     Query Parameters:
-        days (int): Number of days to look back (1-60, default: 60)
+        days (int): Number of days to look back (1-90, default: 60)
 
     Returns:
         A JSON response with a list of objects containing 'lat', 'lng', and 'weight'.
     """
     check_referrer()
 
-    # Get days parameter, default to 60, clamp between 1-60
-    days = max(1, min(60, int(request.args.get('days', 60))))
+    # Get days parameter, default to 60, clamp between 1-90
+    days = max(1, min(90, int(request.args.get('days', 60))))
     recent_cutoff = datetime.utcnow() - timedelta(days=days)
 
     data = db.session.query(

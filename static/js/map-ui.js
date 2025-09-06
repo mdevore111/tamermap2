@@ -155,13 +155,17 @@ function initUI() {
     });
   }
 
-  // Ensure initial slider visibility syncs with current state
+  // Ensure initial slider visibility syncs with current state (with DOM ready check)
   try {
-    const filters = {
-      showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
-      showEvents: DB.filterEvents ? DB.filterEvents.checked : false
-    };
-    (window.updateFilterUI || function(){ })(filters);
+    // Use setTimeout to ensure DOM is fully loaded
+    setTimeout(() => {
+      const filters = {
+        showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
+        showEvents: DB.filterEvents ? DB.filterEvents.checked : false
+      };
+      console.log('[map-ui] initializing slider visibility with filters:', filters);
+      (window.updateFilterUI || function(){ })(filters);
+    }, 100); // Small delay to ensure DOM is ready
   } catch (_) {}
   
   // Handle slider input events
@@ -714,6 +718,16 @@ if (document.readyState === 'loading') {
 } else {
   try { window.initUI(); } catch(e) { console.error('[map-ui] initUI immediate error', e); }
 }
+
+// Expose function to sync slider visibility
+window.syncSliderVisibility = function() {
+  const filters = {
+    showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
+    showEvents: DB.filterEvents ? DB.filterEvents.checked : false
+  };
+  console.log('[map-ui] syncSliderVisibility called with filters:', filters);
+  (window.updateFilterUI || function(){ })(filters);
+};
 
 // Don't auto-initialize - let map-init.js handle it
 // if (document.readyState === 'loading') {

@@ -732,6 +732,13 @@ async function loadOptimizedMapData() {
     
     hideLoadingOverlay();
     
+    // Sync slider visibility after everything is loaded
+    setTimeout(() => {
+      if (window.syncSliderVisibility) {
+        window.syncSliderVisibility();
+      }
+    }, 200); // Small delay to ensure everything is rendered
+    
     // Show performance stats in console
 
     
