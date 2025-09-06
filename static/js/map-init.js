@@ -34,17 +34,7 @@ function initApp() {
 // Explicitly expose initApp to global scope for Google Maps callback
 // Change: expose as initAppImpl so maps.html wrapper can call it when ready
 window.initAppImpl = initApp;
-// Provide a global no-op updateFilterUI early to avoid ReferenceError in any early calls
-if (!window.updateFilterUI) {
-  window.updateFilterUI = function(filters) {
-    try {
-      const heatCont = document.getElementById('heatmap-days-slider-container');
-      if (heatCont) heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
-      const eventCont = document.getElementById('event-days-slider-container');
-      if (eventCont) eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
-    } catch (_) {}
-  };
-}
+// updateFilterUI will be defined later in this file
 console.log('[map-init] initAppImpl exposed');
 
 // Define global variables before imports
