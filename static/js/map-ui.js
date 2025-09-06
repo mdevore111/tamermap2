@@ -163,7 +163,7 @@ function initUI() {
         showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
         showEvents: DB.filterEvents ? DB.filterEvents.checked : false
       };
-      console.log('[map-ui] initializing slider visibility with filters:', filters);
+      if (window.__TM_DEBUG__) console.log('[map-ui] initializing slider visibility with filters:', filters);
       (window.updateFilterUI || function(){ })(filters);
     }, 100); // Small delay to ensure DOM is ready
   } catch (_) {}
@@ -725,7 +725,7 @@ window.syncSliderVisibility = function() {
     showPopular: DB.filterPopularAreas ? DB.filterPopularAreas.checked : false,
     showEvents: DB.filterEvents ? DB.filterEvents.checked : false
   };
-  console.log('[map-ui] syncSliderVisibility called with filters:', filters);
+  if (window.__TM_DEBUG__) console.log('[map-ui] syncSliderVisibility called with filters:', filters);
   (window.updateFilterUI || function(){ })(filters);
 };
 

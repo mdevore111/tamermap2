@@ -123,9 +123,6 @@ def get_pin_heatmap_data():
     days = max(1, min(90, int(request.args.get('days', 60))))
     recent_cutoff = datetime.utcnow() - timedelta(days=days)
     
-    # Debug logging  
-    print(f"[DEBUG] pin-heatmap-data called with days={days}, cutoff={recent_cutoff}")
-
     # Use time-filtered PinInteraction data to respect the days parameter
     data = db.session.query(
         func.round(Retailer.latitude, 2).label("lat"),
@@ -139,7 +136,6 @@ def get_pin_heatmap_data():
     ).group_by("lat", "lng").all()
 
     heatmap = [[lat, lng, weight] for lat, lng, weight in data]
-    print(f"[DEBUG] pin-heatmap-data returning {len(heatmap)} points for {days} days")
     return jsonify(heatmap)
 
 

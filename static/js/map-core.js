@@ -48,18 +48,16 @@ window.is_pro = window.is_pro || false;
  * MUST be defined before imports since map-ui.js calls it during module load
  */
 function updateFilterUI(filters) {
-    console.log('[map-core] updateFilterUI called with:', filters);
+    if (window.__TM_DEBUG__) console.log('[map-core] updateFilterUI called with:', filters);
     try {
         const heatCont = document.getElementById('heatmap-days-slider-container');
         if (heatCont) {
             heatCont.style.display = filters && filters.showPopular ? 'block' : 'none';
-            console.log('[map-core] set heatmap container display to:', filters && filters.showPopular ? 'block' : 'none');
         }
 
         const eventCont = document.getElementById('event-days-slider-container');
         if (eventCont) {
             eventCont.style.display = filters && filters.showEvents ? 'block' : 'none';
-            console.log('[map-core] set event container display to:', filters && filters.showEvents ? 'block' : 'none');
         }
     } catch (e) {
         console.error('[map-core] updateFilterUI error:', e);
@@ -383,25 +381,18 @@ function refreshHeatmapData(days) {
   // Show loading indicator
   if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Refreshing heatmap data for ${days} days`);
   const url = `${ENDPOINTS.popularAreas}?days=${days}`;
-  if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Fetching URL: ${url}`);
   
   fetch(url)
     .then(res => { 
-      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Response status: ${res.status}`);
       if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); 
       return res.json(); 
     })
     .then(points => {
-      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Raw response data:`, points);
-      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Data points count: ${points.length}`);
-      
       // Convert array format [lat, lng, weight] to LatLng objects with weight for Google Maps
       const heatmapData = points.map(point => ({
         location: new google.maps.LatLng(point[0], point[1]),
         weight: point[2]
       }));
-
-      if (window.__TM_DEBUG__) console.log(`[refreshHeatmapData] Converted heatmap data:`, heatmapData.slice(0, 3)); // Show first 3 points
       
       // Update the heatmap data
       window.popularAreasHeatmap.setData(heatmapData);
