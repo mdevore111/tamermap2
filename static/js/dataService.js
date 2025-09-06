@@ -230,6 +230,7 @@ class DataService {
         this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
         this.requestQueue = [];
         this.isLoading = false;
+        if (window.__TM_DEBUG__) console.log('[dataService] constructed');
     }
 
     /**
@@ -268,6 +269,7 @@ class DataService {
             params.append('include_events', includeEvents);
             params.append('days_ahead', daysAhead);
 
+            if (window.__TM_DEBUG__) console.log('[dataService] fetch /api/map-data', Object.fromEntries(params.entries()));
             const response = await fetch(`/api/map-data?${params.toString()}`);
             
             if (!response.ok) {
@@ -275,6 +277,7 @@ class DataService {
             }
 
             const data = await response.json();
+            if (window.__TM_DEBUG__) console.log('[dataService] map-data response counts', { retailers: (data.retailers||[]).length, events: (data.events||[]).length });
             
             // Cache the result
             this.cache.set(cacheKey, {
@@ -316,6 +319,7 @@ class DataService {
             
             params.append('fields_only', fieldsOnly);
 
+            if (window.__TM_DEBUG__) console.log('[dataService] fetch /api/retailers', Object.fromEntries(params.entries()));
             const response = await fetch(`/api/retailers?${params.toString()}`);
             
             if (!response.ok) {
@@ -323,6 +327,7 @@ class DataService {
             }
 
             const data = await response.json();
+            if (window.__TM_DEBUG__) console.log('[dataService] retailers response count', (data.retailers||data||[]).length);
             
             // Cache the result
             this.cache.set(cacheKey, {
@@ -364,6 +369,7 @@ class DataService {
             
             params.append('days_ahead', daysAhead);
 
+            if (window.__TM_DEBUG__) console.log('[dataService] fetch /api/events', Object.fromEntries(params.entries()));
             const response = await fetch(`/api/events?${params.toString()}`);
             
             if (!response.ok) {
@@ -371,6 +377,7 @@ class DataService {
             }
 
             const data = await response.json();
+            if (window.__TM_DEBUG__) console.log('[dataService] events response count', (data.events||data||[]).length);
             
             // Cache the result
             this.cache.set(cacheKey, {

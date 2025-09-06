@@ -509,6 +509,16 @@ function refreshHeatmapData(days) {
   // Set up viewport change listeners for progressive loading
   setupMapEventListeners();
 
+  // Early data load with safe fallback bounds (do not wait on timers)
+  try {
+    const b = dataService.getMapBounds(window.map);
+    const fb = b || { north: window.userCoords.lat + 0.25, south: window.userCoords.lat - 0.25, east: window.userCoords.lng + 0.25, west: window.userCoords.lng - 0.25 };
+    console.log('[map-init] Early data load with bounds:', b || fb);
+    loadOptimizedMapData();
+  } catch (e) {
+    console.warn('[map-init] Early data load failed to start:', e);
+  }
+
   // Wait for map to be properly initialized before loading data
   // Use a more reliable approach than the 'idle' event
   setTimeout(() => {

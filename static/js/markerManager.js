@@ -33,6 +33,7 @@ export class MarkerManager {
         
         // Bind map events
         this.bindMapEvents();
+        if (window.__TM_DEBUG__) console.log('[markerManager] constructed');
     }
     
     bindMapEvents() {
@@ -122,7 +123,7 @@ export class MarkerManager {
      * Load retailer data and create markers progressively
      */
     async loadRetailers(retailers, append = false) {
-
+        if (window.__TM_DEBUG__) console.log('[markerManager] loadRetailers called with', Array.isArray(retailers)? retailers.length : retailers);
         
         if (append) {
             // Append to existing retailers
@@ -143,12 +144,14 @@ export class MarkerManager {
         
         // Update visible markers with force to ensure first render works
         this.updateVisibleMarkers({ force: true });
+        if (window.__TM_DEBUG__) console.log('[markerManager] retailers loaded, cache size', this.markerCache.size);
     }
     
     /**
      * Load event data and create markers progressively
      */
     async loadEvents(events, append = false) {
+        if (window.__TM_DEBUG__) console.log('[markerManager] loadEvents called with', Array.isArray(events)? events.length : events);
         if (append) {
             // Append to existing events
             this.allEvents = [...(this.allEvents || []), ...(events || [])];
@@ -166,6 +169,7 @@ export class MarkerManager {
         
         // Update visible markers with force to ensure first render works
         this.updateVisibleMarkers({ force: true });
+        if (window.__TM_DEBUG__) console.log('[markerManager] events loaded, cache size', this.markerCache.size);
     }
     
     /**
