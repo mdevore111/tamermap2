@@ -1,6 +1,9 @@
-// ==== static/js/map-init.js ====
+// ==== static/js/map-init-v2.js ====
 // Initializes the Google Map, handles geolocation, marker creation,
 // data fetching, heatmaps, and orchestrates filtering.
+
+console.error('[map-init-v2] ===== FILE STARTING TO PARSE =====');
+window.__V2_LOADED__ = true;
 
 // Entry point called by Google Maps API - expose to global scope immediately
 function initApp() {
