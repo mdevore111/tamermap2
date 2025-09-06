@@ -577,6 +577,9 @@ function refreshHeatmapData(days) {
 
 }
 
+// Expose for map-ui slider handler
+window.refreshHeatmapData = refreshHeatmapData;
+
 /**
  * Load optimized map data using the new system
  */
@@ -604,7 +607,7 @@ async function loadOptimizedMapData() {
     
     // Load combined data in a single request
     console.log('[map-init] Fetching map data with bounds:', effectiveBounds);
-    const mapData = await dataService.loadMapData(effectiveBounds, {
+    let mapData = await dataService.loadMapData(effectiveBounds, {
       includeEvents: true,
       daysAhead: 30
     });
@@ -613,6 +616,16 @@ async function loadOptimizedMapData() {
       retailers: mapData && mapData.retailers ? mapData.retailers.length : -1,
       events: mapData && mapData.events ? mapData.events.length : -1
     });
+
+    // Fallback: if zero results, try without bounds once
+    if ((!mapData.retailers || mapData.retailers.length === 0) && (!mapData.events || mapData.events.length === 0)) {
+      console.warn('[map-init] Empty map-data within bounds; retrying without bounds');
+      mapData = await dataService.loadMapData(null, { includeEvents: true, daysAhead: 30, forceRefresh: true });
+      console.log('[map-init] Fallback map-data counts:', {
+        retailers: mapData && mapData.retailers ? mapData.retailers.length : -1,
+        events: mapData && mapData.events ? mapData.events.length : -1
+      });
+    }
     
 
     

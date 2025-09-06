@@ -453,16 +453,12 @@ export class MarkerManager {
     }
     
     shouldShowRetailer(marker, filters) {
-        // Check if marker is enabled using the existing 'enabled' field
-        const isEnabled = Boolean(marker.retailer_data?.enabled); // Convert to proper boolean
-        
-        // Hide markers that are disabled (enabled = 0 or false)
-        if (!isEnabled) {
+        // Respect explicit disables only; default to visible when undefined
+        const enabledRaw = marker.retailer_data?.enabled;
+        const explicitlyDisabled = (enabledRaw === false || enabledRaw === 0 || enabledRaw === '0');
+        if (explicitlyDisabled) {
             if (window.__TM_DEBUG__) {
-                console.log('Hiding disabled marker:', {
-                    retailer: marker.retailer_data?.retailer || marker.retailer_name,
-                    enabled: isEnabled
-                });
+                console.log('[markerManager] Hiding explicitly disabled marker', marker.retailer_data?.retailer || marker.retailer_name);
             }
             return false;
         }
