@@ -263,4 +263,67 @@
   background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   pointer-events: none;
+}
+
+/* Custom Range Slider Styling - Force blue progress bar for both sliders */
+.custom-range-slider {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 6px !important;
+  border-radius: 3px !important;
+  background: #dee2e6 !important;
+  outline: none !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s !important;
+}
+
+.custom-range-slider:hover {
+  opacity: 1 !important;
+}
+
+.custom-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  background: #0d6efd !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+.custom-range-slider::-moz-range-thumb {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  background: #0d6efd !important;
+  cursor: pointer !important;
+  border: none !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Blue progress bar for WebKit browsers */
+.custom-range-slider::-webkit-slider-runnable-track {
+  width: 100% !important;
+  height: 6px !important;
+  cursor: pointer !important;
+  background: linear-gradient(to right, #0d6efd 0%, #0d6efd var(--progress, 50%), #dee2e6 var(--progress, 50%), #dee2e6 100%) !important;
+  border-radius: 3px !important;
+  border: none !important;
+}
+
+/* Blue progress bar for Firefox */
+.custom-range-slider::-moz-range-track {
+  width: 100% !important;
+  height: 6px !important;
+  cursor: pointer !important;
+  background: #dee2e6 !important;
+  border-radius: 3px !important;
+  border: none !important;
+}
+
+.custom-range-slider::-moz-range-progress {
+  background: #0d6efd !important;
+  height: 6px !important;
+  border-radius: 3px !important;
 } 

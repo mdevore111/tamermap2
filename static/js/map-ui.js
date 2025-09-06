@@ -170,10 +170,23 @@ function initUI() {
   
   // Handle slider input events
   if (DB.eventDaysSlider && DB.eventDaysValue) {
+    // Function to update slider progress bar (reuse from above)
+    function updateSliderProgress(slider) {
+      const value = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.setProperty('--progress', `${value}%`);
+    }
+    
+    // Initialize progress bar
+    updateSliderProgress(DB.eventDaysSlider);
+    
     DB.eventDaysSlider.addEventListener('input', () => {
       const days = DB.eventDaysSlider.value;
       DB.eventDaysValue.textContent = `${days} days`;
       localStorage.setItem('event_days_slider', days);
+      
+      // Update progress bar
+      updateSliderProgress(DB.eventDaysSlider);
+      
       window.applyFilters();
     });
   }
@@ -182,10 +195,22 @@ function initUI() {
   if (DB.heatmapDaysSlider && DB.heatmapDaysValue) {
     let sliderDebounceTimer;
     
+    // Function to update slider progress bar
+    function updateSliderProgress(slider) {
+      const value = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.setProperty('--progress', `${value}%`);
+    }
+    
+    // Initialize progress bar
+    updateSliderProgress(DB.heatmapDaysSlider);
+    
     DB.heatmapDaysSlider.addEventListener('input', () => {
       const days = DB.heatmapDaysSlider.value;
       DB.heatmapDaysValue.textContent = `${days} days`;
       localStorage.setItem('heatmap_days_slider', days);
+      
+      // Update progress bar
+      updateSliderProgress(DB.heatmapDaysSlider);
       
       // Debounce the API call to prevent rate limiting
       clearTimeout(sliderDebounceTimer);
