@@ -101,8 +101,8 @@ def track_pin_click():
 
 
 @map_bp.route("/api/pin-heatmap-data", methods=["GET"])
-@cache.cached(timeout=300, query_string=True)  # cache with query parameters
-@limiter.limit("30/minute")
+@cache.cached(timeout=60, query_string=True)  # Reduced cache timeout for testing
+@limiter.limit("60/minute")  # Increased for testing
 def get_pin_heatmap_data():
     """
     Retrieve aggregated pin click data for heatmap rendering.
@@ -122,6 +122,9 @@ def get_pin_heatmap_data():
     # Get days parameter, default to 60, clamp between 1-60
     days = max(1, min(60, int(request.args.get('days', 60))))
     recent_cutoff = datetime.utcnow() - timedelta(days=days)
+    
+    # Debug logging  
+    print(f"[DEBUG] pin-heatmap-data called with days={days}, cutoff={recent_cutoff}")
 
     # Use time-filtered PinInteraction data to respect the days parameter
     data = db.session.query(
@@ -136,6 +139,7 @@ def get_pin_heatmap_data():
     ).group_by("lat", "lng").all()
 
     heatmap = [[lat, lng, weight] for lat, lng, weight in data]
+    print(f"[DEBUG] pin-heatmap-data returning {len(heatmap)} points for {days} days")
     return jsonify(heatmap)
 
 

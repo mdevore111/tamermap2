@@ -187,7 +187,7 @@ function initUI() {
       clearTimeout(sliderDebounceTimer);
       sliderDebounceTimer = setTimeout(() => {
         refreshHeatmapData(days);
-      }, 500); // 500ms debounce
+      }, 1000); // 1000ms debounce to reduce rate limiting
     });
   }
 
