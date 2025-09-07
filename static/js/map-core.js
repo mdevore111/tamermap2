@@ -2,34 +2,32 @@
 // Initializes the Google Map, handles geolocation, marker creation,
 // data fetching, heatmaps, and orchestrates filtering.
 
-console.error('[map-core] ===== NEW FILE STARTING TO PARSE =====');
 window.__V2_LOADED__ = true;
 
 // Entry point called by Google Maps API - expose to global scope immediately
 function initApp() {
-  console.log('[map-init] initApp start');
+  if (window.__TM_DEBUG__) console.log('[map-init] initApp start');
   // Ensure userCoords is always set
   if (!window.userCoords) {
     window.userCoords = DEFAULT_COORDS;
   }
-  console.log('[map-init] userCoords initial', window.userCoords);
   
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => {
         window.userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        console.log('[map-init] geolocation success');
+        if (window.__TM_DEBUG__) console.log('[map-init] geolocation success');
         renderMap();
       },
       () => { 
         // Fallback to default coordinates if geolocation fails
         window.userCoords = DEFAULT_COORDS;
-        console.warn('[map-init] geolocation failed, using default coords');
+        if (window.__TM_DEBUG__) console.warn('[map-init] geolocation failed, using default coords');
         renderMap(); 
       }
     );
   } else { 
-    console.log('[map-init] geolocation not available, rendering map');
+    if (window.__TM_DEBUG__) console.log('[map-init] geolocation not available, rendering map');
     renderMap(); 
   }
 }
@@ -38,7 +36,7 @@ function initApp() {
 // Change: expose as initAppImpl so maps.html wrapper can call it when ready
 window.initAppImpl = initApp;
 // updateFilterUI will be defined later in this file
-console.log('[map-init-v2] FILE LOADING - initAppImpl exposed');
+if (window.__TM_DEBUG__) console.log('[map-init-v2] FILE LOADING - initAppImpl exposed');
 
 // Define global variables before imports
 window.is_pro = window.is_pro || false;
@@ -66,7 +64,7 @@ function updateFilterUI(filters) {
 
 // Bind globally before imports
 window.updateFilterUI = updateFilterUI;
-console.log('[map-core] updateFilterUI bound globally before imports');
+if (window.__TM_DEBUG__) console.log('[map-core] updateFilterUI bound globally before imports');
 
 // Side-effect imports
 import './map-utils.js';   // getPinColor, formatHours
@@ -112,7 +110,7 @@ let loadingOverlay;
 
 // Create the map, markers, heatmap, and listeners
 function renderMap() {
-  console.log('[map-init] renderMap start');
+  if (window.__TM_DEBUG__) console.log('[map-init] renderMap start');
   // Initialize map
   window.map = new google.maps.Map(
     document.getElementById('map'),
@@ -137,7 +135,7 @@ function renderMap() {
       ]
     }
   );
-  console.log('[map-init] map object created');
+  if (window.__TM_DEBUG__) console.log('[map-init] map object created');
 
   // Auto‑center flag
   let autoCenter = true;
@@ -146,31 +144,31 @@ function renderMap() {
   try {
     if (!markerManager) {
       markerManager = new MarkerManager(window.map);
-      console.log('[map-init] MarkerManager constructed early');
+      if (window.__TM_DEBUG__) console.log('[map-init] MarkerManager constructed early');
     }
     if (!dataService) {
       dataService = new DataService();
-      console.log('[map-init] DataService constructed early');
+      if (window.__TM_DEBUG__) console.log('[map-init] DataService constructed early');
     }
     if (!loadingOverlay) {
       initLoadingOverlay();
-      console.log('[map-init] loading overlay initialized (early)');
+      if (window.__TM_DEBUG__) console.log('[map-init] loading overlay initialized (early)');
     }
     if (window.initUI) {
       window.initUI();
-      console.log('[map-init] window.initUI called (early)');
+      if (window.__TM_DEBUG__) console.log('[map-init] window.initUI called (early)');
     }
     // Kick off data load immediately
-    console.log('[map-init] About to call loadOptimizedMapData');
+    if (window.__TM_DEBUG__) console.log('[map-init] About to call loadOptimizedMapData');
     loadOptimizedMapData().catch(err => {
       console.error('[map-init] loadOptimizedMapData failed:', err);
     });
-    console.log('[map-init] loadOptimizedMapData triggered (early)');
+    if (window.__TM_DEBUG__) console.log('[map-init] loadOptimizedMapData triggered (early)');
   } catch (e) {
-    console.warn('[map-init] Early wiring/load failed:', e);
+    if (window.__TM_DEBUG__) console.warn('[map-init] Early wiring/load failed:', e);
   }
 
-  console.log('[map-init] About to create user location marker');
+  if (window.__TM_DEBUG__) console.log('[map-init] About to create user location marker');
 
   // User location marker
   const userLocationMarker = new google.maps.Marker({
@@ -188,10 +186,10 @@ function renderMap() {
     zIndex: Z_INDICES.ui
   });
 
-  console.log('[map-init] User location marker created');
+  if (window.__TM_DEBUG__) console.log('[map-init] User location marker created');
 
   // Continuously update user location with mobile-friendly settings
-  console.log('[map-init] Setting up continuous user location tracking');
+  if (window.__TM_DEBUG__) console.log('[map-init] Setting up continuous user location tracking');
   let lastLocationUpdate = 0;
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
@@ -223,7 +221,7 @@ function renderMap() {
       err => { 
         // Only log timeout errors in debug mode, they're non-critical
         if (window.__TM_DEBUG__ && err.code !== 3) {
-          console.warn('Geolocation error (non-critical):', err.message);
+          if (window.__TM_DEBUG__) console.warn('Geolocation error (non-critical):', err.message);
         }
       },
       { 
@@ -234,7 +232,7 @@ function renderMap() {
     );
   }
 
-  console.log('[map-init] Geolocation watch setup complete');
+  if (window.__TM_DEBUG__) console.log('[map-init] Geolocation watch setup complete');
 
   // Listen for manual interactions to disable auto-centering and track interaction time
   window.map.addListener('dragstart', () => { 
@@ -249,10 +247,10 @@ function renderMap() {
     window.lastMapInteraction = Date.now();
   });
 
-  console.log('[map-init] Map interaction listeners setup complete');
+  if (window.__TM_DEBUG__) console.log('[map-init] Map interaction listeners setup complete');
 
   // "My Location" button
-  console.log('[map-init] Creating My Location button');
+  if (window.__TM_DEBUG__) console.log('[map-init] Creating My Location button');
   const myLocationButton = document.createElement('button');
   myLocationButton.innerHTML = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -270,10 +268,10 @@ function renderMap() {
   });
   window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);
 
-  console.log('[map-init] My Location button added to map controls');
+  if (window.__TM_DEBUG__) console.log('[map-init] My Location button added to map controls');
 
   // Initialize InfoWindow with better positioning behavior
-  console.log('[map-init] Creating InfoWindow');
+  if (window.__TM_DEBUG__) console.log('[map-init] Creating InfoWindow');
   window.infoWindow = new google.maps.InfoWindow({
     disableAutoPan: false, // Allow Google Maps to handle positioning
     pixelOffset: new google.maps.Size(0, -5),
@@ -329,10 +327,10 @@ function renderMap() {
     }
   });
 
-  console.log('[map-init] InfoWindow setup complete');
+  if (window.__TM_DEBUG__) console.log('[map-init] InfoWindow setup complete');
 
   // Fetch and build Popular Areas heatmap layer (for display)
-  console.log('[map-init] About to fetch heatmap data');
+  if (window.__TM_DEBUG__) console.log('[map-init] About to fetch heatmap data');
   fetch(ENDPOINTS.popularAreas)
     .then(res => { if (!res.ok) throw new Error(`Heatmap fetch failed: ${res.status}`); return res.json(); })
     .then(points => {
@@ -387,12 +385,12 @@ function renderMap() {
       bsToast.show();
     });
 
-  console.log('[map-init] Heatmap fetch initiated, continuing with renderMap');
+  if (window.__TM_DEBUG__) console.log('[map-init] Heatmap fetch initiated, continuing with renderMap');
 
   // Set up viewport change listeners for progressive loading - MUST be in renderMap()
-  console.log('[renderMap] About to call setupMapEventListeners');
+  if (window.__TM_DEBUG__) console.log('[renderMap] About to call setupMapEventListeners');
   setupMapEventListeners();
-  console.log('[renderMap] setupMapEventListeners call completed');
+  if (window.__TM_DEBUG__) console.log('[renderMap] setupMapEventListeners call completed');
 }
 
 /**
@@ -400,7 +398,7 @@ function renderMap() {
  */
 function refreshHeatmapData(days) {
   if (!window.popularAreasHeatmap) {
-    console.warn('Heatmap not initialized yet');
+    if (window.__TM_DEBUG__) console.warn('Heatmap not initialized yet');
     return;
   }
 
@@ -566,48 +564,48 @@ function refreshHeatmapData(days) {
   
   // Initialize loading overlay
   initLoadingOverlay();
-  console.log('[map-init] loading overlay initialized');
+  if (window.__TM_DEBUG__) console.log('[map-init] loading overlay initialized');
 
   // Initialize UI components (legend, search, filters)
-  console.log('[map-init] About to check/call window.initUI');
+    if (window.__TM_DEBUG__) console.log('[map-init] About to check/call window.initUI');
   if (window.initUI) {
-    console.log('[map-init] window.initUI found, calling it');
+    if (window.__TM_DEBUG__) console.log('[map-init] window.initUI found, calling it');
     window.initUI();
-    console.log('[map-init] window.initUI called');
+    if (window.__TM_DEBUG__) console.log('[map-init] window.initUI called');
   } else {
     console.error('[map-init] window.initUI not found');
   }
   
       // Set up filter controls to wire up checkbox event listeners
     if (window.__TM_DEBUG__) {
-        console.log('Setting up filter controls...');
+        if (window.__TM_DEBUG__) console.log('Setting up filter controls...');
     }
   setupFilterControls();
-  console.log('[map-init] setupFilterControls called');
+  if (window.__TM_DEBUG__) console.log('[map-init] setupFilterControls called');
   
   if (window.__TM_DEBUG__) {
-        console.log('Filter controls setup complete');
+        if (window.__TM_DEBUG__) console.log('Filter controls setup complete');
     }
     
-  console.log('[renderMap] Reached end of renderMap function, about to setup event listeners');
+  if (window.__TM_DEBUG__) console.log('[renderMap] Reached end of renderMap function, about to setup event listeners');
 
   
   // Set up proper stacking immediately and on idle
   setupMapStacking();
 
   // Set up viewport change listeners for progressive loading
-  console.log('[renderMap] About to call setupMapEventListeners');
+  if (window.__TM_DEBUG__) console.log('[renderMap] About to call setupMapEventListeners');
   setupMapEventListeners();
-  console.log('[renderMap] setupMapEventListeners call completed');
+  if (window.__TM_DEBUG__) console.log('[renderMap] setupMapEventListeners call completed');
 
   // Early data load with safe fallback bounds (do not wait on timers)
   try {
     const b = dataService.getMapBounds(window.map);
     const fb = b || { north: window.userCoords.lat + 0.25, south: window.userCoords.lat - 0.25, east: window.userCoords.lng + 0.25, west: window.userCoords.lng - 0.25 };
-    console.log('[map-init] Early data load with bounds:', b || fb);
+    if (window.__TM_DEBUG__) console.log('[map-init] Early data load with bounds:', b || fb);
     loadOptimizedMapData();
   } catch (e) {
-    console.warn('[map-init] Early data load failed to start:', e);
+    if (window.__TM_DEBUG__) console.warn('[map-init] Early data load failed to start:', e);
   }
 
   // Wait for map to be properly initialized before loading data
@@ -616,7 +614,7 @@ function refreshHeatmapData(days) {
     // Ensure map is properly centered and zoomed before loading data
     if (window.userCoords && window.map) {
       if (window.__TM_DEBUG__) {
-        console.log('Initializing map with user coordinates:', window.userCoords);
+        if (window.__TM_DEBUG__) console.log('Initializing map with user coordinates:', window.userCoords);
       }
       
       // Center the map on user location (keep default zoom from MAP_SETTINGS)
@@ -624,7 +622,7 @@ function refreshHeatmapData(days) {
       // Don't change zoom - let it stay at the default from MAP_SETTINGS
       
       if (window.__TM_DEBUG__) {
-        console.log('Map centered and zoomed, waiting for settlement...');
+        if (window.__TM_DEBUG__) console.log('Map centered and zoomed, waiting for settlement...');
       }
       
       // Wait for the map to settle and get proper bounds, then load data
@@ -633,12 +631,12 @@ function refreshHeatmapData(days) {
           // Get the actual map bounds after it has settled
           const actualBounds = dataService.getMapBounds(window.map);
           if (window.__TM_DEBUG__) {
-            console.log('Map settled, actual bounds:', actualBounds);
+            if (window.__TM_DEBUG__) console.log('Map settled, actual bounds:', actualBounds);
           }
           
           // If bounds are still not available, use a fallback approach
           if (!actualBounds) {
-            console.warn('Map bounds not available, using fallback bounds around user location');
+            if (window.__TM_DEBUG__) console.warn('Map bounds not available, using fallback bounds around user location');
             const fallbackBounds = {
               north: window.userCoords.lat + 0.1,
               south: window.userCoords.lat - 0.1,
@@ -646,7 +644,7 @@ function refreshHeatmapData(days) {
               west: window.userCoords.lng - 0.1
             };
             if (window.__TM_DEBUG__) {
-              console.log('Using fallback bounds:', fallbackBounds);
+              if (window.__TM_DEBUG__) console.log('Using fallback bounds:', fallbackBounds);
             }
             // Temporarily override getMapBounds to return fallback bounds
             const originalGetMapBounds = dataService.getMapBounds;
@@ -676,13 +674,13 @@ window.refreshHeatmapData = refreshHeatmapData;
  */
 async function loadOptimizedMapData() {
   try {
-    console.log('[map-init] loadOptimizedMapData start');
+    if (window.__TM_DEBUG__) console.log('[map-init] loadOptimizedMapData start');
     showLoadingOverlay();
     
     // Get initial viewport bounds for filtering
     const bounds = dataService.getMapBounds(window.map);
     
-    console.log('[map-init] Loading map data with bounds:', bounds);
+    if (window.__TM_DEBUG__) console.log('[map-init] Loading map data with bounds:', bounds);
     
     // Ensure we have bounds; if not, synthesize fallback around user coords
     let effectiveBounds = bounds;
@@ -694,28 +692,28 @@ async function loadOptimizedMapData() {
         east:  uc.lng + 0.25,
         west:  uc.lng - 0.25
       };
-      console.warn('[map-init] No bounds yet; using fallback:', effectiveBounds);
+      if (window.__TM_DEBUG__) console.warn('[map-init] No bounds yet; using fallback:', effectiveBounds);
     }
     
 
     
     // Load combined data in a single request
-    console.log('[map-init] Fetching map data with bounds:', effectiveBounds);
+    if (window.__TM_DEBUG__) console.log('[map-init] Fetching map data with bounds:', effectiveBounds);
     let mapData = await dataService.loadMapData(effectiveBounds, {
       includeEvents: true,
       daysAhead: 30
     });
     
-    console.log('[map-init] Received map data counts:', {
+    if (window.__TM_DEBUG__) console.log('[map-init] Received map data counts:', {
       retailers: mapData && mapData.retailers ? mapData.retailers.length : -1,
       events: mapData && mapData.events ? mapData.events.length : -1
     });
 
     // Fallback: if zero results, try without bounds once
     if ((!mapData.retailers || mapData.retailers.length === 0) && (!mapData.events || mapData.events.length === 0)) {
-      console.warn('[map-init] Empty map-data within bounds; retrying without bounds');
+      if (window.__TM_DEBUG__) console.warn('[map-init] Empty map-data within bounds; retrying without bounds');
       mapData = await dataService.loadMapData(null, { includeEvents: true, daysAhead: 30, forceRefresh: true });
-      console.log('[map-init] Fallback map-data counts:', {
+      if (window.__TM_DEBUG__) console.log('[map-init] Fallback map-data counts:', {
         retailers: mapData && mapData.retailers ? mapData.retailers.length : -1,
         events: mapData && mapData.events ? mapData.events.length : -1
       });
@@ -811,8 +809,8 @@ function setupMapStacking() {
  * Set up optimized map event listeners
  */
 function setupMapEventListeners() {
-    console.log('[setupMapEventListeners] Setting up map idle listener');
-    console.log('[setupMapEventListeners] window.map exists:', !!window.map);
+    if (window.__TM_DEBUG__) console.log('[setupMapEventListeners] Setting up map idle listener');
+    if (window.__TM_DEBUG__) console.log('[setupMapEventListeners] window.map exists:', !!window.map);
     if (!window.map) {
         console.error('[setupMapEventListeners] ERROR: window.map is not defined!');
         return;
@@ -823,14 +821,14 @@ function setupMapEventListeners() {
     // Idle event for loading new data when user stops moving (debounced)
     let idleDebounceTimer;
     window.map.addListener('idle', () => {
-        console.log('[map idle event] Map idle event fired, starting debounce timer');
+        if (window.__TM_DEBUG__) console.log('[map idle event] Map idle event fired, starting debounce timer');
         clearTimeout(idleDebounceTimer);
         idleDebounceTimer = setTimeout(() => {
-            console.log('[map idle event] Debounce timer expired, calling handleMapIdle');
+            if (window.__TM_DEBUG__) console.log('[map idle event] Debounce timer expired, calling handleMapIdle');
             handleMapIdle();
         }, 300); // 300ms debounce for map idle
     });
-    console.log('[setupMapEventListeners] Map idle listener setup complete');
+    if (window.__TM_DEBUG__) console.log('[setupMapEventListeners] Map idle listener setup complete');
 }
 
 /**
@@ -842,9 +840,9 @@ async function handleMapIdle() {
 
   // Only fetch if viewport really changed significantly
   const hasChanged = dataService.hasViewportChanged(bounds, 0.02);
-  console.log('[handleMapIdle] called; hasChanged=', hasChanged, 'bounds=', bounds);
+  if (window.__TM_DEBUG__) console.log('[handleMapIdle] called; hasChanged=', hasChanged, 'bounds=', bounds);
   if (!hasChanged) {
-    console.log('[handleMapIdle] No significant change, skipping fetch');
+    if (window.__TM_DEBUG__) console.log('[handleMapIdle] No significant change, skipping fetch');
     updateMapUI();
     return;
   }
@@ -857,14 +855,14 @@ async function handleMapIdle() {
     const currentLatRange = Math.abs(currentBounds.north - currentBounds.south);
     const currentLngRange = Math.abs(currentBounds.east - currentBounds.west);
     const isSmaller = latRange <= currentLatRange && lngRange <= currentLngRange;
-    console.log('[handleMapIdle] Viewport comparison:', {
+    if (window.__TM_DEBUG__) console.log('[handleMapIdle] Viewport comparison:', {
       isSmaller, 
       latRange, currentLatRange, 
       lngRange, currentLngRange,
       markerCacheSize: markerManager.markerCache.size
     });
     if (isSmaller && markerManager.markerCache.size > 200) {
-      console.log('[handleMapIdle] Skipping fetch - viewport smaller and enough markers');
+      if (window.__TM_DEBUG__) console.log('[handleMapIdle] Skipping fetch - viewport smaller and enough markers');
       updateMapUI();
       return;
     }
@@ -872,7 +870,7 @@ async function handleMapIdle() {
 
   // Only load new data if we don't have it already
   try {
-    console.log('[handleMapIdle] Proceeding with data fetch for expanded viewport');
+    if (window.__TM_DEBUG__) console.log('[handleMapIdle] Proceeding with data fetch for expanded viewport');
     const daysAhead = parseInt(document.getElementById('event-days-slider')?.value, 10) || 30;
 
     // Fetch fresh data for the new viewport
@@ -918,7 +916,7 @@ function debounce(func, wait) {
  * Setup filter controls and bind event listeners
  */
 function setupFilterControls() {
-    console.log('Setting up filter controls...');
+    if (window.__TM_DEBUG__) console.log('Setting up filter controls...');
     
     // Get filter elements using the correct IDs from the HTML
     const kioskToggle = document.getElementById('filter-kiosk');
@@ -929,7 +927,7 @@ function setupFilterControls() {
     const newToggle = document.getElementById('filter-new');
     const popularToggle = document.getElementById('filter-popular-areas');
     
-    console.log('Filter elements found:', {
+    if (window.__TM_DEBUG__) console.log('Filter elements found:', {
         kioskToggle: !!kioskToggle,
         retailToggle: !!retailToggle,
         indieToggle: !!indieToggle,
