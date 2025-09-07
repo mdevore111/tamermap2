@@ -151,14 +151,19 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
 </script>
 <script type="module" src="{{ url_for('static', filename='js/map-core.js') }}" 
        onerror="console.error('Failed to load map-core.js')" 
-       onload="console.log('map-core.js loaded successfully')"></script>
+       onload="console.log('map-core.js loaded successfully'); loadGoogleMapsAPI();"></script>
 <script type="module" src="{{ url_for('static', filename='js/routePlanner.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/cacheManager.js') }}"></script>
 
-<!-- Load Google Maps API with callback -->
-<script
-  src="https://maps.googleapis.com/maps/api/js?key={{google_api_key}}&libraries=visualization,places,geometry&loading=async&callback=initApp"
-  async>
+<!-- Load Google Maps API only after our module is ready -->
+<script>
+  function loadGoogleMapsAPI() {
+    console.log('[maps.html] Loading Google Maps API after module ready');
+    const script = document.createElement('script');
+    script.src = 'https://maps.googleapis.com/maps/api/js?key={{google_api_key}}&libraries=visualization,places,geometry&loading=async&callback=initApp';
+    script.async = true;
+    document.head.appendChild(script);
+  }
 </script>
 
 <!-- Add pinch-to-zoom control -->
