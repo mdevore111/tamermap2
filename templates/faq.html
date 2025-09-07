@@ -473,17 +473,10 @@
                         <div class="card-body text-center">
                             <h4 class="h5 mb-3">Can't Find Your Answer?</h4>
                             <p class="mb-3">Our support team is here to help with any questions about TamerMap, Pokemon card hunting, or technical issues.</p>
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <a href="{{ url_for('public.send_message', type='contact') }}" class="btn btn-outline-primary w-100">
-                                        <i class="fas fa-envelope me-2"></i>Contact Support
-                                    </a>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-outline-success w-100">
-                                        <i class="fas fa-crown me-2"></i>Pro Inquiries
-                                    </a>
-                                </div>
+                            <div class="text-center">
+                                <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-envelope me-2"></i>Contact Support
+                                </a>
                             </div>
                         </div>
                     </div>
