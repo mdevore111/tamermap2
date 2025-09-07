@@ -14,6 +14,18 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
   <!-- Load map-specific CSS styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/maps.css') }}">
   
+  <!-- Preload critical map pin images for better performance -->
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/safeway.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/qfc.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/fred-meyer.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/card-shop.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/best-buy.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/target.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/walmart.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/free.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/event.png') }}" as="image">
+  <link rel="preload" href="{{ url_for('static', filename='map-pins/other.png') }}" as="image">
+  
   <!-- Schema.org LocalBusiness markup for Pokemon card hunting -->
   <script type="application/ld+json">
   {
