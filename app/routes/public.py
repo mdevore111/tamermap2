@@ -877,10 +877,10 @@ def how_to_manage_pro_subscription():
     return render_template("how-to-manage-pro-subscription.html")
 
 
-@public_bp.route("/how-to-contact-support")
-def how_to_contact_support():
-    """Render the contact support guide."""
-    return render_template("how-to-contact-support.html")
+@public_bp.route("/how-to-get-help")
+def how_to_get_help():
+    """Render the comprehensive help and support guide."""
+    return render_template("how-to-get-help.html")
 
 
 @public_bp.route("/sitemap.xml")
@@ -926,7 +926,7 @@ def sitemap_xml():
         ('/how-to-personal-notes', '0.9', 'weekly'),
         ('/how-to-update-account', '0.8', 'weekly'),
         ('/how-to-manage-pro-subscription', '0.8', 'weekly'),
-        ('/how-to-contact-support', '0.8', 'weekly'),
+        ('/how-to-get-help', '0.8', 'weekly'),
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),
