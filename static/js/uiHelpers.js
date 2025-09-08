@@ -179,7 +179,7 @@ export function renderRetailerInfoWindow(retailer, isPro) {
         <button onclick="editNote(${retailer.id})" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#007bff; color:white; border:none; border-radius:2px; cursor:pointer;">Edit</button>
       </div>` : 
       `<div style="margin-top:12px; font-size:12px;">
-        <button onclick="addNote(${retailer.id})" style="padding:4px 8px; font-size:10px; background:#28a745; color:white; border:none; border-radius:2px; cursor:pointer;">Add Note</button>
+        <button onclick="addNote(${retailer.id})" style="padding:4px 8px; font-size:10px; background:#28a745; color:white; border:none; border-radius:2px; cursor:pointer;">Add Personal Note</button>
       </div>`) :
     `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #ffc107;">
       <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#ffc107;">Personal Notes (Pro)</p>
@@ -222,9 +222,11 @@ export function renderEventInfoWindow(evt) {
 
 // User Notes Management Functions
 window.addNote = function(retailerId) {
-  // Check if user is Pro
-  const proSection = document.getElementById('pro-section');
-  const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : false;
+  // Check if user is Pro - use window.is_pro as fallback
+  const proSection = document.getElementById('pro-features-section');
+  const isPro = proSection ? 
+    proSection.getAttribute('data-is-pro') === 'true' : 
+    (window.is_pro === true);
   
   if (!isPro) {
     showProUpgradeToast();
@@ -235,9 +237,11 @@ window.addNote = function(retailerId) {
 };
 
 window.editNote = function(retailerId) {
-  // Check if user is Pro
-  const proSection = document.getElementById('pro-section');
-  const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : false;
+  // Check if user is Pro - use window.is_pro as fallback
+  const proSection = document.getElementById('pro-features-section');
+  const isPro = proSection ? 
+    proSection.getAttribute('data-is-pro') === 'true' : 
+    (window.is_pro === true);
   
   if (!isPro) {
     showProUpgradeToast();
