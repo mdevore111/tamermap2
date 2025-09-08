@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Manage Your TamerMap Pro Subscription - Complete Guide{% endblock %}
+
+{% block meta_description %}Learn how to manage your TamerMap Pro subscription, update billing information, change payment methods, and access your Stripe billing portal.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for comprehensive tutorial -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Manage Your TamerMap Pro Subscription",
+  "description": "Complete guide to managing your TamerMap Pro subscription and billing",
+  "image": "{{ url_for('static', filename='images/pro-subscription-tutorial.png', _external=True) }}",
+  "totalTime": "PT7M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "9.99"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Pro Account",
+      "description": "Active TamerMap Pro subscription"
+    },
+    {
+      "@type": "HowToSupply",
+      "name": "Payment Method",
+      "description": "Valid credit card or payment method"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "Stripe Billing Portal",
+      "description": "Secure billing management system"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Access Billing Portal",
+      "text": "Navigate to the Stripe billing portal"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Manage Subscription",
+      "text": "Update payment methods and billing information"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Review Changes",
+      "text": "Confirm all changes are correct"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">How to Manage Your TamerMap Pro Subscription</h1>
+        <p class="lead">Take control of your Pro subscription. Learn how to update billing information, change payment methods, and manage your membership through our secure Stripe billing portal.</p>
+      </div>
+
+      <!-- What You'll Learn -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> Access your billing portal</li>
+                <li><i class="fas fa-check text-success me-2"></i> Update payment methods</li>
+                <li><i class="fas fa-check text-success me-2"></i> Change billing information</li>
+                <li><i class="fas fa-check text-success me-2"></i> View subscription history</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> Download invoices</li>
+                <li><i class="fas fa-check text-success me-2"></i> Update subscription plan</li>
+                <li><i class="fas fa-check text-success me-2"></i> Cancel or pause subscription</li>
+                <li><i class="fas fa-check text-success me-2"></i> Troubleshoot billing issues</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pro Benefits Reminder -->
+      <div class="alert alert-info mb-4">
+        <h5><i class="fas fa-crown me-2"></i>Your Pro Benefits</h5>
+        <p class="mb-0">As a Pro subscriber, you have access to advanced features including Personal Notes, detailed heatmaps, priority support, and exclusive hunting tools. Keep your subscription active to maintain these benefits!</p>
+      </div>
+
+      <!-- Step 1: Access Billing Portal -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-credit-card me-2"></i>1. Accessing Your Billing Portal</h2>
+        </div>
+        <div class="card-body">
+          <p>To manage your Pro subscription, you'll need to access the secure Stripe billing portal:</p>
+          
+          <h3>Method 1: Through Your Account</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-user-circle text-primary me-2"></i>Account Menu</h4>
+              <ol>
+                <li>Log in to your TamerMap account</li>
+                <li>Click on your name in the top-right corner</li>
+                <li>Select "Account Settings" or "Profile"</li>
+                <li>Look for "Manage Subscription" or "Billing"</li>
+                <li>Click "Manage Your Membership and Billing"</li>
+              </ol>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-external-link-alt text-success me-2"></i>Direct Access</h4>
+              <ol>
+                <li>Go to the Stripe billing portal</li>
+                <li>Visit: <code>https://billing.stripe.com/p/login/</code></li>
+                <li>Enter your email address</li>
+                <li>Check your email for the login link</li>
+                <li>Click the link to access your portal</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="alert alert-warning">
+            <h5><i class="fas fa-shield-alt me-2"></i>Security Note</h5>
+            <p>The Stripe billing portal is secure and encrypted. You'll receive a login link via email to ensure only you can access your billing information. Never share this link with others.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Managing Payment Methods -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-credit-card me-2"></i>2. Managing Payment Methods</h2>
+        </div>
+        <div class="card-body">
+          <p>Keep your payment information up-to-date to ensure uninterrupted Pro access:</p>
+          
+          <h3>Adding a New Payment Method</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-plus-circle text-primary me-2"></i>Add New Card</h4>
+              <ol>
+                <li>In the billing portal, find "Payment Methods"</li>
+                <li>Click "Add Payment Method"</li>
+                <li>Enter your card details</li>
+                <li>Add billing address information</li>
+                <li>Click "Save" to add the card</li>
+              </ol>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-check-circle text-success me-2"></i>Verification</h4>
+              <ul>
+                <li>Card will be verified automatically</li>
+                <li>Look for verification confirmation</li>
+                <li>Test with a small transaction if needed</li>
+                <li>Set as default if desired</li>
+                <li>Remove old cards if no longer needed</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Updating Existing Payment Methods</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-edit text-primary me-2"></i>Modify Details</h4>
+              <ul>
+                <li><strong>Card Number:</strong> Update if card was replaced</li>
+                <li><strong>Expiration Date:</strong> Update when card expires</li>
+                <li><strong>CVV Code:</strong> Update security code</li>
+                <li><strong>Billing Address:</strong> Update if you moved</li>
+                <li><strong>Cardholder Name:</strong> Update if name changed</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-trash text-danger me-2"></i>Remove Cards</h4>
+              <ul>
+                <li><strong>Old Cards:</strong> Remove expired or unused cards</li>
+                <li><strong>Security:</strong> Remove cards you no longer use</li>
+                <li><strong>Cleanup:</strong> Keep only active payment methods</li>
+                <li><strong>Backup:</strong> Ensure you have at least one valid card</li>
+                <li><strong>Confirmation:</strong> Confirm removal before deleting</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle me-2"></i>Payment Security</h5>
+            <p>All payment information is processed securely through Stripe, a PCI-compliant payment processor. TamerMap never stores your full card details on our servers.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Billing Information -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-file-invoice me-2"></i>3. Managing Billing Information</h2>
+        </div>
+        <div class="card-body">
+          <p>Keep your billing details current for accurate invoicing and tax purposes:</p>
+          
+          <h3>Billing Address</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-map-marker-alt text-primary me-2"></i>Address Details</h4>
+              <ul>
+                <li><strong>Street Address:</strong> Your billing address</li>
+                <li><strong>City, State, ZIP:</strong> Complete location information</li>
+                <li><strong>Country:</strong> Your country of residence</li>
+                <li><strong>Phone Number:</strong> Contact number for billing</li>
+                <li><strong>Company Name:</strong> If billing to a business</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-edit text-success me-2"></i>Update Process</h4>
+              <ol>
+                <li>Find "Billing Information" section</li>
+                <li>Click "Edit" or "Update"</li>
+                <li>Make your changes</li>
+                <li>Verify all information is correct</li>
+                <li>Save your changes</li>
+              </ol>
+            </div>
+          </div>
+
+          <h3>Tax Information</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-receipt text-primary me-2"></i>Tax Details</h4>
+              <ul>
+                <li><strong>Tax ID:</strong> If applicable for business</li>
+                <li><strong>VAT Number:</strong> For international customers</li>
+                <li><strong>Tax Exempt:</strong> If you qualify for exemptions</li>
+                <li><strong>Resale Certificate:</strong> For business customers</li>
+                <li><strong>Tax Category:</strong> Personal vs business use</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-calculator text-success me-2"></i>Tax Benefits</h4>
+              <ul>
+                <li><strong>Accurate Invoicing:</strong> Proper tax calculations</li>
+                <li><strong>Deductions:</strong> Business expense tracking</li>
+                <li><strong>Compliance:</strong> Meet tax requirements</li>
+                <li><strong>Records:</strong> Maintain proper documentation</li>
+                <li><strong>Refunds:</strong> Process returns if needed</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Subscription Management -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-cog me-2"></i>4. Managing Your Subscription</h2>
+        </div>
+        <div class="card-body">
+          <p>Control your Pro subscription settings and plan details:</p>
+          
+          <h3>Viewing Subscription Details</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-eye text-primary me-2"></i>Current Plan</h4>
+              <ul>
+                <li><strong>Plan Name:</strong> TamerMap Pro</li>
+                <li><strong>Billing Cycle:</strong> Monthly or Annual</li>
+                <li><strong>Next Billing Date:</strong> When you'll be charged</li>
+                <li><strong>Amount:</strong> Current subscription cost</li>
+                <li><strong>Status:</strong> Active, Paused, or Cancelled</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-history text-success me-2"></i>Billing History</h4>
+              <ul>
+                <li><strong>Past Invoices:</strong> View previous charges</li>
+                <li><strong>Payment History:</strong> Track all payments</li>
+                <li><strong>Failed Payments:</strong> See any issues</li>
+                <li><strong>Refunds:</strong> View any refunds processed</li>
+                <li><strong>Download PDFs:</strong> Save invoices for records</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Changing Your Plan</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-exchange-alt text-primary me-2"></i>Plan Options</h4>
+              <ul>
+                <li><strong>Monthly to Annual:</strong> Save money with yearly billing</li>
+                <li><strong>Annual to Monthly:</strong> More flexible payment</li>
+                <li><strong>Upgrade/Downgrade:</strong> Change plan features</li>
+                <li><strong>Prorated Billing:</strong> Fair charges for changes</li>
+                <li><strong>Effective Date:</strong> When changes take effect</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-calendar text-success me-2"></i>Change Process</h4>
+              <ol>
+                <li>Find "Subscription" or "Plan" section</li>
+                <li>Click "Change Plan" or "Modify"</li>
+                <li>Select your new plan</li>
+                <li>Review pricing and billing changes</li>
+                <li>Confirm the change</li>
+              </ol>
+            </div>
+          </div>
+
+          <h3>Pausing or Cancelling</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-pause text-warning me-2"></i>Pause Subscription</h4>
+              <ul>
+                <li><strong>Temporary Hold:</strong> Pause without losing data</li>
+                <li><strong>Resume Anytime:</strong> Reactivate when ready</li>
+                <li><strong>Data Retention:</strong> Keep your notes and settings</li>
+                <li><strong>Billing Stop:</strong> No charges while paused</li>
+                <li><strong>Pro Features:</strong> Temporarily lose access</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-times-circle text-danger me-2"></i>Cancel Subscription</h4>
+              <ul>
+                <li><strong>Permanent End:</strong> Stop subscription completely</li>
+                <li><strong>Data Retention:</strong> Keep data for 30 days</li>
+                <li><strong>No Refunds:</strong> Cancellation is immediate</li>
+                <li><strong>Reactivation:</strong> Can resubscribe anytime</li>
+                <li><strong>Confirmation:</strong> Verify cancellation intent</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-warning">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+            <ul class="mb-0">
+              <li>Cancelling immediately stops your Pro features</li>
+              <li>Pausing preserves your data and settings</li>
+              <li>Changes take effect at the next billing cycle</li>
+              <li>Contact support if you need immediate changes</li>
+              <li>Consider pausing before cancelling permanently</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Troubleshooting -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-wrench me-2"></i>5. Troubleshooting Billing Issues</h2>
+        </div>
+        <div class="card-body">
+          <p>Common billing problems and their solutions:</p>
+          
+          <div class="accordion" id="billingTroubleshootingAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  <i class="fas fa-credit-card text-danger me-2"></i>Payment Failed
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-button collapse show" aria-labelledby="headingOne" data-bs-parent="#billingTroubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Common Causes and Solutions:</h5>
+                  <ul>
+                    <li><strong>Insufficient Funds:</strong> Check your account balance</li>
+                    <li><strong>Expired Card:</strong> Update your expiration date</li>
+                    <li><strong>Incorrect Details:</strong> Verify card number and CVV</li>
+                    <li><strong>Bank Block:</strong> Contact your bank about the transaction</li>
+                    <li><strong>International Fees:</strong> Check for foreign transaction fees</li>
+                    <li><strong>Card Limit:</strong> Ensure you haven't exceeded spending limits</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                  <i class="fas fa-envelope text-info me-2"></i>Billing Portal Access Issues
+                </button>
+              </h2>
+              <div id="collapseTwo" class="accordion-button collapse" aria-labelledby="headingTwo" data-bs-parent="#billingTroubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Access Problems:</h5>
+                  <ul>
+                    <li><strong>Email Not Received:</strong> Check spam folder and email address</li>
+                    <li><strong>Link Expired:</strong> Request a new login link</li>
+                    <li><strong>Wrong Email:</strong> Use the email associated with your account</li>
+                    <li><strong>Browser Issues:</strong> Try a different browser or clear cache</li>
+                    <li><strong>Account Issues:</strong> Verify your account is active</li>
+                    <li><strong>Contact Support:</strong> If login links aren't working</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                  <i class="fas fa-receipt text-warning me-2"></i>Invoice and Billing Questions
+                </button>
+              </h2>
+              <div id="collapseThree" class="accordion-button collapse" aria-labelledby="headingThree" data-bs-parent="#billingTroubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Invoice Issues:</h5>
+                  <ul>
+                    <li><strong>Missing Invoice:</strong> Check email and billing portal</li>
+                    <li><strong>Incorrect Amount:</strong> Review plan changes and prorations</li>
+                    <li><strong>Tax Questions:</strong> Contact support for tax-related issues</li>
+                    <li><strong>Refund Requests:</strong> Submit through billing portal or support</li>
+                    <li><strong>Duplicate Charges:</strong> Contact support immediately</li>
+                    <li><strong>Download Issues:</strong> Try different browser or PDF viewer</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                  <i class="fas fa-sync text-info me-2"></i>Subscription Status Issues
+                </button>
+              </h2>
+              <div id="collapseFour" class="accordion-button collapse" aria-labelledby="headingFour" data-bs-parent="#billingTroubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Status Problems:</h5>
+                  <ul>
+                    <li><strong>Pro Features Missing:</strong> Check subscription status and refresh</li>
+                    <li><strong>Billing Cycle Confusion:</strong> Review next billing date</li>
+                    <li><strong>Plan Changes Not Applied:</strong> Wait for next cycle or contact support</li>
+                    <li><strong>Account Suspended:</strong> Check for payment issues</li>
+                    <li><strong>Data Loss Fears:</strong> Pausing preserves data, cancelling may not</li>
+                    <li><strong>Reactivation Issues:</strong> Contact support for immediate help</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <h5><i class="fas fa-life-ring me-2"></i>Still Having Issues?</h5>
+            <p>If you're experiencing problems not covered here, our support team is here to help. Contact us with details about your specific billing issue.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Getting Help -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-life-ring me-2"></i>6. Getting Additional Help</h2>
+        </div>
+        <div class="card-body">
+          <p>Need more assistance with your Pro subscription? We're here to help:</p>
+          
+          <h3>Support Options</h3>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="card h-100 border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-envelope fa-2x text-primary mb-3"></i>
+                  <h5>Email Support</h5>
+                  <p class="small">Send us a detailed message about your billing issue. We typically respond within 24 hours.</p>
+                  <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-paper-plane me-1"></i>Contact Support
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card h-100 border-info">
+                <div class="card-body text-center">
+                  <i class="fas fa-credit-card fa-2x text-info mb-3"></i>
+                  <h5>Billing Portal</h5>
+                  <p class="small">Access your Stripe billing portal directly to manage payments and view invoices.</p>
+                  <a href="https://billing.stripe.com/p/login/" target="_blank" class="btn btn-info btn-sm">
+                    <i class="fas fa-external-link-alt me-1"></i>Open Portal
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card h-100 border-success">
+                <div class="card-body text-center">
+                  <i class="fas fa-book fa-2x text-success mb-3"></i>
+                  <h5>Help Guides</h5>
+                  <p class="small">Browse our comprehensive help guides and tutorials for common questions.</p>
+                  <a href="{{ url_for('public.site_tutorials') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-search me-1"></i>Browse Guides
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3>What to Include in Support Requests</h3>
+          <p>Help us help you by providing these details:</p>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <h5><i class="fas fa-clipboard-list me-2"></i>Essential Information</h5>
+              <ul>
+                <li>Your account email address</li>
+                <li>Description of the billing issue</li>
+                <li>Error messages (if any)</li>
+                <li>Steps you've already tried</li>
+                <li>When the problem started</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h5><i class="fas fa-receipt me-2"></i>Billing Details</h5>
+              <ul>
+                <li>Invoice number (if applicable)</li>
+                <li>Payment method used</li>
+                <li>Amount charged or expected</li>
+                <li>Date of the transaction</li>
+                <li>Whether you can access the billing portal</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Call to Action -->
+      <div class="text-center mt-5">
+        <h2>Ready to Manage Your Pro Subscription?</h2>
+        <p class="lead mb-4">Take control of your TamerMap Pro subscription and keep your billing information current!</p>
+        <a href="https://billing.stripe.com/p/login/" target="_blank" class="btn btn-primary btn-lg me-3">
+          <i class="fas fa-credit-card me-2"></i>Access Billing Portal
+        </a>
+        <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-outline-primary btn-lg">
+          <i class="fas fa-life-ring me-2"></i>Get Help
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

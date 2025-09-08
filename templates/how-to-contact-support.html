@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Contact TamerMap Support - Get Help Fast{% endblock %}
+
+{% block meta_description %}Learn how to contact TamerMap support effectively. Get help with account issues, billing questions, technical problems, and feature requests.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for comprehensive tutorial -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Contact TamerMap Support",
+  "description": "Complete guide to getting help from TamerMap support team",
+  "image": "{{ url_for('static', filename='images/contact-support-tutorial.png', _external=True) }}",
+  "totalTime": "PT3M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "0"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Account",
+      "description": "Your TamerMap account information"
+    },
+    {
+      "@type": "HowToSupply",
+      "name": "Problem Description",
+      "description": "Clear description of your issue"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "TamerMap Support System",
+      "description": "Customer support and help system"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Identify Your Issue",
+      "text": "Determine what type of help you need"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Choose Contact Method",
+      "text": "Select the best way to reach support"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Provide Details",
+      "text": "Give support team the information they need"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">How to Contact TamerMap Support</h1>
+        <p class="lead">Get the help you need quickly and effectively. Learn the best ways to contact our support team for different types of issues.</p>
+      </div>
+
+      <!-- What You'll Learn -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> Different ways to contact support</li>
+                <li><i class="fas fa-check text-success me-2"></i> What information to include</li>
+                <li><i class="fas fa-check text-success me-2"></i> How to get faster responses</li>
+                <li><i class="fas fa-check text-success me-2"></i> Self-help resources</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> Support response times</li>
+                <li><i class="fas fa-check text-success me-2"></i> Pro vs Free user support</li>
+                <li><i class="fas fa-check text-success me-2"></i> Emergency contact methods</li>
+                <li><i class="fas fa-check text-success me-2"></i> Follow-up best practices</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Contact Options -->
+      <div class="row mb-5">
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 border-primary text-center">
+            <div class="card-body">
+              <i class="fas fa-envelope fa-3x text-primary mb-3"></i>
+              <h4 class="card-title">Email Support</h4>
+              <p class="card-text">Best for detailed questions and non-urgent issues. We respond within 24 hours.</p>
+              <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-2"></i>Send Message
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 border-info text-center">
+            <div class="card-body">
+              <i class="fas fa-book fa-3x text-info mb-3"></i>
+              <h4 class="card-title">Help Guides</h4>
+              <p class="card-text">Self-help resources and tutorials. Find answers instantly without waiting.</p>
+              <a href="{{ url_for('public.site_tutorials') }}" class="btn btn-info">
+                <i class="fas fa-search me-2"></i>Browse Guides
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <div class="card h-100 border-success text-center">
+            <div class="card-body">
+              <i class="fas fa-question-circle fa-3x text-success mb-3"></i>
+              <h4 class="card-title">FAQ</h4>
+              <p class="card-text">Quick answers to common questions. Check here first for instant solutions.</p>
+              <a href="{{ url_for('public.faq') }}" class="btn btn-success">
+                <i class="fas fa-lightbulb me-2"></i>View FAQ
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Identify Your Issue -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-search me-2"></i>1. Identify Your Issue Type</h2>
+        </div>
+        <div class="card-body">
+          <p>Different issues require different approaches. Here's how to categorize your problem:</p>
+          
+          <h3>Account & Login Issues</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-user-circle text-primary me-2"></i>Common Problems</h4>
+              <ul>
+                <li>Can't log in to your account</li>
+                <li>Forgot password or email</li>
+                <li>Account locked or suspended</li>
+                <li>Wrong email address on file</li>
+                <li>Can't access Pro features</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-tools text-success me-2"></i>Best Solution</h4>
+              <ul>
+                <li>Try password reset first</li>
+                <li>Check our <a href="{{ url_for('public.how_to_reset_password') }}">Password Reset Guide</a></li>
+                <li>Email support with account details</li>
+                <li>Include your email address</li>
+                <li>Verify Pro subscription status</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Billing & Subscription Issues</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-credit-card text-primary me-2"></i>Common Problems</h4>
+              <ul>
+                <li>Payment failed or declined</li>
+                <li>Charged incorrectly</li>
+                <li>Can't access billing portal</li>
+                <li>Subscription not active</li>
+                <li>Need to cancel or pause</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-tools text-success me-2"></i>Best Solution</h4>
+              <ul>
+                <li>Check our <a href="{{ url_for('public.how_to_manage_pro_subscription') }}">Pro Subscription Guide</a></li>
+                <li>Try the <a href="https://billing.stripe.com/p/login/" target="_blank">Stripe billing portal</a></li>
+                <li>Email support with billing details</li>
+                <li>Include invoice numbers</li>
+                <li>Provide payment method info</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Technical & Feature Issues</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-bug text-primary me-2"></i>Common Problems</h4>
+              <ul>
+                <li>Map not loading properly</li>
+                <li>Features not working as expected</li>
+                <li>Slow performance or errors</li>
+                <li>Mobile app issues</li>
+                <li>Data not syncing</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-tools text-success me-2"></i>Best Solution</h4>
+              <ul>
+                <li>Try refreshing the page</li>
+                <li>Clear browser cache and cookies</li>
+                <li>Try a different browser</li>
+                <li>Check your internet connection</li>
+                <li>Email support with error details</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Feature Requests & Feedback</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-lightbulb text-primary me-2"></i>Common Requests</h4>
+              <ul>
+                <li>New features or improvements</li>
+                <li>Bug reports</li>
+                <li>User experience feedback</li>
+                <li>Integration requests</li>
+                <li>General suggestions</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-tools text-success me-2"></i>Best Solution</h4>
+              <ul>
+                <li>Email support with detailed description</li>
+                <li>Include screenshots if applicable</li>
+                <li>Explain the benefit to users</li>
+                <li>Provide use case examples</li>
+                <li>Be specific about your needs</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Choose Contact Method -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-phone me-2"></i>2. Choose the Right Contact Method</h2>
+        </div>
+        <div class="card-body">
+          <p>Select the best way to reach us based on your issue type and urgency:</p>
+          
+          <h3>Email Support (Recommended)</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-envelope text-primary me-2"></i>When to Use</h4>
+              <ul>
+                <li>Detailed questions or problems</li>
+                <li>Account or billing issues</li>
+                <li>Feature requests or feedback</li>
+                <li>Non-urgent technical issues</li>
+                <li>Need to attach files or screenshots</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-clock text-success me-2"></i>Response Times</h4>
+              <ul>
+                <li><strong>Pro Users:</strong> Within 12 hours</li>
+                <li><strong>Free Users:</strong> Within 24 hours</li>
+                <li><strong>Weekends:</strong> Next business day</li>
+                <li><strong>Holidays:</strong> May be delayed</li>
+                <li><strong>Complex Issues:</strong> May take longer</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Self-Help Resources</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-book text-primary me-2"></i>Available Resources</h4>
+              <ul>
+                <li><a href="{{ url_for('public.faq') }}">Frequently Asked Questions</a></li>
+                <li><a href="{{ url_for('public.site_tutorials') }}">Help & Tutorials</a></li>
+                <li><a href="{{ url_for('public.how_to_reset_password') }}">Password Reset Guide</a></li>
+                <li><a href="{{ url_for('public.how_to_manage_pro_subscription') }}">Pro Subscription Guide</a></li>
+                <li><a href="{{ url_for('public.how_to_update_account') }}">Account Management Guide</a></li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-search text-success me-2"></i>Search Tips</h4>
+              <ul>
+                <li>Use specific keywords</li>
+                <li>Try different phrasings</li>
+                <li>Check related articles</li>
+                <li>Look for similar issues</li>
+                <li>Read the full article</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <h5><i class="fas fa-lightbulb me-2"></i>Pro Tip</h5>
+            <p>Pro subscribers get priority support with faster response times. If you're a Pro user, make sure to mention this in your support request to get the fastest possible help.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Provide the Right Information -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-clipboard-list me-2"></i>3. Provide the Right Information</h2>
+        </div>
+        <div class="card-body">
+          <p>Help us help you by providing the right details. Here's what to include:</p>
+          
+          <h3>Essential Information</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-user text-primary me-2"></i>Account Details</h4>
+              <ul>
+                <li><strong>Email Address:</strong> The one associated with your account</li>
+                <li><strong>Account Type:</strong> Free or Pro subscription</li>
+                <li><strong>Username:</strong> If different from email</li>
+                <li><strong>Account Status:</strong> Active, suspended, etc.</li>
+                <li><strong>Registration Date:</strong> When you signed up (if known)</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-desktop text-success me-2"></i>Technical Details</h4>
+              <ul>
+                <li><strong>Browser:</strong> Chrome, Firefox, Safari, etc.</li>
+                <li><strong>Browser Version:</strong> Latest version recommended</li>
+                <li><strong>Operating System:</strong> Windows, Mac, iOS, Android</li>
+                <li><strong>Device Type:</strong> Desktop, mobile, tablet</li>
+                <li><strong>Internet Connection:</strong> WiFi, mobile data, etc.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Problem Description</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-exclamation-triangle text-primary me-2"></i>What to Include</h4>
+              <ul>
+                <li><strong>Clear Description:</strong> What exactly is happening</li>
+                <li><strong>Steps to Reproduce:</strong> How to recreate the issue</li>
+                <li><strong>Expected Behavior:</strong> What should happen</li>
+                <li><strong>Actual Behavior:</strong> What actually happens</li>
+                <li><strong>Error Messages:</strong> Copy exact error text</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-image text-success me-2"></i>Visual Evidence</h4>
+              <ul>
+                <li><strong>Screenshots:</strong> Show the problem visually</li>
+                <li><strong>Screen Recordings:</strong> For complex issues</li>
+                <li><strong>Error Logs:</strong> Browser console errors</li>
+                <li><strong>URLs:</strong> Specific pages where issue occurs</li>
+                <li><strong>File Attachments:</strong> Relevant documents</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Timeline Information</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-clock text-primary me-2"></i>When & How Often</h4>
+              <ul>
+                <li><strong>When Started:</strong> When did the problem begin</li>
+                <li><strong>Frequency:</strong> How often does it happen</li>
+                <li><strong>Recent Changes:</strong> Any recent updates or changes</li>
+                <li><strong>Time of Day:</strong> When the issue occurs</li>
+                <li><strong>Duration:</strong> How long the problem lasts</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-check-circle text-success me-2"></i>What You've Tried</h4>
+              <ul>
+                <li><strong>Self-Help Steps:</strong> What you've already tried</li>
+                <li><strong>Browser Changes:</strong> Different browsers tested</li>
+                <li><strong>Device Changes:</strong> Different devices tested</li>
+                <li><strong>Settings Changes:</strong> Any modifications made</li>
+                <li><strong>Previous Solutions:</strong> What worked before</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-warning">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+            <ul class="mb-0">
+              <li>Never share your password in support requests</li>
+              <li>Include only relevant information to avoid confusion</li>
+              <li>Be as specific as possible about the problem</li>
+              <li>Test the issue on different devices if possible</li>
+              <li>Include screenshots or error messages when helpful</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Follow Up -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-reply me-2"></i>4. Follow Up Effectively</h2>
+        </div>
+        <div class="card-body">
+          <p>Maximize your support experience with these follow-up best practices:</p>
+          
+          <h3>After Sending Your Request</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-hourglass-half text-primary me-2"></i>Waiting for Response</h4>
+              <ul>
+                <li><strong>Be Patient:</strong> Allow time for response</li>
+                <li><strong>Check Email:</strong> Look in spam folder too</li>
+                <li><strong>Don't Duplicate:</strong> Avoid sending multiple requests</li>
+                <li><strong>Stay Available:</strong> Check email regularly</li>
+                <li><strong>Keep Testing:</strong> Try suggested solutions</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-reply text-success me-2"></i>When We Respond</h4>
+              <ul>
+                <li><strong>Read Carefully:</strong> Follow instructions exactly</li>
+                <li><strong>Test Solutions:</strong> Try suggested fixes</li>
+                <li><strong>Provide Feedback:</strong> Let us know if it worked</li>
+                <li><strong>Ask Questions:</strong> Clarify if unclear</li>
+                <li><strong>Be Specific:</strong> Report results accurately</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>If the Problem Persists</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-redo text-primary me-2"></i>Next Steps</h4>
+              <ul>
+                <li><strong>Reply to Email:</strong> Don't start a new thread</li>
+                <li><strong>Provide Updates:</strong> What you've tried since</li>
+                <li><strong>Include New Info:</strong> Any additional details</li>
+                <li><strong>Be Persistent:</strong> We want to help you</li>
+                <li><strong>Escalate if Needed:</strong> Ask for supervisor if urgent</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-star text-success me-2"></i>Positive Outcomes</h4>
+              <ul>
+                <li><strong>Thank Support:</strong> Acknowledge helpful responses</li>
+                <li><strong>Rate Experience:</strong> Provide feedback if asked</li>
+                <li><strong>Share Solutions:</strong> Help other users if possible</li>
+                <li><strong>Document Fixes:</strong> Note what worked for future</li>
+                <li><strong>Stay Engaged:</strong> Continue using TamerMap</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <h5><i class="fas fa-heart me-2"></i>We're Here to Help</h5>
+            <p>Our support team genuinely wants to help you succeed with TamerMap. Don't hesitate to reach out, and don't give up if the first solution doesn't work. We're committed to resolving your issues and improving your experience.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Contact -->
+      <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+          <h2 class="h3 mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Emergency Contact</h2>
+        </div>
+        <div class="card-body">
+          <p>For urgent issues that require immediate attention:</p>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <h4><i class="fas fa-bolt text-warning me-2"></i>What Constitutes an Emergency</h4>
+              <ul>
+                <li>Account compromised or hacked</li>
+                <li>Unauthorized charges on your account</li>
+                <li>Complete inability to access your account</li>
+                <li>Data loss or corruption</li>
+                <li>Security vulnerabilities discovered</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-phone text-danger me-2"></i>Emergency Response</h4>
+              <ul>
+                <li><strong>Email Subject:</strong> "URGENT" or "EMERGENCY"</li>
+                <li><strong>Response Time:</strong> Within 4 hours</li>
+                <li><strong>Priority Level:</strong> Highest</li>
+                <li><strong>Follow-up:</strong> Immediate</li>
+                <li><strong>Resolution:</strong> Fast-tracked</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-danger mt-3">
+            <h5><i class="fas fa-shield-alt me-2"></i>Security Note</h5>
+            <p>If you suspect your account has been compromised, change your password immediately and contact us right away. We'll help secure your account and investigate any unauthorized activity.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Call to Action -->
+      <div class="text-center mt-5">
+        <h2>Ready to Get Help?</h2>
+        <p class="lead mb-4">Choose the best way to contact our support team and get the help you need!</p>
+        <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-primary btn-lg me-3">
+          <i class="fas fa-envelope me-2"></i>Contact Support
+        </a>
+        <a href="{{ url_for('public.faq') }}" class="btn btn-outline-primary btn-lg me-3">
+          <i class="fas fa-question-circle me-2"></i>View FAQ
+        </a>
+        <a href="{{ url_for('public.site_tutorials') }}" class="btn btn-outline-primary btn-lg">
+          <i class="fas fa-book me-2"></i>Browse Guides
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

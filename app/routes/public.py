@@ -865,6 +865,24 @@ def how_to_personal_notes():
     return render_template("how-to-personal-notes.html")
 
 
+@public_bp.route("/how-to-update-account")
+def how_to_update_account():
+    """Render the account information update guide."""
+    return render_template("how-to-update-account.html")
+
+
+@public_bp.route("/how-to-manage-pro-subscription")
+def how_to_manage_pro_subscription():
+    """Render the Pro subscription management guide."""
+    return render_template("how-to-manage-pro-subscription.html")
+
+
+@public_bp.route("/how-to-contact-support")
+def how_to_contact_support():
+    """Render the contact support guide."""
+    return render_template("how-to-contact-support.html")
+
+
 @public_bp.route("/sitemap.xml")
 def sitemap_xml():
     """Generate dynamic XML sitemap for search engines with caching for performance."""
@@ -906,6 +924,9 @@ def sitemap_xml():
         ('/how-to-use-heatmaps', '0.9', 'weekly'),
         ('/how-to-reset-password', '0.8', 'weekly'),
         ('/how-to-personal-notes', '0.9', 'weekly'),
+        ('/how-to-update-account', '0.8', 'weekly'),
+        ('/how-to-manage-pro-subscription', '0.8', 'weekly'),
+        ('/how-to-contact-support', '0.8', 'weekly'),
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),

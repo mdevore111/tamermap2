@@ -1,0 +1,500 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Update Your TamerMap Account Information - Complete Guide{% endblock %}
+
+{% block meta_description %}Learn how to update your TamerMap account information, change email address, update personal details, and manage your profile settings.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for comprehensive tutorial -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Update Your TamerMap Account Information",
+  "description": "Complete guide to updating your TamerMap account information and profile settings",
+  "image": "{{ url_for('static', filename='images/account-update-tutorial.png', _external=True) }}",
+  "totalTime": "PT5M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "0"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Account",
+      "description": "Active TamerMap account with login credentials"
+    },
+    {
+      "@type": "HowToSupply",
+      "name": "Internet Connection",
+      "description": "Access to TamerMap website"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "TamerMap Account Management",
+      "description": "User account management system"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Access Account Settings",
+      "text": "Navigate to your account settings page"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Update Information",
+      "text": "Modify your account details as needed"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Save Changes",
+      "text": "Confirm and save your updated information"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">How to Update Your TamerMap Account Information</h1>
+        <p class="lead">Keep your account information current and secure. Learn how to update your profile details, email address, and account settings.</p>
+      </div>
+
+      <!-- What You'll Learn -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> Access your account settings</li>
+                <li><i class="fas fa-check text-success me-2"></i> Update personal information</li>
+                <li><i class="fas fa-check text-success me-2"></i> Change your email address</li>
+                <li><i class="fas fa-check text-success me-2"></i> Manage notification preferences</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i> Update account security settings</li>
+                <li><i class="fas fa-check text-success me-2"></i> Troubleshoot common issues</li>
+                <li><i class="fas fa-check text-success me-2"></i> Keep your information current</li>
+                <li><i class="fas fa-check text-success me-2"></i> Best practices for account management</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Access Account Settings -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-cog me-2"></i>1. Accessing Your Account Settings</h2>
+        </div>
+        <div class="card-body">
+          <p>To update your account information, you'll need to access your account settings:</p>
+          
+          <h3>Step 1: Log In to Your Account</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-sign-in-alt text-primary me-2"></i>Navigate to Login</h4>
+              <ol>
+                <li>Go to the TamerMap homepage</li>
+                <li>Click the "Login" button in the top-right corner</li>
+                <li>Enter your email and password</li>
+                <li>Click "Sign In"</li>
+              </ol>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-user-circle text-success me-2"></i>Access Account Menu</h4>
+              <ol>
+                <li>Once logged in, look for your name in the top-right corner</li>
+                <li>Click on your name to open the account menu</li>
+                <li>Select "Account Settings" or "Profile"</li>
+                <li>You'll be taken to your account management page</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle me-2"></i>Quick Access</h5>
+            <p>You can also access account settings by going directly to <code>/account</code> or <code>/profile</code> in your browser's address bar after logging in.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Update Personal Information -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-edit me-2"></i>2. Updating Your Personal Information</h2>
+        </div>
+        <div class="card-body">
+          <p>Once in your account settings, you can update various personal details:</p>
+          
+          <h3>Basic Information</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-user text-primary me-2"></i>Name and Contact</h4>
+              <ul>
+                <li><strong>First Name:</strong> Your given name</li>
+                <li><strong>Last Name:</strong> Your family name</li>
+                <li><strong>Display Name:</strong> How your name appears to others</li>
+                <li><strong>Phone Number:</strong> Contact phone (optional)</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-envelope text-success me-2"></i>Email Address</h4>
+              <ul>
+                <li><strong>Primary Email:</strong> Your main contact email</li>
+                <li><strong>Email Verification:</strong> Confirm new email addresses</li>
+                <li><strong>Backup Email:</strong> Secondary contact (optional)</li>
+                <li><strong>Notification Preferences:</strong> Control email frequency</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Step-by-Step Update Process</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-edit text-primary me-2"></i>Making Changes</h4>
+              <ol>
+                <li>Click on the field you want to update</li>
+                <li>Enter your new information</li>
+                <li>Review the changes carefully</li>
+                <li>Click "Save" or "Update"</li>
+              </ol>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-check-circle text-success me-2"></i>Confirmation</h4>
+              <ul>
+                <li>Look for a success message</li>
+                <li>Verify changes are reflected</li>
+                <li>Check your email for confirmations</li>
+                <li>Test login with new credentials if changed</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-warning">
+            <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Notes</h5>
+            <ul class="mb-0">
+              <li>Some changes may require email verification</li>
+              <li>Changing your email address will affect login</li>
+              <li>Keep your information current for security</li>
+              <li>Contact support if you can't make changes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Account Security Settings -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-shield-alt me-2"></i>3. Managing Account Security</h2>
+        </div>
+        <div class="card-body">
+          <p>Keep your account secure by managing these important settings:</p>
+          
+          <h3>Password Management</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-key text-primary me-2"></i>Password Settings</h4>
+              <ul>
+                <li><strong>Change Password:</strong> Update your login password</li>
+                <li><strong>Password Strength:</strong> Ensure strong passwords</li>
+                <li><strong>Password History:</strong> Avoid reusing old passwords</li>
+                <li><strong>Two-Factor Auth:</strong> Enable if available</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-lock text-success me-2"></i>Security Features</h4>
+              <ul>
+                <li><strong>Login Notifications:</strong> Get alerts for new logins</li>
+                <li><strong>Session Management:</strong> Control active sessions</li>
+                <li><strong>Account Recovery:</strong> Set up recovery options</li>
+                <li><strong>Privacy Settings:</strong> Control data sharing</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Notification Preferences</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-bell text-primary me-2"></i>Email Notifications</h4>
+              <ul>
+                <li><strong>Account Updates:</strong> Changes to your account</li>
+                <li><strong>Security Alerts:</strong> Login attempts and changes</li>
+                <li><strong>Product Updates:</strong> New features and improvements</li>
+                <li><strong>Marketing:</strong> Promotional content (optional)</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-mobile-alt text-success me-2"></i>Push Notifications</h4>
+              <ul>
+                <li><strong>Real-time Alerts:</strong> Immediate notifications</li>
+                <li><strong>Frequency Control:</strong> How often you receive them</li>
+                <li><strong>Content Types:</strong> What you want to be notified about</li>
+                <li><strong>Quiet Hours:</strong> When to pause notifications</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Troubleshooting Common Issues -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-wrench me-2"></i>4. Troubleshooting Common Issues</h2>
+        </div>
+        <div class="card-body">
+          <p>Here are solutions to common problems when updating account information:</p>
+          
+          <div class="accordion" id="troubleshootingAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  <i class="fas fa-exclamation-triangle text-warning me-2"></i>Can't Save Changes
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-button collapse show" aria-labelledby="headingOne" data-bs-parent="#troubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Possible Causes and Solutions:</h5>
+                  <ul>
+                    <li><strong>Invalid Format:</strong> Check that email addresses and phone numbers are properly formatted</li>
+                    <li><strong>Required Fields:</strong> Ensure all mandatory fields are filled out</li>
+                    <li><strong>Character Limits:</strong> Verify text doesn't exceed maximum length</li>
+                    <li><strong>Special Characters:</strong> Avoid using restricted characters in names</li>
+                    <li><strong>Browser Issues:</strong> Try refreshing the page or using a different browser</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                  <i class="fas fa-envelope text-info me-2"></i>Email Verification Issues
+                </button>
+              </h2>
+              <div id="collapseTwo" class="accordion-button collapse" aria-labelledby="headingTwo" data-bs-parent="#troubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Email Verification Problems:</h5>
+                  <ul>
+                    <li><strong>Check Spam Folder:</strong> Verification emails often end up in spam</li>
+                    <li><strong>Email Address Typo:</strong> Double-check the email address you entered</li>
+                    <li><strong>Resend Verification:</strong> Look for a "Resend" button in your account settings</li>
+                    <li><strong>Email Provider Issues:</strong> Some providers block automated emails</li>
+                    <li><strong>Contact Support:</strong> If verification emails aren't arriving after 24 hours</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                  <i class="fas fa-lock text-danger me-2"></i>Can't Access Account Settings
+                </button>
+              </h2>
+              <div id="collapseThree" class="accordion-button collapse" aria-labelledby="headingThree" data-bs-parent="#troubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Access Problems:</h5>
+                  <ul>
+                    <li><strong>Login Issues:</strong> Make sure you're logged in with the correct account</li>
+                    <li><strong>Browser Cache:</strong> Clear your browser cache and cookies</li>
+                    <li><strong>Account Status:</strong> Verify your account is active and not suspended</li>
+                    <li><strong>Permission Issues:</strong> Some features may require Pro subscription</li>
+                    <li><strong>Technical Problems:</strong> Try a different browser or device</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                  <i class="fas fa-sync text-warning me-2"></i>Changes Not Reflecting
+                </button>
+              </h2>
+              <div id="collapseFour" class="accordion-button collapse" aria-labelledby="headingFour" data-bs-parent="#troubleshootingAccordion">
+                <div class="accordion-body">
+                  <h5>Update Issues:</h5>
+                  <ul>
+                    <li><strong>Page Refresh:</strong> Refresh the page to see updated information</li>
+                    <li><strong>Cache Issues:</strong> Clear browser cache to see changes</li>
+                    <li><strong>Save Confirmation:</strong> Make sure you clicked "Save" after making changes</li>
+                    <li><strong>Processing Time:</strong> Some changes may take a few minutes to appear</li>
+                    <li><strong>Multiple Devices:</strong> Changes may not appear on all devices immediately</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <h5><i class="fas fa-life-ring me-2"></i>Still Having Issues?</h5>
+            <p>If you're experiencing problems not covered here, our support team is here to help. Contact us with details about your specific issue.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Best Practices -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-star me-2"></i>5. Best Practices for Account Management</h2>
+        </div>
+        <div class="card-body">
+          <p>Follow these best practices to keep your account secure and up-to-date:</p>
+          
+          <h3>Security Best Practices</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-shield-alt text-primary me-2"></i>Account Security</h4>
+              <ul>
+                <li><strong>Regular Updates:</strong> Keep your information current</li>
+                <li><strong>Strong Passwords:</strong> Use complex, unique passwords</li>
+                <li><strong>Email Verification:</strong> Always verify new email addresses</li>
+                <li><strong>Monitor Activity:</strong> Check for unauthorized access</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-user-secret text-success me-2"></i>Privacy Protection</h4>
+              <ul>
+                <li><strong>Minimal Information:</strong> Only share necessary details</li>
+                <li><strong>Review Settings:</strong> Regularly check privacy settings</li>
+                <li><strong>Secure Connections:</strong> Always use HTTPS when updating</li>
+                <li><strong>Logout Properly:</strong> Sign out when done, especially on shared devices</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Maintenance Tips</h3>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h4><i class="fas fa-calendar-check text-primary me-2"></i>Regular Maintenance</h4>
+              <ul>
+                <li><strong>Monthly Reviews:</strong> Check your account monthly</li>
+                <li><strong>Update Information:</strong> Keep contact details current</li>
+                <li><strong>Review Permissions:</strong> Check what apps have access</li>
+                <li><strong>Clean Up Data:</strong> Remove old, unnecessary information</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h4><i class="fas fa-bell text-success me-2"></i>Notification Management</h4>
+              <ul>
+                <li><strong>Customize Alerts:</strong> Set up notifications you actually want</li>
+                <li><strong>Review Frequency:</strong> Adjust how often you receive updates</li>
+                <li><strong>Test Notifications:</strong> Make sure they're working properly</li>
+                <li><strong>Update Preferences:</strong> Change settings as your needs change</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <h5><i class="fas fa-lightbulb me-2"></i>Pro Tip</h5>
+            <p>Set a calendar reminder to review your account settings every 3-6 months. This helps ensure your information stays current and your account remains secure. It's also a good time to review your notification preferences and make sure you're getting the updates you want.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Getting Help -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h2 class="h3 mb-0"><i class="fas fa-life-ring me-2"></i>6. Getting Additional Help</h2>
+        </div>
+        <div class="card-body">
+          <p>Need more assistance with your account? We're here to help:</p>
+          
+          <h3>Support Options</h3>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="card h-100 border-primary">
+                <div class="card-body text-center">
+                  <i class="fas fa-envelope fa-2x text-primary mb-3"></i>
+                  <h5>Email Support</h5>
+                  <p class="small">Send us a detailed message about your issue. We typically respond within 24 hours.</p>
+                  <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-paper-plane me-1"></i>Contact Support
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card h-100 border-info">
+                <div class="card-body text-center">
+                  <i class="fas fa-book fa-2x text-info mb-3"></i>
+                  <h5>Help Documentation</h5>
+                  <p class="small">Browse our comprehensive help guides and tutorials for common questions.</p>
+                  <a href="{{ url_for('public.site_tutorials') }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-search me-1"></i>Browse Guides
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="card h-100 border-success">
+                <div class="card-body text-center">
+                  <i class="fas fa-users fa-2x text-success mb-3"></i>
+                  <h5>Community Support</h5>
+                  <p class="small">Connect with other TamerMap users for tips and advice.</p>
+                  <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-comments me-1"></i>Join Community
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3>What to Include in Support Requests</h3>
+          <p>Help us help you by providing these details:</p>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <h5><i class="fas fa-clipboard-list me-2"></i>Essential Information</h5>
+              <ul>
+                <li>Your account email address</li>
+                <li>Description of the problem</li>
+                <li>Steps you've already tried</li>
+                <li>Error messages (if any)</li>
+                <li>Browser and device information</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h5><i class="fas fa-clock me-2"></i>Timeline Details</h5>
+              <ul>
+                <li>When the problem started</li>
+                <li>How often it occurs</li>
+                <li>What you were trying to do</li>
+                <li>Any recent changes to your account</li>
+                <li>Whether it affects all devices</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Call to Action -->
+      <div class="text-center mt-5">
+        <h2>Ready to Update Your Account?</h2>
+        <p class="lead mb-4">Follow our step-by-step guide and keep your TamerMap account information current and secure!</p>
+        <a href="{{ url_for('public.send_message', type='support') }}" class="btn btn-primary btn-lg me-3">
+          <i class="fas fa-life-ring me-2"></i>Get Help Now
+        </a>
+        <a href="{{ url_for('public.site_tutorials') }}" class="btn btn-outline-primary btn-lg">
+          <i class="fas fa-book me-2"></i>More Tutorials
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
