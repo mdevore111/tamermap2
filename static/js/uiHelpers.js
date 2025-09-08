@@ -289,14 +289,18 @@ function refreshCurrentPopup() {
 
 // Add or remove note decorator based on notes existence
 function updateNoteDecorator(marker, hasNotes, retailer) {
+  console.log('updateNoteDecorator called:', { hasNotes, retailerId: retailer.id, hasDecorator: !!marker.noteDecorator });
+  
   // Remove existing decorator if it exists
   if (marker.noteDecorator) {
+    console.log('Removing existing decorator');
     marker.noteDecorator.setMap(null);
     marker.noteDecorator = null;
   }
   
   // Add decorator if notes exist
   if (hasNotes && window.addNoteDecorator) {
+    console.log('Adding new decorator');
     window.addNoteDecorator(marker, retailer);
   }
 }

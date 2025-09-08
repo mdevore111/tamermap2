@@ -226,28 +226,28 @@ export function createRetailerMarker(map, retailer) {
  * @param {object} retailer - The retailer data
  */
 function addNoteDecorator(marker, retailer) {
-  // Create a small note icon overlay
+  // Create a more noticeable note icon overlay in upper right
   const noteIcon = new google.maps.Marker({
     position: marker.getPosition(),
     map: marker.getMap(),
     icon: {
       url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-        <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="7" fill="#007bff" stroke="#ffffff" stroke-width="2"/>
-          <path d="M6 6h4M6 8h3M6 10h2" stroke="#ffffff" stroke-width="1" stroke-linecap="round"/>
+        <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="11" fill="#ff6b35" stroke="#ffffff" stroke-width="3"/>
+          <path d="M8 8h8M8 12h6M8 16h4" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
         </svg>
       `),
-      scaledSize: new google.maps.Size(16, 16),
-      anchor: new google.maps.Point(8, 8)
+      scaledSize: new google.maps.Size(24, 24),
+      anchor: new google.maps.Point(18, 6) // Position in upper right
     },
-    zIndex: marker.getZIndex() + 1,
-    title: 'Has Personal Notes'
+    zIndex: marker.getZIndex() + 10, // Higher z-index to appear on top
+    title: 'Has Personal Notes - Click to edit'
   });
   
-  // Position the note icon slightly offset from the main marker
+  // Position the note icon in upper right corner of the pin
   const position = marker.getPosition();
-  const offsetLat = 0.0001; // Small offset to position the note icon
-  const offsetLng = 0.0001;
+  const offsetLat = 0.0003; // More offset for upper right positioning
+  const offsetLng = 0.0003;
   
   noteIcon.setPosition({
     lat: position.lat() + offsetLat,
