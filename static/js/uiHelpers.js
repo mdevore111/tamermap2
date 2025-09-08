@@ -346,6 +346,8 @@ function showNotesModalWithContent(retailerId, currentNotes) {
 }
 
 function saveUserNote(retailerId, notes) {
+  console.log('Saving note for retailer:', retailerId, 'Notes:', notes);
+  
   fetch(`/api/user-notes/${retailerId}`, {
     method: 'POST',
     headers: {
@@ -354,6 +356,7 @@ function saveUserNote(retailerId, notes) {
     body: JSON.stringify({ notes: notes })
   })
   .then(response => {
+    console.log('Response status:', response.status);
     if (response.status === 403) {
       showProUpgradeToast();
       return;
@@ -361,6 +364,7 @@ function saveUserNote(retailerId, notes) {
     return response.json();
   })
   .then(data => {
+    console.log('Response data:', data);
     if (data && data.error) {
       Swal.fire({
         icon: 'error',

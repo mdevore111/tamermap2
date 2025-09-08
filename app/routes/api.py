@@ -282,12 +282,16 @@ def save_user_note(retailer_id):
     """Create or update user's note for a specific retailer location"""
     from flask_login import current_user
     
+    print(f"Save note request - User: {current_user.id}, Retailer: {retailer_id}, Pro: {current_user.is_pro}")
+    
     # Check if user is Pro
     if not current_user.is_pro:
         return jsonify({'error': 'Pro subscription required'}), 403
     
     data = request.get_json()
+    print(f"Request data: {data}")
     notes = data.get('notes', '').strip()
+    print(f"Notes to save: '{notes}'")
     
     if not notes:
         # Delete note if empty
@@ -332,7 +336,8 @@ def save_user_note(retailer_id):
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Failed to save note'}), 500
+        print(f"Error saving user note: {e}")
+        return jsonify({'error': f'Failed to save note: {str(e)}'}), 500
 
 
 @api_bp.route("/user-notes/<int:retailer_id>", methods=['DELETE'])
