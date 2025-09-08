@@ -2,6 +2,82 @@
 import { MARKER_TYPES } from './config.js';
 import { renderRetailerInfoWindow, renderEventInfoWindow } from './uiHelpers.js';
 
+// Fetch user notes and show popup
+function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
+  const base = marker.retailer_data ? { ...marker.retailer_data } : { ...retailer };
+  
+  // If user is not Pro, show popup without notes
+  if (!isPro) {
+    const html = renderRetailerInfoWindow({
+      ...base,
+      kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
+      machine_count: (base.machine_count)
+    }, isPro);
+    
+    window.currentOpenMarker = marker;
+    window.infoWindow.setContent(html);
+    window.infoWindow.open(marker.getMap(), marker);
+    handleInfoWindowOpen();
+    return;
+  }
+  
+  // Fetch user notes for Pro users
+  fetch(`/api/user-notes/${retailer.id}`)
+    .then(response => {
+      if (response.status === 403) {
+        // User is not Pro, show popup without notes
+        const html = renderRetailerInfoWindow({
+          ...base,
+          kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
+          machine_count: (base.machine_count)
+        }, false);
+        
+        window.currentOpenMarker = marker;
+        window.infoWindow.setContent(html);
+        window.infoWindow.open(marker.getMap(), marker);
+        handleInfoWindowOpen();
+        return;
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch notes');
+      }
+      
+      return response.json();
+    })
+    .then(data => {
+      // Add user notes to retailer data
+      const retailerWithNotes = {
+        ...base,
+        kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
+        machine_count: (base.machine_count),
+        user_notes: data.notes || null
+      };
+      
+      const html = renderRetailerInfoWindow(retailerWithNotes, isPro);
+      
+      window.currentOpenMarker = marker;
+      window.infoWindow.setContent(html);
+      window.infoWindow.open(marker.getMap(), marker);
+      handleInfoWindowOpen();
+    })
+    .catch(error => {
+      console.error('Error fetching user notes:', error);
+      
+      // Show popup without notes on error
+      const html = renderRetailerInfoWindow({
+        ...base,
+        kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
+        machine_count: (base.machine_count)
+      }, isPro);
+      
+      window.currentOpenMarker = marker;
+      window.infoWindow.setContent(html);
+      window.infoWindow.open(marker.getMap(), marker);
+      handleInfoWindowOpen();
+    });
+}
+
 // Simplified function to ensure InfoWindow close button is visible
 function handleInfoWindowOpen() {
   // Make sure close button is visible
@@ -112,13 +188,6 @@ export function createRetailerMarker(map, retailer) {
 
   // Delegate HTML to UI helper; use marker.retailer_data to reflect merged updates
   marker.addListener('click', () => {
-    const base = marker.retailer_data ? { ...marker.retailer_data } : { ...retailer };
-    const html = renderRetailerInfoWindow({
-      ...base,
-      kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
-      machine_count: (base.machine_count)
-    }, isPro);
-
     if (window.currentOpenMarker === marker) {
       window.infoWindow.close();
       window.currentOpenMarker = null;
@@ -130,12 +199,8 @@ export function createRetailerMarker(map, retailer) {
       window.infoWindow.close();
     }
 
-    window.currentOpenMarker = marker;
-    window.infoWindow.setContent(html);
-    window.infoWindow.open(map, marker);
-
-    // Ensure InfoWindow is visible with close button
-    handleInfoWindowOpen();
+    // Fetch user notes before rendering popup
+    fetchUserNotesAndShowPopup(marker, retailer, isPro);
     
     fetch('/track/pin', {
       method: 'POST',
