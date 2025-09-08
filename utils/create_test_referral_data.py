@@ -29,7 +29,7 @@ def create_test_referral_data():
             test_refs = ['TEST123', 'DEMO456', 'LOCAL789', 'DEV001', 'SAMPLE002']
             
             # Sample paths
-            paths = ['/', '/maps', '/learn', '/play', '/privacy', '/terms']
+            paths = ['/', '/maps', '/learn', '/privacy', '/terms']
             
             # Create test data for the last 7 days
             for i in range(7):
