@@ -620,7 +620,7 @@ class UserNote(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    retailer_id = db.Column(db.Integer, db.ForeignKey('retailer.id'), nullable=False)
+    retailer_id = db.Column(db.Integer, db.ForeignKey('retailers.id'), nullable=False)
     notes = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, onupdate=_datetime.datetime.utcnow)
