@@ -287,6 +287,20 @@ function refreshCurrentPopup() {
   }
 }
 
+// Add or remove note decorator based on notes existence
+function updateNoteDecorator(marker, hasNotes, retailer) {
+  // Remove existing decorator if it exists
+  if (marker.noteDecorator) {
+    marker.noteDecorator.setMap(null);
+    marker.noteDecorator = null;
+  }
+  
+  // Add decorator if notes exist
+  if (hasNotes && window.addNoteDecorator) {
+    window.addNoteDecorator(marker, retailer);
+  }
+}
+
 // Show the modal with the actual content
 function showNotesModalWithContent(retailerId, currentNotes) {
   Swal.fire({
@@ -393,7 +407,11 @@ function saveUserNote(retailerId, notes) {
         showConfirmButton: false
       });
       
-      // Refresh the current popup to show updated notes
+      // Update decorator and refresh popup
+      if (window.currentOpenMarker) {
+        const hasNotes = notes && notes.trim().length > 0;
+        updateNoteDecorator(window.currentOpenMarker, hasNotes, { id: retailerId });
+      }
       refreshCurrentPopup();
     }
   })
@@ -438,7 +456,10 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Refresh the current popup to show updated notes
+      // Update decorator and refresh popup
+      if (window.currentOpenMarker) {
+        updateNoteDecorator(window.currentOpenMarker, false, { id: retailerId });
+      }
       refreshCurrentPopup();
     }
   })

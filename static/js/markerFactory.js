@@ -54,6 +54,11 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
         user_notes: data.notes || null
       };
       
+      // Add note decorator if notes exist
+      if (data.notes && data.notes.trim().length > 0) {
+        addNoteDecorator(marker, retailerWithNotes);
+      }
+      
       const html = renderRetailerInfoWindow(retailerWithNotes, isPro);
       
       window.currentOpenMarker = marker;
@@ -78,8 +83,9 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
     });
 }
 
-// Make function available globally for popup refresh
+// Make functions available globally for popup refresh
 window.fetchUserNotesAndShowPopup = fetchUserNotesAndShowPopup;
+window.addNoteDecorator = addNoteDecorator;
 
 // Simplified function to ensure InfoWindow close button is visible
 function handleInfoWindowOpen() {
@@ -135,9 +141,6 @@ export function createRetailerMarker(map, retailer) {
     ? `${cfg.iconBase}${pinName}`
     : `${cfg.iconBase}${cfg.freeIcon}`;
 
-  // Check if retailer has personal notes
-  const hasNotes = retailer.user_notes && retailer.user_notes.trim().length > 0;
-  
   const marker = new google.maps.Marker({
     position: { lat: parseFloat(retailer.latitude), lng: parseFloat(retailer.longitude) },
     map,
@@ -149,11 +152,6 @@ export function createRetailerMarker(map, retailer) {
     },
     zIndex: cfg.zIndex
   });
-  
-  // Add note decorator if retailer has personal notes
-  if (hasNotes) {
-    addNoteDecorator(marker, retailer);
-  }
 
   if (window.__TM_DEBUG__) {
     console.log('Retailer marker created:', {
