@@ -859,6 +859,12 @@ def how_to_reset_password():
     return render_template("how-to-reset-password.html")
 
 
+@public_bp.route("/how-to-personal-notes")
+def how_to_personal_notes():
+    """Render the Personal Notes tutorial page."""
+    return render_template("how-to-personal-notes.html")
+
+
 @public_bp.route("/sitemap.xml")
 def sitemap_xml():
     """Generate dynamic XML sitemap for search engines with caching for performance."""
@@ -899,6 +905,7 @@ def sitemap_xml():
         ('/how-to-route-planning-tool', '0.9', 'weekly'),
         ('/how-to-use-heatmaps', '0.9', 'weekly'),
         ('/how-to-reset-password', '0.8', 'weekly'),
+        ('/how-to-personal-notes', '0.9', 'weekly'),
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),

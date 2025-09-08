@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Use Personal Notes to Track Pokemon Card Hunting Success | TamerMap Pro{% endblock %}
+
+{% block meta_description %}Master Personal Notes in TamerMap Pro! Learn to track restock schedules, record successful finds, build hunting strategies, and optimize your Pokemon card hunting with private location notes.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for Personal Notes guide -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Use Personal Notes for Pokemon Card Hunting Success",
+  "description": "Complete guide to using TamerMap Pro's Personal Notes feature to track hunting success, restock schedules, and build winning strategies.",
+  "url": "{{ request.url }}",
+  "image": "{{ request.url_root.rstrip('/') }}/static/images/personal-notes-guide.png",
+  "totalTime": "PT10M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "9.95"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Pro Subscription"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "HowToTool",
+      "name": "TamerMap Pro Personal Notes"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Access Personal Notes",
+      "text": "Click on any location pin to open the info window, then look for the Personal Notes section."
+    },
+    {
+      "@type": "HowToStep", 
+      "name": "Add Your First Note",
+      "text": "Click 'Add Personal Note' to record your observations about the location."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Track Success Patterns",
+      "text": "Record what you found, when you found it, and any patterns you notice."
+    }
+  ]
+}
+</script>
+
+<style>
+  .hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+  }
+  
+  .feature-highlight {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  
+  .note-example {
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+  }
+  
+  .pro-tip {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+  
+  .step-number {
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="display-4 mb-3">
+          <i class="fas fa-sticky-note me-3"></i>
+          Master Personal Notes for Pokemon Card Hunting Success
+        </h1>
+        <p class="lead mb-4">Transform your Pokemon card hunting with TamerMap Pro's Personal Notes feature. Track restock schedules, record successful finds, and build winning strategies that give you the edge over other hunters.</p>
+        <div class="d-flex gap-3">
+          <span class="badge bg-warning text-dark fs-6">Pro Feature</span>
+          <span class="badge bg-light text-dark fs-6">Strategy Building</span>
+          <span class="badge bg-light text-dark fs-6">Success Tracking</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Introduction -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <h2>Why Personal Notes Are Your Secret Weapon</h2>
+      <p class="lead">While other hunters rely on guesswork, you'll have a detailed database of success patterns, restock schedules, and location-specific insights that only you can see.</p>
+      
+      <div class="feature-highlight">
+        <h4><i class="fas fa-lightbulb me-2"></i>Pro Advantage</h4>
+        <p>Personal Notes are exclusive to TamerMap Pro users. This private feature lets you build a competitive advantage by tracking patterns that other hunters miss.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Getting Started -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <h2>Getting Started with Personal Notes</h2>
+      
+      <div class="mb-4">
+        <h4><span class="step-number">1</span>Access Personal Notes</h4>
+        <p>Click on any location pin on the map to open the info window. Look for the "Personal Notes" section - it's only visible to Pro users.</p>
+      </div>
+      
+      <div class="mb-4">
+        <h4><span class="step-number">2</span>Add Your First Note</h4>
+        <p>Click "Add Personal Note" to open the beautiful SweetAlert2 modal. This is where you'll record your observations and insights.</p>
+      </div>
+      
+      <div class="mb-4">
+        <h4><span class="step-number">3</span>Visual Indicators</h4>
+        <p>Once you add notes to a location, you'll see an orange circle with note lines appear on the pin. This makes it easy to spot locations with your personal data at a glance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- What to Track -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <h2>What Should You Track?</h2>
+      <p>Effective Personal Notes cover multiple aspects of your hunting experience. Here's what successful hunters track:</p>
+      
+      <h3>Restock Schedules & Timing</h3>
+      <div class="note-example">
+        <strong>Example Note:</strong><br>
+        "Restocks every Tuesday around 2 PM. Last found: 3/15/2024 - 2 booster boxes, 1 ETB. Employee said they usually get shipments on Mondays but stock Tuesday afternoons. Best to check 2-4 PM on Tuesdays."
+      </div>
+      
+      <h3>Successful Finds & Inventory</h3>
+      <div class="note-example">
+        <strong>Example Note:</strong><br>
+        "Found 151 ETB here on 3/10/2024 at 10 AM. Had 4 in stock. Also had Paldea Evolved boosters. Store manager said they get new releases on Fridays. Check Friday mornings for new sets."
+      </div>
+      
+      <h3>Store-Specific Strategies</h3>
+      <div class="note-example">
+        <strong>Example Note:</strong><br>
+        "Cards are in electronics section, not toys. Look behind the counter - they keep high-value items there. Manager is friendly and will check back if you ask. Avoid weekends - too crowded."
+      </div>
+      
+      <h3>Employee Information</h3>
+      <div class="note-example">
+        <strong>Example Note:</strong><br>
+        "Sarah (morning shift) knows about Pokemon cards and will text when new stock arrives. Mike (evening) doesn't care about cards. Best to visit when Sarah is working."
+      </div>
+    </div>
+  </div>
+
+  <!-- Building Your Strategy -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <h2>Building Your Personal Strategy Database</h2>
+      
+      <h3>Pattern Recognition</h3>
+      <p>After tracking notes for a few weeks, you'll start seeing patterns:</p>
+      <ul>
+        <li><strong>Restock Days:</strong> Which stores restock on which days</li>
+        <li><strong>Best Times:</strong> Optimal times to visit each location</li>
+        <li><strong>Inventory Patterns:</strong> Which stores get which products</li>
+        <li><strong>Employee Schedules:</strong> Who to talk to for insider info</li>
+      </ul>
+      
+      <h3>Route Optimization</h3>
+      <p>Use your notes to plan efficient hunting routes:</p>
+      <ul>
+        <li>Hit restock days first</li>
+        <li>Visit employee-friendly stores when key staff are working</li>
+        <li>Avoid locations that consistently have nothing</li>
+        <li>Time visits based on your success patterns</li>
+      </ul>
+      
+      <div class="pro-tip">
+        <h4><i class="fas fa-star me-2"></i>Pro Tip</h4>
+        <p>Review your notes weekly to identify your most successful locations and times. Focus your hunting efforts on these high-probability spots.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Techniques -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <h2>Advanced Personal Notes Techniques</h2>
+      
+      <h3>Seasonal Tracking</h3>
+      <p>Track how different seasons affect inventory:</p>
+      <ul>
+        <li>Holiday seasons often have more stock</li>
+        <li>Back-to-school periods increase demand</li>
+        <li>Summer months may have different restock schedules</li>
+      </ul>
+      
+      <h3>Competition Analysis</h3>
+        <p>Note when you see other hunters:</p>
+        <ul>
+          <li>Which days/times are busiest</li>
+          <li>What they're looking for</li>
+          <li>How they behave (helpful or competitive)</li>
+        </ul>
+      
+      <h3>Price Tracking</h3>
+      <p>Record prices you see to track market trends:</p>
+      <ul>
+        <li>Booster pack prices by store</li>
+        <li>ETB and collection box pricing</li>
+        <li>Clearance and sale patterns</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Privacy & Security -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <h2>Privacy & Security</h2>
+      <p>Your Personal Notes are completely private and secure:</p>
+      <ul>
+        <li><strong>Only You Can See Them:</strong> Notes are tied to your Pro account</li>
+        <li><strong>Not Shared:</strong> Other users cannot see your notes</li>
+        <li><strong>Secure Storage:</strong> All data is encrypted and protected</li>
+        <li><strong>Your Competitive Edge:</strong> Build your private knowledge base</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Call to Action -->
+  <div class="row mb-5">
+    <div class="col-lg-8">
+      <div class="card bg-primary text-white">
+        <div class="card-body text-center">
+          <h3 class="card-title">Ready to Start Building Your Success Database?</h3>
+          <p class="card-text">Join TamerMap Pro today and start tracking your hunting success with Personal Notes.</p>
+          <a href="{{ url_for('public.learn') }}" class="btn btn-warning btn-lg">
+            <i class="fas fa-crown me-2"></i>Upgrade to Pro Now
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Articles -->
+  <div class="row">
+    <div class="col-lg-8">
+      <h2>Related Guides</h2>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-clock me-2"></i>Timing Your Hunts</h5>
+              <p class="card-text">Learn when to hunt for maximum success.</p>
+              <a href="{{ url_for('public.how_to_timing') }}" class="btn btn-outline-primary">Read Guide</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"><i class="fas fa-route me-2"></i>Route Planning</h5>
+              <p class="card-text">Optimize your hunting routes for efficiency.</p>
+              <a href="{{ url_for('public.how_to_routes') }}" class="btn btn-outline-primary">Read Guide</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
