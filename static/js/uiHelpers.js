@@ -231,10 +231,7 @@ window.addNote = function(retailerId) {
     return;
   }
   
-  const notes = prompt('Add your notes for this location:');
-  if (notes !== null) {
-    saveUserNote(retailerId, notes);
-  }
+  showNotesModal(retailerId);
 };
 
 window.editNote = function(retailerId) {
@@ -247,6 +244,11 @@ window.editNote = function(retailerId) {
     return;
   }
   
+  showNotesModal(retailerId);
+};
+
+// Show the Personal Notes modal
+function showNotesModal(retailerId) {
   // First get the current note
   fetch(`/api/user-notes/${retailerId}`)
     .then(response => {
@@ -258,17 +260,86 @@ window.editNote = function(retailerId) {
     })
     .then(data => {
       if (data) {
-        const notes = prompt('Edit your notes for this location:', data.notes || '');
-        if (notes !== null) {
-          saveUserNote(retailerId, notes);
-        }
+        const currentNotes = data.notes || '';
+        showNotesModalWithContent(retailerId, currentNotes);
       }
     })
     .catch(error => {
       console.error('Error fetching note:', error);
-      alert('Error loading note. Please try again.');
+      // Show modal with empty content if fetch fails
+      showNotesModalWithContent(retailerId, '');
     });
-};
+}
+
+// Show the modal with the actual content
+function showNotesModalWithContent(retailerId, currentNotes) {
+  Swal.fire({
+    title: '<i class="fas fa-sticky-note text-primary me-2"></i>Personal Notes',
+    html: `
+      <div class="text-start">
+        <p class="text-muted mb-3">Track your hunting success and build your strategy with private notes for this location.</p>
+        <div class="mb-3">
+          <label for="notesTextarea" class="form-label fw-bold">Your Notes:</label>
+          <textarea 
+            id="notesTextarea" 
+            class="form-control" 
+            rows="6" 
+            placeholder="Record what you found, when you found it, best times to visit, or any other insights..."
+            style="resize: vertical; min-height: 120px;"
+          >${currentNotes}</textarea>
+        </div>
+        <div class="text-muted small">
+          <i class="fas fa-info-circle me-1"></i>
+          These notes are private and only visible to you. Use them to track patterns and optimize your hunting strategy.
+        </div>
+      </div>
+    `,
+    width: '500px',
+    showCancelButton: true,
+    confirmButtonText: '<i class="fas fa-save me-2"></i>Save Notes',
+    cancelButtonText: '<i class="fas fa-times me-2"></i>Cancel',
+    confirmButtonColor: '#007bff',
+    cancelButtonColor: '#6c757d',
+    showDenyButton: currentNotes ? true : false,
+    denyButtonText: currentNotes ? '<i class="fas fa-trash me-2"></i>Delete Notes' : '',
+    denyButtonColor: '#dc3545',
+    focusConfirm: false,
+    preConfirm: () => {
+      const notes = document.getElementById('notesTextarea').value.trim();
+      return { notes: notes };
+    },
+    didOpen: () => {
+      // Focus on textarea
+      const textarea = document.getElementById('notesTextarea');
+      if (textarea) {
+        textarea.focus();
+        // Move cursor to end
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      }
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Save notes
+      const notes = result.value.notes;
+      saveUserNote(retailerId, notes);
+    } else if (result.isDenied) {
+      // Delete notes
+      Swal.fire({
+        title: 'Delete Notes?',
+        text: 'Are you sure you want to delete your notes for this location?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc3545'
+      }).then((deleteResult) => {
+        if (deleteResult.isConfirmed) {
+          deleteUserNote(retailerId);
+        }
+      });
+    }
+  });
+}
 
 function saveUserNote(retailerId, notes) {
   fetch(`/api/user-notes/${retailerId}`, {
@@ -287,8 +358,21 @@ function saveUserNote(retailerId, notes) {
   })
   .then(data => {
     if (data && data.error) {
-      alert('Error saving note: ' + data.error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to save note: ' + data.error
+      });
     } else if (data) {
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Notes Saved!',
+        text: 'Your personal notes have been saved successfully.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      
       // Refresh the map to show updated notes
       if (window.refreshMap) {
         window.refreshMap();
@@ -297,6 +381,57 @@ function saveUserNote(retailerId, notes) {
   })
   .catch(error => {
     console.error('Error saving note:', error);
-    alert('Error saving note. Please try again.');
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to save note. Please try again.'
+    });
+  });
+}
+
+function deleteUserNote(retailerId) {
+  fetch(`/api/user-notes/${retailerId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+  .then(response => {
+    if (response.status === 403) {
+      showProUpgradeToast();
+      return;
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data && data.error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to delete note: ' + data.error
+      });
+    } else {
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Notes Deleted!',
+        text: 'Your personal notes have been deleted.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+      
+      // Refresh the map to show updated notes
+      if (window.refreshMap) {
+        window.refreshMap();
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting note:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to delete note. Please try again.'
+    });
   });
 }

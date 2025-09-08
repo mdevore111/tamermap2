@@ -56,6 +56,9 @@ export function createRetailerMarker(map, retailer) {
     ? `${cfg.iconBase}${pinName}`
     : `${cfg.iconBase}${cfg.freeIcon}`;
 
+  // Check if retailer has personal notes
+  const hasNotes = retailer.user_notes && retailer.user_notes.trim().length > 0;
+  
   const marker = new google.maps.Marker({
     position: { lat: parseFloat(retailer.latitude), lng: parseFloat(retailer.longitude) },
     map,
@@ -67,6 +70,11 @@ export function createRetailerMarker(map, retailer) {
     },
     zIndex: cfg.zIndex
   });
+  
+  // Add note decorator if retailer has personal notes
+  if (hasNotes) {
+    addNoteDecorator(marker, retailer);
+  }
 
   if (window.__TM_DEBUG__) {
     console.log('Retailer marker created:', {
@@ -144,6 +152,52 @@ export function createRetailerMarker(map, retailer) {
   // Do not auto-bounce on create; preview handles bounce for selected stops only
 
   return marker;
+}
+
+/**
+ * Add a subtle note decorator to a marker that has personal notes
+ * @param {google.maps.Marker} marker - The marker to decorate
+ * @param {object} retailer - The retailer data
+ */
+function addNoteDecorator(marker, retailer) {
+  // Create a small note icon overlay
+  const noteIcon = new google.maps.Marker({
+    position: marker.getPosition(),
+    map: marker.getMap(),
+    icon: {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="7" fill="#007bff" stroke="#ffffff" stroke-width="2"/>
+          <path d="M6 6h4M6 8h3M6 10h2" stroke="#ffffff" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      `),
+      scaledSize: new google.maps.Size(16, 16),
+      anchor: new google.maps.Point(8, 8)
+    },
+    zIndex: marker.getZIndex() + 1,
+    title: 'Has Personal Notes'
+  });
+  
+  // Position the note icon slightly offset from the main marker
+  const position = marker.getPosition();
+  const offsetLat = 0.0001; // Small offset to position the note icon
+  const offsetLng = 0.0001;
+  
+  noteIcon.setPosition({
+    lat: position.lat() + offsetLat,
+    lng: position.lng() + offsetLng
+  });
+  
+  // Store reference to the note icon on the main marker for cleanup
+  marker.noteDecorator = noteIcon;
+  
+  // Add click handler to the note icon
+  noteIcon.addListener('click', () => {
+    // Trigger the edit note function
+    if (window.editNote) {
+      window.editNote(retailer.id);
+    }
+  });
 }
 
 /** Event marker */

@@ -380,6 +380,11 @@ export class MarkerManager {
         // Remove markers that are no longer visible
         this.visibleMarkers.forEach(marker => {
             if (!newVisibleMarkers.has(marker)) {
+                // Clean up note decorator if it exists
+                if (marker.noteDecorator) {
+                    marker.noteDecorator.setMap(null);
+                    marker.noteDecorator = null;
+                }
                 marker.setMap(null);
             }
         });
@@ -413,6 +418,11 @@ export class MarkerManager {
     
     clearVisibleMarkers() {
         this.visibleMarkers.forEach(marker => {
+            // Clean up note decorator if it exists
+            if (marker.noteDecorator) {
+                marker.noteDecorator.setMap(null);
+                marker.noteDecorator = null;
+            }
             marker.setMap(null);
         });
         this.visibleMarkers.clear();
@@ -422,6 +432,11 @@ export class MarkerManager {
         // Remove retailer markers from cache
         for (const [key, marker] of this.markerCache.entries()) {
             if (key.startsWith('retailer_')) {
+                // Clean up note decorator if it exists
+                if (marker.noteDecorator) {
+                    marker.noteDecorator.setMap(null);
+                    marker.noteDecorator = null;
+                }
                 marker.setMap(null);
                 this.markerCache.delete(key);
             }
