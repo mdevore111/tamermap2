@@ -257,7 +257,7 @@ def get_user_note(retailer_id):
     from flask_login import current_user
     
     # Check if user is Pro
-    if not current_user.is_pro:
+    if not current_user.has_role('Pro'):
         return jsonify({'error': 'Pro subscription required'}), 403
     
     note = UserNote.query.filter_by(
@@ -282,10 +282,10 @@ def save_user_note(retailer_id):
     """Create or update user's note for a specific retailer location"""
     from flask_login import current_user
     
-    print(f"Save note request - User: {current_user.id}, Retailer: {retailer_id}, Pro: {current_user.is_pro}")
+    print(f"Save note request - User: {current_user.id}, Retailer: {retailer_id}, Pro: {current_user.has_role('Pro')}")
     
     # Check if user is Pro
-    if not current_user.is_pro:
+    if not current_user.has_role('Pro'):
         return jsonify({'error': 'Pro subscription required'}), 403
     
     data = request.get_json()
@@ -347,7 +347,7 @@ def delete_user_note(retailer_id):
     from flask_login import current_user
     
     # Check if user is Pro
-    if not current_user.is_pro:
+    if not current_user.has_role('Pro'):
         return jsonify({'error': 'Pro subscription required'}), 403
     
     note = UserNote.query.filter_by(
