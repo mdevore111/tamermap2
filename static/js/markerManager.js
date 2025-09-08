@@ -145,6 +145,62 @@ export class MarkerManager {
         // Update visible markers with force to ensure first render works
         this.updateVisibleMarkers({ force: true });
         if (window.__TM_DEBUG__) console.log('[markerManager] retailers loaded, cache size', this.markerCache.size);
+        
+        // Load user notes and add decorators for Pro users
+        this.loadUserNotesDecorators();
+    }
+    
+    /**
+     * Load user notes and add decorators to markers that have notes
+     */
+    async loadUserNotesDecorators() {
+        // Only load notes for Pro users
+        if (!window.is_pro) {
+            return;
+        }
+        
+        try {
+            // Get all visible retailer IDs
+            const retailerIds = Array.from(this.markerCache.values())
+                .filter(marker => marker.retailer_data)
+                .map(marker => marker.retailer_data.id);
+            
+            if (retailerIds.length === 0) {
+                return;
+            }
+            
+            // Fetch all user notes at once
+            const response = await fetch('/api/user-notes/bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ retailer_ids: retailerIds })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch user notes');
+            }
+            
+            const data = await response.json();
+            
+            // Add decorators to markers that have notes
+            if (data.notes) {
+                Object.entries(data.notes).forEach(([retailerId, notes]) => {
+                    if (notes && notes.trim().length > 0) {
+                        // Find the marker for this retailer
+                        const marker = Array.from(this.markerCache.values())
+                            .find(m => m.retailer_data && m.retailer_data.id == retailerId);
+                        
+                        if (marker && window.addNoteDecorator) {
+                            window.addNoteDecorator(marker, { id: retailerId });
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading user notes decorators:', error);
+        }
     }
     
     /**

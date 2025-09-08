@@ -361,3 +361,35 @@ def delete_user_note(retailer_id):
         return jsonify({'message': 'Note deleted'})
     else:
         return jsonify({'error': 'Note not found'}), 404
+
+@api_bp.route("/user-notes/bulk", methods=['POST'])
+@login_required
+def get_bulk_user_notes():
+    """Get user notes for multiple retailers at once"""
+    from flask_login import current_user
+    
+    # Check if user is Pro
+    if not current_user.has_role('Pro'):
+        return jsonify({'error': 'Pro subscription required'}), 403
+    
+    try:
+        data = request.get_json()
+        retailer_ids = data.get('retailer_ids', [])
+        
+        if not retailer_ids:
+            return jsonify({'notes': {}})
+        
+        # Fetch all notes for the given retailer IDs
+        notes = UserNote.query.filter_by(
+            user_id=current_user.id
+        ).filter(UserNote.retailer_id.in_(retailer_ids)).all()
+        
+        # Convert to dictionary format
+        notes_dict = {}
+        for note in notes:
+            notes_dict[str(note.retailer_id)] = note.notes
+        
+        return jsonify({'notes': notes_dict})
+        
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch notes'}), 500
