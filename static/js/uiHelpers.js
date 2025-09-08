@@ -275,6 +275,18 @@ function showNotesModal(retailerId) {
     });
 }
 
+// Refresh the current popup to show updated notes
+function refreshCurrentPopup() {
+  if (window.currentOpenMarker && window.infoWindow) {
+    // Get the retailer data from the current marker
+    const retailer = window.currentOpenMarker.retailer_data || window.currentOpenMarker.retailer;
+    if (retailer) {
+      // Re-fetch notes and update popup
+      fetchUserNotesAndShowPopup(window.currentOpenMarker, retailer, window.is_pro);
+    }
+  }
+}
+
 // Show the modal with the actual content
 function showNotesModalWithContent(retailerId, currentNotes) {
   Swal.fire({
@@ -381,10 +393,8 @@ function saveUserNote(retailerId, notes) {
         showConfirmButton: false
       });
       
-      // Refresh the map to show updated notes
-      if (window.refreshMap) {
-        window.refreshMap();
-      }
+      // Refresh the current popup to show updated notes
+      refreshCurrentPopup();
     }
   })
   .catch(error => {
@@ -428,10 +438,8 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Refresh the map to show updated notes
-      if (window.refreshMap) {
-        window.refreshMap();
-      }
+      // Refresh the current popup to show updated notes
+      refreshCurrentPopup();
     }
   })
   .catch(error => {

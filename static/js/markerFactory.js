@@ -78,6 +78,9 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
     });
 }
 
+// Make function available globally for popup refresh
+window.fetchUserNotesAndShowPopup = fetchUserNotesAndShowPopup;
+
 // Simplified function to ensure InfoWindow close button is visible
 function handleInfoWindowOpen() {
   // Make sure close button is visible
