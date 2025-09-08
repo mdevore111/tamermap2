@@ -170,15 +170,21 @@ export function renderRetailerInfoWindow(retailer, isPro) {
       `&phone=${encodeURIComponent(phoneRaw)}&website=${encodeURIComponent(websiteRaw)}` +
       `&hours=${encodeURIComponent(retailer.opening_hours || '')}\">Correct Data</a></p>`;
 
-  // User Notes Section (only for logged-in users)
-  const notesSection = retailer.user_notes ? 
-    `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #007bff;">
-      <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#007bff;">Your Notes:</p>
-      <p style="margin:0; font-size:12px; color:#333;">${retailer.user_notes}</p>
-      <button onclick="editNote(${retailer.id})" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#007bff; color:white; border:none; border-radius:2px; cursor:pointer;">Edit</button>
-    </div>` : 
-    `<div style="margin-top:12px; font-size:12px;">
-      <button onclick="addNote(${retailer.id})" style="padding:4px 8px; font-size:10px; background:#28a745; color:white; border:none; border-radius:2px; cursor:pointer;">Add Note</button>
+  // User Notes Section (Pro only)
+  const notesSection = isPro ? 
+    (retailer.user_notes ? 
+      `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #007bff;">
+        <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#007bff;">Your Notes:</p>
+        <p style="margin:0; font-size:12px; color:#333;">${retailer.user_notes}</p>
+        <button onclick="editNote(${retailer.id})" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#007bff; color:white; border:none; border-radius:2px; cursor:pointer;">Edit</button>
+      </div>` : 
+      `<div style="margin-top:12px; font-size:12px;">
+        <button onclick="addNote(${retailer.id})" style="padding:4px 8px; font-size:10px; background:#28a745; color:white; border:none; border-radius:2px; cursor:pointer;">Add Note</button>
+      </div>`) :
+    `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #ffc107;">
+      <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#ffc107;">Personal Notes (Pro)</p>
+      <p style="margin:0; font-size:12px; color:#666;">Track your hunting success with private notes</p>
+      <button onclick="showProUpgradeToast()" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#ffc107; color:#000; border:none; border-radius:2px; cursor:pointer;">Upgrade to Pro</button>
     </div>`;
 
   const inner = `
@@ -216,6 +222,15 @@ export function renderEventInfoWindow(evt) {
 
 // User Notes Management Functions
 window.addNote = function(retailerId) {
+  // Check if user is Pro
+  const proSection = document.getElementById('pro-section');
+  const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : false;
+  
+  if (!isPro) {
+    showProUpgradeToast();
+    return;
+  }
+  
   const notes = prompt('Add your notes for this location:');
   if (notes !== null) {
     saveUserNote(retailerId, notes);
@@ -223,13 +238,30 @@ window.addNote = function(retailerId) {
 };
 
 window.editNote = function(retailerId) {
+  // Check if user is Pro
+  const proSection = document.getElementById('pro-section');
+  const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : false;
+  
+  if (!isPro) {
+    showProUpgradeToast();
+    return;
+  }
+  
   // First get the current note
   fetch(`/api/user-notes/${retailerId}`)
-    .then(response => response.json())
+    .then(response => {
+      if (response.status === 403) {
+        showProUpgradeToast();
+        return;
+      }
+      return response.json();
+    })
     .then(data => {
-      const notes = prompt('Edit your notes for this location:', data.notes || '');
-      if (notes !== null) {
-        saveUserNote(retailerId, notes);
+      if (data) {
+        const notes = prompt('Edit your notes for this location:', data.notes || '');
+        if (notes !== null) {
+          saveUserNote(retailerId, notes);
+        }
       }
     })
     .catch(error => {
@@ -246,11 +278,17 @@ function saveUserNote(retailerId, notes) {
     },
     body: JSON.stringify({ notes: notes })
   })
-  .then(response => response.json())
+  .then(response => {
+    if (response.status === 403) {
+      showProUpgradeToast();
+      return;
+    }
+    return response.json();
+  })
   .then(data => {
-    if (data.error) {
+    if (data && data.error) {
       alert('Error saving note: ' + data.error);
-    } else {
+    } else if (data) {
       // Refresh the map to show updated notes
       if (window.refreshMap) {
         window.refreshMap();

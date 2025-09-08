@@ -256,6 +256,10 @@ def get_user_note(retailer_id):
     """Get user's note for a specific retailer location"""
     from flask_login import current_user
     
+    # Check if user is Pro
+    if not current_user.is_pro:
+        return jsonify({'error': 'Pro subscription required'}), 403
+    
     note = UserNote.query.filter_by(
         user_id=current_user.id, 
         retailer_id=retailer_id
@@ -277,6 +281,10 @@ def get_user_note(retailer_id):
 def save_user_note(retailer_id):
     """Create or update user's note for a specific retailer location"""
     from flask_login import current_user
+    
+    # Check if user is Pro
+    if not current_user.is_pro:
+        return jsonify({'error': 'Pro subscription required'}), 403
     
     data = request.get_json()
     notes = data.get('notes', '').strip()
@@ -332,6 +340,10 @@ def save_user_note(retailer_id):
 def delete_user_note(retailer_id):
     """Delete user's note for a specific retailer location"""
     from flask_login import current_user
+    
+    # Check if user is Pro
+    if not current_user.is_pro:
+        return jsonify({'error': 'Pro subscription required'}), 403
     
     note = UserNote.query.filter_by(
         user_id=current_user.id, 
