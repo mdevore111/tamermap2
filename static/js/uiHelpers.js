@@ -307,6 +307,13 @@ function updateNoteDecorator(marker, hasNotes, retailer) {
     setTimeout(() => {
       marker.setZIndex(originalZIndex);
     }, 10);
+    
+    // Additional aggressive refresh: trigger map resize event
+    setTimeout(() => {
+      if (window.google && window.google.maps && window.map) {
+        window.google.maps.event.trigger(window.map, 'resize');
+      }
+    }, 50);
   }
   
   // Add decorator if notes exist
@@ -506,7 +513,7 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Update decorator for the specific marker and refresh popup
+      // Force complete marker refresh by removing and recreating it
       console.log('DELETE: Looking for marker with retailer ID:', retailerId);
       console.log('DELETE: markerManager available:', !!window.markerManager);
       console.log('DELETE: markerManager.markerCache available:', !!(window.markerManager && window.markerManager.markerCache));
@@ -519,17 +526,27 @@ function deleteUserNote(retailerId) {
         
         console.log('DELETE: Found marker:', !!marker);
         if (marker) {
-          console.log('DELETE: Updating decorator for marker');
-          updateNoteDecorator(marker, false, { id: retailerId });
-        }
-      } else {
-        console.log('DELETE: markerManager not available, trying alternative approach');
-        // Fallback: try to find marker in allMarkers or other global arrays
-        if (window.allMarkers) {
-          const marker = window.allMarkers.find(m => m.retailer_data && m.retailer_data.id == retailerId);
-          if (marker) {
-            console.log('DELETE: Found marker in allMarkers, updating decorator');
-            updateNoteDecorator(marker, false, { id: retailerId });
+          console.log('DELETE: Force refreshing marker by removing and recreating');
+          // Store the current position and data
+          const position = marker.getPosition();
+          const retailerData = marker.retailer_data;
+          const map = marker.getMap();
+          
+          // Remove the old marker completely
+          marker.setMap(null);
+          
+          // Recreate the marker without the decorator
+          if (window.createRetailerMarker) {
+            const newMarker = window.createRetailerMarker(retailerData, map);
+            if (newMarker) {
+              // Update the cache
+              window.markerManager.markerCache.set(retailerData.id, newMarker);
+              
+              // If this was the current open marker, update the reference
+              if (window.currentOpenMarker === marker) {
+                window.currentOpenMarker = newMarker;
+              }
+            }
           }
         }
       }
