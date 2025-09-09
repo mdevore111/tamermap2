@@ -98,10 +98,11 @@ def get_non_na_traffic_stats():
     total_traffic = cursor.fetchone()[0]
     
     # Get North American traffic count
+    na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) FROM visitor_log 
-        WHERE country IN ('{na_countries_str}')
-    """)
+        WHERE country IN ({na_countries_placeholders})
+    """, NORTH_AMERICAN_COUNTRIES)
     total_na = cursor.fetchone()[0]
     
     conn.close()
@@ -170,10 +171,11 @@ def verify_cleanup():
     new_total = cursor.fetchone()[0]
     
     # Get remaining North American traffic count
+    na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) FROM visitor_log 
-        WHERE country IN ('{na_countries_str}')
-    """)
+        WHERE country IN ({na_countries_placeholders})
+    """, NORTH_AMERICAN_COUNTRIES)
     remaining_na = cursor.fetchone()[0]
     
     conn.close()
