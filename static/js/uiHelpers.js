@@ -414,13 +414,30 @@ function saveUserNote(retailerId, notes) {
       // Update decorator for the specific marker and refresh popup
       const hasNotes = notes && notes.trim().length > 0;
       
+      console.log('SAVE: Looking for marker with retailer ID:', retailerId);
+      console.log('SAVE: markerManager available:', !!window.markerManager);
+      console.log('SAVE: markerManager.markerCache available:', !!(window.markerManager && window.markerManager.markerCache));
+      
       if (window.markerManager && window.markerManager.markerCache) {
+        console.log('SAVE: markerCache size:', window.markerManager.markerCache.size);
         // Find the marker by retailer ID
         const marker = Array.from(window.markerManager.markerCache.values())
           .find(m => m.retailer_data && m.retailer_data.id == retailerId);
         
+        console.log('SAVE: Found marker:', !!marker);
         if (marker) {
+          console.log('SAVE: Updating decorator for marker');
           updateNoteDecorator(marker, hasNotes, { id: retailerId });
+        }
+      } else {
+        console.log('SAVE: markerManager not available, trying alternative approach');
+        // Fallback: try to find marker in allMarkers or other global arrays
+        if (window.allMarkers) {
+          const marker = window.allMarkers.find(m => m.retailer_data && m.retailer_data.id == retailerId);
+          if (marker) {
+            console.log('SAVE: Found marker in allMarkers, updating decorator');
+            updateNoteDecorator(marker, hasNotes, { id: retailerId });
+          }
         }
       }
       
@@ -475,13 +492,30 @@ function deleteUserNote(retailerId) {
       });
       
       // Update decorator for the specific marker and refresh popup
+      console.log('DELETE: Looking for marker with retailer ID:', retailerId);
+      console.log('DELETE: markerManager available:', !!window.markerManager);
+      console.log('DELETE: markerManager.markerCache available:', !!(window.markerManager && window.markerManager.markerCache));
+      
       if (window.markerManager && window.markerManager.markerCache) {
+        console.log('DELETE: markerCache size:', window.markerManager.markerCache.size);
         // Find the marker by retailer ID
         const marker = Array.from(window.markerManager.markerCache.values())
           .find(m => m.retailer_data && m.retailer_data.id == retailerId);
         
+        console.log('DELETE: Found marker:', !!marker);
         if (marker) {
+          console.log('DELETE: Updating decorator for marker');
           updateNoteDecorator(marker, false, { id: retailerId });
+        }
+      } else {
+        console.log('DELETE: markerManager not available, trying alternative approach');
+        // Fallback: try to find marker in allMarkers or other global arrays
+        if (window.allMarkers) {
+          const marker = window.allMarkers.find(m => m.retailer_data && m.retailer_data.id == retailerId);
+          if (marker) {
+            console.log('DELETE: Found marker in allMarkers, updating decorator');
+            updateNoteDecorator(marker, false, { id: retailerId });
+          }
         }
       }
       

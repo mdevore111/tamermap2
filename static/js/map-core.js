@@ -144,6 +144,7 @@ function renderMap() {
   try {
     if (!markerManager) {
       markerManager = new MarkerManager(window.map);
+      window.markerManager = markerManager; // Expose globally
       if (window.__TM_DEBUG__) console.log('[map-init] MarkerManager constructed early');
     }
     if (!dataService) {
@@ -561,6 +562,9 @@ function refreshHeatmapData(days) {
   // Initialize marker manager and data service
   markerManager = new MarkerManager(window.map);
   dataService = new DataService();
+  
+  // Expose markerManager globally for Personal Notes functionality
+  window.markerManager = markerManager;
   
   // Initialize loading overlay
   initLoadingOverlay();
