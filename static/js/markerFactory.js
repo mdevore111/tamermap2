@@ -86,6 +86,7 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
 // Make functions available globally for popup refresh
 window.fetchUserNotesAndShowPopup = fetchUserNotesAndShowPopup;
 window.addNoteDecorator = addNoteDecorator;
+window.createRetailerMarker = createRetailerMarker;
 
 // Simplified function to ensure InfoWindow close button is visible
 function handleInfoWindowOpen() {

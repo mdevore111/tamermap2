@@ -537,16 +537,24 @@ function deleteUserNote(retailerId) {
           
           // Recreate the marker without the decorator
           if (window.createRetailerMarker) {
-            const newMarker = window.createRetailerMarker(retailerData, map);
+            console.log('DELETE: Creating new marker for retailer:', retailerData.retailer);
+            const newMarker = window.createRetailerMarker(map, retailerData);
+            console.log('DELETE: New marker created:', !!newMarker);
             if (newMarker) {
               // Update the cache
               window.markerManager.markerCache.set(retailerData.id, newMarker);
+              console.log('DELETE: Updated marker cache');
               
               // If this was the current open marker, update the reference
               if (window.currentOpenMarker === marker) {
                 window.currentOpenMarker = newMarker;
+                console.log('DELETE: Updated current open marker reference');
               }
+            } else {
+              console.log('DELETE: Failed to create new marker');
             }
+          } else {
+            console.log('DELETE: createRetailerMarker not available on window');
           }
         }
       }
