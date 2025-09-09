@@ -154,24 +154,7 @@ server {{
     # ────────────────────────────────────────────────────────────
     
     # Block direct access unless from Cloudflare or monitoring
-    location / {{
-        # Check if request is from Cloudflare or monitoring
-        if ($cloudflare_ip = 0) {{
-            return 403 "Access denied. Please use the official website.";
-        }}
-        
-        # Proxy to your application
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # Add Cloudflare headers for proper IP detection
-        proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
-        proxy_set_header CF-Ray $http_cf_ray;
-        proxy_set_header CF-Visitor $http_cf_visitor;
-    }}
+    # (Protection logic moved to main location block below)
     
 
     # ────────────────────────────────────────────────────────────
@@ -254,6 +237,11 @@ server {{
 
     # ── Main application
     location / {{
+        # Check if request is from Cloudflare or monitoring
+        if ($cloudflare_ip = 0) {{
+            return 403 "Access denied. Please use the official website.";
+        }}
+        
         proxy_http_version 1.1;
         proxy_set_header   Connection "";
 
