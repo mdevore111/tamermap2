@@ -513,7 +513,7 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Force complete marker refresh by removing and recreating it
+      // Simple approach: just remove the decorator and force a visual refresh
       console.log('DELETE: Looking for marker with retailer ID:', retailerId);
       console.log('DELETE: markerManager available:', !!window.markerManager);
       console.log('DELETE: markerManager.markerCache available:', !!(window.markerManager && window.markerManager.markerCache));
@@ -526,36 +526,21 @@ function deleteUserNote(retailerId) {
         
         console.log('DELETE: Found marker:', !!marker);
         if (marker) {
-          console.log('DELETE: Force refreshing marker by removing and recreating');
-          // Store the current position and data
-          const position = marker.getPosition();
-          const retailerData = marker.retailer_data;
-          const map = marker.getMap();
+          console.log('DELETE: Removing decorator and forcing visual refresh');
           
-          // Remove the old marker completely
-          marker.setMap(null);
-          
-          // Recreate the marker without the decorator
-          if (window.createRetailerMarker) {
-            console.log('DELETE: Creating new marker for retailer:', retailerData.retailer);
-            const newMarker = window.createRetailerMarker(map, retailerData);
-            console.log('DELETE: New marker created:', !!newMarker);
-            if (newMarker) {
-              // Update the cache
-              window.markerManager.markerCache.set(retailerData.id, newMarker);
-              console.log('DELETE: Updated marker cache');
-              
-              // If this was the current open marker, update the reference
-              if (window.currentOpenMarker === marker) {
-                window.currentOpenMarker = newMarker;
-                console.log('DELETE: Updated current open marker reference');
-              }
-            } else {
-              console.log('DELETE: Failed to create new marker');
-            }
-          } else {
-            console.log('DELETE: createRetailerMarker not available on window');
+          // Remove decorator if it exists
+          if (marker.noteDecorator) {
+            marker.noteDecorator.setMap(null);
+            marker.noteDecorator = null;
           }
+          
+          // Force visual refresh by briefly hiding and showing the marker
+          const map = marker.getMap();
+          marker.setMap(null);
+          setTimeout(() => {
+            marker.setMap(map);
+            console.log('DELETE: Marker refreshed on map');
+          }, 10);
         }
       }
       
