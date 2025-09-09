@@ -155,10 +155,9 @@ server {{
     
     # Block direct access unless from Cloudflare or monitoring
     location / {{
+        # Check if request is from Cloudflare or monitoring
         if ($cloudflare_ip = 0) {{
-            if ($is_monitor = 0) {{
-                return 403 "Access denied. Please use the official website.";
-            }}
+            return 403 "Access denied. Please use the official website.";
         }}
         
         # Proxy to your application
@@ -173,6 +172,7 @@ server {{
         proxy_set_header CF-Ray $http_cf_ray;
         proxy_set_header CF-Visitor $http_cf_visitor;
     }}
+    
 
     # ────────────────────────────────────────────────────────────
     # Basic Security (minimal - Cloudflare handles the rest)
