@@ -479,8 +479,6 @@ function saveUserNote(retailerId, notes) {
 }
 
 function deleteUserNote(retailerId) {
-  console.log('DELETE: deleteUserNote called for retailer ID:', retailerId);
-  
   fetch(`/api/user-notes/${retailerId}`, {
     method: 'DELETE',
     headers: {
@@ -488,7 +486,6 @@ function deleteUserNote(retailerId) {
     }
   })
   .then(response => {
-    console.log('DELETE: Response status:', response.status);
     if (response.status === 403) {
       showProUpgradeToast();
       return;
@@ -496,7 +493,6 @@ function deleteUserNote(retailerId) {
     return response.json();
   })
   .then(data => {
-    console.log('DELETE: Response data:', data);
     if (data && data.error) {
       Swal.fire({
         icon: 'error',
@@ -513,21 +509,12 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Simple approach: just remove the decorator and force a visual refresh
-      console.log('DELETE: Looking for marker with retailer ID:', retailerId);
-      console.log('DELETE: markerManager available:', !!window.markerManager);
-      console.log('DELETE: markerManager.markerCache available:', !!(window.markerManager && window.markerManager.markerCache));
-      
+      // Remove decorator and force visual refresh
       if (window.markerManager && window.markerManager.markerCache) {
-        console.log('DELETE: markerCache size:', window.markerManager.markerCache.size);
-        // Find the marker by retailer ID
         const marker = Array.from(window.markerManager.markerCache.values())
           .find(m => m.retailer_data && m.retailer_data.id == retailerId);
         
-        console.log('DELETE: Found marker:', !!marker);
         if (marker) {
-          console.log('DELETE: Removing decorator and forcing visual refresh');
-          
           // Remove decorator if it exists
           if (marker.noteDecorator) {
             marker.noteDecorator.setMap(null);
@@ -539,17 +526,11 @@ function deleteUserNote(retailerId) {
           marker.setMap(null);
           setTimeout(() => {
             marker.setMap(map);
-            console.log('DELETE: Marker refreshed on map');
           }, 10);
         }
       }
       
-      // Also update current open marker if it's the same one
-      if (window.currentOpenMarker && window.currentOpenMarker.retailer_data && 
-          window.currentOpenMarker.retailer_data.id == retailerId) {
-        console.log('DELETE: Updating current open marker decorator');
-        updateNoteDecorator(window.currentOpenMarker, false, { id: retailerId });
-      }
+      // Current open marker is already handled by the main marker refresh above
       
       refreshCurrentPopup();
     }
