@@ -135,7 +135,8 @@ server {{
 
 # HTTPS server block
 server {{
-    listen 443 ssl http2;
+    listen 443 ssl;
+    http2 on;
     server_name {server_names};
 
     # SSL certificates
@@ -153,16 +154,25 @@ server {{
     # ────────────────────────────────────────────────────────────
     
     # Block direct access unless from Cloudflare or monitoring
-    if ($cloudflare_ip = 0) {{
-        if ($is_monitor = 0) {{
-            return 403 "Access denied. Please use the official website.";
+    location / {{
+        if ($cloudflare_ip = 0) {{
+            if ($is_monitor = 0) {{
+                return 403 "Access denied. Please use the official website.";
+            }}
         }}
+        
+        # Proxy to your application
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Add Cloudflare headers for proper IP detection
+        proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
+        proxy_set_header CF-Ray $http_cf_ray;
+        proxy_set_header CF-Visitor $http_cf_visitor;
     }}
-
-    # Add Cloudflare headers for proper IP detection
-    proxy_set_header CF-Connecting-IP $http_cf_connecting_ip;
-    proxy_set_header CF-Ray $http_cf_ray;
-    proxy_set_header CF-Visitor $http_cf_visitor;
 
     # ────────────────────────────────────────────────────────────
     # Basic Security (minimal - Cloudflare handles the rest)
