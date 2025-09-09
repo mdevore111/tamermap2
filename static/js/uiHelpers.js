@@ -294,8 +294,12 @@ function updateNoteDecorator(marker, hasNotes, retailer) {
   // Remove existing decorator if it exists
   if (marker.noteDecorator) {
     console.log('Removing existing decorator');
+    console.log('Decorator before removal:', marker.noteDecorator);
+    console.log('Decorator map before removal:', marker.noteDecorator.getMap());
     marker.noteDecorator.setMap(null);
+    console.log('Decorator map after setMap(null):', marker.noteDecorator.getMap());
     marker.noteDecorator = null;
+    console.log('Decorator after null assignment:', marker.noteDecorator);
   }
   
   // Add decorator if notes exist
