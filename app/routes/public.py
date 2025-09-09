@@ -730,6 +730,10 @@ def correct_location():
     form.out_of_business.data = False  # Explicitly set to unchecked
     form.subject.data = "Location Data Correction"
     
+    # Debug logging
+    print(f"DEBUG: out_of_business.data = {form.out_of_business.data}")
+    print(f"DEBUG: out_of_business.default = {form.out_of_business.default}")
+    
     # Pre-populate with location data from URL parameters
     if request.args.get("address"):
         form.reported_address.data = request.args.get("address")
