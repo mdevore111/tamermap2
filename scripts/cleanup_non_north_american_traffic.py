@@ -32,8 +32,12 @@ import argparse
 DB_PATH = "instance/tamermap_data.db"
 BACKUP_PATH = f"instance/tamermap_data_backup_non_na_cleanup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
 
-# North American countries to preserve
-NORTH_AMERICAN_COUNTRIES = ['US', 'CA', 'MX']
+# North American countries to preserve (both codes and full names)
+NORTH_AMERICAN_COUNTRIES = [
+    'US', 'CA', 'MX',  # Country codes
+    'United States', 'Canada', 'Mexico',  # Full names
+    'United States of America', 'USA'  # Alternative names
+]
 
 def backup_database():
     """Create a backup before making changes"""
@@ -48,45 +52,45 @@ def get_non_na_traffic_stats():
     cursor = conn.cursor()
     
     # Get total non-North American traffic count
-    na_countries_str = "', '".join(NORTH_AMERICAN_COUNTRIES)
+    na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) as total_non_na_visits
         FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
-    """)
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+    """, NORTH_AMERICAN_COUNTRIES)
     total_non_na = cursor.fetchone()[0]
     
     # Get non-North American traffic by country
     cursor.execute(f"""
         SELECT country, COUNT(*) as visits
         FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
         GROUP BY country 
         ORDER BY visits DESC 
         LIMIT 20
-    """)
+    """, NORTH_AMERICAN_COUNTRIES)
     non_na_by_country = cursor.fetchall()
     
     # Get non-North American traffic by path
     cursor.execute(f"""
         SELECT path, COUNT(*) as visits
         FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
         GROUP BY path 
         ORDER BY visits DESC 
         LIMIT 20
-    """)
+    """, NORTH_AMERICAN_COUNTRIES)
     non_na_by_path = cursor.fetchall()
     
     # Get non-North American traffic by date
     cursor.execute(f"""
         SELECT DATE(timestamp) as date, COUNT(*) as visits
         FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
-        GROUP BY DATE(timestamp)
-        ORDER BY date DESC
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        GROUP BY DATE(timestamp) 
+        ORDER BY date DESC 
         LIMIT 10
-    """)
+    """, NORTH_AMERICAN_COUNTRIES)
     non_na_by_date = cursor.fetchall()
     
     # Get total traffic count for comparison
@@ -119,11 +123,11 @@ def cleanup_non_na_traffic():
     cursor = conn.cursor()
     
     # Count what will be deleted
-    na_countries_str = "', '".join(NORTH_AMERICAN_COUNTRIES)
+    na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
-    """)
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+    """, NORTH_AMERICAN_COUNTRIES)
     to_delete = cursor.fetchone()[0]
     
     if to_delete == 0:
@@ -136,8 +140,8 @@ def cleanup_non_na_traffic():
     # Delete non-North American traffic
     cursor.execute(f"""
         DELETE FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
-    """)
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+    """, NORTH_AMERICAN_COUNTRIES)
     deleted_count = cursor.rowcount
     
     conn.commit()
@@ -154,11 +158,11 @@ def verify_cleanup():
     cursor = conn.cursor()
     
     # Check if any non-North American traffic remains
-    na_countries_str = "', '".join(NORTH_AMERICAN_COUNTRIES)
+    na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) FROM visitor_log 
-        WHERE country NOT IN ('{na_countries_str}') OR country IS NULL
-    """)
+        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+    """, NORTH_AMERICAN_COUNTRIES)
     remaining = cursor.fetchone()[0]
     
     # Get new total count
