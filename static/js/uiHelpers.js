@@ -300,6 +300,13 @@ function updateNoteDecorator(marker, hasNotes, retailer) {
     console.log('Decorator map after setMap(null):', marker.noteDecorator.getMap());
     marker.noteDecorator = null;
     console.log('Decorator after null assignment:', marker.noteDecorator);
+    
+    // Force a visual refresh by briefly changing the marker's z-index
+    const originalZIndex = marker.getZIndex();
+    marker.setZIndex(originalZIndex - 1);
+    setTimeout(() => {
+      marker.setZIndex(originalZIndex);
+    }, 10);
   }
   
   // Add decorator if notes exist
