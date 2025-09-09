@@ -51,42 +51,42 @@ def get_non_na_traffic_stats():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Get total non-North American traffic count
+    # Get total non-North American traffic count (excluding unknown/null)
     na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) as total_non_na_visits
         FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
     """, NORTH_AMERICAN_COUNTRIES)
     total_non_na = cursor.fetchone()[0]
     
-    # Get non-North American traffic by country
+    # Get non-North American traffic by country (excluding unknown/null)
     cursor.execute(f"""
         SELECT country, COUNT(*) as visits
         FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
         GROUP BY country 
         ORDER BY visits DESC 
         LIMIT 20
     """, NORTH_AMERICAN_COUNTRIES)
     non_na_by_country = cursor.fetchall()
     
-    # Get non-North American traffic by path
+    # Get non-North American traffic by path (excluding unknown/null)
     cursor.execute(f"""
         SELECT path, COUNT(*) as visits
         FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
         GROUP BY path 
         ORDER BY visits DESC 
         LIMIT 20
     """, NORTH_AMERICAN_COUNTRIES)
     non_na_by_path = cursor.fetchall()
     
-    # Get non-North American traffic by date
+    # Get non-North American traffic by date (excluding unknown/null)
     cursor.execute(f"""
         SELECT DATE(timestamp) as date, COUNT(*) as visits
         FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
         GROUP BY DATE(timestamp) 
         ORDER BY date DESC 
         LIMIT 10
@@ -123,11 +123,11 @@ def cleanup_non_na_traffic():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Count what will be deleted
+    # Count what will be deleted (excluding unknown/null)
     na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
     """, NORTH_AMERICAN_COUNTRIES)
     to_delete = cursor.fetchone()[0]
     
@@ -138,10 +138,10 @@ def cleanup_non_na_traffic():
     
     print(f"📊 Found {to_delete} non-North American traffic entries to remove")
     
-    # Delete non-North American traffic
+    # Delete non-North American traffic (excluding unknown/null)
     cursor.execute(f"""
         DELETE FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
     """, NORTH_AMERICAN_COUNTRIES)
     deleted_count = cursor.rowcount
     
@@ -158,11 +158,11 @@ def verify_cleanup():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Check if any non-North American traffic remains
+    # Check if any non-North American traffic remains (excluding unknown/null)
     na_countries_placeholders = ', '.join(['?' for _ in NORTH_AMERICAN_COUNTRIES])
     cursor.execute(f"""
         SELECT COUNT(*) FROM visitor_log 
-        WHERE country NOT IN ({na_countries_placeholders}) OR country IS NULL
+        WHERE country NOT IN ({na_countries_placeholders}) AND country IS NOT NULL
     """, NORTH_AMERICAN_COUNTRIES)
     remaining = cursor.fetchone()[0]
     
@@ -238,6 +238,7 @@ def main():
         print(f"\n⚠️  WARNING: This will permanently delete {stats['total_non_na']:,} non-North American traffic entries")
         print(f"   This includes traffic from countries outside: {', '.join(NORTH_AMERICAN_COUNTRIES)}")
         print(f"   North American traffic will be preserved: {stats['total_na']:,} entries")
+        print(f"   Unknown/Null traffic will be preserved: {stats['total_traffic'] - stats['total_na'] - stats['total_non_na']:,} entries")
         response = input("Are you sure you want to proceed? (yes/no): ")
         if response.lower() not in ['yes', 'y']:
             print("❌ Cleanup cancelled")
