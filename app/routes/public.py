@@ -708,6 +708,7 @@ def add_location():
     form.form_type.data = 'add_new'
     form.is_admin_report.data = True  # New locations always need admin review
     form.is_new_location.data = True  # This is a new location
+    form.out_of_business.data = False  # Explicitly set to unchecked
     form.subject.data = "New Location Submission"
     
     return render_template("add_location_form.html", form=form)
@@ -726,6 +727,7 @@ def correct_location():
     form.form_type.data = 'correct_existing'
     form.is_admin_report.data = True  # Corrections need admin review
     form.is_new_location.data = False  # This is correcting an existing location
+    form.out_of_business.data = False  # Explicitly set to unchecked
     form.subject.data = "Location Data Correction"
     
     # Pre-populate with location data from URL parameters
