@@ -411,11 +411,25 @@ function saveUserNote(retailerId, notes) {
         showConfirmButton: false
       });
       
-      // Update decorator and refresh popup
-      if (window.currentOpenMarker) {
-        const hasNotes = notes && notes.trim().length > 0;
+      // Update decorator for the specific marker and refresh popup
+      const hasNotes = notes && notes.trim().length > 0;
+      
+      if (window.markerManager && window.markerManager.markerCache) {
+        // Find the marker by retailer ID
+        const marker = Array.from(window.markerManager.markerCache.values())
+          .find(m => m.retailer_data && m.retailer_data.id == retailerId);
+        
+        if (marker) {
+          updateNoteDecorator(marker, hasNotes, { id: retailerId });
+        }
+      }
+      
+      // Also update current open marker if it's the same one
+      if (window.currentOpenMarker && window.currentOpenMarker.retailer_data && 
+          window.currentOpenMarker.retailer_data.id == retailerId) {
         updateNoteDecorator(window.currentOpenMarker, hasNotes, { id: retailerId });
       }
+      
       refreshCurrentPopup();
     }
   })
@@ -460,10 +474,23 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Update decorator and refresh popup
-      if (window.currentOpenMarker) {
+      // Update decorator for the specific marker and refresh popup
+      if (window.markerManager && window.markerManager.markerCache) {
+        // Find the marker by retailer ID
+        const marker = Array.from(window.markerManager.markerCache.values())
+          .find(m => m.retailer_data && m.retailer_data.id == retailerId);
+        
+        if (marker) {
+          updateNoteDecorator(marker, false, { id: retailerId });
+        }
+      }
+      
+      // Also update current open marker if it's the same one
+      if (window.currentOpenMarker && window.currentOpenMarker.retailer_data && 
+          window.currentOpenMarker.retailer_data.id == retailerId) {
         updateNoteDecorator(window.currentOpenMarker, false, { id: retailerId });
       }
+      
       refreshCurrentPopup();
     }
   })
