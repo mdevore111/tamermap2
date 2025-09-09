@@ -461,6 +461,8 @@ function saveUserNote(retailerId, notes) {
 }
 
 function deleteUserNote(retailerId) {
+  console.log('DELETE: deleteUserNote called for retailer ID:', retailerId);
+  
   fetch(`/api/user-notes/${retailerId}`, {
     method: 'DELETE',
     headers: {
@@ -468,6 +470,7 @@ function deleteUserNote(retailerId) {
     }
   })
   .then(response => {
+    console.log('DELETE: Response status:', response.status);
     if (response.status === 403) {
       showProUpgradeToast();
       return;
@@ -475,6 +478,7 @@ function deleteUserNote(retailerId) {
     return response.json();
   })
   .then(data => {
+    console.log('DELETE: Response data:', data);
     if (data && data.error) {
       Swal.fire({
         icon: 'error',
@@ -522,6 +526,7 @@ function deleteUserNote(retailerId) {
       // Also update current open marker if it's the same one
       if (window.currentOpenMarker && window.currentOpenMarker.retailer_data && 
           window.currentOpenMarker.retailer_data.id == retailerId) {
+        console.log('DELETE: Updating current open marker decorator');
         updateNoteDecorator(window.currentOpenMarker, false, { id: retailerId });
       }
       
