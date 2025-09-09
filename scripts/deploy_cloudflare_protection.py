@@ -90,7 +90,7 @@ geo $cloudflare_ip {{
     # Your SSH access (if specified)
 '''
     
-    if your_ssh_ip:
+    if your_ssh_ip and your_ssh_ip != "cloudflare":
         geo_block += f"    {your_ssh_ip} 1;\n"
     
     geo_block += """
@@ -270,7 +270,7 @@ def backup_existing_configs(environment):
     if os.path.exists(main_config):
         backup_path = f"/etc/nginx/sites-available/tamermap_backup_{timestamp}"
         try:
-            shutil.copy2(main_config, backup_path)
+            subprocess.run(['sudo', 'cp', main_config, backup_path], check=True)
             backups.append(backup_path)
             print(f"✅ Backed up main config: {backup_path}")
         except Exception as e:
@@ -281,7 +281,7 @@ def backup_existing_configs(environment):
     if os.path.exists(staging_config):
         backup_path = f"/etc/nginx/sites-available/staging.tamermap.com_backup_{timestamp}"
         try:
-            shutil.copy2(staging_config, backup_path)
+            subprocess.run(['sudo', 'cp', staging_config, backup_path], check=True)
             backups.append(backup_path)
             print(f"✅ Backed up staging config: {backup_path}")
         except Exception as e:
