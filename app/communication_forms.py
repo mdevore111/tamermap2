@@ -84,9 +84,9 @@ class MessageForm(FlaskForm):
     reported_phone   = StringField('Reported Phone',   validators=[Optional()])
     reported_website = StringField('Reported Website', validators=[Optional()])
     reported_hours   = StringField('Reported Hours',   validators=[Optional()])
-    out_of_business = BooleanField('Appears to be out of business')
-    is_new_location = BooleanField('This is a new location')
-    is_admin_report = BooleanField('This is for Admin review (not updating/correcting a location)')
+    out_of_business = BooleanField('Appears to be out of business', default=False)
+    is_new_location = BooleanField('This is a new location', default=False)
+    is_admin_report = BooleanField('This is for Admin review (not updating/correcting a location)', default=False)
     form_type = SelectField('Form Type', choices=[
         ('add_new', 'Add New Location'),
         ('correct_existing', 'Correct Existing Location')
