@@ -308,18 +308,20 @@
         kiosk.addEventListener("change", function () {
           localStorage.setItem("checkbox_filter-kiosk", kiosk.checked);
         });
-      }
-      
-      // Make sure non-kiosk checkboxes are unchecked
-      const otherCheckboxes = document.querySelectorAll("input[type='checkbox']:not(#filter-kiosk)");
-      otherCheckboxes.forEach((checkbox) => {
-        checkbox.checked = false;
         
-        // Still allow them to be changed and saved
-        checkbox.addEventListener("change", function () {
-          localStorage.setItem("checkbox_" + checkbox.id, checkbox.checked);
+        // Only process map filter checkboxes, not form checkboxes
+        const mapCheckboxes = document.querySelectorAll("#filter-kiosk, #filter-retail, #filter-indie, #filter-popular-areas, #filter-events");
+        mapCheckboxes.forEach((checkbox) => {
+          if (checkbox.id !== "filter-kiosk") {
+            checkbox.checked = false;
+          }
+          
+          // Still allow them to be changed and saved
+          checkbox.addEventListener("change", function () {
+            localStorage.setItem("checkbox_" + checkbox.id, checkbox.checked);
+          });
         });
-      });
+      }
     }
   });
 </script>
