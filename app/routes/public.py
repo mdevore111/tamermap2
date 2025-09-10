@@ -522,6 +522,17 @@ def state_page(state_name):
 
 
 
+def render_correct_form_template(form):
+    """Render the correct form template based on form type"""
+    if form.communication_type.data == 'location':
+        if form.form_type.data == 'correct_existing':
+            return render_template("correct_location_form.html", form=form)
+        elif form.form_type.data == 'add_new':
+            return render_template("add_location_form.html", form=form)
+    
+    # Default to message form for other types
+    return render_template("message_form.html", form=form)
+
 @public_bp.route("/message", methods=["GET", "POST"])
 # @limiter.limit("5 per minute")  # Rate limit message submissions (DISABLED - Cloudflare handles this)
 def send_message():
@@ -569,7 +580,7 @@ def send_message():
         if body_text.count('!') > 5 or body_text.count('?') > 5:
             current_app.logger.warning(f"Potential spam from IP {client_ip}: excessive punctuation")
             flash("Message contains too much punctuation.", "danger")
-            return render_template("message_form.html", form=form)
+            return render_correct_form_template(form)
         
         # Check for suspicious keywords in subject or body
         spam_keywords = ['urgent', 'act now', 'limited time', 'free money', 'make money fast', 'work from home', 'earn cash']
@@ -577,14 +588,14 @@ def send_message():
             if keyword in body_text or keyword in subject_text:
                 current_app.logger.warning(f"Potential spam from IP {client_ip}: keyword '{keyword}' detected")
                 flash("Message contains inappropriate content.", "danger")
-                return render_template("message_form.html", form=form)
+                return render_correct_form_template(form)
         
         # Check for suspicious user agent
         user_agent = request.headers.get('User-Agent', '').lower()
         if 'bot' in user_agent or 'crawler' in user_agent or 'spider' in user_agent:
             current_app.logger.warning(f"Bot detected from IP {client_ip}: {user_agent}")
             flash("Automated submissions are not allowed.", "danger")
-            return render_template("message_form.html", form=form)
+            return render_correct_form_template(form)
         
         # Get sender info
         if current_user.is_authenticated:
@@ -691,8 +702,8 @@ def send_message():
             current_app.logger.error(f"Failed to save message: {e}")
             flash("An error occurred while sending your message.", "danger")
 
-    # Render the message form template (on GET or if form submission fails)
-    return render_template("message_form.html", form=form)
+    # Render the correct form template based on form type
+    return render_correct_form_template(form)
 
 
 @public_bp.route("/add-location")
