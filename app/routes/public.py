@@ -646,6 +646,11 @@ def send_message():
         extra = "\n".join(extra_lines) + "\n"
 
         try:
+            # Log form data for debugging
+            current_app.logger.info(f"Processing form submission from IP {client_ip} by {user_name}")
+            current_app.logger.info(f"Form data - communication_type: {form.communication_type.data}, form_type: {form.form_type.data}")
+            current_app.logger.info(f"Form data - out_of_business: {form.out_of_business.data}, is_new_location: {form.is_new_location.data}")
+            
             msg_record = Message(
                 sender_id=sender_id,
                 recipient_id=None,
@@ -674,23 +679,29 @@ def send_message():
             db.session.commit()
 
             # Send admin notification email
-            send_email_with_context(
-                subject="New Communication Form Submission",
-                template="email/admin_message_notification",
-                recipient=current_app.config.get('ADMIN_EMAIL', 'mark@markdevore.com'),
-                communication_type=form.communication_type.data,
-                name=form.name.data,
-                address=form.address.data,
-                form_subject=form.subject.data,
-                body=form.body.data,
-                reported_address=form.reported_address.data,
-                reported_phone=form.reported_phone.data,
-                reported_website=form.reported_website.data,
-                reported_hours=form.reported_hours.data,
-                out_of_business=form.out_of_business.data,
-                is_new_location=form.is_new_location.data,
-                config=current_app.config
-            )
+            try:
+                current_app.logger.info(f"Attempting to send admin notification email")
+                send_email_with_context(
+                    subject="New Communication Form Submission",
+                    template="email/admin_message_notification",
+                    recipient=current_app.config.get('ADMIN_EMAIL', 'mark@markdevore.com'),
+                    communication_type=form.communication_type.data,
+                    name=form.name.data,
+                    address=form.address.data,
+                    form_subject=form.subject.data,
+                    body=form.body.data,
+                    reported_address=form.reported_address.data,
+                    reported_phone=form.reported_phone.data,
+                    reported_website=form.reported_website.data,
+                    reported_hours=form.reported_hours.data,
+                    out_of_business=form.out_of_business.data,
+                    is_new_location=form.is_new_location.data,
+                    config=current_app.config
+                )
+                current_app.logger.info(f"Admin notification email sent successfully")
+            except Exception as email_error:
+                current_app.logger.error(f"Failed to send admin notification email: {email_error}")
+                # Don't fail the whole process if email fails
 
             # Log successful submission for monitoring
             current_app.logger.info(f"Message submitted successfully from IP {client_ip} by {user_name}")
@@ -700,6 +711,10 @@ def send_message():
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Failed to save message: {e}")
+            current_app.logger.error(f"Exception type: {type(e).__name__}")
+            current_app.logger.error(f"Exception details: {str(e)}")
+            import traceback
+            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
             flash("An error occurred while sending your message.", "danger")
 
     # Render the correct form template based on form type
