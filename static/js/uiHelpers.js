@@ -291,15 +291,21 @@ function refreshCurrentPopup() {
 function updateNoteDecorator(marker, hasNotes, retailer) {
   console.log('updateNoteDecorator called:', { hasNotes, retailerId: retailer.id, hasDecorator: !!marker.noteDecorator });
   
-  // Remove existing decorator if it exists
+  // ALWAYS remove existing decorator first, regardless of hasNotes value
   if (marker.noteDecorator) {
     console.log('Removing existing decorator');
     console.log('Decorator before removal:', marker.noteDecorator);
     console.log('Decorator map before removal:', marker.noteDecorator.getMap());
-    marker.noteDecorator.setMap(null);
-    console.log('Decorator map after setMap(null):', marker.noteDecorator.getMap());
-    marker.noteDecorator = null;
-    console.log('Decorator after null assignment:', marker.noteDecorator);
+    
+    // More aggressive removal
+    try {
+      marker.noteDecorator.setMap(null);
+      marker.noteDecorator = null;
+      console.log('Decorator removed successfully');
+    } catch (error) {
+      console.error('Error removing decorator:', error);
+      marker.noteDecorator = null;
+    }
     
     // Force a visual refresh by briefly changing the marker's z-index
     const originalZIndex = marker.getZIndex();
@@ -316,10 +322,12 @@ function updateNoteDecorator(marker, hasNotes, retailer) {
     }, 50);
   }
   
-  // Add decorator if notes exist
+  // Only add decorator if notes exist
   if (hasNotes && window.addNoteDecorator) {
     console.log('Adding new decorator');
     window.addNoteDecorator(marker, retailer);
+  } else {
+    console.log('No notes, not adding decorator');
   }
 }
 
@@ -463,9 +471,21 @@ function saveUserNote(retailerId, notes) {
       if (window.currentOpenMarker && window.currentOpenMarker.retailer_data && 
           window.currentOpenMarker.retailer_data.id == retailerId) {
         updateNoteDecorator(window.currentOpenMarker, hasNotes, { id: retailerId });
+        
+        // Keep the info window open and update its content
+        const retailer = window.currentOpenMarker.retailer_data;
+        const retailerWithUpdatedNotes = {
+          ...retailer,
+          user_notes: hasNotes ? notes : null
+        };
+        
+        // Update the popup content directly without closing it
+        const html = renderRetailerInfoWindow(retailerWithUpdatedNotes, window.is_pro);
+        window.infoWindow.setContent(html);
+      } else {
+        // Fallback to the original refresh method
+        refreshCurrentPopup();
       }
-      
-      refreshCurrentPopup();
     }
   })
   .catch(error => {
@@ -509,30 +529,41 @@ function deleteUserNote(retailerId) {
         showConfirmButton: false
       });
       
-      // Remove decorator and force visual refresh
-      if (window.markerManager && window.markerManager.markerCache) {
-        const marker = Array.from(window.markerManager.markerCache.values())
-          .find(m => m.retailer_data && m.retailer_data.id == retailerId);
-        
-        if (marker) {
-          // Remove decorator if it exists
-          if (marker.noteDecorator) {
-            marker.noteDecorator.setMap(null);
-            marker.noteDecorator = null;
-          }
-          
-          // Force visual refresh by briefly hiding and showing the marker
-          const map = marker.getMap();
-          marker.setMap(null);
-          setTimeout(() => {
-            marker.setMap(map);
-          }, 10);
-        }
+      // Use the aggressive decorator removal function
+      console.log('DELETE: Using aggressive decorator removal for retailer:', retailerId);
+      if (window.removeAllDecoratorsForRetailer) {
+        window.removeAllDecoratorsForRetailer(retailerId);
       }
       
-      // Current open marker is already handled by the main marker refresh above
-      
-      refreshCurrentPopup();
+      // Keep the info window open and update its content
+      if (window.currentOpenMarker && window.currentOpenMarker.retailer_data && 
+          window.currentOpenMarker.retailer_data.id == retailerId) {
+        console.log('DELETE: Updating current popup directly (keeping it open)');
+        console.log('DELETE: Current marker has decorator:', !!window.currentOpenMarker.noteDecorator);
+        
+        const retailer = window.currentOpenMarker.retailer_data;
+        const retailerWithNoNotes = {
+          ...retailer,
+          user_notes: null
+        };
+        
+        // Update the popup content directly without closing it
+        const html = renderRetailerInfoWindow(retailerWithNoNotes, window.is_pro);
+        window.infoWindow.setContent(html);
+        
+        // Also update the decorator for the current marker
+        console.log('DELETE: Calling updateNoteDecorator with hasNotes=false');
+        updateNoteDecorator(window.currentOpenMarker, false, retailerWithNoNotes);
+        
+        // Additional check after decorator update
+        setTimeout(() => {
+          console.log('DELETE: After decorator update, marker has decorator:', !!window.currentOpenMarker.noteDecorator);
+        }, 100);
+      } else {
+        console.log('DELETE: Current marker not found, using fallback refresh');
+        // Fallback to the original refresh method
+        refreshCurrentPopup();
+      }
     }
   })
   .catch(error => {
@@ -544,3 +575,60 @@ function deleteUserNote(retailerId) {
     });
   });
 }
+
+// Expose updateNoteDecorator globally
+window.updateNoteDecorator = updateNoteDecorator;
+
+// Global decorator tracking for more aggressive cleanup
+window.noteDecorators = window.noteDecorators || new Map();
+
+// Enhanced decorator removal function
+window.removeAllDecoratorsForRetailer = function(retailerId) {
+  console.log('REMOVE_ALL: Removing all decorators for retailer:', retailerId);
+  
+  // Remove from global tracking
+  if (window.noteDecorators.has(retailerId)) {
+    const decorators = window.noteDecorators.get(retailerId);
+    decorators.forEach(decorator => {
+      try {
+        decorator.setMap(null);
+        console.log('REMOVE_ALL: Removed tracked decorator');
+      } catch (error) {
+        console.error('REMOVE_ALL: Error removing tracked decorator:', error);
+      }
+    });
+    window.noteDecorators.delete(retailerId);
+  }
+  
+  // Also search all markers aggressively
+  const allMarkers = [];
+  if (window.markerManager && window.markerManager.markerCache) {
+    allMarkers.push(...Array.from(window.markerManager.markerCache.values()));
+  }
+  if (window.allMarkers) {
+    allMarkers.push(...window.allMarkers);
+  }
+  if (window.currentOpenMarker) {
+    allMarkers.push(window.currentOpenMarker);
+  }
+  
+  allMarkers.forEach(marker => {
+    if (marker && marker.retailer_data && marker.retailer_data.id == retailerId && marker.noteDecorator) {
+      console.log('REMOVE_ALL: Found and removing decorator from marker');
+      try {
+        marker.noteDecorator.setMap(null);
+        marker.noteDecorator = null;
+      } catch (error) {
+        console.error('REMOVE_ALL: Error removing marker decorator:', error);
+        marker.noteDecorator = null;
+      }
+    }
+  });
+  
+  // Force map refresh
+  setTimeout(() => {
+    if (window.google && window.google.maps && window.map) {
+      window.google.maps.event.trigger(window.map, 'resize');
+    }
+  }, 100);
+};

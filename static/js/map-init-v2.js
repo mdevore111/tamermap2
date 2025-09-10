@@ -509,11 +509,19 @@ function refreshHeatmapData(days) {
   window.map.addListener('click', (event) => {
     // Only close info window if it's a genuine click, not a drag end
     if (!window.isDragging) {
-      window.infoWindow.close();
-      window.currentOpenMarker = null;
-      // Remove has-active-infowindow class from legend when infowindow is closed
-      const legend = document.getElementById('legend');
-      if (legend) legend.classList.remove('has-active-infowindow');
+      // Add a small delay to prevent closing immediately after auto-pan
+      // This prevents the info window from closing when Google Maps auto-pans
+      // to show the info window for edge pins
+      setTimeout(() => {
+        // Double-check that we're not in a drag state and info window is still open
+        if (!window.isDragging && window.infoWindow && window.currentOpenMarker) {
+          window.infoWindow.close();
+          window.currentOpenMarker = null;
+          // Remove has-active-infowindow class from legend when infowindow is closed
+          const legend = document.getElementById('legend');
+          if (legend) legend.classList.remove('has-active-infowindow');
+        }
+      }, 100); // 100ms delay to allow auto-pan to complete
     }
   });
 

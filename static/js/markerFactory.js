@@ -54,8 +54,12 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
         user_notes: data.notes || null
       };
       
-      // Add note decorator if notes exist
-      if (data.notes && data.notes.trim().length > 0) {
+      // Update note decorator based on whether notes exist
+      const hasNotes = data.notes && data.notes.trim().length > 0;
+      if (window.updateNoteDecorator) {
+        window.updateNoteDecorator(marker, hasNotes, retailerWithNotes);
+      } else if (hasNotes) {
+        // Fallback to just adding decorator if updateNoteDecorator is not available
         addNoteDecorator(marker, retailerWithNotes);
       }
       
@@ -254,6 +258,14 @@ function addNoteDecorator(marker, retailer) {
   
   // Store reference to the note icon on the main marker for cleanup
   marker.noteDecorator = noteIcon;
+  
+  // Also track globally for aggressive cleanup
+  if (window.noteDecorators) {
+    if (!window.noteDecorators.has(retailer.id)) {
+      window.noteDecorators.set(retailer.id, []);
+    }
+    window.noteDecorators.get(retailer.id).push(noteIcon);
+  }
   
   // Add click handler to the note icon
   noteIcon.addListener('click', () => {
