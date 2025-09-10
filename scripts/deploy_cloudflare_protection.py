@@ -291,7 +291,8 @@ def deploy_config(config_content, environment):
     """Deploy the new nginx configuration"""
     
     if environment == 'staging':
-        config_path = "/etc/nginx/sites-available/staging.tamermap.com"
+        # Always use the standard tamermap config path
+        config_path = "/etc/nginx/sites-available/tamermap"
     else:
         config_path = "/etc/nginx/sites-available/tamermap"
     

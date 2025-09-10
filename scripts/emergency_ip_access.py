@@ -33,17 +33,17 @@ def add_emergency_ip_access(ip_address):
             print(f"✅ IP {ip_address} is already in the configuration")
             return True
         
-        # First, remove any existing emergency access entries
-        config = re.sub(r'\n\s*# EMERGENCY ACCESS - .*\n\s*allow [0-9.]+;\n', '', config)
+        # First, remove any existing emergency access entries from the your_ip geo block
+        config = re.sub(r'\n\s*# EMERGENCY ACCESS - .*\n\s*[0-9.]+\s+1;\n', '', config)
         
-        # Find the geo block and add the IP
-        geo_pattern = r'(geo \$cloudflare_ip \{[^}]*?)(\s*default 0;)'
+        # Find the your_ip geo block and add the IP
+        geo_pattern = r'(geo \$your_ip \{[^}]*?)(\s*default 0;)'
         
         if re.search(geo_pattern, config, re.DOTALL):
             # Add IP before "default 0;" with emergency comment
             new_config = re.sub(
                 geo_pattern,
-                f'\\1\n    # EMERGENCY ACCESS - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n    allow {ip_address};\n\\2',
+                f'\\1\n    # EMERGENCY ACCESS - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n    {ip_address} 1;\n\\2',
                 config,
                 flags=re.DOTALL
             )
