@@ -33,6 +33,9 @@ def add_emergency_ip_access(ip_address):
             print(f"✅ IP {ip_address} is already in the configuration")
             return True
         
+        # First, remove any existing emergency access entries
+        config = re.sub(r'\n\s*# EMERGENCY ACCESS - .*\n\s*allow [0-9.]+;\n', '', config)
+        
         # Find the geo block and add the IP
         geo_pattern = r'(geo \$cloudflare_ip \{[^}]*?)(\s*default 0;)'
         
@@ -78,22 +81,30 @@ def add_emergency_ip_access(ip_address):
         return False
 
 def main():
+    import sys
+    
     print("🚨 Emergency IP Access - Quick Fix")
     print("=" * 40)
-    print("This will add your current IP to allow direct access.")
+    print("This will add your IP to allow direct access.")
     print("Use this to regain access, then set up a permanent solution.")
     print()
     
-    # Get your current IP
-    current_ip = get_current_ip()
-    if current_ip:
-        print(f"📍 Your current IP: {current_ip}")
+    # Check for command line argument
+    if len(sys.argv) > 1:
+        current_ip = sys.argv[1]
+        print(f"📍 Using provided IP: {current_ip}")
     else:
-        print("⚠️  Could not detect your IP automatically")
-        current_ip = input("Enter your IP address: ").strip()
+        # Get your current IP
+        current_ip = get_current_ip()
+        if current_ip:
+            print(f"📍 Your current IP: {current_ip}")
+        else:
+            print("⚠️  Could not detect your IP automatically")
+            current_ip = input("Enter your IP address: ").strip()
     
     if not current_ip:
         print("❌ No IP address provided")
+        print("Usage: python3 emergency_ip_access.py [IP_ADDRESS]")
         return
     
     # Confirm
