@@ -552,6 +552,7 @@ def send_message():
         str or Response: Rendered message form template on GET,
         or a redirect response on successful POST.
     """
+    current_app.logger.info(f"send_message function called - Method: {request.method}")
     form = MessageForm()
 
     # only override on GET when link provides type & metadata
