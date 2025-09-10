@@ -41,6 +41,7 @@ public_bp = Blueprint("public", __name__)
 
 @public_bp.route("/")
 def splash():  # Or rename to 'index' for clarity
+    current_app.logger.info(f"splash function called - Method: {request.method}")
     google_api_key = current_app.config.get("GOOGLE_API_KEY")
     return render_template("maps.html", google_api_key=google_api_key)
 
