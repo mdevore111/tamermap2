@@ -41,6 +41,7 @@ public_bp = Blueprint("public", __name__)
 
 @public_bp.route("/")
 def splash():  # Or rename to 'index' for clarity
+    print(f"DEBUG: splash function called - Method: {request.method}")
     current_app.logger.info(f"splash function called - Method: {request.method}")
     google_api_key = current_app.config.get("GOOGLE_API_KEY")
     return render_template("maps.html", google_api_key=google_api_key)
@@ -553,6 +554,7 @@ def send_message():
         str or Response: Rendered message form template on GET,
         or a redirect response on successful POST.
     """
+    print(f"DEBUG: send_message function called - Method: {request.method}")
     current_app.logger.info(f"send_message function called - Method: {request.method}")
     form = MessageForm()
 
