@@ -568,6 +568,11 @@ def send_message():
             form.reported_website.data = request.args.get("website", "")
             form.reported_hours.data = request.args.get("hours", "")
 
+    # Debug form validation
+    current_app.logger.info(f"Form validation - validate_on_submit(): {form.validate_on_submit()}")
+    if not form.validate_on_submit():
+        current_app.logger.warning(f"Form validation failed - errors: {form.errors}")
+    
     if form.validate_on_submit():
         # Additional SPAM protection checks
         client_ip = request.remote_addr
