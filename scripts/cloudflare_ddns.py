@@ -13,7 +13,7 @@ from datetime import datetime
 
 # Configuration - Update these values
 ZONE_ID = "909f91b90c0bc9bdd472bfaaf16609f0"  # tamermap.com zone ID
-RECORD_ID = "your_record_id_here"  # Get after creating workstation.tamermap.com A record
+RECORD_ID = "72dfc20198bf4053434e012b7755c03c"  # workstation.tamermap.com A record
 API_TOKEN = "V7oVqj_N_VOjhM166Zlx8f0AkM1zfacEj57KewzD"  # Cloudflare API token
 SUBDOMAIN = "workstation.tamermap.com"
 
