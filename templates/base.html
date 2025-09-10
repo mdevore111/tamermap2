@@ -267,9 +267,9 @@
     
     // First check if user is logged in AND is a pro user
     if (isLoggedIn && is_pro) {
-      // Logged-in Pro users: process all checkboxes and remember their state
-      const checkboxes = document.querySelectorAll("input[type='checkbox']");
-      checkboxes.forEach((checkbox) => {
+      // Logged-in Pro users: process only map filter checkboxes and remember their state
+      const mapCheckboxes = document.querySelectorAll("#filter-kiosk, #filter-retail, #filter-indie, #filter-popular-areas, #filter-events");
+      mapCheckboxes.forEach((checkbox) => {
         // Form a unique key based on the checkbox ID.
         const key = "checkbox_" + checkbox.id;
         // Retrieve the stored state from LocalStorage, if available.
@@ -323,6 +323,14 @@
         });
       }
     }
+    
+    // Clear any cached form checkbox states to ensure they start unchecked
+    const formCheckboxes = document.querySelectorAll("input[type='checkbox'][id^='out_of_business'], input[type='checkbox'][id^='is_new_location'], input[type='checkbox'][id^='is_admin_report']");
+    formCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+      // Clear any cached state for form checkboxes
+      localStorage.removeItem("checkbox_" + checkbox.id);
+    });
   });
 </script>
 
