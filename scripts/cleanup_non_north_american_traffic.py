@@ -262,7 +262,7 @@ def main():
         print(f"\n⚠️  Cleanup may not have completed fully")
         print(f"   Backup created: {BACKUP_PATH}")
 
-if __name__ == "__main__":
+if __name__ == "__main__":eplaces by cloudflare.  
     try:
         main()
     except Exception as e:
