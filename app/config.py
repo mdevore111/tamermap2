@@ -101,6 +101,15 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'instance', 'tamermap_data.db')
+    
+    # Database connection pooling for better performance
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,  # Recycle connections every 5 minutes
+        'pool_size': 10,      # Number of connections to maintain
+        'max_overflow': 20,   # Additional connections when pool is exhausted
+        'echo': False,        # Set to True for SQL query logging
+    }
 
     # --------------------------
     # Custom Usage Tracking Storage
@@ -127,8 +136,22 @@ class BaseConfig:
     # Common cache settings
     CACHE_DEFAULT_TIMEOUT = 300                    # 5 min fall-back
 
-    # Server compression algo
+    # Server compression configuration
     COMPRESS_ALGORITHM = 'gzip'
+    COMPRESS_MIMETYPES = [
+        'text/html',
+        'text/css',
+        'text/xml',
+        'application/json',
+        'application/javascript',
+        'application/xml',
+        'application/xhtml+xml',
+        'application/rss+xml',
+        'application/atom+xml',
+        'image/svg+xml'
+    ]
+    COMPRESS_LEVEL = 6  # Balanced compression (1-9)
+    COMPRESS_MIN_SIZE = 1000  # Only compress files > 1KB
 
     # --------------------------
     # Flask-Security Configuration
