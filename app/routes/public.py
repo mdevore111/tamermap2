@@ -989,6 +989,13 @@ def sitemap_xml():
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),
+        ('/terms', '0.6', 'monthly'),
+        ('/privacy', '0.6', 'monthly'),
+        ('/add-location', '0.7', 'monthly'),
+        ('/correct-location', '0.7', 'monthly'),
+        ('/message', '0.5', 'monthly'),
+        ('/robots.txt', '0.3', 'monthly'),
+        ('/manifest.json', '0.3', 'monthly'),
         ('/sitemap', '0.5', 'monthly'),
     )
     
