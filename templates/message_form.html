@@ -10,12 +10,12 @@
     <div class="form-container">
       <h1>Message Sent!</h1>
       <div class="text-center mt-3">
-        <a href="/maps" class="btn btn-link">Back to Map</a>
+        <a href="/" class="btn btn-link">Back to Map</a>
       </div>
     </div>
     <script>
       setTimeout(function() {
-        window.location.href = '/maps';
+        window.location.href = '/';
       }, 5000);
     </script>
   {% else %}
@@ -244,7 +244,7 @@
         {% endif %}
 
         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-          <a href="{{ url_for('public.splash') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+          <a href="{{ url_for('public.home') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
           {{ form.submit(class="btn btn-primary") }}
         </div>
       </form>

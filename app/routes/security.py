@@ -22,9 +22,7 @@ def check_referrer():
         "http://127.0.0.1:5000",
         "http://localhost:5000",
         "http://127.0.0.1:5000/",
-        "http://localhost:5000/",
-        "http://127.0.0.1:5000/maps",
-        "http://localhost:5000/maps"
+        "http://localhost:5000/"
     ]
     
     # Server IP patterns for development and production
