@@ -1,0 +1,32 @@
+# Prevent .env files from being tracked
+.env export-ignore
+.env.* export-ignore
+**/.env export-ignore
+**/.env.* export-ignore
+
+# Prevent sensitive files from being tracked
+*.key export-ignore
+*.pem export-ignore
+*.p12 export-ignore
+*.pfx export-ignore
+secrets.json export-ignore
+config.json export-ignore
+
+# Prevent database files from being tracked
+*.db export-ignore
+*.sqlite export-ignore
+*.sqlite3 export-ignore
+instance/ export-ignore
+
+# Prevent log files from being tracked
+*.log export-ignore
+logs/ export-ignore
+
+# Prevent cache files from being tracked
+__pycache__/ export-ignore
+*.pyc export-ignore
+*.pyo export-ignore
+*.pyd export-ignore
+
+# Prevent session files from being tracked
+flask_session_files/ export-ignore
