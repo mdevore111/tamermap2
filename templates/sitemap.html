@@ -168,6 +168,13 @@
         <h2>Main Navigation</h2>
         <ul class="sitemap-list">
             <li>
+                <a href="{{ url_for('public.splash') }}">
+                    <i class="fas fa-home"></i>
+                    Home
+                </a>
+                <div class="sitemap-description">TamerMap homepage with featured content and quick access to key features</div>
+            </li>
+            <li>
                 <a href="{{ url_for('public.maps') }}">
                     <i class="fas fa-map-marked-alt"></i>
                     Interactive Map
@@ -187,6 +194,13 @@
                     User Wins
                 </a>
                 <div class="sitemap-description">Read real success stories from TamerMap users who found Pokemon cards and built collections</div>
+            </li>
+            <li>
+                <a href="{{ url_for('auth.account') }}">
+                    <i class="fas fa-user"></i>
+                    My Account
+                </a>
+                <div class="sitemap-description">Manage your profile, subscription, and account settings (login required)</div>
             </li>
             <li>
                 <a href="{{ url_for('public.about') }}">
@@ -302,9 +316,75 @@
                 <h3>📧 Contact Support</h3>
                 <p>Get help with technical issues, account problems, or questions about TamerMap features.</p>
                 <a href="{{ url_for('public.send_message', type='contact') }}" class="btn">Contact Us</a>
-                </div>
-
+            </div>
         </div>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Legal & Policies</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.terms') }}">
+                    <i class="fas fa-file-contract"></i>
+                    Terms of Service
+                </a>
+                <div class="sitemap-description">Terms and conditions for using TamerMap services</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.privacy') }}">
+                    <i class="fas fa-shield-alt"></i>
+                    Privacy Policy
+                </a>
+                <div class="sitemap-description">How we collect, use, and protect your personal information</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>Location Data & States</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.states_index') }}">
+                    <i class="fas fa-map"></i>
+                    All States
+                </a>
+                <div class="sitemap-description">Browse Pokemon card locations by state across the United States</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.add_location') }}">
+                    <i class="fas fa-plus-circle"></i>
+                    Add New Location
+                </a>
+                <div class="sitemap-description">Submit a new Pokemon card location to help the community</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.correct_location') }}">
+                    <i class="fas fa-edit"></i>
+                    Correct Location Data
+                </a>
+                <div class="sitemap-description">Report incorrect information about existing locations</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sitemap-section">
+        <h2>System Pages</h2>
+        <ul class="sitemap-list">
+            <li>
+                <a href="{{ url_for('public.sitemap') }}">
+                    <i class="fas fa-sitemap"></i>
+                    Sitemap
+                </a>
+                <div class="sitemap-description">Complete list of all pages on TamerMap for easy navigation</div>
+            </li>
+            <li>
+                <a href="{{ url_for('public.robots_txt') }}">
+                    <i class="fas fa-robot"></i>
+                    Robots.txt
+                </a>
+                <div class="sitemap-description">Search engine crawling instructions and sitemap location</div>
+            </li>
+        </ul>
     </div>
 
 
