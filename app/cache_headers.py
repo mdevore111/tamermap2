@@ -18,11 +18,16 @@ def add_cache_headers(response, max_age=3600, public=True, must_revalidate=False
     if must_revalidate:
         response.headers['Cache-Control'] += ', must-revalidate'
     
-    # Add ETag for better caching
-    if hasattr(response, 'data') and response.data:
-        import hashlib
-        etag = hashlib.md5(response.data).hexdigest()
-        response.headers['ETag'] = f'"{etag}"'
+    # Add ETag for better caching (only for non-static files)
+    if not request.endpoint.startswith('static'):
+        try:
+            if hasattr(response, 'data') and response.data:
+                import hashlib
+                etag = hashlib.md5(response.data).hexdigest()
+                response.headers['ETag'] = f'"{etag}"'
+        except (RuntimeError, AttributeError):
+            # Skip ETag for files that can't be accessed
+            pass
     
     return response
 
