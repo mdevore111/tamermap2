@@ -534,33 +534,67 @@ function refreshHeatmapData(days) {
     }, DEBOUNCE_TIMINGS.UI_UPDATE); // Use constant for consistent timing
   });
 
+  // Track if map is currently auto-panning
+  window.isAutoPanning = false;
+  window.autoPanTimeout = null;
+  
+  // Track map readiness to ensure auto-pan works from the start
+  window.mapReady = false;
+  
+  // Multiple events to ensure map is ready
+  window.map.addListener('tilesloaded', () => {
+    window.mapReady = true;
+    console.log('🗺️ Map tiles loaded - auto-pan should now work');
+  });
+  
+  window.map.addListener('idle', () => {
+    window.mapReady = true;
+    console.log('🗺️ Map idle - auto-pan should now work');
+  });
+  
+  // Fallback: set ready after a short delay regardless
+  setTimeout(() => {
+    window.mapReady = true;
+    console.log('🗺️ Map ready fallback - auto-pan should now work');
+  }, 1000);
+  
+  // Test debugging is working
+  console.log('🔧 Debugging initialized - map click handler should work');
+
+  // Track when info window was last opened to prevent immediate closure
+  window.infoWindowOpenedAt = 0;
+  window.mapClickDisabled = false;
+  
   // Close infoWindow on map click - BUT NOT on drag or other map movements
   window.map.addListener('click', (event) => {
-    // Only close info window if it's a genuine click, not a drag end
-    if (!window.isDragging) {
-      // Add a small delay to prevent closing immediately after auto-pan
-      // This prevents the info window from closing when Google Maps auto-pans
-      // to show the info window for edge pins
+    const now = Date.now();
+    const timeSinceInfoWindowOpened = now - window.infoWindowOpenedAt;
+    
+    // Only close info window if it's a genuine click, not a drag end, and enough time has passed
+    if (!window.isDragging && !window.isAutoPanning && !window.mapClickDisabled && timeSinceInfoWindowOpened > 300) {
+      // Add a short delay to prevent closing during auto-pan
       setTimeout(() => {
-        // Double-check that we're not in a drag state and info window is still open
-        if (!window.isDragging && window.infoWindow && window.currentOpenMarker) {
+        // Triple-check that we're not in a drag state, auto-panning, and info window is still open
+        if (!window.isDragging && !window.isAutoPanning && !window.mapClickDisabled && window.infoWindow && window.currentOpenMarker) {
           window.infoWindow.close();
           window.currentOpenMarker = null;
           // Remove has-active-infowindow class from legend when infowindow is closed
           const legend = document.getElementById('legend');
           if (legend) legend.classList.remove('has-active-infowindow');
         }
-      }, 100); // 100ms delay to allow auto-pan to complete
+      }, 100); // Very short delay
     }
   });
 
   // Track dragging state to prevent info window closure during drag
   window.isDragging = false;
   window.map.addListener('dragstart', () => {
+    console.log('🔄 Drag started - setting isDragging to true');
     window.isDragging = true;
   });
   
   window.map.addListener('dragend', () => {
+    console.log('🔄 Drag ended - setting isDragging to false after 100ms delay');
     // Small delay to prevent immediate closure after drag
     setTimeout(() => {
       window.isDragging = false;
