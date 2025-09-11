@@ -111,6 +111,7 @@ function displayType(retailer, isPro) {
 
   // Combined cases like "store + kiosk"
   if (hasStore && parts.some(p => p === 'kiosk')) {
+    if (!isPro) return 'Store + Kiosk (Count available with Pro)';
     const label = kioskCount === 1 ? 'Kiosk' : 'Kiosks';
     return `Store + ${kioskCount} ${label}`;
   }
