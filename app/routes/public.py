@@ -979,6 +979,8 @@ def sitemap_xml():
         ('/faq', '0.8', 'weekly'),
         ('/how-to-route-planning-tool', '0.9', 'weekly'),
         ('/how-to-use-heatmaps', '0.9', 'weekly'),
+        ('/how-to-use-new-locations-filter', '0.9', 'weekly'),
+        ('/how-to-use-open-now-filter', '0.9', 'weekly'),
         ('/how-to-reset-password', '0.8', 'weekly'),
         ('/how-to-personal-notes', '0.9', 'weekly'),
         ('/how-to-update-account', '0.8', 'weekly'),
