@@ -50,7 +50,7 @@
       <div class="row">
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="name" class="form-label">Your Name <span class="text-danger">*</span></label>
+            <label for="name" class="form-label">Your Name</label>
             {{ form.name(class="form-control", placeholder="Enter your name") }}
             {% if form.name.errors %}
               <div class="text-danger">
@@ -63,7 +63,7 @@
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <label for="address" class="form-label">Your Email <span class="text-danger">*</span></label>
+            <label for="address" class="form-label">Your Email</label>
             {{ form.address(class="form-control", placeholder="Enter your email address") }}
             {% if form.address.errors %}
               <div class="text-danger">

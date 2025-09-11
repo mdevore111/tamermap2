@@ -576,6 +576,11 @@ def send_message():
     current_app.logger.info(f"Form validation - validate_on_submit(): {form.validate_on_submit()}")
     if not form.validate_on_submit():
         current_app.logger.warning(f"Form validation failed - errors: {form.errors}")
+        current_app.logger.warning(f"Form data received: {request.form.to_dict()}")
+        # Show validation errors to user
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", "danger")
     
     if form.validate_on_submit():
         # Additional SPAM protection checks
@@ -676,6 +681,7 @@ def send_message():
                 form_type=form.form_type.data,
                 name=form.name.data,
                 address=form.address.data,
+                email=form.address.data,  # Map address field to email field for backward compatibility
                 # Post Wins fields
                 win_type=form.win_type.data,
                 location_used=form.location_used.data,

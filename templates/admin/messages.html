@@ -425,9 +425,13 @@ $(document).ready(function() {
             method: 'POST',
             success: function() {
                 // Update the read status in the table without reloading
-                var row = $('#messages-table').DataTable().row(`[data-id="${id}"]`).closest('tr');
-                if (row.length) {
-                    row.find('td:eq(7)').text('Yes'); // Update the Read column
+                var table = $('#messages-table').DataTable();
+                var rowIndex = table.rows().nodes().to$().filter(`[data-id="${id}"]`).index();
+                if (rowIndex >= 0) {
+                    var row = table.row(rowIndex);
+                    if (row.length) {
+                        row.node().cells[7].textContent = 'Yes'; // Update the Read column
+                    }
                 }
             }
         });
@@ -467,7 +471,15 @@ $(document).ready(function() {
                     </div>
                 </div>
             `);
-            modal.modal('show');
+            
+            // Remove aria-hidden and show modal with proper focus management
+            modal.removeAttr('aria-hidden').modal('show');
+            
+            // Handle focus properly to avoid aria-hidden conflicts
+            modal.on('shown.bs.modal', function() {
+                // Remove focus from any focused elements to prevent aria-hidden conflict
+                $(document.activeElement).blur();
+            });
         }).fail(function() {
             alert('Error loading message data.');
         });
@@ -485,9 +497,13 @@ $(document).ready(function() {
             method: 'POST',
             success: function() {
                 // Update the read status in the table without reloading
-                var row = $('#messages-table').DataTable().row(`[data-id="${id}"]`).closest('tr');
-                if (row.length) {
-                    row.find('td:eq(7)').text('Yes'); // Update the Read column
+                var table = $('#messages-table').DataTable();
+                var rowIndex = table.rows().nodes().to$().filter(`[data-id="${id}"]`).index();
+                if (rowIndex >= 0) {
+                    var row = table.row(rowIndex);
+                    if (row.length) {
+                        row.node().cells[7].textContent = 'Yes'; // Update the Read column
+                    }
                 }
             }
         });

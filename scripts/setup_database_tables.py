@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app
 from app.extensions import db
-from app.models import User, Retailer, Event, UserNote, LegendClick, VisitorLog
+from app.models import User, Retailer, Event, UserNote, LegendClick, VisitorLog, Message
 
 def setup_database_tables():
     """Create all required database tables."""
@@ -38,7 +38,7 @@ def setup_database_tables():
                 print(f"📋 Tables after creation: {new_tables}")
                 
                 # Check specific tables
-                required_tables = ['user', 'retailer', 'event', 'user_notes', 'legend_click', 'visitor_log']
+                required_tables = ['user', 'retailer', 'event', 'user_notes', 'legend_click', 'visitor_log', 'message']
                 for table in required_tables:
                     if table in new_tables:
                         print(f"✅ {table} table exists")

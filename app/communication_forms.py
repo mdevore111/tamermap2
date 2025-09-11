@@ -193,6 +193,34 @@ class MessageForm(FlaskForm):
         if name in spam_names:
             raise ValidationError('Invalid name provided.')
     
+    def validate_out_of_business(self, field):
+        """Validate out_of_business checkbox - convert 'y' to True"""
+        if field.data == 'y' or field.data == 'on' or field.data is True:
+            field.data = True
+        else:
+            field.data = False
+    
+    def validate_is_new_location(self, field):
+        """Validate is_new_location checkbox - convert 'y' to True"""
+        if field.data == 'y' or field.data == 'on' or field.data is True:
+            field.data = True
+        else:
+            field.data = False
+    
+    def validate_is_admin_report(self, field):
+        """Validate is_admin_report checkbox - convert 'y' to True"""
+        if field.data == 'y' or field.data == 'on' or field.data is True:
+            field.data = True
+        else:
+            field.data = False
+    
+    def validate_allow_feature(self, field):
+        """Validate allow_feature checkbox - convert 'y' to True"""
+        if field.data == 'y' or field.data == 'on' or field.data is True:
+            field.data = True
+        else:
+            field.data = False
+    
     def validate_address(self, field):
         """Validate email address for spam"""
         if not field.data:

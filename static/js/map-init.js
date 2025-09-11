@@ -505,23 +505,34 @@ function refreshHeatmapData(days) {
     }, DEBOUNCE_TIMINGS.UI_UPDATE); // Use constant for consistent timing
   });
 
+  // Track if map is currently auto-panning
+  window.isAutoPanning = false;
+  window.autoPanTimeout = null;
+  
+  // Track map readiness to ensure auto-pan works from the start
+  window.mapReady = false;
+  window.map.addListener('tilesloaded', () => {
+    window.mapReady = true;
+    console.log('Map tiles loaded - auto-pan should now work');
+  });
+
   // Close infoWindow on map click - BUT NOT on drag or other map movements
   window.map.addListener('click', (event) => {
-    // Only close info window if it's a genuine click, not a drag end
-    if (!window.isDragging) {
-      // Add a small delay to prevent closing immediately after auto-pan
+    // Only close info window if it's a genuine click, not a drag end or auto-pan
+    if (!window.isDragging && !window.isAutoPanning) {
+      // Add a longer delay to prevent closing during auto-pan
       // This prevents the info window from closing when Google Maps auto-pans
       // to show the info window for edge pins
       setTimeout(() => {
-        // Double-check that we're not in a drag state and info window is still open
-        if (!window.isDragging && window.infoWindow && window.currentOpenMarker) {
+        // Triple-check that we're not in a drag state, auto-panning, and info window is still open
+        if (!window.isDragging && !window.isAutoPanning && window.infoWindow && window.currentOpenMarker) {
           window.infoWindow.close();
           window.currentOpenMarker = null;
           // Remove has-active-infowindow class from legend when infowindow is closed
           const legend = document.getElementById('legend');
           if (legend) legend.classList.remove('has-active-infowindow');
         }
-      }, 100); // 100ms delay to allow auto-pan to complete
+      }, 500); // Increased delay to 500ms to allow auto-pan to complete
     }
   });
 
