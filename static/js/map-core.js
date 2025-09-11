@@ -70,6 +70,8 @@ if (window.__TM_DEBUG__) console.log('[map-core] updateFilterUI bound globally b
 import './map-utils.js';   // getPinColor, formatHours
 import './map-ui.js';      // initUI(), domCache, isOpenNow
 import './uiHelpers.js';   // renderRetailerInfoWindow, renderEventInfoWindow
+import './loadingOverlay.js'; // Loading overlay management
+import './errorHandler.js';   // Error handling
 
 // Config & constants
 import {
@@ -92,6 +94,8 @@ import { DataService } from './dataService.js';
 import { isOpenNow } from './utils.js';
 
 import { MarkerManager } from './markerManager.js';
+import { initLoadingOverlay, showLoadingOverlay, hideLoadingOverlay } from './loadingOverlay.js';
+import { showErrorMessage } from './errorHandler.js';
 
 // Global state
 // Use only the new system:
@@ -104,7 +108,7 @@ window.currentOpenMarker = null;
 // Global variables
 let markerManager;
 let dataService;
-let loadingOverlay;
+// Loading overlay is now imported from loadingOverlay.js
 
 // Unified filter function: applies retailer, event, and heatmap filters
 
@@ -1044,45 +1048,7 @@ function applyFilters() {
     }, DEBOUNCE_TIMINGS.FILTER_APPLY); // Use constant for consistent timing
 }
 
-/**
- * Initialize loading overlay
- */
-function initLoadingOverlay() {
-    loadingOverlay = document.createElement('div');
-    loadingOverlay.id = 'map-loading-overlay';
-    loadingOverlay.innerHTML = `
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <p>Loading map data...</p>
-        </div>
-    `;
-    loadingOverlay.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(255, 255, 255, 0.9);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    `;
-    
-    document.getElementById('map').appendChild(loadingOverlay);
-}
-
-function showLoadingOverlay() {
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'flex';
-    }
-}
-
-function hideLoadingOverlay() {
-    if (loadingOverlay) {
-        loadingOverlay.style.display = 'none';
-    }
-}
+// Loading overlay functions are now imported from loadingOverlay.js
 
 // updateFilterUI moved to top of file before imports
 
@@ -1102,37 +1068,7 @@ function updateMapUI() {
 
 
 
-/**
- * Show error message to user
- */
-function showErrorMessage(message) {
-    // Create or update error display
-    let errorDiv = document.getElementById('map-error');
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = 'map-error';
-        errorDiv.style.cssText = `
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff4444;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            z-index: 1001;
-        `;
-        document.getElementById('map').appendChild(errorDiv);
-    }
-    
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
-}
+// Error handling functions are now imported from errorHandler.js
 
 
 

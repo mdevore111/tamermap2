@@ -152,8 +152,36 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
 <script type="module" src="{{ url_for('static', filename='js/map-core.js') }}" 
        onerror="console.error('Failed to load map-core.js')" 
        onload="console.log('map-core.js loaded successfully'); loadGoogleMapsAPI();"></script>
-<script type="module" src="{{ url_for('static', filename='js/routePlanner.js') }}"></script>
 <script type="module" src="{{ url_for('static', filename='js/cacheManager.js') }}"></script>
+{% if is_pro %}
+<script type="module" src="{{ url_for('static', filename='js/routePlanner.js') }}"></script>
+{% else %}
+<!-- Lazy load routePlanner.js for non-Pro users when route planning is clicked -->
+<script>
+  let routePlannerLoaded = false;
+  function loadRoutePlanner() {
+    if (!routePlannerLoaded) {
+      console.log('Loading routePlanner.js for non-Pro user');
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = "{{ url_for('static', filename='js/routePlanner.js') }}";
+      script.onload = () => {
+        routePlannerLoaded = true;
+        console.log('routePlanner.js loaded successfully');
+      };
+      document.head.appendChild(script);
+    }
+  }
+  
+  // Add click listener to route planning button
+  document.addEventListener('DOMContentLoaded', function() {
+    const routeBtn = document.getElementById('plan-route-btn');
+    if (routeBtn) {
+      routeBtn.addEventListener('click', loadRoutePlanner);
+    }
+  });
+</script>
+{% endif %}
 
 <!-- Load Google Maps API only after our module is ready -->
 <script>
