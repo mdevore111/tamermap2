@@ -35,7 +35,7 @@
       "description": "Interactive map for finding Pokémon cards at kiosks, retail stores, and indie shops nationwide",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": request.url_root.rstrip('/') + "/maps",
+        "target": request.url_root.rstrip('/') + "/",
         "query-input": "required name=location"
       }
     } | tojson
@@ -108,7 +108,7 @@
     <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #007bff;">
       <div class="container-fluid">
         <!-- Logo -->
-        <a class="navbar-brand text-white" href="{{ url_for('public.splash') }}">
+        <a class="navbar-brand text-white" href="{{ url_for('public.home') }}">
           <img src="{{ url_for('static', filename='logo.png') }}" alt="Tamermap Logo" style="height:40px;">
         </a>
         <!-- Hamburger Toggle -->

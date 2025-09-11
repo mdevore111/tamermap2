@@ -40,17 +40,12 @@ public_bp = Blueprint("public", __name__)
 
 
 @public_bp.route("/")
-def splash():  # Or rename to 'index' for clarity
-    print(f"DEBUG: splash function called - Method: {request.method}")
-    current_app.logger.info(f"splash function called - Method: {request.method}")
+def home():
+    """Render the home page with the interactive map."""
+    print(f"DEBUG: home function called - Method: {request.method}")
+    current_app.logger.info(f"home function called - Method: {request.method}")
     google_api_key = current_app.config.get("GOOGLE_API_KEY")
     return render_template("maps.html", google_api_key=google_api_key)
-
-
-@public_bp.route("/maps")
-def maps():
-    """Redirect /maps to root for SEO consolidation."""
-    return redirect(url_for("public.splash"), code=301)
 
 
 @public_bp.route("/learn")
@@ -967,7 +962,6 @@ def sitemap_xml():
     # Use tuples for better memory efficiency
     static_pages = (
         ('/', '1.0', 'daily'),
-        ('/maps', '0.9', 'daily'),
         ('/learn', '0.8', 'weekly'),
         ('/how-to', '0.8', 'weekly'),
         ('/user-wins', '0.8', 'weekly'),
@@ -1138,7 +1132,7 @@ def robots_txt():
     
     robots_content = f"""User-agent: *
 Allow: /
-Allow: /maps
+Allow: /
 Allow: /learn
 Allow: /how-to
 Allow: /card-hunting-tips

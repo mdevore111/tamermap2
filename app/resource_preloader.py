@@ -44,7 +44,7 @@ def get_critical_resources():
     ])
     
     # Critical images (only for maps page)
-    if request.endpoint == 'public.splash':
+    if request.endpoint == 'public.home':
         resources.extend([
             {'url': url_for('static', filename='map-pins/safeway.png'), 'type': 'image'},
             {'url': url_for('static', filename='map-pins/qfc.png'), 'type': 'image'},
