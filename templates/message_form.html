@@ -243,15 +243,29 @@
           </div>
         {% endif %}
 
-        <div>
-          {{ form.submit(class="btn btn-primary w-100") }}
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+          <a href="{{ url_for('public.splash') }}" class="btn btn-outline-secondary me-md-2">Cancel</a>
+          {{ form.submit(class="btn btn-primary") }}
         </div>
       </form>
-
-      <div class="text-center mt-3">
-        <a href="/maps" class="btn btn-link">Back to Map</a>
-      </div>
     </div>
   {% endif %}
 </div>
+
+<style>
+.honeypot-field {
+  display: none !important;
+  position: absolute;
+  left: -9999px;
+}
+
+/* Ensure consistent button alignment */
+.d-grid .btn {
+  vertical-align: middle;
+  height: 38px; /* Match Bootstrap button height */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
 {% endblock %}
