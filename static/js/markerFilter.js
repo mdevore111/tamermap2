@@ -3,6 +3,8 @@
  * Handles all marker filtering and visibility logic
  */
 
+import { isOpenNow } from './utils.js';
+
 /**
  * Check if a retailer marker should be shown based on filters
  */
@@ -49,8 +51,7 @@ export function shouldShowRetailer(marker, filters) {
     
     // Check "Open Now" filter
     if (filters.showOpenNow === true) {
-        const isOpen = marker.retailer_data?.is_open_now;
-        if (isOpen !== true) {
+        if (!isOpenNow(marker.retailer_data?.opening_hours)) {
             return false;
         }
     }
