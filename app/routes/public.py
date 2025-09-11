@@ -717,7 +717,7 @@ def send_message():
             current_app.logger.info(f"Message submitted successfully from IP {client_ip} by {user_name}")
             
             flash("Your message has been sent.", "success")
-            return redirect(url_for("public.maps"))
+            return redirect(url_for("public.home"))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Failed to save message: {e}")

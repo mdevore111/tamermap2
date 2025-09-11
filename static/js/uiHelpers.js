@@ -100,7 +100,7 @@ function displayType(retailer, isPro) {
   if (parts.length === 1) {
     const t = parts[0];
     if (t === 'kiosk') {
-      if (!isPro) return 'Kiosk (Pro Only)';
+      if (!isPro) return 'Kiosk (Count available with Pro)';
       const label = kioskCount === 1 ? '1 Kiosk' : `${kioskCount} Kiosks`;
       return label;
     }
