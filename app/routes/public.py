@@ -899,6 +899,16 @@ def how_to_use_heatmaps():
     """Render the comprehensive guide for using TamerMap's heatmap feature."""
     return render_template("how-to-use-heatmaps.html")
 
+@public_bp.route("/how-to-use-new-locations-filter")
+def how_to_use_new_locations_filter():
+    """Render the comprehensive guide for using TamerMap's New Locations filter."""
+    return render_template("how-to-use-new-locations-filter.html")
+
+@public_bp.route("/how-to-use-open-now-filter")
+def how_to_use_open_now_filter():
+    """Render the comprehensive guide for using TamerMap's Open Now filter."""
+    return render_template("how-to-use-open-now-filter.html")
+
 
 @public_bp.route("/how-to-reset-password")
 def how_to_reset_password():

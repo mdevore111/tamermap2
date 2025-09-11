@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}How to Use the New Locations Filter - Find Fresh Pokemon Card Inventory{% endblock %}
+
+{% block meta_description %}Master TamerMap's New Locations filter to discover fresh Pokemon card inventory! Learn how to find new kiosks, retail stores & indie shops before other hunters and maximize your hunting success.{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org markup for tutorial -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Use the New Locations Filter",
+  "description": "Complete guide to using TamerMap's New Locations filter to find fresh Pokemon card inventory",
+  "image": "{{ url_for('static', filename='images/new-locations-tutorial.png', _external=True) }}",
+  "totalTime": "PT8M",
+  "estimatedCost": {
+    "@type": "MonetaryAmount",
+    "currency": "USD",
+    "value": "0"
+  },
+  "supply": [
+    {
+      "@type": "HowToSupply",
+      "name": "TamerMap Pro Account",
+      "description": "Pro subscription required for New Locations filter"
+    }
+  ],
+  "tool": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "TamerMap New Locations Filter",
+      "description": "Advanced filtering tool for discovering fresh Pokemon card inventory"
+    }
+  ],
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Access Pro Features",
+      "text": "Ensure you have an active TamerMap Pro subscription"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Enable New Locations Filter",
+      "text": "Navigate to the map and enable the 'All New Locations' filter"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Review Filtered Results",
+      "text": "See only locations added in the last 30 days"
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Plan Your Strategy",
+      "text": "Prioritize new locations for maximum hunting success"
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5" style="margin-bottom: 6rem !important;">
+  <!-- Hero Section -->
+  <div class="text-center mb-5">
+    <h1 class="display-4 mb-3">How to Use the New Locations Filter</h1>
+    <p class="lead">Discover fresh Pokemon card inventory before other hunters! Learn how to use TamerMap's New Locations filter to find new kiosks, retail stores & indie shops.</p>
+    
+    <div class="alert alert-warning">
+      <i class="fas fa-crown me-2"></i>
+      <strong>Pro Feature:</strong> The New Locations filter is exclusive to TamerMap Pro subscribers!
+    </div>
+  </div>
+
+  <!-- Table of Contents -->
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+      <h2 class="h4 mb-0"><i class="fas fa-list me-2"></i>What You'll Learn</h2>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#what-is-new-filter" class="text-decoration-none">1. What is the New Locations Filter?</a></li>
+            <li><a href="#accessing-filter" class="text-decoration-none">2. How to Access the Filter</a></li>
+            <li><a href="#understanding-results" class="text-decoration-none">3. Understanding Filter Results</a></li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="list-unstyled">
+            <li><a href="#strategic-planning" class="text-decoration-none">4. Strategic Planning with New Locations</a></li>
+            <li><a href="#pro-advantages" class="text-decoration-none">5. Pro Advantages</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What is New Filter Section -->
+  <section id="what-is-new-filter" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h2 class="h4 mb-0"><i class="fas fa-question-circle me-2"></i>What is the New Locations Filter?</h2>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <h4><i class="fas fa-star text-warning me-2"></i>Fresh Inventory Discovery</h4>
+            <p>The New Locations filter shows you only locations that have been added to TamerMap in the last 30 days. This includes:</p>
+            <ul>
+              <li><strong>New Kiosks:</strong> Fresh kiosks added to existing stores</li>
+              <li><strong>New Kiosk Locations:</strong> Brand new stores that now have kiosks</li>
+              <li><strong>New Retail Stores:</strong> Recently added retail locations</li>
+              <li><strong>New Indie Shops:</strong> Newly discovered independent card shops</li>
+            </ul>
+            
+            <h4><i class="fas fa-chart-line text-success me-2"></i>Why It's Valuable</h4>
+            <ul>
+              <li><strong>First-to-Find Advantage:</strong> Discover fresh inventory before other hunters</li>
+              <li><strong>Reduced Competition:</strong> New locations are less crowded initially</li>
+              <li><strong>Fresh Inventory:</strong> New locations often have untouched card stock</li>
+              <li><strong>Competitive Edge:</strong> Stay ahead of the hunting community</li>
+              <li><strong>Success Rate Boost:</strong> Higher chances of finding valuable cards</li>
+            </ul>
+          </div>
+          <div class="col-md-4">
+            <div class="alert alert-info">
+              <h5><i class="fas fa-lightbulb me-2"></i>Pro Tip</h5>
+              <p>Combine the New Locations filter with <a href="{{ url_for('public.how_to_use_heatmaps') }}">heatmaps</a> and <a href="{{ url_for('public.how_to_routes') }}">route planning</a> for the ultimate hunting strategy!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Accessing Filter Section -->
+  <section id="accessing-filter" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h2 class="h4 mb-0"><i class="fas fa-cog me-2"></i>How to Access the Filter</h2>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h4><i class="fas fa-step-forward text-primary me-2"></i>Step-by-Step Guide</h4>
+            <ol>
+              <li><strong>Ensure Pro Access:</strong> Make sure you have an active TamerMap Pro subscription</li>
+              <li><strong>Navigate to Map:</strong> Go to the main maps page</li>
+              <li><strong>Open Filter Panel:</strong> Click on the filter icon or panel</li>
+              <li><strong>Find New Locations:</strong> Look for "All New Locations" checkbox</li>
+              <li><strong>Enable Filter:</strong> Check the box to activate the filter</li>
+              <li><strong>View Results:</strong> See only new locations on your map</li>
+            </ol>
+          </div>
+          <div class="col-md-6">
+            <div class="alert alert-success">
+              <h5><i class="fas fa-check-circle me-2"></i>Filter Active</h5>
+              <p>When the filter is active, you'll see only locations added in the last 30 days. All other locations will be hidden from view.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Understanding Results Section -->
+  <section id="understanding-results" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h2 class="h4 mb-0"><i class="fas fa-search me-2"></i>Understanding Filter Results</h2>
+      </div>
+      <div class="card-body">
+        <h4><i class="fas fa-map-marker-alt text-primary me-2"></i>What You'll See</h4>
+        <p>When the New Locations filter is active, your map will show only locations that meet these criteria:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <div class="card border-success">
+              <div class="card-body">
+                <h5 class="card-title text-success"><i class="fas fa-plus-circle me-2"></i>Included Locations</h5>
+                <ul class="mb-0">
+                  <li>Kiosks added in last 30 days</li>
+                  <li>New retail store locations</li>
+                  <li>Recently discovered indie shops</li>
+                  <li>New kiosk installations</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-secondary">
+              <div class="card-body">
+                <h5 class="card-title text-muted"><i class="fas fa-minus-circle me-2"></i>Hidden Locations</h5>
+                <ul class="mb-0">
+                  <li>Older kiosk locations</li>
+                  <li>Established retail stores</li>
+                  <li>Long-known indie shops</li>
+                  <li>Pre-existing locations</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <h5><i class="fas fa-info-circle me-2"></i>Filter Behavior</h5>
+          <p>The filter automatically updates as new locations are added to TamerMap. Check back regularly to discover the latest additions!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Strategic Planning Section -->
+  <section id="strategic-planning" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h2 class="h4 mb-0"><i class="fas fa-chess me-2"></i>Strategic Planning with New Locations</h2>
+      </div>
+      <div class="card-body">
+        <p class="lead">Transform new location data into a winning hunting strategy. Learn how to prioritize and plan your visits for maximum success.</p>
+        
+        <h3>Priority Planning Strategy</h3>
+        <p>Use this hierarchy to plan your new location visits:</p>
+        
+        <div class="row mb-4">
+          <div class="col-md-4">
+            <div class="card border-danger">
+              <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                <h5>High Priority</h5>
+                <p class="small">New kiosks at popular stores - highest success rate</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-warning">
+              <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h5>Medium Priority</h5>
+                <p class="small">New retail stores - good potential</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-info">
+              <div class="card-body text-center">
+                <i class="fas fa-info-circle fa-2x text-info mb-2"></i>
+                <h5>Lower Priority</h5>
+                <p class="small">New indie shops - explore when convenient</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Timing Your Visits</h3>
+        <ul>
+          <li><strong>Immediate Action:</strong> Visit new locations within 48 hours of discovery</li>
+          <li><strong>Peak Hours:</strong> Avoid busy times when possible</li>
+          <li><strong>Restock Timing:</strong> Coordinate with known restock schedules</li>
+          <li><strong>Competition Avoidance:</strong> Visit during off-peak hours</li>
+        </ul>
+
+        <div class="alert alert-warning">
+          <h5><i class="fas fa-sync-alt me-2"></i>Adaptation Strategies</h5>
+          <p><strong>Regular Checks:</strong> Check for new locations daily to stay ahead. <strong>Quick Response:</strong> Act fast on high-priority new locations. <strong>Pattern Recognition:</strong> Learn which types of new locations yield the best results. <strong>Community Monitoring:</strong> Watch for mentions of new locations in hunting communities.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pro Advantages Section -->
+  <section id="pro-advantages" class="mb-5">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h2 class="h4 mb-0"><i class="fas fa-crown me-2"></i>Pro Advantages</h2>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="feature-box p-3 mb-3">
+              <h5><i class="fas fa-fire text-primary me-2"></i>Heatmap Integration</h5>
+              <p class="mb-0">Combine new locations with <a href="{{ url_for('public.how_to_use_heatmaps') }}">heatmap data</a> to see which new locations are already popular!</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feature-box p-3 mb-3">
+              <h5><i class="fas fa-route text-success me-2"></i>Route Planning</h5>
+              <p class="mb-0">Use <a href="{{ url_for('public.how_to_routes') }}">route planning</a> to efficiently visit multiple new locations in one trip!</p>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="feature-box p-3 mb-3">
+              <h5><i class="fas fa-door-open text-info me-2"></i>Open Now Filter</h5>
+              <p class="mb-0">Combine with the "Live Hunting Mode" filter to see only new locations that are currently open!</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="feature-box p-3 mb-3">
+              <h5><i class="fas fa-sticky-note text-warning me-2"></i>Personal Notes</h5>
+              <p class="mb-0">Track your success at new locations with <a href="{{ url_for('public.how_to_personal_notes') }}">Personal Notes</a> to build winning strategies!</p>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          <h6><i class="fas fa-lightbulb me-2"></i>Pro Power Combo</h6>
+          <p class="mb-0">Use all Pro features together: New Locations + Heatmaps + Route Planning + Open Now + Personal Notes = Ultimate hunting success!</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <div class="text-center mt-5">
+    <h2>Start Finding New Locations Today!</h2>
+    <p class="lead mb-4">Master the New Locations filter and discover fresh Pokemon card inventory before other hunters!</p>
+    
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <a href="{{ url_for('public.splash') }}" class="btn btn-success btn-lg w-100">
+          <i class="fas fa-map me-2"></i>Try the Filter
+        </a>
+      </div>
+      <div class="col-md-6 mb-3">
+        <a href="{{ url_for('public.send_message', type='pro') }}" class="btn btn-primary btn-lg w-100">
+          <i class="fas fa-crown me-2"></i>Upgrade to Pro
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
