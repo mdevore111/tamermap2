@@ -116,7 +116,7 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
 <script>
   // Set is_pro based on the context processor value for frontend use
   window.is_pro = {{ is_pro|tojson }};
-  window.userRole = "{{ current_user.is_authenticated and current_user.roles[0].name or 'User' }}";
+  window.userRole = "{{ current_user.is_authenticated and current_user.roles and current_user.roles|length > 0 and current_user.roles[0].name or 'User' }}";
   window.retailersEndpoint = "{{ url_for('api.retailers_endpoint') }}";
   
   // Define initApp function immediately to ensure it's available for Google Maps API
