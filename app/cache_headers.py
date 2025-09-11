@@ -95,4 +95,4 @@ def should_skip_caching(response):
 def enable_cache_headers(app):
     """Enable cache headers for the app"""
     init_cache_headers(app)
-    current_app.logger.info("Cache headers enabled")
+    app.logger.info("Cache headers enabled")
