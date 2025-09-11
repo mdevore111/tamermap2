@@ -201,6 +201,14 @@ def create_app(config_class=BaseConfig):
     # Initialize Flask-Compress
     compress = Compress()
     compress.init_app(app)
+    
+    # Initialize cache headers
+    from app.cache_headers import enable_cache_headers
+    enable_cache_headers(app)
+    
+    # Initialize resource preloader
+    from app.resource_preloader import enable_resource_preloader
+    enable_resource_preloader(app)
 
     # Register blueprints for various application modules.
     app.register_blueprint(public_bp)  # Public pages.

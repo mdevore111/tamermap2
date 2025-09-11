@@ -69,15 +69,23 @@ def retailers_endpoint():
         if r.get("place_id") and r["place_id"].strip().lower() != "none"
     ]
 
-    # Add user notes for logged-in users
+    # Add user notes for logged-in users (optimized to avoid N+1 queries)
     from flask_login import current_user
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and filtered_retailers:
+        # Get all retailer IDs
+        retailer_ids = [r['id'] for r in filtered_retailers]
+        
+        # Fetch all user notes in a single query
+        notes = UserNote.query.filter_by(
+            user_id=current_user.id
+        ).filter(UserNote.retailer_id.in_(retailer_ids)).all()
+        
+        # Create a lookup dictionary
+        notes_dict = {note.retailer_id: note.notes for note in notes}
+        
+        # Add notes to retailers
         for retailer in filtered_retailers:
-            note = UserNote.query.filter_by(
-                user_id=current_user.id, 
-                retailer_id=retailer['id']
-            ).first()
-            retailer['user_notes'] = note.notes if note else None
+            retailer['user_notes'] = notes_dict.get(retailer['id'])
 
     return jsonify({
         'retailers': filtered_retailers,
