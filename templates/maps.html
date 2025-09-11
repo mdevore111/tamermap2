@@ -14,17 +14,12 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
   <!-- Load map-specific CSS styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/maps.css') }}">
   
+  <!-- Defer non-critical CSS for faster initial load -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"></noscript>
+  
   <!-- Preload critical map pin images for better performance -->
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/safeway.png') }}" as="image">
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/qfc.png') }}" as="image">
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/fred-meyer.png') }}" as="image">
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/card-shop.png') }}" as="image">
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/best-buy.png') }}" as="image">
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/target.png') }}" as="image">
-  <!-- walmart.png removed from preload - not in initial viewport -->
-  {% if not is_pro %}<link rel="preload" href="{{ url_for('static', filename='map-pins/free.png') }}" as="image">{% endif %}
-  <!-- event.png removed from preload since events filter is off by default -->
-  <link rel="preload" href="{{ url_for('static', filename='map-pins/other.png') }}" as="image">
+  <!-- Images will be preloaded with WebP support via JavaScript -->
   
   <!-- Schema.org LocalBusiness markup for Pokemon card hunting -->
   <script type="application/ld+json">
@@ -153,6 +148,7 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
        onerror="console.error('Failed to load map-core.js')" 
        onload="console.log('map-core.js loaded successfully'); loadGoogleMapsAPI();"></script>
 <script type="module" src="{{ url_for('static', filename='js/cacheManager.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/imageOptimizer.js') }}"></script>
 {% if is_pro %}
 <script type="module" src="{{ url_for('static', filename='js/routePlanner.js') }}"></script>
 {% else %}
@@ -179,6 +175,24 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
     if (routeBtn) {
       routeBtn.addEventListener('click', loadRoutePlanner);
     }
+  });
+  
+  // Load Font Awesome after map is ready for better performance
+  function loadFontAwesome() {
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+      document.head.appendChild(link);
+    }
+  }
+  
+  // Load Font Awesome after a short delay to prioritize map loading
+  setTimeout(loadFontAwesome, 1000);
+  
+  // Preload critical images with WebP support
+  import('./imageOptimizer.js').then(module => {
+    module.preloadCriticalImages();
   });
 </script>
 {% endif %}

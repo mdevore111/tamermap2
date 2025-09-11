@@ -4,6 +4,7 @@
 import { MARKER_TYPES, Z_INDICES, DEBOUNCE_TIMINGS } from './config.js';
 import { createRetailerMarker, createEventMarker } from './markerFactory.js';
 import { isOpenNow } from './utils.js';
+import { shouldShowRetailer, shouldShowEvent, isMarkerInBounds, hasFiltersChanged } from './markerFilter.js';
 
 /**
  * MarkerManager - Handles efficient marker rendering and clustering
@@ -385,7 +386,7 @@ export class MarkerManager {
         const newFilters = providedFilters || this.getCurrentFiltersFromUI();
 
         // Detect changes before mutating
-        const filtersChanged = this.hasFiltersChanged(newFilters);
+        const filtersChanged = hasFiltersChanged(newFilters, this.currentFilters);
         const viewportChanged = !this.lastBounds || !this.boundsEqual(bounds, this.lastBounds, 0.002);
         const isFirstRun = !this.currentFilters;
 
@@ -412,10 +413,10 @@ export class MarkerManager {
             processed++;
             let shouldShow = true;
             if (key.startsWith('retailer_')) {
-                shouldShow = this.shouldShowRetailer(marker, this.currentFilters);
+                shouldShow = shouldShowRetailer(marker, this.currentFilters);
                 if (!shouldShow) filteredOut++;
             } else if (key.startsWith('event_')) {
-                shouldShow = this.shouldShowEvent(marker, this.currentFilters);
+                shouldShow = shouldShowEvent(marker, this.currentFilters);
                 if (!shouldShow) filteredOut++;
             }
             
