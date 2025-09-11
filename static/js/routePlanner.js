@@ -758,9 +758,28 @@ class RoutePlanner {
      * Get filtered locations based on current settings
      */
     getFilteredLocations(openNow = false, leastPopular = false, mostPopular = false) {
+        console.log('🔍 ROUTE PLANNER DEBUG: getFilteredLocations called');
+        console.log('📍 window.userCoords:', window.userCoords);
+        console.log('📍 window.allMarkers length:', window.allMarkers ? window.allMarkers.length : 'undefined');
+        console.log('📍 window.markerManager:', window.markerManager);
+        
         if (!window.userCoords) {
-            console.warn('No user coordinates available for filtering');
-            return [];
+            console.warn('❌ No user coordinates available for filtering');
+            console.log('🔧 Attempting to use fallback coordinates...');
+            // Try to use map center as fallback
+            if (window.map) {
+                const center = window.map.getCenter();
+                if (center) {
+                    window.userCoords = { lat: center.lat(), lng: center.lng() };
+                    console.log('✅ Using map center as user coordinates:', window.userCoords);
+                } else {
+                    console.error('❌ Map center not available either');
+                    return [];
+                }
+            } else {
+                console.error('❌ No map available either');
+                return [];
+            }
         }
 
         console.log('🔍 ROUTE PLANNER DEBUG: Starting location filtering');
@@ -900,8 +919,17 @@ class RoutePlanner {
             locations = cacheValues.map(marker => {
                 if (!marker) return null;
                 
-                const lat = parseFloat(marker.lat ?? marker.latitude);
-                const lng = parseFloat(marker.lng ?? marker.longitude);
+                // Handle Google Maps Marker objects (they have getPosition() method)
+                let lat, lng;
+                if (typeof marker.getPosition === 'function') {
+                    const position = marker.getPosition();
+                    lat = position ? position.lat() : NaN;
+                    lng = position ? position.lng() : NaN;
+                } else {
+                    // Fallback to direct properties for plain objects
+                    lat = parseFloat(marker.lat ?? marker.latitude);
+                    lng = parseFloat(marker.lng ?? marker.longitude);
+                }
                 
                 // Debug: Log Boulder cache conversion specifically
                 if (window.__TM_DEBUG__) {
@@ -915,15 +943,18 @@ class RoutePlanner {
                     }
                 }
                 
+                // Extract data from marker or its stored data
+                const markerData = marker.retailer_data || marker.event_data || marker;
+                
                 return {
                     lat: lat,
                     lng: lng,
-                    retailer: marker.retailer || 'Unknown',
-                    retailer_type: marker.retailer_type || 'unknown',
-                    opening_hours: marker.opening_hours || null,
-                    address: marker.address || marker.full_address || null,
-                    phone: marker.phone || marker.phone_number || null,
-                    place_id: marker.place_id || null
+                    retailer: markerData.retailer || marker.getTitle?.() || 'Unknown',
+                    retailer_type: marker.retailer_type || markerData.retailer_type || 'unknown',
+                    opening_hours: markerData.opening_hours || null,
+                    address: markerData.full_address || markerData.address || null,
+                    phone: markerData.phone_number || markerData.phone || null,
+                    place_id: markerData.place_id || null
                 };
             }).filter(loc => {
                 const isValid = Number.isFinite(loc.lat) && Number.isFinite(loc.lng);
