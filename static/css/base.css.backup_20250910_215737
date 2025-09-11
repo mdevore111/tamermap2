@@ -1,0 +1,979 @@
+/* ==========================================================================
+   GLOBAL STYLES & UTILITY
+   ========================================================================= */
+
+/* Hide unexpected resize handles or gaps */
+body > .resizer-horizontal {
+  display: none !important;
+}
+
+/* Global Base Styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+/* Ensure consistent background color throughout the page */
+html {
+  background-color: #f8f9fa;
+}
+
+body {
+  background-color: #f8f9fa;
+}
+
+/* Ensure all content containers maintain the same background */
+#main-content {
+  background-color: #f8f9fa;
+}
+
+/* Ensure the entire page maintains consistent background */
+body > * {
+  background-color: #f8f9fa;
+}
+
+/* Override any potential background color changes */
+main, .page-content, .content-wrapper {
+  background-color: #f8f9fa !important;
+}
+
+/* Utility: Box Sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* Layout: Base Body Flex Setup */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0px !important;
+}
+
+/* ==========================================================================
+   HEADER & NAVIGATION
+   ========================================================================== */
+
+/* Navigation Bar Container */
+#navbar {
+  background-color: #007bff;
+  color: #fff;
+  padding: 1px 10px;  /* Consolidated smaller top/bottom padding */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+}
+
+/* Navbar Left: Site Logo & Name */
+.navbar-left .site-name {
+  padding: 0;
+}
+
+/* Navbar Right: Navigation Links Container */
+.navbar-right {
+  display: flex;
+  gap: 10px;
+}
+
+/* Navigation Buttons (Styled as Buttons) */
+.nav-button {
+  background-color: #0056b3;
+  padding: 2px 2px;           /* Smaller padding for a compact appearance */
+  font-size: 14px;
+  line-height: 1;             /* Removes extra vertical space */
+  border-radius: 3px;
+  text-decoration: none;
+  color: #fff;
+  transition: background-color 0.3s;
+  /* Center text vertically */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;                /* Remove default margins */
+}
+
+.nav-button:hover {
+  background-color: #003f7f;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Constrain the legend search container for tablets */
+  #legend-search-container {
+    max-width: 120px; /* Adjust as needed */
+  }
+  #legend-search-container input {
+    width: 100%;
+    padding-right: 25px; /* Ensure there's enough padding for the clear icon */
+  }
+  .clear-icon {
+    right: 5px; /* Fine-tune the clear icon's position */
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+  #navbar .nav-link {
+    font-size: 18px !important;
+    margin: 0 4px;
+  }
+  #navbar .nav-button {
+    font-size: 14px !important;
+    padding: 4px 8px !important;
+  }
+  .navbar-right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* Medium screen responsive adjustments - show hamburger menu earlier */
+@media (max-width: 991px) {
+  .navbar-nav {
+    text-align: left;
+  }
+  
+  .navbar-nav .nav-item {
+    margin: 0.5rem 0;
+  }
+  
+  .navbar-nav .dropdown-menu {
+    text-align: left;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  
+  .navbar-nav .dropdown-item {
+    color: #fff !important;
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar-nav .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff !important;
+  }
+}
+
+/* FAQ Page Styles */
+.faq-section {
+  margin-bottom: 3rem;
+}
+
+.faq-section h2 {
+  border-bottom: 3px solid var(--bs-primary);
+  padding-bottom: 0.5rem;
+}
+
+.accordion-item {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.accordion-button {
+  background-color: #f8f9fa;
+  border: none;
+  font-weight: 600;
+  color: var(--bs-primary);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.accordion-body {
+  background-color: white;
+  padding: 1.5rem;
+}
+
+.accordion-body ul, .accordion-body ol {
+  margin-bottom: 1rem;
+}
+
+.accordion-body li {
+  margin-bottom: 0.5rem;
+}
+
+.alert {
+  border-radius: 0.5rem;
+  border: none;
+}
+
+.btn-outline-primary.active {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+/* Quick Navigation Styles */
+.quick-navigation .btn {
+  transition: all 0.3s ease;
+}
+
+.quick-navigation .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* FAQ Content Enhancements */
+.faq-section .text-primary {
+  color: var(--bs-primary) !important;
+}
+
+.faq-section .text-success {
+  color: var(--bs-success) !important;
+}
+
+.faq-section .text-info {
+  color: var(--bs-info) !important;
+}
+
+.faq-section .text-warning {
+  color: var(--bs-warning) !important;
+}
+
+/* FAQ Page Consistency */
+.faq-section .card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.faq-section .card-header {
+  border-bottom: none;
+  padding: 1rem 1.5rem;
+}
+
+.faq-section .card-body {
+  padding: 1.5rem;
+}
+
+.faq-section .accordion-item {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  margin-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.faq-section .accordion-button {
+  background-color: #f8f9fa;
+  border: none;
+  font-weight: 600;
+  color: var(--bs-primary);
+  padding: 1rem 1.5rem;
+}
+
+.faq-section .accordion-button:not(.collapsed) {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.faq-section .accordion-button:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.faq-section .accordion-body {
+  background-color: white;
+  padding: 1.5rem;
+}
+
+/* Quick Navigation Improvements */
+.quick-navigation .btn {
+  transition: all 0.3s ease;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.quick-navigation .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quick-navigation .btn.active {
+  background-color: var(--bs-primary);
+  color: white;
+  border-color: var(--bs-primary);
+}
+
+/* Plain Text Links (e.g., Suggestions) */
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1;
+  padding: 0;               /* No extra padding */
+  margin: 0 6px;            /* Optional horizontal spacing */
+  background: none;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+/* Try Pro Button */
+.btn-try-pro {
+  background-color: #ffc107 !important; /* Yellow background */
+  color: #fff !important;              /* White text */
+  font-weight: bold !important;        /* Bold text */
+  white-space: nowrap;
+}
+
+.btn-try-pro:hover {
+  background-color: #e0a800 !important;
+  color: #fff !important;
+}
+
+/* ==========================================================================
+   MAIN CONTENT & CONTAINERS
+   ========================================================================== */
+
+/* Main Content Area */
+#main-content {
+  flex: 1;
+  padding: 0px;
+  padding-bottom: 80px; /* Increased space for fixed footer */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow content to shrink */
+  background-color: #f8f9fa; /* Ensure consistent background */
+}
+
+/* Add bottom margin to all content blocks to prevent touching footer */
+.page-content {
+  margin-bottom: 2rem;
+}
+
+/* Ensure form containers have proper bottom spacing */
+.form-container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem; /* Add bottom margin */
+}
+
+/* Add bottom margin to content sections */
+.content {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 10px;
+  max-width: 800px;
+  width: 90%;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  margin-bottom: 2rem; /* Add bottom margin */
+}
+
+/* Ensure about page content has proper spacing */
+.about-section {
+  margin-bottom: 2rem;
+}
+
+/* Add bottom margin to the last content element before footer */
+.about-section .story-section:last-child,
+.content:last-child,
+.form-container:last-child {
+  margin-bottom: 3rem; /* Extra space before footer */
+}
+
+/* Specific styling for security forms to ensure proper spacing */
+.page-content {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+}
+
+/* Ensure security forms have proper bottom spacing */
+.page-content .form-container {
+  margin-bottom: 3rem;
+}
+
+/* Add extra bottom margin to forms with links at the bottom */
+.page-content .form-container form {
+  margin-bottom: 1rem;
+}
+
+/* Ensure the last element in forms has proper spacing */
+.page-content .form-container form > div:last-child {
+  margin-bottom: 1rem;
+}
+
+/* Style for the "Reset via email" link container */
+.page-content .form-container form > div:last-child small {
+  display: block;
+  margin-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Map page specific layout - use flexbox to fit above fixed footer */
+body.map-page {
+  min-height: 100vh !important;
+  min-height: 100dvh !important; /* Modern browsers - dynamic viewport height */
+  overflow: visible !important;
+}
+
+body.map-page #main-content {
+  padding-bottom: 0 !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.map-page .map-container {
+  flex: 1 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body.map-page #map {
+  height: 100% !important;
+  width: 100% !important;
+  max-height: none !important;
+  flex: 1 !important;
+}
+
+/* Mobile responsive adjustments for map page */
+@media only screen and (max-width: 768px) {
+  body.map-page #main-content {
+    /* Height driven by flex; no explicit vh math needed */
+  }
+}
+
+/* Tablet responsive adjustments for map page */
+@media (min-width: 769px) and (max-width: 1024px) {
+  body.map-page #main-content {
+    /* Height driven by flex; no explicit vh math needed */
+  }
+}
+
+/* On map page, keep footer in normal flow (not fixed) to avoid height math */
+body.map-page #footer {
+  position: static !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+}
+
+/* Splash page: use same flex approach so hero fills naturally without viewport math */
+body.splash-page {
+  min-height: 100vh !important;
+}
+
+body.splash-page #main-content {
+  padding-bottom: 0 !important;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body.splash-page #footer {
+  position: static !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+}
+
+/* Compact splash hero: remove any global min-height constraints */
+body.splash-page .landing-page {
+  min-height: auto !important;
+  height: auto !important;
+  padding: 16px 0 !important;
+  overflow: visible !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Form Container: For Centered Forms/Dialogs */
+/* This section is now handled by the .form-container rule above */
+
+/* ==========================================================================
+   FORM ELEMENTS & BUTTONS
+   ========================================================================== */
+
+/* Form Labels */
+form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+/* Form Input, Textarea, and Select Fields */
+form input, form textarea, form select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Form Buttons */
+form button {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+form button:hover {
+  background-color: #0056b3;
+}
+
+/* SPAM Protection - Honeypot Fields */
+.honeypot-field {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* Error Messages */
+.error-messages {
+  color: red;
+  margin-bottom: 15px;
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+
+/* Footer Container */
+#footer {
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
+
+/* Footer Links */
+#footer a {
+  color: #ddd;
+  text-decoration: none;
+}
+
+#footer a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   SPLASH PAGE & CONTENT
+   ========================================================================== */
+
+/* Splash Page Container */
+.landing-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  text-align: center;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+/* Splash Page Background Overlay */
+.landing-page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('../img/map.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.35;
+  z-index: -1;
+}
+
+/* General Content Containers */
+/* This section is now handled by the .content rule above */
+
+/* Headline */
+.headline {
+  font-size: 2.4rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* Container for Grouped Buttons */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* Primary & Secondary Buttons */
+.primary-button, .secondary-button {
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+/* Primary Button Specific Styles */
+.primary-button {
+  background-color: #ffcc00;
+  color: #000;
+}
+
+.primary-button:hover {
+  background-color: #ffd700;
+  transform: scale(1.05);
+}
+
+/* Secondary Button Specific Styles */
+.secondary-button {
+  background-color: transparent;
+  color: #007bff;
+  border: 2px solid #007bff;
+}
+
+.secondary-button:hover {
+  background-color: #007bff;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* ==========================================================================
+   FLASH MESSAGES
+   ========================================================================== */
+
+/* Flash Container: For Alerts & Messages */
+#flash-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0px 0 !important;
+  background-color: transparent !important;
+}
+
+/* Flash Alerts: Override Bootstrap Margins */
+#flash-container .alert {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Close Button for Alerts */
+#flash-container .btn-close {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pokemon-text {
+    font-family: 'Trebuchet MS', 'Helvetica', sans-serif; /* Web-safe fonts */
+    font-size: 36px;
+    font-weight: bold; /* Increase thicknesss */
+    color: #FFC107; /* Bright yellow matching the logo */
+    -webkit-text-stroke: 2px #1E90FF; /* Blue outline (WebKit browsers) */
+    text-shadow:
+        1px 1px 0 #1E90FF, /* Blue shadow for outline */
+        1px 2px 0 rgba(0, 0, 0, 0.2);
+    display: inline-block; /* Ensure proper rendering */
+    padding: 2px; /* Prevent clipping */
+    letter-spacing: 1px; /* Slight spacing for style */
+}
+
+.center {
+    text-align: center;
+}
+
+.half-size {
+    width: 65%;        /* Shrinks the image to 50% of its container's width */
+    height: auto;      /* Maintains aspect ratio */
+}
+
+/* ==========================================================================
+   SWEETALERT2 MODAL FIXES
+   ========================================================================== */
+
+/* Fix height issues with SweetAlert2 modals on desktop */
+.swal2-popup {
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+}
+
+/* Ensure the modal content is fully visible */
+.swal2-popup .swal2-image {
+    max-height: 40vh !important;
+    object-fit: contain !important;
+}
+
+/* Adjust modal width for better desktop display */
+@media (min-width: 768px) {
+    .swal2-popup {
+        width: 90% !important;
+        max-width: 500px !important;
+    }
+}
+
+/* Specific styling for the upgrade modal */
+.swal2-upgrade-modal {
+    max-height: 95vh !important;
+    overflow: visible !important;
+    /* Force portrait orientation with more height */
+    aspect-ratio: 3/5 !important;
+    max-width: 480px !important; /* Reduced width slightly */
+    min-height: 720px !important; /* Increased min-height */
+    /* Ensure even borders */
+    padding: 1em 1em !important; /* Added top/bottom and left/right padding */
+}
+
+/* Responsive height adjustments */
+@media (max-height: 800px) {
+    .swal2-upgrade-modal {
+        min-height: 650px !important;
+        aspect-ratio: 2/3 !important;
+    }
+}
+
+@media (max-height: 600px) {
+    .swal2-upgrade-modal {
+        min-height: 550px !important;
+        aspect-ratio: 4/5 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .swal2-upgrade-modal {
+        width: 95% !important;
+        max-width: 400px !important;
+        min-height: 600px !important;
+        aspect-ratio: 3/4 !important;
+    }
+}
+
+.swal2-upgrade-modal .swal2-title {
+    font-size: 1.8rem !important;
+    padding: 0.1em 0 0.1em 0 !important; /* Minimal vertical padding, no horizontal */
+    margin-bottom: 0.1em !important;
+    line-height: 1.2 !important;
+}
+
+.swal2-upgrade-modal .swal2-image {
+    max-height: 75vh !important;
+    object-fit: contain !important;
+    margin: 0 !important; /* No margins, let modal padding handle spacing */
+}
+
+/* Ensure buttons are always visible */
+.swal2-upgrade-modal .swal2-actions {
+    margin-top: 0.5em !important; /* Slightly more space from image */
+    padding-bottom: 0.5em !important; /* More bottom padding for buttons */
+}
+
+/* Remove default SweetAlert2 padding to maximize content space */
+.swal2-upgrade-modal .swal2-html-container {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Ensure the modal content uses maximum available space */
+.swal2-upgrade-modal .swal2-content {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Pro Features Comparison Styling */
+.pro-features-comparison {
+    padding: 1em 0;
+    text-align: center;
+}
+
+.feature-row {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.2em;
+    gap: 1em;
+}
+
+.feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    max-width: 120px;
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5em;
+}
+
+.feature-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.coming-soon {
+    margin-top: 1.5em;
+    padding: 0.8em;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.coming-soon-icon {
+    font-size: 1.2rem;
+    margin-right: 0.5em;
+}
+
+.coming-soon-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   BACKGROUND COLOR CONSISTENCY & SPACING FIXES
+   ========================================================================== */
+
+/* Ensure consistent background color across all pages */
+html, body, #main-content, main, .page-content {
+  background-color: #f8f9fa !important;
+}
+
+/* Override any potential Bootstrap or other framework background changes */
+.container, .container-fluid, .row, .col, [class*="col-"] {
+  background-color: transparent !important;
+}
+
+/* Ensure content areas have proper spacing from footer */
+.page-content, .content, .about-section, .form-container {
+  margin-bottom: 2rem;
+}
+
+/* Extra spacing for the last content element before footer */
+.page-content:last-child,
+.content:last-child,
+.about-section:last-child,
+.form-container:last-child {
+  margin-bottom: 3rem;
+}
+
+/* Ensure forms have proper bottom spacing */
+.page-content .form-container {
+  margin-bottom: 3rem;
+}
+
+/* Fix for long content pages to prevent background color changes */
+body:not(.map-page):not(.splash-page) {
+  background-color: #f8f9fa !important;
+  background-image: none !important;
+}
+
+/* Ensure consistent spacing for all content containers */
+.content-wrapper, .main-wrapper {
+  background-color: #f8f9fa !important;
+  margin-bottom: 2rem;
+}
+
+/* ==========================================================================
+   COMPREHENSIVE BOTTOM SPACING FOR ALL PAGES
+   ========================================================================== */
+
+/* Universal rule: ensure any content container has proper bottom spacing */
+/* EXCLUDE map and splash pages from these rules to maintain their perfect layout */
+body:not(.map-page):not(.splash-page) #main-content > *:last-child,
+body:not(.map-page):not(.splash-page) main > *:last-child,
+body:not(.map-page):not(.splash-page) .page-content > *:last-child,
+body:not(.map-page):not(.splash-page) .content > *:last-child {
+  margin-bottom: 2rem !important;
+}
+
+/* Catch-all for any content containers that might not have specific classes */
+/* EXCLUDE map and splash pages from these rules */
+body:not(.map-page):not(.splash-page) #main-content > div:last-child,
+body:not(.map-page):not(.splash-page) main > div:last-child {
+  margin-bottom: 2rem !important;
+}
+
+/* Ensure any form or content wrapper has proper spacing */
+/* EXCLUDE map and splash pages from these rules */
+body:not(.map-page):not(.splash-page) .form-wrapper,
+body:not(.map-page):not(.splash-page) .content-wrapper,
+body:not(.map-page):not(.splash-page) .page-wrapper,
+body:not(.map-page):not(.splash-page) .section-wrapper {
+  margin-bottom: 2rem;
+}
+
+/* Special handling for pages with multiple sections */
+/* EXCLUDE map and splash pages from these rules */
+body:not(.map-page):not(.splash-page) .section:last-child,
+body:not(.map-page):not(.splash-page) .chapter:last-child,
+body:not(.map-page):not(.splash-page) .part:last-child {
+  margin-bottom: 3rem !important;
+}
+
+/* ==========================================================================
+   HOW-TO GUIDE SPECIFIC SPACING
+   ========================================================================== */
+
+/* Ensure how-to guide containers have proper bottom spacing */
+.guide-container,
+.container[style*="margin-bottom: 6rem"],
+.container[style*="margin-bottom: 6rem !important"] {
+  margin-bottom: 6rem !important;
+  padding-bottom: 2rem !important;
+}
+
+/* Ensure the last section in how-to guides has extra spacing */
+.guide-container > *:last-child,
+.guide-content > *:last-child {
+  margin-bottom: 4rem !important;
+}
+
+/* Specific spacing for how-to guide main containers */
+.guide-container .container,
+.guide-content .container {
+  margin-bottom: 6rem !important;
+}

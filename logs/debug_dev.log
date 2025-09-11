@@ -1,0 +1,970 @@
+2025-09-10 13:08:11,828 - app - WARNING - Session issue on /: missing user_id - None
+2025-09-10 13:08:11,829 - app - INFO - splash function called - Method: GET - None
+2025-09-10 13:08:16,011 - app - WARNING - Session issue on /api/map-data: missing user_id - None
+2025-09-10 13:08:16,013 - app - WARNING - Session issue on /api/pin-heatmap-data: missing user_id - None
+2025-09-10 13:08:16,475 - app - WARNING - Session issue on /api/map-data: missing user_id - None
+2025-09-10 13:08:19,024 - app - WARNING - Session issue on /login: missing user_id - None
+2025-09-10 13:08:52,824 - app - WARNING - Session issue on /login: missing user_id - None
+2025-09-10 13:08:52,830 - app - WARNING - Security issue: Unauthenticated POST to security.login - None
+2025-09-10 13:08:53,174 - app - INFO - FLASK-SECURITY: User authenticated: mark@markdevore.com (ID: 1) - None
+2025-09-10 13:08:53,174 - app - INFO -    Extra data: {'authn_via': ['password']} - None
+2025-09-10 13:08:53,175 - app - INFO -    Authentication method: ['password'] - None
+2025-09-10 13:08:53,203 - app - INFO - splash function called - Method: GET - None
+2025-09-10 13:28:45,210 - app - INFO - splash function called - Method: GET - None
+2025-09-10 13:32:58,690 - app - INFO - splash function called - Method: GET - None
+2025-09-10 13:43:30,575 - app - INFO - splash function called - Method: GET - None
+2025-09-10 13:51:17,527 - app - INFO - splash function called - Method: GET - None
+2025-09-10 13:56:01,520 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:01:19,090 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:01:28,337 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:08:42,186 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:08:42,190 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 14:08:42,192 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 14:08:42,192 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 14:08:42,193 - app - INFO - Form data - out_of_business: False, is_new_location: False - None
+2025-09-10 14:08:42,196 - app - ERROR - Failed to save message: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nasdcascas', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:08:42.195636', 0, '', '', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:08:42,197 - app - ERROR - Exception type: OperationalError - None
+2025-09-10 14:08:42,197 - app - ERROR - Exception details: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nasdcascas', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:08:42.195636', 0, '', '', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:08:42,435 - app - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table message has no column named is_new_location
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\app\routes\public.py", line 688, in send_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4345, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4480, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4441, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1415, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nasdcascas', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:08:42.195636', 0, '', '', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ - None
+2025-09-10 14:09:06,689 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:09:06,691 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 14:09:06,692 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 14:09:06,692 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 14:09:06,692 - app - INFO - Form data - out_of_business: False, is_new_location: False - None
+2025-09-10 14:09:06,694 - app - ERROR - Failed to save message: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nasdcascas', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:09:06.693483', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:09:06,695 - app - ERROR - Exception type: OperationalError - None
+2025-09-10 14:09:06,695 - app - ERROR - Exception details: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nasdcascas', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:09:06.693483', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:09:06,703 - app - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table message has no column named is_new_location
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\app\routes\public.py", line 688, in send_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4345, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4480, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4441, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1415, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nasdcascas', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:09:06.693483', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ - None
+2025-09-10 14:09:26,025 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:09:26,027 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 14:09:26,030 - app - WARNING - Form validation failed - errors: {'body': ['Message contains too much repetition.']} - None
+2025-09-10 14:09:51,075 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:09:51,077 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 14:09:51,078 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 14:09:51,079 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 14:09:51,079 - app - INFO - Form data - out_of_business: False, is_new_location: False - None
+2025-09-10 14:09:51,081 - app - ERROR - Failed to save message: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthey really suck!', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:09:51.080396', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:09:51,086 - app - ERROR - Exception type: OperationalError - None
+2025-09-10 14:09:51,087 - app - ERROR - Exception details: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthey really suck!', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:09:51.080396', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:09:51,093 - app - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table message has no column named is_new_location
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\app\routes\public.py", line 688, in send_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4345, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4480, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4441, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1415, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthey really suck!', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:09:51.080396', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ - None
+2025-09-10 14:10:01,896 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:10:01,899 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 14:10:01,901 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 14:10:01,901 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 14:10:01,902 - app - INFO - Form data - out_of_business: False, is_new_location: False - None
+2025-09-10 14:10:01,903 - app - ERROR - Failed to save message: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthey really suck!', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:10:01.902898', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:10:01,905 - app - ERROR - Exception type: OperationalError - None
+2025-09-10 14:10:01,906 - app - ERROR - Exception details: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthey really suck!', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:10:01.902898', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:10:01,915 - app - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table message has no column named is_new_location
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\app\routes\public.py", line 688, in send_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4345, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4480, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4441, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1415, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthey really suck!', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 0, 0, 1, 'correct_existing', '2025-09-10 21:10:01.902898', 0, 'Mark DeVore', 'mark@markdevore.com', None, None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ - None
+2025-09-10 14:23:29,249 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:25:14,413 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:25:18,338 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:25:48,396 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:25:48,401 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 14:25:48,402 - app - WARNING - Form validation failed - errors: {'address': ['Invalid email format.']} - None
+2025-09-10 14:25:48,402 - app - WARNING - Form data received: {'honeypot': '', 'timestamp': '1757539527514', 'website': '', 'phone': '', 'csrf_token': 'ImI0MDlkNTc2ZGZkNTUxZGQzYWNlOGU3MTY4NjZiYWM0ZDMyMjA2MGUi.aMHsxw.WVfrv-Np9aK8YJHstAggOmRH2U0', 'communication_type': 'location', 'form_type': 'correct_existing', 'is_admin_report': 'true', 'is_new_location': 'false', 'subject': 'Location Data Correction', 'name': 'Mark', 'address': 'DeVore', 'reported_address': '4301 212th St SW, Mountlake Terrace, WA, 98043', 'reported_phone': '(425) 775-4154', 'reported_website': '', 'reported_hours': 'Monday: 5:00 AM – 12:00 AMTuesday: 5:00 AM – 12:00 AMWednesday: 5:00 AM – 12:00 AMThursday: 5:00 AM – 12:00 AMFriday: 5:00 AM – 12:00 AMSaturday: 5:00 AM – 12:00 AMSunday: 5:00 AM – 12:00 AM', 'body': 'this is a test', 'out_of_business': 'y', 'submit': 'Send Message'} - None
+2025-09-10 14:26:09,375 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:26:09,377 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 14:26:09,378 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 14:26:09,378 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 14:26:09,378 - app - INFO - Form data - out_of_business: False, is_new_location: False - None
+2025-09-10 14:26:09,383 - app - ERROR - Failed to save message: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthis is a test', '4301 212th St SW, Mountlake Terrace, WA, 98043', '(425) 775-4154', '', 'Monday: 5:00 AM – 12:00 AMTuesday: 5:00 AM – 12:00 AMWednesday: 5:00 AM – 12:00 AMThursday: 5:00 AM – 12:00 AMFriday: 5:00 AM – 12:00 AMSaturday: 5:00 AM – 12:00 AMSunday: 5:00 AM – 12:00 AM', 0, 0, 1, 'correct_existing', '2025-09-10 21:26:09.382849', 0, 'Mark DeVore', 'mark@markdevore.com', 'mark@markdevore.com', None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:26:09,384 - app - ERROR - Exception type: OperationalError - None
+2025-09-10 14:26:09,385 - app - ERROR - Exception details: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthis is a test', '4301 212th St SW, Mountlake Terrace, WA, 98043', '(425) 775-4154', '', 'Monday: 5:00 AM – 12:00 AMTuesday: 5:00 AM – 12:00 AMWednesday: 5:00 AM – 12:00 AMThursday: 5:00 AM – 12:00 AMFriday: 5:00 AM – 12:00 AMSaturday: 5:00 AM – 12:00 AMSunday: 5:00 AM – 12:00 AM', 0, 0, 1, 'correct_existing', '2025-09-10 21:26:09.382849', 0, 'Mark DeVore', 'mark@markdevore.com', 'mark@markdevore.com', None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:26:09,400 - app - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table message has no column named is_new_location
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\app\routes\public.py", line 694, in send_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4345, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4480, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4441, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1415, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\nthis is a test', '4301 212th St SW, Mountlake Terrace, WA, 98043', '(425) 775-4154', '', 'Monday: 5:00 AM – 12:00 AMTuesday: 5:00 AM – 12:00 AMWednesday: 5:00 AM – 12:00 AMThursday: 5:00 AM – 12:00 AMFriday: 5:00 AM – 12:00 AMSaturday: 5:00 AM – 12:00 AMSunday: 5:00 AM – 12:00 AM', 0, 0, 1, 'correct_existing', '2025-09-10 21:26:09.382849', 0, 'Mark DeVore', 'mark@markdevore.com', 'mark@markdevore.com', None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ - None
+2025-09-10 14:41:22,510 - app - INFO - splash function called - Method: GET - None
+2025-09-10 14:41:49,189 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 14:41:49,194 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 14:41:49,195 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 14:41:49,195 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 14:41:49,196 - app - INFO - Form data - out_of_business: True, is_new_location: False - None
+2025-09-10 14:41:49,199 - app - ERROR - Failed to save message: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\ntesting ', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 1, 0, 1, 'correct_existing', '2025-09-10 21:41:49.198767', 0, '', '', '', None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:41:49,202 - app - ERROR - Exception type: OperationalError - None
+2025-09-10 14:41:49,202 - app - ERROR - Exception details: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\ntesting ', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 1, 0, 1, 'correct_existing', '2025-09-10 21:41:49.198767', 0, '', '', '', None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8) - None
+2025-09-10 14:41:49,221 - app - ERROR - Traceback: Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: table message has no column named is_new_location
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\PythonProjects\tamermap\app\routes\public.py", line 694, in send_message
+    db.session.commit()
+    ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\scoping.py", line 599, in commit
+    return self._proxied.commit()
+           ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2032, in commit
+    trans.commit(_to_root=True)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "<string>", line 2, in commit
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1313, in commit
+    self._prepare_impl()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "<string>", line 2, in _prepare_impl
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\state_changes.py", line 139, in _go
+    ret_value = fn(self, *arg, **kw)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 1288, in _prepare_impl
+    self.session.flush()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4345, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4480, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 224, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 4441, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self.mapper,
+        ^^^^^^^^^^^^
+        uow.states_for_mapper_hierarchy(self.mapper, False, False),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        uow,
+        ^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        base_mapper,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        insert,
+        ^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\orm\persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+        statement,
+        params,
+        execution_options=execution_options,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1415, in execute
+    return meth(
+        self,
+        distilled_parameters,
+        execution_options or NO_OPTIONS,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, distilled_params, execution_options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1637, in _execute_clauseelement
+    ret = self._execute_context(
+        dialect,
+    ...<8 lines>...
+        cache_hit=cache_hit,
+    )
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1842, in _execute_context
+    return self._exec_single_context(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        dialect, context, statement, parameters
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1982, in _exec_single_context
+    self._handle_dbapi_exception(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        e, str_statement, effective_parameters, cursor, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2351, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1963, in _exec_single_context
+    self.dialect.do_execute(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        cursor, str_statement, effective_parameters, context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\PythonProjects\tamermap\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 943, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table message has no column named is_new_location
+[SQL: INSERT INTO message (sender_id, recipient_id, communication_type, subject, body, reported_address, reported_phone, reported_website, reported_hours, out_of_business, is_new_location, is_admin_report, form_type, timestamp, read, name, address, email, win_type, location_used, cards_found, time_saved, money_saved, allow_feature) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (1, None, 'location', 'Location Data Correction', 'Reported by Mark DeVore:\nForm Type: CORRECT EXISTING LOCATION\nADMIN REVIEW REQUESTED\ntesting ', '2801 Bickford Ave, Snohomish, WA, 98290', '(360) 563-3700', '', 'Monday: 6:00 AM – 11:00 PMTuesday: 6:00 AM – 11:00 PMWednesday: 6:00 AM – 11:00 PMThursday: 6:00 AM – 11:00 PMFriday: 6:00 AM – 11:00 PMSaturday: 6:00 AM – 11:00 PMSunday: 6:00 AM – 11:00 PM', 1, 0, 1, 'correct_existing', '2025-09-10 21:41:49.198767', 0, '', '', '', None, None, None, None, None, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+ - None
+2025-09-10 18:36:28,200 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:37:11,534 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 18:37:11,539 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 18:37:11,540 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 18:37:11,541 - app - INFO - Form data - communication_type: location, form_type: correct_existing - None
+2025-09-10 18:37:11,541 - app - INFO - Form data - out_of_business: True, is_new_location: False - None
+2025-09-10 18:37:11,549 - app - INFO - Attempting to send admin notification email - None
+2025-09-10 18:37:12,631 - app.custom_email - INFO - Email sent successfully via Mailgun to ['mark@markdevore.com'] - None
+2025-09-10 18:37:12,632 - app - INFO - Admin notification email sent successfully - None
+2025-09-10 18:37:12,632 - app - INFO - Message submitted successfully from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 18:37:12,674 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:44:33,126 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 18:44:33,128 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 18:44:33,128 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 18:44:33,129 - app - INFO - Form data - communication_type: location, form_type: add_new - None
+2025-09-10 18:44:33,129 - app - INFO - Form data - out_of_business: False, is_new_location: True - None
+2025-09-10 18:44:33,137 - app - INFO - Attempting to send admin notification email - None
+2025-09-10 18:44:34,247 - app.custom_email - INFO - Email sent successfully via Mailgun to ['mark@markdevore.com'] - None
+2025-09-10 18:44:34,247 - app - INFO - Admin notification email sent successfully - None
+2025-09-10 18:44:34,248 - app - INFO - Message submitted successfully from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 18:44:34,291 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:46:21,937 - app - INFO - send_message function called - Method: GET - None
+2025-09-10 18:46:21,938 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 18:46:21,939 - app - WARNING - Form validation failed - errors: {} - None
+2025-09-10 18:46:21,939 - app - WARNING - Form data received: {} - None
+2025-09-10 18:47:23,626 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 18:47:23,628 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 18:47:23,629 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 18:47:23,630 - app - INFO - Form data - communication_type: post_wins, form_type: None - None
+2025-09-10 18:47:23,630 - app - INFO - Form data - out_of_business: False, is_new_location: False - None
+2025-09-10 18:47:23,637 - app - INFO - Attempting to send admin notification email - None
+2025-09-10 18:47:24,799 - app.custom_email - INFO - Email sent successfully via Mailgun to ['mark@markdevore.com'] - None
+2025-09-10 18:47:24,801 - app - INFO - Admin notification email sent successfully - None
+2025-09-10 18:47:24,801 - app - INFO - Message submitted successfully from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 18:47:24,859 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:49:14,647 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:55:55,727 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:55:59,137 - app - INFO - splash function called - Method: GET - None
+2025-09-10 18:56:37,769 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:00:05,940 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:01:18,170 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:02:09,337 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:05:21,023 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:17:06,529 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:17:30,553 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:58:39,524 - app - INFO - splash function called - Method: GET - None
+2025-09-10 19:59:51,944 - app - INFO - send_message function called - Method: POST - None
+2025-09-10 19:59:51,949 - app - INFO - Form validation - validate_on_submit(): True - None
+2025-09-10 19:59:51,950 - app - INFO - Processing form submission from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 19:59:51,951 - app - INFO - Form data - communication_type: location, form_type: add_new - None
+2025-09-10 19:59:51,951 - app - INFO - Form data - out_of_business: False, is_new_location: True - None
+2025-09-10 19:59:51,966 - app - INFO - Attempting to send admin notification email - None
+2025-09-10 19:59:52,969 - app.custom_email - INFO - Email sent successfully via Mailgun to ['mark@markdevore.com'] - None
+2025-09-10 19:59:52,970 - app - INFO - Admin notification email sent successfully - None
+2025-09-10 19:59:52,970 - app - INFO - Message submitted successfully from IP 127.0.0.1 by Mark DeVore - None
+2025-09-10 19:59:53,009 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:05:58,964 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:09:20,248 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:10:28,072 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:30:25,813 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:30:30,653 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:31:06,336 - app - INFO - splash function called - Method: GET - None
+2025-09-10 20:31:36,251 - app - INFO - send_message function called - Method: GET - None
+2025-09-10 20:31:36,252 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 20:31:36,253 - app - WARNING - Form validation failed - errors: {} - None
+2025-09-10 20:31:36,254 - app - WARNING - Form data received: {} - None
+2025-09-10 20:31:43,550 - app - INFO - send_message function called - Method: GET - None
+2025-09-10 20:31:43,551 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 20:31:43,551 - app - WARNING - Form validation failed - errors: {} - None
+2025-09-10 20:31:43,552 - app - WARNING - Form data received: {} - None
+2025-09-10 20:31:55,878 - app - INFO - send_message function called - Method: GET - None
+2025-09-10 20:31:55,879 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 20:31:55,879 - app - WARNING - Form validation failed - errors: {} - None
+2025-09-10 20:31:55,880 - app - WARNING - Form data received: {} - None
+2025-09-10 20:38:12,853 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:07:49,254 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:08:16,248 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:08:35,420 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:19:59,791 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:21:56,316 - app - INFO - Directions v2 request body: {"origin": {"location": {"latLng": {"latitude": 47.8500513891937, "longitude": -122.29958892119988}}}, "destination": {"location": {"latLng": {"latitude": 47.8500513891937, "longitude": -122.29958892119988}}}, "intermediates": [{"location": {"latLng": {"latitude": 47.8638989, "longitude": -122.2828562}}}, {"location": {"latLng": {"latitude": 47.847454, "longitude": -122.2730248}}}, {"location": {"latLng": {"latitude": 47.8330362, "longitude": -122.2777917}}}, {"location": {"latLng": {"latitude": - None
+2025-09-10 21:22:32,671 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:28:15,043 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:29:13,173 - app - INFO - send_message function called - Method: GET - None
+2025-09-10 21:29:13,174 - app - INFO - Form validation - validate_on_submit(): False - None
+2025-09-10 21:29:13,175 - app - WARNING - Form validation failed - errors: {} - None
+2025-09-10 21:29:13,177 - app - WARNING - Form data received: {} - None
+2025-09-10 21:53:47,287 - app - INFO - splash function called - Method: GET - None
+2025-09-10 21:54:10,720 - app - INFO - splash function called - Method: GET - None
