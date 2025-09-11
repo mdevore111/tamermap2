@@ -98,4 +98,4 @@ def init_resource_preloader(app):
 def enable_resource_preloader(app):
     """Enable resource preloader for the app"""
     init_resource_preloader(app)
-    current_app.logger.info("Resource preloader enabled")
+    app.logger.info("Resource preloader enabled")
