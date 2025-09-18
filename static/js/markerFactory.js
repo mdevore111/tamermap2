@@ -2,6 +2,65 @@
 import { MARKER_TYPES } from './config.js';
 import { renderRetailerInfoWindow, renderEventInfoWindow } from './uiHelpers.js';
 
+// Helper: mark the start of an InfoWindow open and gate background clicks
+function beginInfoWindowOpen() {
+  window.isAutoPanning = true;
+  window.mapClickDisabled = true;
+  window.infoWindowOpenedAt = Date.now();
+}
+
+// Helper: release the gates after map settles (idle) with safe fallback
+function releaseAfterAutoPan() {
+  try {
+    if (!window.map || !window.google || !window.google.maps) {
+      // Fallback timer only
+      if (window.autoPanReleaseTimer) clearTimeout(window.autoPanReleaseTimer);
+      window.autoPanReleaseTimer = setTimeout(() => {
+        window.isAutoPanning = false;
+        window.mapClickDisabled = false;
+      }, 1200);
+      return;
+    }
+
+    if (window.autoPanIdleListener) {
+      window.google.maps.event.removeListener(window.autoPanIdleListener);
+      window.autoPanIdleListener = null;
+    }
+    if (window.autoPanReleaseTimer) {
+      clearTimeout(window.autoPanReleaseTimer);
+      window.autoPanReleaseTimer = null;
+    }
+
+    window.autoPanIdleListener = window.map.addListener('idle', () => {
+      // small delay to ensure layout done
+      setTimeout(() => {
+        window.isAutoPanning = false;
+        window.mapClickDisabled = false;
+        if (window.autoPanIdleListener) {
+          window.google.maps.event.removeListener(window.autoPanIdleListener);
+          window.autoPanIdleListener = null;
+        }
+      }, 200);
+    });
+
+    // Fallback: if idle never fires
+    window.autoPanReleaseTimer = setTimeout(() => {
+      window.isAutoPanning = false;
+      window.mapClickDisabled = false;
+      if (window.autoPanIdleListener) {
+        window.google.maps.event.removeListener(window.autoPanIdleListener);
+        window.autoPanIdleListener = null;
+      }
+    }, 1500);
+  } catch (e) {
+    // Worst-case release quickly
+    setTimeout(() => {
+      window.isAutoPanning = false;
+      window.mapClickDisabled = false;
+    }, 800);
+  }
+}
+
 // Fetch user notes and show popup
 function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
   console.log('[markerFactory] fetchUserNotesAndShowPopup called for:', retailer.retailer);
@@ -19,8 +78,8 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
     window.currentOpenMarker = marker;
     window.infoWindow.setContent(html);
     
-    // Set auto-panning flag before opening info window
-    window.isAutoPanning = true;
+    // Mark start of open
+    beginInfoWindowOpen();
     
     // Store the current map center before opening info window
     const originalCenter = window.map.getCenter();
@@ -42,6 +101,7 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       // Try to open the info window
       try {
         window.infoWindow.open(marker.getMap(), marker);
+        releaseAfterAutoPan();
         console.log('[markerFactory] InfoWindow.open() called successfully');
         
         // Check if it's actually visible
@@ -66,6 +126,7 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       console.log('[markerFactory] Map not ready, retrying info window open');
       setTimeout(() => {
         window.infoWindow.open(marker.getMap(), marker);
+        releaseAfterAutoPan();
       }, 100);
     }
     
@@ -75,16 +136,9 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       const centerChanged = Math.abs(originalCenter.lat() - newCenter.lat()) > 0.001 || 
                            Math.abs(originalCenter.lng() - newCenter.lng()) > 0.001;
       
-      if (centerChanged) {
-        // Map auto-panned, keep the flag longer
-        window.autoPanTimeout = setTimeout(() => {
-          window.isAutoPanning = false;
-          window.mapClickDisabled = false; // Re-enable map clicks
-        }, 1500); // 1.5 seconds for auto-pan
-      } else {
-        // No auto-pan, clear flag sooner
-        window.isAutoPanning = false;
-        window.mapClickDisabled = false; // Re-enable map clicks
+      if (!centerChanged) {
+        // No meaningful pan; release sooner
+        setTimeout(() => { window.isAutoPanning = false; window.mapClickDisabled = false; }, 300);
       }
     }, 200); // Check after 200ms to give auto-pan more time to start
     
@@ -106,32 +160,20 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
         window.currentOpenMarker = marker;
         window.infoWindow.setContent(html);
         
-        // Set auto-panning flag before opening info window
-        window.isAutoPanning = true;
-        
-        // Set timestamp when info window is opened
-        window.infoWindowOpenedAt = Date.now();
-        
-        // Disable map clicks temporarily to prevent premature closure
-        window.mapClickDisabled = true;
+        // Mark start of open
+        beginInfoWindowOpen();
         
         // Ensure map is ready before opening info window for auto-pan to work
         if (window.mapReady) {
           window.infoWindow.open(marker.getMap(), marker);
+          releaseAfterAutoPan();
         } else {
           // If map isn't ready, wait a bit and try again
           setTimeout(() => {
             window.infoWindow.open(marker.getMap(), marker);
+            releaseAfterAutoPan();
           }, 100);
         }
-        
-        // Clear auto-panning flag after a delay to allow auto-pan to complete
-        if (window.autoPanTimeout) {
-          clearTimeout(window.autoPanTimeout);
-        }
-        window.autoPanTimeout = setTimeout(() => {
-          window.isAutoPanning = false;
-        }, 1000); // 1 second should be enough for auto-pan to complete
         
         handleInfoWindowOpen();
         return;
@@ -166,34 +208,25 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       window.currentOpenMarker = marker;
       window.infoWindow.setContent(html);
       
-      // Set auto-panning flag before opening info window
-      window.isAutoPanning = true;
-      
-      // Set timestamp when info window is opened
-      window.infoWindowOpenedAt = Date.now();
+      // Mark start of open
+      beginInfoWindowOpen();
       
       // Ensure map is ready before opening info window for auto-pan to work
       if (window.mapReady) {
         // Ensure consistent positioning for real info window
         window.infoWindow.setOptions({ disableAutoPan: false });
         window.infoWindow.open(marker.getMap(), marker);
+        releaseAfterAutoPan();
         console.log('[markerFactory] Real info window opened at marker position');
       } else {
         // If map isn't ready, wait a bit and try again
         setTimeout(() => {
           window.infoWindow.setOptions({ disableAutoPan: false });
           window.infoWindow.open(marker.getMap(), marker);
+          releaseAfterAutoPan();
           console.log('[markerFactory] Real info window opened (delayed) at marker position');
         }, 100);
       }
-      
-      // Clear auto-panning flag after a delay to allow auto-pan to complete
-      if (window.autoPanTimeout) {
-        clearTimeout(window.autoPanTimeout);
-      }
-      window.autoPanTimeout = setTimeout(() => {
-        window.isAutoPanning = false;
-      }, 1000); // 1 second should be enough for auto-pan to complete
       
       handleInfoWindowOpen();
     })
@@ -210,34 +243,25 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       window.currentOpenMarker = marker;
       window.infoWindow.setContent(html);
       
-      // Set auto-panning flag before opening info window
-      window.isAutoPanning = true;
-      
-      // Set timestamp when info window is opened
-      window.infoWindowOpenedAt = Date.now();
+      // Mark start of open
+      beginInfoWindowOpen();
       
       // Ensure map is ready before opening info window for auto-pan to work
       if (window.mapReady) {
         // Ensure consistent positioning for real info window
         window.infoWindow.setOptions({ disableAutoPan: false });
         window.infoWindow.open(marker.getMap(), marker);
+        releaseAfterAutoPan();
         console.log('[markerFactory] Real info window opened at marker position');
       } else {
         // If map isn't ready, wait a bit and try again
         setTimeout(() => {
           window.infoWindow.setOptions({ disableAutoPan: false });
           window.infoWindow.open(marker.getMap(), marker);
+          releaseAfterAutoPan();
           console.log('[markerFactory] Real info window opened (delayed) at marker position');
         }, 100);
       }
-      
-      // Clear auto-panning flag after a delay to allow auto-pan to complete
-      if (window.autoPanTimeout) {
-        clearTimeout(window.autoPanTimeout);
-      }
-      window.autoPanTimeout = setTimeout(() => {
-        window.isAutoPanning = false;
-      }, 1000); // 1 second should be enough for auto-pan to complete
       
       handleInfoWindowOpen();
     });
@@ -523,25 +547,11 @@ export function createEventMarker(map, evt) {
     window.currentOpenMarker = marker; // Track current open marker
     window.infoWindow.setContent(html);
 
-    // Set auto-panning flag before opening info window
-    window.isAutoPanning = true;
-
-    // Set timestamp when info window is opened
-    window.infoWindowOpenedAt = Date.now();
-
-    // Disable map clicks temporarily to prevent premature closure
-    window.mapClickDisabled = true;
+    // Mark start of open
+    beginInfoWindowOpen();
 
     window.infoWindow.open(window.map, marker);
-    
-    // Clear auto-panning flag after a delay to allow auto-pan to complete
-    if (window.autoPanTimeout) {
-      clearTimeout(window.autoPanTimeout);
-    }
-    window.autoPanTimeout = setTimeout(() => {
-      window.isAutoPanning = false;
-      window.mapClickDisabled = false; // Re-enable map clicks
-    }, 2000); // 2 seconds should be enough for auto-pan to complete
+    releaseAfterAutoPan();
     
     // Ensure InfoWindow is visible with close button
     handleInfoWindowOpen();
