@@ -944,11 +944,14 @@ def sitemap_xml():
     # Get current date
     now = datetime.utcnow().strftime('%Y-%m-%d')
     
-    # Base URL
-    base_url = request.url_root.rstrip('/')
+    # Determine scheme and host robustly (behind proxies/CDN)
+    forwarded_proto = request.headers.get('X-Forwarded-Proto')
+    scheme = (forwarded_proto or request.scheme or 'https').split(',')[0].strip()
+    host = request.headers.get('X-Forwarded-Host', request.host).split(',')[0].strip()
+    base_url = f"{scheme}://{host}".rstrip('/')
     
-    # Create a cache key based on the current date (changes daily)
-    cache_key = f"sitemap_{now}"
+    # Create a cache key based on date AND host (avoid cross-domain contamination)
+    cache_key = f"sitemap_{host}_{now}"
     
     # Check if we have a cached version
     cached_content = _get_cached_sitemap(cache_key)
