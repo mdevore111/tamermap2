@@ -342,18 +342,6 @@
         </ul>
     </div>
 
-    <div class="sitemap-section">
-        <h2>Community & Location Data</h2>
-        <ul class="sitemap-list">
-            <li>
-                <a href="{{ url_for('public.add_location') }}">
-                    <i class="fas fa-plus-circle"></i>
-                    Add New Location
-                </a>
-                <div class="sitemap-description">Submit a new Pokémon card location (kiosk, retailer, or indie shop) to help the community hunt smarter.</div>
-            </li>
-        </ul>
-    </div>
 
 
 
@@ -379,11 +367,11 @@
                 <div class="sitemap-description">Share ideas to improve TamerMap—feature requests, UX suggestions, and product feedback welcome.</div>
             </li>
             <li>
-                <a href="{{ url_for('public.send_message', type='location') }}">
-                    <i class="fas fa-map-pin"></i>
-                    Report Location
+                <a href="{{ url_for('public.add_location') }}">
+                    <i class="fas fa-plus-circle"></i>
+                    Add New Location
                 </a>
-                <div class="sitemap-description">Report incorrect location info (wrong hours, address, name) so we can keep Pokémon card data accurate.</div>
+                <div class="sitemap-description">Submit a new Pokémon card location (kiosk, retailer, or indie shop) to help the community hunt smarter.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.send_message', type='support') }}">
