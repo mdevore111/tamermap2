@@ -509,71 +509,44 @@ def state_page(state_name):
     
     # Return XML for search engines instead of HTML template
     from flask import make_response
+    import html
+    
+    def escape_xml(text):
+        """Escape XML special characters"""
+        if text is None:
+            return 'N/A'
+        return html.escape(str(text))
+    
     xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <state_retailers xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <state_name>{state_name_normalized}</state_name>
+    <state_name>{escape_xml(state_name_normalized)}</state_name>
     <total_kiosks>{total_kiosks}</total_kiosks>
     <total_card_shops>{total_card_shops}</total_card_shops>
     <total_cities>{len(sorted_cities)}</total_cities>
-    <cities>
+    <retailers>
 '''
     
     for city, city_data in sorted_cities.items():
         city_kiosks = city_data['kiosks']
         city_card_shops = city_data['card_shops']
         
-        xml_content += f'''        <city>
-            <name>{city}</name>
-            <kiosk_count>{len(city_kiosks)}</kiosk_count>
-            <card_shop_count>{len(city_card_shops)}</card_shop_count>
+        # Add all kiosks for this city in simple format
+        for retailer in city_kiosks:
+            xml_content += f'''        <retailer>
+            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
+            <type>Kiosk</type>
+        </retailer>
 '''
         
-        # Add kiosks section
-        if city_kiosks:
-            xml_content += '''            <kiosks>
-'''
-            for retailer in city_kiosks:
-                xml_content += f'''                <kiosk>
-                    <name>{retailer.retailer}</name>
-                    <address>{retailer.full_address}</address>
-                    <phone>{retailer.phone_number or 'N/A'}</phone>
-                    <website>{retailer.website or 'N/A'}</website>
-                    <machine_count>{retailer.machine_count}</machine_count>
-                    <hours>{retailer.opening_hours or 'N/A'}</hours>
-                    <coordinates>
-                        <latitude>{retailer.latitude or 'N/A'}</latitude>
-                        <longitude>{retailer.longitude or 'N/A'}</longitude>
-                    </coordinates>
-                </kiosk>
-'''
-            xml_content += '''            </kiosks>
-'''
-        
-        # Add card shops section
-        if city_card_shops:
-            xml_content += '''            <card_shops>
-'''
-            for retailer in city_card_shops:
-                xml_content += f'''                <card_shop>
-                    <name>{retailer.retailer}</name>
-                    <address>{retailer.full_address}</address>
-                    <phone>{retailer.phone_number or 'N/A'}</phone>
-                    <website>{retailer.website or 'N/A'}</website>
-                    <machine_count>{retailer.machine_count}</machine_count>
-                    <hours>{retailer.opening_hours or 'N/A'}</hours>
-                    <coordinates>
-                        <latitude>{retailer.latitude or 'N/A'}</latitude>
-                        <longitude>{retailer.longitude or 'N/A'}</longitude>
-                    </coordinates>
-                </card_shop>
-'''
-            xml_content += '''            </card_shops>
-'''
-        
-        xml_content += '''        </city>
+        # Add all card shops for this city in simple format  
+        for retailer in city_card_shops:
+            xml_content += f'''        <retailer>
+            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
+            <type>Card Shop</type>
+        </retailer>
 '''
     
-    xml_content += '''    </cities>
+    xml_content += '''    </retailers>
 </state_retailers>'''
     
     response = make_response(xml_content)
