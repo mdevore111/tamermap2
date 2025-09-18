@@ -407,201 +407,11 @@ def states_index():
     return response
 
 
-@public_bp.route("/states-shops")
-def states_shops_index():
-    """
-    States index for Card Shops (Indie) pages - XML only for search engines.
-    Users receive 404; search engines receive an XML listing of states.
-    """
-    # Block user access - this is for search engines only
-    user_agent = request.headers.get('User-Agent', '').lower()
-    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
-        return "Page not found", 404
-
-    # Reuse the same state list as kiosks
-    states = [
-        {'name': 'Washington', 'slug': 'washington'},
-        {'name': 'Oregon', 'slug': 'oregon'},
-        {'name': 'California', 'slug': 'california'},
-        {'name': 'Nevada', 'slug': 'nevada'},
-        {'name': 'Arizona', 'slug': 'arizona'},
-        {'name': 'Texas', 'slug': 'texas'},
-        {'name': 'New Mexico', 'slug': 'new-mexico'},
-        {'name': 'Florida', 'slug': 'florida'},
-        {'name': 'Georgia', 'slug': 'georgia'},
-        {'name': 'North Carolina', 'slug': 'north-carolina'},
-        {'name': 'South Carolina', 'slug': 'south-carolina'},
-        {'name': 'Tennessee', 'slug': 'tennessee'},
-        {'name': 'Alabama', 'slug': 'alabama'},
-        {'name': 'Mississippi', 'slug': 'mississippi'},
-        {'name': 'Louisiana', 'slug': 'louisiana'},
-        {'name': 'Arkansas', 'slug': 'arkansas'},
-        {'name': 'New York', 'slug': 'new-york'},
-        {'name': 'New Jersey', 'slug': 'new-jersey'},
-        {'name': 'Pennsylvania', 'slug': 'pennsylvania'},
-        {'name': 'Delaware', 'slug': 'delaware'},
-        {'name': 'Maryland', 'slug': 'maryland'},
-        {'name': 'Virginia', 'slug': 'virginia'},
-        {'name': 'West Virginia', 'slug': 'west-virginia'},
-        {'name': 'Massachusetts', 'slug': 'massachusetts'},
-        {'name': 'Connecticut', 'slug': 'connecticut'},
-        {'name': 'Rhode Island', 'slug': 'rhode-island'},
-        {'name': 'Vermont', 'slug': 'vermont'},
-        {'name': 'New Hampshire', 'slug': 'new-hampshire'},
-        {'name': 'Maine', 'slug': 'maine'},
-        {'name': 'Illinois', 'slug': 'illinois'},
-        {'name': 'Indiana', 'slug': 'indiana'},
-        {'name': 'Michigan', 'slug': 'michigan'},
-        {'name': 'Ohio', 'slug': 'ohio'},
-        {'name': 'Wisconsin', 'slug': 'wisconsin'},
-        {'name': 'Minnesota', 'slug': 'minnesota'},
-        {'name': 'Iowa', 'slug': 'iowa'},
-        {'name': 'Missouri', 'slug': 'missouri'},
-        {'name': 'Kansas', 'slug': 'kansas'},
-        {'name': 'Nebraska', 'slug': 'nebraska'},
-        {'name': 'North Dakota', 'slug': 'north-dakota'},
-        {'name': 'South Dakota', 'slug': 'south-dakota'},
-        {'name': 'Colorado', 'slug': 'colorado'},
-        {'name': 'Utah', 'slug': 'utah'},
-        {'name': 'Wyoming', 'slug': 'wyoming'},
-        {'name': 'Montana', 'slug': 'montana'},
-        {'name': 'Idaho', 'slug': 'idaho'},
-        {'name': 'Alaska', 'slug': 'alaska'},
-        {'name': 'Hawaii', 'slug': 'hawaii'},
-    ]
-
-    from flask import make_response
-    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<states xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <title>Pokemon Card Shops by State</title>
-    <description>Find indie card shops across the United States</description>
-    <total_states>{len(states)}</total_states>
-    <states_list>
-'''
-
-    for state in states:
-        xml_content += f'''        <state>
-            <name>{state['name']}</name>
-            <slug>{state['slug']}</slug>
-            <url>{request.url_root.rstrip('/')}/state-shops/{state['slug']}</url>
-        </state>
-'''
-
-    xml_content += '''    </states_list>
-</states>'''
-
-    response = make_response(xml_content)
-    response.headers['Content-Type'] = 'application/xml'
-    return response
-
-
-@public_bp.route("/state-shops/<state_name>")
-def state_shops_page(state_name):
-    """
-    Dynamic state page showing all CARD SHOPS (indie) in a specific state organized by city.
-    BLOCKED: This route is for search engines only, not user access.
-    """
-    # Block user access - this is for search engines only
-    user_agent = request.headers.get('User-Agent', '').lower()
-    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
-        return "Page not found", 404
-
-    # Normalize state name
-    state_name_normalized = state_name.title()
-
-    # Common variations to search within full_address
-    state_variations = {
-        'washington': ['Washington', 'WA', 'Wash'],
-        'california': ['California', 'CA', 'Calif'],
-        'texas': ['Texas', 'TX', 'Tex'],
-        'florida': ['Florida', 'FL', 'Fla'],
-        'new-york': ['New York', 'NY', 'New York State'],
-        'illinois': ['Illinois', 'IL', 'Ill'],
-        'pennsylvania': ['Pennsylvania', 'PA', 'Penn'],
-        'ohio': ['Ohio', 'OH'],
-        'michigan': ['Michigan', 'MI', 'Mich'],
-        'georgia': ['Georgia', 'GA']
-    }
-
-    search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
-
-    # Build query for CARD SHOPS only with multiple naming variations
-    from sqlalchemy import or_
-    type_filters = or_(
-        Retailer.retailer_type.ilike('%card shop%'),
-        Retailer.retailer_type.ilike('%card_shop%'),
-        Retailer.retailer_type.ilike('%indie%'),
-        Retailer.retailer_type.ilike('%card%shop%'),
-        Retailer.retailer_type.ilike('%shop%')
-    )
-    query = db.session.query(Retailer).filter(
-        Retailer.enabled == True,
-        type_filters
-    )
-
-    state_filters = []
-    for term in search_terms:
-        state_filters.append(Retailer.full_address.ilike(f'%{term}%'))
-
-    retailers = query.filter(or_(*state_filters)).all()
-
-    # Group by city
-    cities = {}
-    for retailer in retailers:
-        parts = retailer.full_address.split(',')
-        if len(parts) >= 2:
-            city = ' '.join(parts[1].strip().split())
-            if city and city not in cities:
-                cities[city] = []
-            if city:
-                cities[city].append(retailer)
-
-    sorted_cities = dict(sorted(cities.items()))
-
-    from flask import make_response
-    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<state_card_shops xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <state_name>{state_name_normalized}</state_name>
-    <total_shops>{len(retailers)}</total_shops>
-    <total_cities>{len(sorted_cities)}</total_cities>
-    <cities>
-'''
-
-    for city, city_retailers in sorted_cities.items():
-        xml_content += f'''        <city>
-            <name>{city}</name>
-            <shop_count>{len(city_retailers)}</shop_count>
-            <shops>
-'''
-        for retailer in city_retailers:
-            xml_content += f'''                <shop>
-                    <name>{retailer.retailer}</name>
-                    <address>{retailer.full_address}</address>
-                    <phone>{retailer.phone_number or 'N/A'}</phone>
-                    <website>{retailer.website or 'N/A'}</website>
-                    <machine_count>{retailer.machine_count}</machine_count>
-                    <hours>{retailer.opening_hours or 'N/A'}</hours>
-                    <coordinates>
-                        <latitude>{retailer.latitude or 'N/A'}</latitude>
-                        <longitude>{retailer.longitude or 'N/A'}</longitude>
-                    </coordinates>
-                </shop>
-'''
-        xml_content += '''            </shops>
-        </city>
-'''
-
-    xml_content += '''    </cities>
-</state_card_shops>'''
-
-    response = make_response(xml_content)
-    response.headers['Content-Type'] = 'application/xml'
-    return response
 
 @public_bp.route("/state/<state_name>")
 def state_page(state_name):
     """
-    Dynamic state page showing all KIOSKS ONLY in a specific state organized by city.
+    Dynamic state page showing all KIOSKS AND CARD SHOPS in a specific state organized by city.
     BLOCKED: This route is for search engines only, not user access.
     
     Args:
@@ -635,55 +445,95 @@ def state_page(state_name):
     # Get state variations for search
     search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
     
-    # Build query for KIOSKS ONLY (match standalone or combined types like "store + kiosk")
-    query = db.session.query(Retailer).filter(
+    # Build query for ALL RETAILERS (both kiosks and card shops)
+    from sqlalchemy import or_
+    
+    # Query for kiosks
+    kiosk_query = db.session.query(Retailer).filter(
         Retailer.enabled == True,
         Retailer.retailer_type.ilike('%kiosk%')
     )
     
+    # Query for card shops with multiple naming variations
+    cardshop_type_filters = or_(
+        Retailer.retailer_type.ilike('%card shop%'),
+        Retailer.retailer_type.ilike('%card_shop%'),
+        Retailer.retailer_type.ilike('%indie%'),
+        Retailer.retailer_type.ilike('%card%shop%'),
+        Retailer.retailer_type.ilike('%shop%')
+    )
+    cardshop_query = db.session.query(Retailer).filter(
+        Retailer.enabled == True,
+        cardshop_type_filters
+    )
+    
     # Use OR conditions for multiple state name variations
-    from sqlalchemy import or_
     state_filters = []
     for term in search_terms:
         state_filters.append(Retailer.full_address.ilike(f'%{term}%'))
     
-    retailers = query.filter(or_(*state_filters)).all()
+    # Get both kiosks and card shops
+    kiosks = kiosk_query.filter(or_(*state_filters)).all()
+    card_shops = cardshop_query.filter(or_(*state_filters)).all()
     
     # Group retailers by city with better address parsing
     cities = {}
-    for retailer in retailers:
-        # Extract city from address (assuming format: "Street, City, State ZIP")
+    
+    # Process kiosks
+    for retailer in kiosks:
         address_parts = retailer.full_address.split(',')
         if len(address_parts) >= 2:
             city = address_parts[1].strip()
-            # Clean up city name (remove extra spaces, etc.)
             city = ' '.join(city.split())
-            if city and city not in cities:
-                cities[city] = []
             if city:
-                cities[city].append(retailer)
+                if city not in cities:
+                    cities[city] = {'kiosks': [], 'card_shops': []}
+                cities[city]['kiosks'].append(retailer)
+    
+    # Process card shops
+    for retailer in card_shops:
+        address_parts = retailer.full_address.split(',')
+        if len(address_parts) >= 2:
+            city = address_parts[1].strip()
+            city = ' '.join(city.split())
+            if city:
+                if city not in cities:
+                    cities[city] = {'kiosks': [], 'card_shops': []}
+                cities[city]['card_shops'].append(retailer)
     
     # Sort cities alphabetically
     sorted_cities = dict(sorted(cities.items()))
     
+    total_kiosks = len(kiosks)
+    total_card_shops = len(card_shops)
+    
     # Return XML for search engines instead of HTML template
     from flask import make_response
     xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<state_kiosks xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<state_retailers xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <state_name>{state_name_normalized}</state_name>
-    <total_kiosks>{len(retailers)}</total_kiosks>
+    <total_kiosks>{total_kiosks}</total_kiosks>
+    <total_card_shops>{total_card_shops}</total_card_shops>
     <total_cities>{len(sorted_cities)}</total_cities>
     <cities>
 '''
     
-    for city, city_retailers in sorted_cities.items():
+    for city, city_data in sorted_cities.items():
+        city_kiosks = city_data['kiosks']
+        city_card_shops = city_data['card_shops']
+        
         xml_content += f'''        <city>
             <name>{city}</name>
-            <kiosk_count>{len(city_retailers)}</kiosk_count>
-            <kiosks>
+            <kiosk_count>{len(city_kiosks)}</kiosk_count>
+            <card_shop_count>{len(city_card_shops)}</card_shop_count>
 '''
-        for retailer in city_retailers:
-            xml_content += f'''                <kiosk>
+        
+        # Add kiosks section
+        if city_kiosks:
+            xml_content += '''            <kiosks>
+'''
+            for retailer in city_kiosks:
+                xml_content += f'''                <kiosk>
                     <name>{retailer.retailer}</name>
                     <address>{retailer.full_address}</address>
                     <phone>{retailer.phone_number or 'N/A'}</phone>
@@ -696,12 +546,35 @@ def state_page(state_name):
                     </coordinates>
                 </kiosk>
 '''
-        xml_content += '''            </kiosks>
-        </city>
+            xml_content += '''            </kiosks>
+'''
+        
+        # Add card shops section
+        if city_card_shops:
+            xml_content += '''            <card_shops>
+'''
+            for retailer in city_card_shops:
+                xml_content += f'''                <card_shop>
+                    <name>{retailer.retailer}</name>
+                    <address>{retailer.full_address}</address>
+                    <phone>{retailer.phone_number or 'N/A'}</phone>
+                    <website>{retailer.website or 'N/A'}</website>
+                    <machine_count>{retailer.machine_count}</machine_count>
+                    <hours>{retailer.opening_hours or 'N/A'}</hours>
+                    <coordinates>
+                        <latitude>{retailer.latitude or 'N/A'}</latitude>
+                        <longitude>{retailer.longitude or 'N/A'}</longitude>
+                    </coordinates>
+                </card_shop>
+'''
+            xml_content += '''            </card_shops>
+'''
+        
+        xml_content += '''        </city>
 '''
     
     xml_content += '''    </cities>
-</state_kiosks>'''
+</state_retailers>'''
     
     response = make_response(xml_content)
     response.headers['Content-Type'] = 'application/xml'
@@ -1177,7 +1050,6 @@ def sitemap_xml():
         ('/how-to-get-help', '0.8', 'weekly'),
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
-        ('/states-shops', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),
         ('/terms', '0.6', 'monthly'),
         ('/privacy', '0.6', 'monthly'),
@@ -1224,14 +1096,10 @@ def sitemap_xml():
             f'<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>'
         )
     
-    # Add state pages efficiently
+    # Add state pages efficiently (now combined kiosks + card shops)
     for state_slug in state_slugs:
         xml_parts.append(
             f'<url><loc>{base_url}/state/{state_slug}</loc><lastmod>{now}</lastmod>'
-            f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
-        )
-        xml_parts.append(
-            f'<url><loc>{base_url}/state-shops/{state_slug}</loc><lastmod>{now}</lastmod>'
             f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
         )
     
