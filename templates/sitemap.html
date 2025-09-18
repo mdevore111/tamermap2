@@ -97,6 +97,7 @@
         padding: 1.5rem;
         border-radius: 8px;
         border: 1px solid #e9ecef;
+        border-left: 4px solid #e9ecef; /* Ensure visible left accent border on all tiles */
         transition: all 0.3s ease;
     }
     
@@ -134,17 +135,9 @@
         text-decoration: none;
     }
     
-    .priority-high {
-        border-left-color: #e74c3c;
-    }
-    
-    .priority-medium {
-        border-left-color: #f39c12;
-    }
-    
-    .priority-low {
-        border-left-color: #27ae60;
-    }
+    .priority-high { border-left-color: #e74c3c; }
+    .priority-medium { border-left-color: #f39c12; }
+    .priority-low { border-left-color: #27ae60; }
     
     @media (max-width: 768px) {
         .sitemap-container {
