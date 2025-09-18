@@ -520,6 +520,7 @@ def state_page(state_name):
     xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <state_retailers xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <state_name>{escape_xml(state_name_normalized)}</state_name>
+    <description>Find Pokemon trading card game retailers in {escape_xml(state_name_normalized)}. Discover kiosks and card shops where you can buy Pokemon cards, booster packs, and TCG accessories across cities throughout {escape_xml(state_name_normalized)}.</description>
     <total_kiosks>{total_kiosks}</total_kiosks>
     <total_card_shops>{total_card_shops}</total_card_shops>
     <total_cities>{len(sorted_cities)}</total_cities>
@@ -533,7 +534,7 @@ def state_page(state_name):
         # Add all kiosks for this city in simple format
         for retailer in city_kiosks:
             xml_content += f'''        <retailer>
-            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
+            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - Pokemon cards at {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
             <type>Kiosk</type>
         </retailer>
 '''
@@ -541,7 +542,7 @@ def state_page(state_name):
         # Add all card shops for this city in simple format  
         for retailer in city_card_shops:
             xml_content += f'''        <retailer>
-            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
+            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - Pokemon trading card shop {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
             <type>Card Shop</type>
         </retailer>
 '''
@@ -1069,11 +1070,21 @@ def sitemap_xml():
             f'<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>'
         )
     
-    # Add state pages efficiently (now combined kiosks + card shops)
+    # Add state pages efficiently (now combined kiosks + card shops) with priority based on size/importance
+    high_priority_states = {'california', 'texas', 'florida', 'new-york', 'illinois', 'pennsylvania', 'ohio', 'michigan', 'georgia', 'washington'}
+    medium_priority_states = {'oregon', 'nevada', 'arizona', 'new-mexico', 'north-carolina', 'south-carolina', 'tennessee', 'alabama', 'virginia', 'massachusetts', 'new-jersey', 'maryland', 'wisconsin', 'minnesota', 'missouri', 'indiana', 'colorado', 'utah'}
+    
     for state_slug in state_slugs:
+        if state_slug in high_priority_states:
+            priority = '0.9'
+        elif state_slug in medium_priority_states:
+            priority = '0.8'
+        else:
+            priority = '0.7'
+            
         xml_parts.append(
             f'<url><loc>{base_url}/state/{state_slug}</loc><lastmod>{now}</lastmod>'
-            f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
+            f'<changefreq>weekly</changefreq><priority>{priority}</priority></url>'
         )
     
     xml_parts.append('</urlset>')
