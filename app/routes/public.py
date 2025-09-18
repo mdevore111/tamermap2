@@ -1174,6 +1174,7 @@ def sitemap_xml():
         ('/how-to-get-help', '0.8', 'weekly'),
         ('/card-hunting-tips', '0.8', 'weekly'),
         ('/states', '0.8', 'weekly'),
+        ('/states-shops', '0.8', 'weekly'),
         ('/about', '0.7', 'monthly'),
         ('/terms', '0.6', 'monthly'),
         ('/privacy', '0.6', 'monthly'),
@@ -1224,6 +1225,10 @@ def sitemap_xml():
     for state_slug in state_slugs:
         xml_parts.append(
             f'<url><loc>{base_url}/state/{state_slug}</loc><lastmod>{now}</lastmod>'
+            f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
+        )
+        xml_parts.append(
+            f'<url><loc>{base_url}/state-shops/{state_slug}</loc><lastmod>{now}</lastmod>'
             f'<changefreq>weekly</changefreq><priority>0.8</priority></url>'
         )
     
