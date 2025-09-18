@@ -406,6 +406,195 @@ def states_index():
     return response
 
 
+@public_bp.route("/states-shops")
+def states_shops_index():
+    """
+    States index for Card Shops (Indie) pages - XML only for search engines.
+    Users receive 404; search engines receive an XML listing of states.
+    """
+    # Block user access - this is for search engines only
+    user_agent = request.headers.get('User-Agent', '').lower()
+    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+        return "Page not found", 404
+
+    # Reuse the same state list as kiosks
+    states = [
+        {'name': 'Washington', 'slug': 'washington'},
+        {'name': 'Oregon', 'slug': 'oregon'},
+        {'name': 'California', 'slug': 'california'},
+        {'name': 'Nevada', 'slug': 'nevada'},
+        {'name': 'Arizona', 'slug': 'arizona'},
+        {'name': 'Texas', 'slug': 'texas'},
+        {'name': 'New Mexico', 'slug': 'new-mexico'},
+        {'name': 'Florida', 'slug': 'florida'},
+        {'name': 'Georgia', 'slug': 'georgia'},
+        {'name': 'North Carolina', 'slug': 'north-carolina'},
+        {'name': 'South Carolina', 'slug': 'south-carolina'},
+        {'name': 'Tennessee', 'slug': 'tennessee'},
+        {'name': 'Alabama', 'slug': 'alabama'},
+        {'name': 'Mississippi', 'slug': 'mississippi'},
+        {'name': 'Louisiana', 'slug': 'louisiana'},
+        {'name': 'Arkansas', 'slug': 'arkansas'},
+        {'name': 'New York', 'slug': 'new-york'},
+        {'name': 'New Jersey', 'slug': 'new-jersey'},
+        {'name': 'Pennsylvania', 'slug': 'pennsylvania'},
+        {'name': 'Delaware', 'slug': 'delaware'},
+        {'name': 'Maryland', 'slug': 'maryland'},
+        {'name': 'Virginia', 'slug': 'virginia'},
+        {'name': 'West Virginia', 'slug': 'west-virginia'},
+        {'name': 'Massachusetts', 'slug': 'massachusetts'},
+        {'name': 'Connecticut', 'slug': 'connecticut'},
+        {'name': 'Rhode Island', 'slug': 'rhode-island'},
+        {'name': 'Vermont', 'slug': 'vermont'},
+        {'name': 'New Hampshire', 'slug': 'new-hampshire'},
+        {'name': 'Maine', 'slug': 'maine'},
+        {'name': 'Illinois', 'slug': 'illinois'},
+        {'name': 'Indiana', 'slug': 'indiana'},
+        {'name': 'Michigan', 'slug': 'michigan'},
+        {'name': 'Ohio', 'slug': 'ohio'},
+        {'name': 'Wisconsin', 'slug': 'wisconsin'},
+        {'name': 'Minnesota', 'slug': 'minnesota'},
+        {'name': 'Iowa', 'slug': 'iowa'},
+        {'name': 'Missouri', 'slug': 'missouri'},
+        {'name': 'Kansas', 'slug': 'kansas'},
+        {'name': 'Nebraska', 'slug': 'nebraska'},
+        {'name': 'North Dakota', 'slug': 'north-dakota'},
+        {'name': 'South Dakota', 'slug': 'south-dakota'},
+        {'name': 'Colorado', 'slug': 'colorado'},
+        {'name': 'Utah', 'slug': 'utah'},
+        {'name': 'Wyoming', 'slug': 'wyoming'},
+        {'name': 'Montana', 'slug': 'montana'},
+        {'name': 'Idaho', 'slug': 'idaho'},
+        {'name': 'Alaska', 'slug': 'alaska'},
+        {'name': 'Hawaii', 'slug': 'hawaii'},
+    ]
+
+    from flask import make_response
+    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<states xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <title>Pokemon Card Shops by State</title>
+    <description>Find indie card shops across the United States</description>
+    <total_states>{len(states)}</total_states>
+    <states_list>
+'''
+
+    for state in states:
+        xml_content += f'''        <state>
+            <name>{state['name']}</name>
+            <slug>{state['slug']}</slug>
+            <url>{request.url_root.rstrip('/')}/state-shops/{state['slug']}</url>
+        </state>
+'''
+
+    xml_content += '''    </states_list>
+</states>'''
+
+    response = make_response(xml_content)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+
+@public_bp.route("/state-shops/<state_name>")
+def state_shops_page(state_name):
+    """
+    Dynamic state page showing all CARD SHOPS (indie) in a specific state organized by city.
+    BLOCKED: This route is for search engines only, not user access.
+    """
+    # Block user access - this is for search engines only
+    user_agent = request.headers.get('User-Agent', '').lower()
+    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+        return "Page not found", 404
+
+    # Normalize state name
+    state_name_normalized = state_name.title()
+
+    # Common variations to search within full_address
+    state_variations = {
+        'washington': ['Washington', 'WA', 'Wash'],
+        'california': ['California', 'CA', 'Calif'],
+        'texas': ['Texas', 'TX', 'Tex'],
+        'florida': ['Florida', 'FL', 'Fla'],
+        'new-york': ['New York', 'NY', 'New York State'],
+        'illinois': ['Illinois', 'IL', 'Ill'],
+        'pennsylvania': ['Pennsylvania', 'PA', 'Penn'],
+        'ohio': ['Ohio', 'OH'],
+        'michigan': ['Michigan', 'MI', 'Mich'],
+        'georgia': ['Georgia', 'GA']
+    }
+
+    search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
+
+    # Build query for CARD SHOPS only with multiple naming variations
+    from sqlalchemy import or_
+    type_filters = or_(
+        Retailer.retailer_type.ilike('%card shop%'),
+        Retailer.retailer_type.ilike('%card_shop%'),
+        Retailer.retailer_type.ilike('%indie%')
+    )
+    query = db.session.query(Retailer).filter(
+        Retailer.enabled == True,
+        type_filters
+    )
+
+    state_filters = []
+    for term in search_terms:
+        state_filters.append(Retailer.full_address.ilike(f'%{term}%'))
+
+    retailers = query.filter(or_(*state_filters)).all()
+
+    # Group by city
+    cities = {}
+    for retailer in retailers:
+        parts = retailer.full_address.split(',')
+        if len(parts) >= 2:
+            city = ' '.join(parts[1].strip().split())
+            if city and city not in cities:
+                cities[city] = []
+            if city:
+                cities[city].append(retailer)
+
+    sorted_cities = dict(sorted(cities.items()))
+
+    from flask import make_response
+    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<state_card_shops xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <state_name>{state_name_normalized}</state_name>
+    <total_shops>{len(retailers)}</total_shops>
+    <total_cities>{len(sorted_cities)}</total_cities>
+    <cities>
+'''
+
+    for city, city_retailers in sorted_cities.items():
+        xml_content += f'''        <city>
+            <name>{city}</name>
+            <shop_count>{len(city_retailers)}</shop_count>
+            <shops>
+'''
+        for retailer in city_retailers:
+            xml_content += f'''                <shop>
+                    <name>{retailer.retailer}</name>
+                    <address>{retailer.full_address}</address>
+                    <phone>{retailer.phone_number or 'N/A'}</phone>
+                    <website>{retailer.website or 'N/A'}</website>
+                    <machine_count>{retailer.machine_count}</machine_count>
+                    <hours>{retailer.opening_hours or 'N/A'}</hours>
+                    <coordinates>
+                        <latitude>{retailer.latitude or 'N/A'}</latitude>
+                        <longitude>{retailer.longitude or 'N/A'}</longitude>
+                    </coordinates>
+                </shop>
+'''
+        xml_content += '''            </shops>
+        </city>
+'''
+
+    xml_content += '''    </cities>
+</state_card_shops>'''
+
+    response = make_response(xml_content)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
 @public_bp.route("/state/<state_name>")
 def state_page(state_name):
     """
