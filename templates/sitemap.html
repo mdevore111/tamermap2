@@ -206,13 +206,16 @@
     </div>
 
     <div class="sitemap-section">
-        <h2>Comprehensive How-To Guides</h2>
+        <h2>Comprehensive Pokemon Hunting Guides</h2>
+        
+        <!-- ALL Hunting Guides Box -->
+        <div class="guide-item priority-high" style="margin-bottom: 2rem; text-align: center; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none;">
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 1rem;">📚 ALL Hunting Guides</h3>
+            <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 1.5rem;">Complete collection of Pokemon card hunting guides, strategies, and expert tips for maximum success.</p>
+            <a href="{{ url_for('public.how_to') }}" class="btn" style="background: white; color: #007bff; font-weight: bold; padding: 0.75rem 2rem; font-size: 1.1rem;">View All Guides</a>
+        </div>
+        
         <div class="guide-grid">
-            <div class="guide-item priority-high">
-                <h3>📚 All Hunting Guides</h3>
-                <p>Complete collection of Pokemon card hunting guides, strategies, and expert tips for maximum success.</p>
-                <a href="{{ url_for('public.how_to') }}" class="btn">View All Guides</a>
-            </div>
             <div class="guide-item priority-high">
                 <h3>💰 How to Make Money Flipping Pokemon Cards</h3>
                 <p>Master the business side of card hunting and flipping for profit. Learn pricing strategies, market analysis, and business fundamentals.</p>
@@ -248,47 +251,65 @@
 
     <div class="sitemap-section">
         <h2>Site Help & Tutorials</h2>
+        
+        <!-- ALL Site Tutorials Box -->
+        <div class="guide-item priority-high" style="margin-bottom: 2rem; text-align: center; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none;">
+            <h3 style="color: white; font-size: 1.5rem; margin-bottom: 1rem;">📚 ALL Site Tutorials</h3>
+            <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 1.5rem;">Master every TamerMap feature with our comprehensive collection of step-by-step tutorials and guides.</p>
+            <a href="{{ url_for('public.site_tutorials') }}" class="btn" style="background: white; color: #28a745; font-weight: bold; padding: 0.75rem 2rem; font-size: 1.1rem;">View All Tutorials</a>
+        </div>
+        
         <div class="guide-grid">
+            <!-- Getting Started Tutorials -->
             <div class="guide-item priority-high">
-                <h3>📚 Complete Site Tutorials</h3>
-                <p>Master every TamerMap feature with our comprehensive collection of step-by-step tutorials and guides.</p>
-                <a href="{{ url_for('public.site_tutorials') }}" class="btn">View All Tutorials</a>
-            </div>
-            <div class="guide-item priority-high">
-                <h3>🗺️ How to Use Route Planning Tool</h3>
-                <p>Master TamerMap's route planning feature to create efficient hunting routes and optimize your travel time.</p>
+                <h3>🗺️ Route Planning Tool</h3>
+                <p>Learn how to create efficient hunting routes, optimize travel time, and maximize your Pokemon card hunting success.</p>
                 <a href="{{ url_for('public.how_to_route_planning_tool') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
-                <h3>🔥 How to Use Heatmap Feature</h3>
-                <p>Learn how to read activity heatmaps to find the best hunting spots and identify hot spots.</p>
+                <h3>🔥 Heatmap Feature</h3>
+                <p>Master the heatmap feature to find the best hunting spots, identify hot spots, and plan strategic hunting routes.</p>
                 <a href="{{ url_for('public.how_to_use_heatmaps') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
-                <h3>🆕 How to Use New Locations Filter</h3>
+                <h3>🆕 New Locations Filter</h3>
                 <p>Discover fresh Pokemon card inventory with the New Locations filter! Find new kiosks, retail stores & indie shops before other hunters.</p>
                 <a href="{{ url_for('public.how_to_use_new_locations_filter') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
-                <h3>🚪 How to Use Open Now Filter</h3>
+                <h3>🚪 Open Now Filter</h3>
                 <p>Hunt Pokemon cards right now with the Open Now filter! Find locations that are currently open for immediate hunting.</p>
                 <a href="{{ url_for('public.how_to_use_open_now_filter') }}" class="btn">Read Tutorial</a>
             </div>
+            <div class="guide-item priority-high">
+                <h3>📝 Personal Notes</h3>
+                <p>Learn how to use Personal Notes to track your hunting success, record findings, and build your own success patterns.</p>
+                <a href="{{ url_for('public.how_to_personal_notes') }}" class="btn">Read Tutorial</a>
+            </div>
+            <div class="guide-item priority-high">
+                <h3>🔍 Hunting Strategies</h3>
+                <p>Master advanced Pokemon card hunting techniques, store-specific strategies, and professional hunting methods.</p>
+                <a href="{{ url_for('public.how_to_hunt_cards') }}" class="btn">Read Tutorial</a>
+            </div>
+            
+            <!-- Account Management Tutorials -->
             <div class="guide-item">
-                <h3>🔑 How to Reset Your TamerMap Password</h3>
+                <h3>🔑 Password Reset</h3>
                 <p>Complete guide to resetting your password and regaining account access when you're locked out.</p>
                 <a href="{{ url_for('public.how_to_reset_password') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item">
-                <h3>👤 How to Update Your Account Information</h3>
+                <h3>👤 Update Account Info</h3>
                 <p>Learn how to update your account information, email address, and profile settings.</p>
                 <a href="{{ url_for('public.how_to_update_account') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item">
-                <h3>💳 How to Manage Your Pro Subscription</h3>
+                <h3>💳 Manage Pro Subscription</h3>
                 <p>Control your Pro subscription, update billing info, and access your Stripe billing portal.</p>
                 <a href="{{ url_for('public.how_to_manage_pro_subscription') }}" class="btn">Read Tutorial</a>
             </div>
+            
+            <!-- Support & Troubleshooting -->
             <div class="guide-item">
                 <h3>🆘 How to Get Help</h3>
                 <p>Learn the best ways to contact support, browse FAQ, and find help guides for any issue.</p>
@@ -342,13 +363,6 @@
                     Add New Location
                 </a>
                 <div class="sitemap-description">Submit a new Pokemon card location to help the community</div>
-            </li>
-            <li>
-                <a href="{{ url_for('public.correct_location') }}">
-                    <i class="fas fa-edit"></i>
-                    Correct Location Data
-                </a>
-                <div class="sitemap-description">Report incorrect information about existing locations</div>
             </li>
         </ul>
     </div>
