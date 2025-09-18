@@ -530,7 +530,9 @@ def state_shops_page(state_name):
     type_filters = or_(
         Retailer.retailer_type.ilike('%card shop%'),
         Retailer.retailer_type.ilike('%card_shop%'),
-        Retailer.retailer_type.ilike('%indie%')
+        Retailer.retailer_type.ilike('%indie%'),
+        Retailer.retailer_type.ilike('%card%shop%'),
+        Retailer.retailer_type.ilike('%shop%')
     )
     query = db.session.query(Retailer).filter(
         Retailer.enabled == True,
@@ -633,10 +635,10 @@ def state_page(state_name):
     # Get state variations for search
     search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
     
-    # Build query for KIOSKS ONLY
+    # Build query for KIOSKS ONLY (match standalone or combined types like "store + kiosk")
     query = db.session.query(Retailer).filter(
         Retailer.enabled == True,
-        Retailer.retailer_type.ilike('kiosk')
+        Retailer.retailer_type.ilike('%kiosk%')
     )
     
     # Use OR conditions for multiple state name variations
