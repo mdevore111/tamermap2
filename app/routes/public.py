@@ -71,7 +71,8 @@ def states_index():
     """
     # Block user access - this is for search engines only
     user_agent = request.headers.get('User-Agent', '').lower()
-    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+    # Allow preview via query param; otherwise restrict to bots
+    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
         return "Page not found", 404
     
     # Define all available states with their metadata and keyword-rich descriptions
@@ -414,7 +415,7 @@ def states_shops_index():
     """
     # Block user access - this is for search engines only
     user_agent = request.headers.get('User-Agent', '').lower()
-    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
         return "Page not found", 404
 
     # Reuse the same state list as kiosks
@@ -502,7 +503,7 @@ def state_shops_page(state_name):
     """
     # Block user access - this is for search engines only
     user_agent = request.headers.get('User-Agent', '').lower()
-    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
         return "Page not found", 404
 
     # Normalize state name
@@ -609,7 +610,7 @@ def state_page(state_name):
     """
     # Block user access - this is for search engines only
     user_agent = request.headers.get('User-Agent', '').lower()
-    if not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
+    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
         return "Page not found", 404
     
     # Normalize state name for database query
@@ -632,10 +633,10 @@ def state_page(state_name):
     # Get state variations for search
     search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
     
-    # Build query for KIOSKS AND CARD SHOPS with multiple state name variations
+    # Build query for KIOSKS ONLY
     query = db.session.query(Retailer).filter(
         Retailer.enabled == True,
-        Retailer.retailer_type.ilike('kiosk') | Retailer.retailer_type.ilike('card_shop')  # Both kiosks and card shops
+        Retailer.retailer_type.ilike('kiosk')
     )
     
     # Use OR conditions for multiple state name variations
