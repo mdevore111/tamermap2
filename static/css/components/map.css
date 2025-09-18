@@ -65,10 +65,10 @@ html, body {
 /* Removed device-specific #map height override. The map fills via flex container. */
 
 /* Map Controls - Desktop and General */
-/* Ensure zoom controls are above footer */
+/* Hide default Google zoom controls on desktop (we use custom) */
 .gm-style .gm-control-active.gm-zoom-in,
 .gm-style .gm-control-active.gm-zoom-out {
-    z-index: 1000 !important;
+    display: none !important;
 }
 
 /* Improve My Location button positioning on desktop - Google Maps style */
@@ -113,14 +113,9 @@ html, body {
     display: block !important;
 }
 
-/* Hide Google Maps default zoom controls */
-.gm-style .gm-control-active.gm-zoom-in,
-.gm-style .gm-control-active.gm-zoom-out {
-    display: none !important;
-}
+/* (kept hidden) */
 
-/* Hide any other Google Maps zoom controls */
-.gm-style .gmnoprint,
+/* Do not hide controls container (.gmnoprint) so custom controls remain visible */
 .gm-style .gm-style-cc {
     display: none !important;
 }
@@ -136,7 +131,7 @@ html, body {
     flex-direction: column;
     gap: 0;
     z-index: 1000;
-    margin: 0 !important;
+    margin: 50px 10px 10px 0 !important; /* tighter spacing under My Location */
 }
 
 .custom-zoom-button {

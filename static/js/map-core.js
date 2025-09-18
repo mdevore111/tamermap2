@@ -312,9 +312,7 @@ function renderMap() {
 
   // Add to map - position in upper right, below My Location button
   window.map.controls[google.maps.ControlPosition.RIGHT_TOP].push(zoomContainer);
-  
-  // Add some spacing between My Location and zoom controls
-  zoomContainer.style.marginTop = '50px';
+  // Spacing handled in CSS so controls stack consistently with My Location
 
   if (window.__TM_DEBUG__) console.log('[map-init] Custom zoom controls added to map');
 

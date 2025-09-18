@@ -8,7 +8,7 @@ export const MAP_SETTINGS = {
   maxZoom: 18,
   gestureHandling: "greedy",
   disableDefaultUI: true,
-  zoomControl: true
+  zoomControl: false
 };
 
 // Named constants that we’ll turn into google.* at runtime
