@@ -2,11 +2,11 @@
 
 {% block title %}Sitemap - TamerMap: Find Pokémon Card Stores & Events Near You{% endblock %}
 
-{% block meta_description %}Navigate TamerMap's features easily with our comprehensive sitemap. Find Pokémon card stores, kiosks, events, and plan your card hunting routes with our interactive tools.{% endblock %}
+{% block meta_description %}Explore the complete TamerMap sitemap. Find Pokémon card stores, kiosks, and indie shops, discover events, plan optimized hunting routes, and leverage Pro features like heatmaps and personal notes for Pokémon TCG hunting.{% endblock %}
 
 {% block og_meta %}
 <meta property="og:title" content="TamerMap Sitemap - Find Pokémon Card Stores & Events">
-<meta property="og:description" content="Navigate TamerMap's features easily with our comprehensive sitemap. Find Pokémon card stores, kiosks, events, and plan your card hunting routes.">
+<meta property="og:description" content="Explore TamerMap's sitemap: find Pokémon card stores, kiosks, and indie shops, plan optimized hunting routes, and use Pro heatmaps for smarter Pokémon TCG hunting.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="{{ url_for('public.sitemap', _external=True) }}">
 <meta property="og:image" content="{{ url_for('static', filename='images/tamermap-og.jpg', _external=True) }}">
@@ -172,35 +172,35 @@
                     <i class="fas fa-home"></i>
                     Home
                 </a>
-                <div class="sitemap-description">Explore TamerMap’s interactive Pokémon card map to find kiosks, retail stores, and indie shops near you, plan efficient hunting routes, and use activity heatmaps to discover the best places to hunt.</div>
+                <div class="sitemap-description">Open the interactive Pokémon card map to discover kiosks, retail stores, and indie shops near you, plan optimized hunting routes, and use Pro heatmaps to target high-activity locations for smarter Pokémon TCG hunting.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.learn') }}">
                     <i class="fas fa-graduation-cap"></i>
                     Learn
                 </a>
-                <div class="sitemap-description">Discover TamerMap Pro features and upgrade your card hunting experience</div>
+                <div class="sitemap-description">Learn about TamerMap Pro features—heatmaps, route planning, Personal Notes, and more—to upgrade your Pokémon card hunting efficiency and results.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.user_wins') }}">
                     <i class="fas fa-trophy"></i>
                     User Wins
                 </a>
-                <div class="sitemap-description">Read real success stories from TamerMap users who found Pokemon cards and built collections</div>
+                <div class="sitemap-description">Read real success stories from the community, including Pokémon card finds, Pro feature tips, and strategies that helped hunters build their collections.</div>
             </li>
             <li>
                 <a href="{{ url_for('auth.account') }}">
                     <i class="fas fa-user"></i>
                     My Account
                 </a>
-                <div class="sitemap-description">Manage your profile, subscription, and account settings (login required)</div>
+                <div class="sitemap-description">Manage profile preferences, notification settings, and your TamerMap Pro subscription (Stripe billing portal) in one place. Login required.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.about') }}">
                     <i class="fas fa-info-circle"></i>
                     About Us
                 </a>
-                <div class="sitemap-description">Learn about TamerMap's mission and story</div>
+                <div class="sitemap-description">Learn about TamerMap’s mission, data quality approach, and how we help Pokémon card hunters save time and find more product.</div>
             </li>
         </ul>
     </div>
@@ -218,32 +218,32 @@
         <div class="guide-grid">
             <div class="guide-item priority-high">
                 <h3>💰 How to Make Money Flipping Pokemon Cards</h3>
-                <p>Master the business side of card hunting and flipping for profit. Learn pricing strategies, market analysis, and business fundamentals.</p>
+                <p>Master the business side of Pokémon card hunting and flipping for profit. Learn pricing, market analysis, sourcing, and risk management fundamentals.</p>
                 <a href="{{ url_for('public.how_to_make_money') }}" class="btn">Read Guide</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>🔍 How to Hunt Pokemon Cards Like a Pro</h3>
-                <p>Master the fundamentals of successful card hunting. Learn where to look, what to look for, and how to maximize your finds.</p>
+                <p>Master core Pokémon card hunting fundamentals—where to search, what to target, and how to reliably increase your find rate.</p>
                 <a href="{{ url_for('public.how_to_hunt_cards') }}" class="btn">Read Guide</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>⏰ How to Time Your Card Hunting</h3>
-                <p>Master the art of timing for maximum hunting success. Learn seasonal patterns, market cycles, and optimal hunting schedules.</p>
+                <p>Maximize results with precise timing. Learn seasonal patterns, restock windows, market cycles, and optimal hunting schedules.</p>
                 <a href="{{ url_for('public.how_to_timing') }}" class="btn">Read Guide</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>🗺️ How to Plan Your Card Hunting Routes</h3>
-                <p>Optimize your hunting trips for maximum efficiency. Learn route planning, scheduling, and advanced optimization strategies.</p>
+                <p>Optimize multi-stop hunting trips with efficient route planning, time-saving scheduling, and advanced optimization strategies.</p>
                 <a href="{{ url_for('public.how_to_routes') }}" class="btn">Read Guide</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>📝 How to Use Personal Notes for Success Tracking</h3>
-                <p>Master TamerMap Pro's Personal Notes feature to track restock schedules, record successful finds, and build winning strategies.</p>
+                <p>Use Personal Notes to track restock schedules, record successful finds, analyze patterns, and build repeatable Pokémon hunting strategies.</p>
                 <a href="{{ url_for('public.how_to_personal_notes') }}" class="btn">Read Guide</a>
             </div>
             <div class="guide-item">
                 <h3>💡 Advanced Card Hunting Tips</h3>
-                <p>Expert tips and advanced strategies for serious Pokemon card hunters looking to maximize their success rate.</p>
+                <p>Advanced Pokémon card hunting tactics, retailer-specific strategies, and expert tips for maximizing success at scale.</p>
                 <a href="{{ url_for('public.card_hunting_tips') }}" class="btn">Read Tips</a>
             </div>
         </div>
@@ -263,73 +263,68 @@
             <!-- Getting Started Tutorials -->
             <div class="guide-item priority-high">
                 <h3>🗺️ Route Planning Tool</h3>
-                <p>Learn how to create efficient hunting routes, optimize travel time, and maximize your Pokemon card hunting success.</p>
+                <p>Create efficient multi-stop routes, reduce drive time, and maximize on-the-ground hunting efficiency with route planning best practices.</p>
                 <a href="{{ url_for('public.how_to_route_planning_tool') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>🔥 Heatmap Feature</h3>
-                <p>Master the heatmap feature to find the best hunting spots, identify hot spots, and plan strategic hunting routes.</p>
+                <p>Turn heatmaps into an edge—identify hot spots, prioritize high-activity areas, and plan strategic Pokémon card hunting routes.</p>
                 <a href="{{ url_for('public.how_to_use_heatmaps') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>🆕 New Locations Filter</h3>
-                <p>Discover fresh Pokemon card inventory with the New Locations filter! Find new kiosks, retail stores & indie shops before other hunters.</p>
+                <p>Find fresh inventory first with the New Locations filter—spot new kiosks, retail stores, and indie shops before other hunters.</p>
                 <a href="{{ url_for('public.how_to_use_new_locations_filter') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>🚪 Open Now Filter</h3>
-                <p>Hunt Pokemon cards right now with the Open Now filter! Find locations that are currently open for immediate hunting.</p>
+                <p>Hunt right now with the Open Now filter—instantly see retailers that are currently open so you never waste a trip.</p>
                 <a href="{{ url_for('public.how_to_use_open_now_filter') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>📝 Personal Notes</h3>
-                <p>Learn how to use Personal Notes to track your hunting success, record findings, and build your own success patterns.</p>
+                <p>Track restocks and results with Personal Notes—organize findings, store insights, and build your own data-driven playbook.</p>
                 <a href="{{ url_for('public.how_to_personal_notes') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item priority-high">
                 <h3>🔍 Hunting Strategies</h3>
-                <p>Master advanced Pokemon card hunting techniques, store-specific strategies, and professional hunting methods.</p>
+                <p>Level-up with expert Pokémon hunting techniques, retailer-specific strategies, and pro methods for consistent results.</p>
                 <a href="{{ url_for('public.how_to_hunt_cards') }}" class="btn">Read Tutorial</a>
             </div>
             
             <!-- Account Management Tutorials -->
             <div class="guide-item">
                 <h3>🔑 Password Reset</h3>
-                <p>Complete guide to resetting your password and regaining account access when you're locked out.</p>
+                <p>Step-by-step password reset guide—regain account access quickly and keep your TamerMap account secure.</p>
                 <a href="{{ url_for('public.how_to_reset_password') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item">
                 <h3>👤 Update Account Info</h3>
-                <p>Learn how to update your account information, email address, and profile settings.</p>
+                <p>Update account information, change email addresses, and manage profile settings with confidence.</p>
                 <a href="{{ url_for('public.how_to_update_account') }}" class="btn">Read Tutorial</a>
             </div>
             <div class="guide-item">
                 <h3>💳 Manage Pro Subscription</h3>
-                <p>Control your Pro subscription, update billing info, and access your Stripe billing portal.</p>
+                <p>Manage your Pro subscription—update billing details and access the Stripe billing portal anytime.</p>
                 <a href="{{ url_for('public.how_to_manage_pro_subscription') }}" class="btn">Read Tutorial</a>
             </div>
             
             <!-- Support & Troubleshooting -->
             <div class="guide-item">
                 <h3>🆘 How to Get Help</h3>
-                <p>Learn the best ways to contact support, browse FAQ, and find help guides for any issue.</p>
+                <p>Find the fastest path to help—contact support, browse FAQs, and follow step-by-step help guides.</p>
                 <a href="{{ url_for('public.how_to_get_help') }}" class="btn">Read Tutorial</a>
             </div>
         </div>
     </div>
 
     <div class="sitemap-section">
-        <h2>FAQ & Support</h2>
+        <h2>FAQ</h2>
         <div class="guide-grid">
             <div class="guide-item priority-high">
                 <h3>❓ Frequently Asked Questions</h3>
-                <p>Quick answers to common questions about TamerMap, Pokemon card hunting, Pro features, and account help.</p>
+                <p>Quick answers to common questions about TamerMap, Pokémon TCG hunting, Pro features, billing, and account settings.</p>
                 <a href="{{ url_for('public.faq') }}" class="btn">View FAQ</a>
-            </div>
-            <div class="guide-item">
-                <h3>📧 Contact Support</h3>
-                <p>Get help with technical issues, account problems, or questions about TamerMap features.</p>
-                <a href="{{ url_for('public.send_message', type='contact') }}" class="btn">Contact Us</a>
             </div>
         </div>
     </div>
@@ -342,14 +337,14 @@
                     <i class="fas fa-file-contract"></i>
                     Terms of Service
                 </a>
-                <div class="sitemap-description">Terms and conditions for using TamerMap services</div>
+                <div class="sitemap-description">Review the terms and conditions for using TamerMap services, features, and Pro tools.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.privacy') }}">
                     <i class="fas fa-shield-alt"></i>
                     Privacy Policy
                 </a>
-                <div class="sitemap-description">How we collect, use, and protect your personal information</div>
+                <div class="sitemap-description">Understand how we collect, use, and protect your personal information and account data.</div>
             </li>
         </ul>
     </div>
@@ -362,7 +357,7 @@
                     <i class="fas fa-plus-circle"></i>
                     Add New Location
                 </a>
-                <div class="sitemap-description">Submit a new Pokemon card location to help the community</div>
+                <div class="sitemap-description">Submit a new Pokémon card location (kiosk, retailer, or indie shop) to help the community hunt smarter.</div>
             </li>
         </ul>
     </div>
@@ -381,35 +376,35 @@
                     <i class="fas fa-question-circle"></i>
                     General Contact
                 </a>
-                <div class="sitemap-description">Get help with general questions and support</div>
+                <div class="sitemap-description">Contact us for general questions about TamerMap features, coverage, or account assistance.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.send_message', type='suggestions') }}">
                     <i class="fas fa-lightbulb"></i>
                     Site/Feature Suggestions
                 </a>
-                <div class="sitemap-description">Share ideas and suggestions for improving TamerMap features and functionality</div>
+                <div class="sitemap-description">Share ideas to improve TamerMap—feature requests, UX suggestions, and product feedback welcome.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.send_message', type='location') }}">
                     <i class="fas fa-map-pin"></i>
                     Report Location
                 </a>
-                <div class="sitemap-description">Report incorrect location information (missing hours, wrong address, store name, etc.) or add new Pokemon card locations</div>
+                <div class="sitemap-description">Report incorrect location info (wrong hours, address, name) so we can keep Pokémon card data accurate.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.send_message', type='support') }}">
                     <i class="fas fa-cog"></i>
                     Customer Support
                 </a>
-                <div class="sitemap-description">Get technical help and account support</div>
+                <div class="sitemap-description">Get technical help, account support, and assistance using TamerMap Pro tools.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.send_message', type='business') }}">
                     <i class="fas fa-briefcase"></i>
                     Business Inquiry
                 </a>
-                <div class="sitemap-description">Business partnerships, advertising, and commercial inquiries</div>
+                <div class="sitemap-description">Business partnerships, sponsorships, advertising, and other commercial opportunities.</div>
             </li>
         </ul>
     </div>
@@ -424,14 +419,14 @@
                     <i class="fas fa-shield-alt"></i>
                     Privacy Policy
                 </a>
-                <div class="sitemap-description">Learn about how we protect your data</div>
+                <div class="sitemap-description">Learn how we protect your data with modern security practices and policies.</div>
             </li>
             <li>
                 <a href="{{ url_for('public.terms') }}">
                     <i class="fas fa-file-contract"></i>
                     Terms of Service
                 </a>
-                <div class="sitemap-description">Review our terms and conditions</div>
+                <div class="sitemap-description">Review the terms and conditions governing your use of TamerMap.</div>
             </li>
         </ul>
     </div>
