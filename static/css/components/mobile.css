@@ -126,13 +126,13 @@
   }
   
   /* Horizontal slider layout for mobile - FORCE inline layout */
-  #legend.mobile-drawer label {
+  #legend.mobile-drawer #legend-body label {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
     margin-bottom: 2px !important; /* Reduced from 4px to match Popular Areas/Events */
     width: 100% !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: wrap !important; /* Allow wrapping for sliders */
   }
   
   /* Reduce spacing between all checkboxes to match Popular Areas/Events */
@@ -140,7 +140,7 @@
     display: none !important; /* Remove line breaks */
   }
   
-  #legend.mobile-drawer label input[type="checkbox"] {
+  #legend.mobile-drawer #legend-body label input[type="checkbox"] {
     margin-right: 8px !important;
     flex-shrink: 0 !important;
   }
@@ -154,20 +154,21 @@
     padding: 0 !important;
     flex-shrink: 0 !important;
     width: auto !important;
+    margin-left: 8px !important; /* Consistent spacing from text */
   }
   
   /* Force spacing between labels and sliders */
   #legend.mobile-drawer #heatmap-days-slider-container {
-    margin-left: 12px !important;
+    margin-left: 8px !important;
   }
   
   #legend.mobile-drawer #event-days-slider-container {
-    margin-left: 24px !important;
+    margin-left: 8px !important;
   }
   
   #heatmap-days-slider-container .custom-range-slider,
   #event-days-slider-container .custom-range-slider {
-    width: 180px !important; /* Even longer sliders - increased from 160px */
+    width: 180px !important; /* Restored original width */
     margin: 0 !important;
     flex-shrink: 0 !important;
   }
@@ -187,6 +188,118 @@
 
   /* Heatmap and events labels are now handled by JavaScript for better compatibility */
   
+  /* Force specific labels with sliders to stay inline */
+  #legend.mobile-drawer #legend-body label:has(#heatmap-days-slider-container),
+  #legend.mobile-drawer #legend-body label:has(#event-days-slider-container) {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+  }
+  
+  /* Alternative approach for browsers that don't support :has() */
+  #legend.mobile-drawer #legend-body label[data-has-slider="true"] {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+  }
+  
+  /* Override any conflicting styles from legend.css - more specific selector */
+  #legend.mobile-drawer #legend-body label[data-has-slider="true"] {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    margin-bottom: 2px !important;
+  }
+  
+  /* Even more specific to override legend.css */
+  #legend.mobile-drawer.mobile-expanded #legend-body label[data-has-slider="true"] {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    margin-bottom: 2px !important;
+  }
+  
+  /* Ensure sliders don't wrap to new line */
+  #legend.mobile-drawer #legend-body label[data-has-slider="true"] #heatmap-days-slider-container,
+  #legend.mobile-drawer #legend-body label[data-has-slider="true"] #event-days-slider-container {
+    display: inline-flex !important;
+    margin-left: 8px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Mobile Navigation Improvements */
+  /* Reduce spacing and font size for hamburger menu while maintaining touch targets */
+  .navbar-nav .nav-item {
+    margin: 0.5rem 0 !important; /* Minimum 32px spacing between touch targets */
+  }
+  
+  .navbar-nav .nav-link {
+    font-size: 16px !important; /* Reduced from default */
+    padding: 0.75rem 1rem !important; /* Minimum 48px touch target height */
+    line-height: 1.2 !important; /* Comfortable line height */
+    min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  /* Make Contact dropdown more compact while maintaining touch targets */
+  .navbar-nav .dropdown-item {
+    padding: 0.75rem 1rem !important; /* Minimum 48px touch target height */
+    font-size: 14px !important; /* Smaller font */
+    line-height: 1.3 !important; /* Comfortable line height */
+    min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  /* Reduce spacing between dropdown items while maintaining touch targets */
+  .navbar-nav .dropdown-menu {
+    padding: 0.25rem 0 !important; /* Minimal padding but maintain spacing */
+  }
+  
+  /* Make Try Pro button more compact while maintaining touch targets */
+  .btn-try-pro {
+    font-size: 14px !important;
+    padding: 0.75rem 1rem !important; /* Minimum 48px touch target height */
+    margin: 0.5rem 0 !important; /* Minimum 32px spacing */
+    min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  /* Extra compact for very small screens while maintaining touch targets */
+  @media (max-width: 480px) {
+    .navbar-nav .nav-item {
+      margin: 0.4rem 0 !important; /* Slightly tighter but still 32px+ spacing */
+    }
+    
+    .navbar-nav .nav-link {
+      font-size: 15px !important; /* Slightly smaller */
+      padding: 0.6rem 0.8rem !important; /* Maintain 48px touch target */
+      line-height: 1.2 !important; /* Comfortable line height */
+      min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    }
+    
+    .navbar-nav .dropdown-item {
+      padding: 0.6rem 0.8rem !important; /* Maintain 48px touch target */
+      font-size: 13px !important; /* Smaller font */
+      line-height: 1.3 !important; /* Comfortable line height */
+      min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    }
+    
+    .btn-try-pro {
+      font-size: 13px !important;
+      padding: 0.6rem 0.8rem !important; /* Maintain 48px touch target */
+      margin: 0.4rem 0 !important; /* Maintain 32px+ spacing */
+      min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    }
+  }
+
   /* Mobile Map Controls Positioning */
   /* Move My Location button to top-right to avoid drawer interference */
   .my-location-button {
@@ -247,6 +360,39 @@
 /* Tablet-specific adjustments (iPad and similar) */
 @media (min-width: 769px) and (max-width: 1024px) {
   /* Only handle UI positioning - let base.css handle main layout */
+  
+  /* Tablet Navigation Improvements */
+  .navbar-nav .nav-item {
+    margin: 0.5rem 0 !important; /* Maintain 32px+ spacing */
+  }
+  
+  .navbar-nav .nav-link {
+    font-size: 18px !important; /* Slightly larger than mobile */
+    padding: 0.75rem 1rem !important; /* Maintain 48px touch target */
+    line-height: 1.2 !important; /* Comfortable line height */
+    min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .navbar-nav .dropdown-item {
+    padding: 0.75rem 1rem !important; /* Maintain 48px touch target */
+    font-size: 15px !important;
+    line-height: 1.3 !important; /* Comfortable line height */
+    min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  .btn-try-pro {
+    font-size: 15px !important;
+    padding: 0.75rem 1rem !important; /* Maintain 48px touch target */
+    margin: 0.5rem 0 !important; /* Maintain 32px+ spacing */
+    min-height: 3rem !important; /* Ensure minimum 48px touch target */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
   
   /* Ensure search bar is visible on tablet and positioned correctly with higher z-index */
   #top-controls {

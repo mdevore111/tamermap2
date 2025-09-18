@@ -260,6 +260,15 @@ function initUI() {
     updateSliderProgress(DB.eventDaysSlider);
     
     DB.eventDaysSlider.addEventListener('input', () => {
+      // Check if user is pro before allowing slider interaction
+      const proSection = document.getElementById('pro-features-section');
+      const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : (window.is_pro === true);
+      
+      if (!isPro) {
+        showProUpgradeToast();
+        return;
+      }
+      
       const days = DB.eventDaysSlider.value;
       DB.eventDaysValue.textContent = `${days} days`;
       localStorage.setItem('event_days_slider', days);
@@ -285,6 +294,15 @@ function initUI() {
     updateSliderProgress(DB.heatmapDaysSlider);
     
     DB.heatmapDaysSlider.addEventListener('input', () => {
+      // Check if user is pro before allowing slider interaction
+      const proSection = document.getElementById('pro-features-section');
+      const isPro = proSection ? proSection.getAttribute('data-is-pro') === 'true' : (window.is_pro === true);
+      
+      if (!isPro) {
+        showProUpgradeToast();
+        return;
+      }
+      
       const days = DB.heatmapDaysSlider.value;
       DB.heatmapDaysValue.textContent = `${days} days`;
       localStorage.setItem('heatmap_days_slider', days);
@@ -615,7 +633,7 @@ function showProUpgradeToast() {
     Swal.fire({
       toast: true,
       position: 'top-start',
-      icon: 'lock',
+      icon: 'warning',
       title: 'Pro Feature',
       html: '<div style="font-size: 13px; margin: 6px 0; color: #6c757d;">Upgrade to access this feature</div>',
       showConfirmButton: true,
@@ -916,6 +934,26 @@ function forceInlineSliders() {
     eventContainer.style.flexDirection = 'row';
     console.log('[map-ui] Set event container to flex');
   }
+  
+  // Force labels with sliders to use flex layout
+  const heatmapLabel = document.querySelector('label[data-has-slider="true"]:has(#heatmap-days-slider-container)');
+  const eventLabel = document.querySelector('label[data-has-slider="true"]:has(#event-days-slider-container)');
+  
+  // Fallback for browsers that don't support :has()
+  const heatmapLabelFallback = document.querySelector('label[data-has-slider="true"]');
+  const eventLabelFallback = document.querySelectorAll('label[data-has-slider="true"]')[1];
+  
+  const labelsToFix = [heatmapLabel, eventLabel, heatmapLabelFallback, eventLabelFallback].filter(Boolean);
+  
+  labelsToFix.forEach(label => {
+    if (label) {
+      label.style.display = 'flex';
+      label.style.alignItems = 'center';
+      label.style.flexWrap = 'nowrap';
+      label.style.width = '100%';
+      console.log('[map-ui] Applied flex styling to label:', label);
+    }
+  });
 }
 
 // Adjust map height based on drawer state

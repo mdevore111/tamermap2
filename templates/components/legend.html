@@ -49,11 +49,11 @@
         <input type="checkbox" id="filter-new">
          🌟 New Locations
       </label>
-      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Show a heat map of popular locations.">
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Show a heat map of popular locations." data-has-slider="true">
         <input type="checkbox" id="filter-popular-areas">
         <span>🔥 Heatmap</span>
         <!-- Heatmap Time Range Slider - inline on mobile -->
-        <div id="heatmap-days-slider-container" style="display: none; margin-left: 12px; flex-direction: row; align-items: center;">
+        <div id="heatmap-days-slider-container" style="display: none; margin-left: 8px; flex-direction: row; align-items: center;">
           <input type="range" id="heatmap-days-slider" min="1" max="90" value="60"
                  class="form-range custom-range-slider"
                  style="width: 180px; margin: 0;" 
@@ -62,11 +62,11 @@
           <span id="heatmap-days-value" style="margin-left: 8px; font-size: 10px; color: #666;">60 days</span>
         </div>
       </label>
-      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle upcoming events">
+      <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle upcoming events" data-has-slider="true">
         <input type="checkbox" id="filter-events">
         <span>📅 Events</span>
         <!-- Events Day Range Slider - inline on mobile -->
-        <div id="event-days-slider-container" style="display: none; margin-left: 20px; flex-direction: row; align-items: center;">
+        <div id="event-days-slider-container" style="display: none; margin-left: 8px; flex-direction: row; align-items: center;">
           <input type="range" id="event-days-slider" 
                  min="1" max="60" value="30" step="1" 
                  class="form-range custom-range-slider" 
