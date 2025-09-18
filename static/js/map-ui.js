@@ -61,12 +61,10 @@ function initUI() {
   const DB = window.domCache;
 
   // Cache legend controls
-  DB.legendToggleBtn     = document.getElementById('legend-toggle');
   DB.legendResetBtn      = document.getElementById('legend-reset');
   DB.legend              = document.getElementById('legend');
   
   console.log('[map-ui] Legend elements found:', {
-    legendToggleBtn: !!DB.legendToggleBtn,
     legendResetBtn: !!DB.legendResetBtn,
     legend: !!DB.legend
   });
@@ -76,6 +74,12 @@ function initUI() {
     DB.legend.style.display = 'block';
     DB.legend.style.visibility = 'visible';
   }
+
+  // Initialize mobile drawer functionality
+  initializeMobileDrawer();
+  
+  // Initialize dynamic drawer height adjustment
+  initializeDynamicDrawerHeight();
 
   // Cache all filter checkboxes
   DB.filterKiosk         = document.getElementById('filter-kiosk');
@@ -136,22 +140,98 @@ function initUI() {
   
   // Update slider display and toggle container visibility based on events checkbox
   if (DB.filterEvents && DB.eventDaysContainer) {
-    // Initialize container visibility
-    DB.eventDaysContainer.style.display = DB.filterEvents.checked ? 'block' : 'none';
+    // Initialize container visibility - use flex on mobile, block on desktop
+    const isMobile = window.innerWidth <= 768;
+    DB.eventDaysContainer.style.display = DB.filterEvents.checked ? (isMobile ? 'flex' : 'block') : 'none';
+
+    // Initialize label styling for mobile
+    if (isMobile) {
+      const label = DB.filterEvents.closest('label');
+      if (label) {
+        if (DB.filterEvents.checked) {
+          label.style.display = 'inline-flex';
+          label.style.alignItems = 'center';
+          label.style.flexWrap = 'wrap';
+          label.style.width = '100%';
+          label.style.justifyContent = 'flex-start';
+        } else {
+          label.style.display = 'block';
+          label.style.width = '';
+          label.style.justifyContent = '';
+        }
+      }
+    }
     
     // Toggle visibility when events checkbox changes
     DB.filterEvents.addEventListener('change', () => {
-      DB.eventDaysContainer.style.display = DB.filterEvents.checked ? 'block' : 'none';
+      const isMobile = window.innerWidth <= 768;
+      DB.eventDaysContainer.style.display = DB.filterEvents.checked ? (isMobile ? 'flex' : 'block') : 'none';
+      if (isMobile) {
+        DB.eventDaysContainer.style.flexDirection = 'row';
+        // Make the label inline when slider is visible
+        const label = DB.filterEvents.closest('label');
+        if (label) {
+          if (DB.filterEvents.checked) {
+            label.style.display = 'inline-flex';
+            label.style.alignItems = 'center';
+            label.style.flexWrap = 'wrap';
+            label.style.width = '100%';
+            label.style.justifyContent = 'flex-start';
+          } else {
+            label.style.display = 'block';
+            label.style.width = '';
+            label.style.justifyContent = '';
+          }
+        }
+      }
     });
   }
   
   if (DB.filterPopularAreas && DB.heatmapDaysContainer) {
-    // Initialize container visibility
-    DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? 'block' : 'none';
+    // Initialize container visibility - use flex on mobile, block on desktop
+    const isMobile = window.innerWidth <= 768;
+    DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? (isMobile ? 'flex' : 'block') : 'none';
+
+    // Initialize label styling for mobile
+    if (isMobile) {
+      const label = DB.filterPopularAreas.closest('label');
+      if (label) {
+        if (DB.filterPopularAreas.checked) {
+          label.style.display = 'inline-flex';
+          label.style.alignItems = 'center';
+          label.style.flexWrap = 'wrap';
+          label.style.width = '100%';
+          label.style.justifyContent = 'flex-start';
+        } else {
+          label.style.display = 'block';
+          label.style.width = '';
+          label.style.justifyContent = '';
+        }
+      }
+    }
     
     // Toggle visibility when popular areas checkbox changes
     DB.filterPopularAreas.addEventListener('change', () => {
-      DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? 'block' : 'none';
+      const isMobile = window.innerWidth <= 768;
+      DB.heatmapDaysContainer.style.display = DB.filterPopularAreas.checked ? (isMobile ? 'flex' : 'block') : 'none';
+      if (isMobile) {
+        DB.heatmapDaysContainer.style.flexDirection = 'row';
+        // Make the label inline when slider is visible
+        const label = DB.filterPopularAreas.closest('label');
+        if (label) {
+          if (DB.filterPopularAreas.checked) {
+            label.style.display = 'inline-flex';
+            label.style.alignItems = 'center';
+            label.style.flexWrap = 'wrap';
+            label.style.width = '100%';
+            label.style.justifyContent = 'flex-start';
+          } else {
+            label.style.display = 'block';
+            label.style.width = '';
+            label.style.justifyContent = '';
+          }
+        }
+      }
     });
   }
 
@@ -467,76 +547,7 @@ function initUI() {
       });
     });
 
-// Legend show/hide toggle (only body)
-if (DB.legendToggleBtn) {
-  
-  
-  // Remove any existing event listeners to prevent duplicates
-  const newToggleBtn = DB.legendToggleBtn.cloneNode(true);
-  DB.legendToggleBtn.parentNode.replaceChild(newToggleBtn, DB.legendToggleBtn);
-  DB.legendToggleBtn = newToggleBtn;
-  
-  DB.legendToggleBtn.addEventListener('click', () => {
-    
-    const body = document.getElementById('legend-body');
-    const chevron = DB.legendToggleBtn.querySelector('i');
-    if (body && chevron) {
-      const isCollapsed = DB.legend.classList.contains('collapsed');
-      
-      
-      // Toggle the collapsed class on the legend
-      DB.legend.classList.toggle('collapsed', !isCollapsed);
-      
-      // Update the chevron icon
-      chevron.classList.toggle('fa-chevron-up', !isCollapsed);
-      chevron.classList.toggle('fa-chevron-down', isCollapsed);
-      
-      // Force the display style directly
-      if (!isCollapsed) {
-        // If we just collapsed, ensure body is hidden
-        body.style.display = 'none';
-      } else {
-        // If we just expanded, ensure body is visible
-        body.style.display = 'block';
-      }
-      
-      
-      
-      // Store the collapsed state
-      localStorage.setItem('legend_collapsed', !isCollapsed);
-      // Track legend toggle
-      try {
-        const center = window.map && window.map.getCenter ? window.map.getCenter() : null;
-        const payload = {
-          control_id: 'legend-toggle',
-          path: location.pathname,
-          zoom: window.map && window.map.getZoom ? window.map.getZoom() : undefined,
-          center_lat: center ? center.lat() : undefined,
-          center_lng: center ? center.lng() : undefined
-        };
-        fetch('/track/legend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(() => {});
-      } catch {}
-    } else {
-      
-    }
-  });
-  
-  // Check if legend was collapsed previously and restore state
-  const wasCollapsed = localStorage.getItem('legend_collapsed') === 'true';
-  if (wasCollapsed) {
-    const body = document.getElementById('legend-body');
-    const chevron = DB.legendToggleBtn.querySelector('i');
-    if (body && chevron) {
-      DB.legend.classList.add('collapsed');
-      chevron.classList.remove('fa-chevron-up');
-      chevron.classList.add('fa-chevron-down');
-      // Force the body to be hidden
-      body.style.display = 'none';
-    }
-  }
-} else {
-  
-}
+// Toggle button removed - mobile uses drawer, desktop shows full legend
 
 // Reset button in header
 if (DB.legendResetBtn) {
@@ -756,6 +767,191 @@ window.syncSliderVisibility = function() {
   if (window.__TM_DEBUG__) console.log('[map-ui] syncSliderVisibility called with filters:', filters);
   (window.updateFilterUI || function(){ })(filters);
 };
+
+// Dynamic Drawer Height Adjustment
+function initializeDynamicDrawerHeight() {
+  const legend = document.getElementById('legend');
+  const filterPopularAreas = document.getElementById('filter-popular-areas');
+  const filterEvents = document.getElementById('filter-events');
+  
+  if (!legend || !filterPopularAreas || !filterEvents) return;
+  
+  function adjustDrawerHeight() {
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
+    
+    // Reset to auto height to let content determine size
+    legend.style.height = 'auto';
+    
+    // Force a reflow to get accurate measurements
+    legend.offsetHeight;
+    
+    // Get the actual content height
+    const contentHeight = legend.scrollHeight;
+    const footerHeight = 50; // Account for footer space
+    const maxHeight = window.innerHeight - footerHeight - 20; // Leave space for footer and padding
+    
+    // Set height to content size, but cap at max height
+    const finalHeight = Math.min(contentHeight, maxHeight);
+    legend.style.height = finalHeight + 'px';
+
+    // If content exceeds max height, enable scrolling
+    if (contentHeight > maxHeight) {
+      legend.style.overflowY = 'auto';
+    } else {
+      legend.style.overflowY = 'visible';
+    }
+
+    // Let adjustMapHeight handle the map sizing
+    // Just trigger a map height adjustment
+    setTimeout(() => {
+      adjustMapHeight();
+    }, 50);
+
+    console.log('[map-ui] Adjusted drawer height to', finalHeight + 'px', 'content height:', contentHeight, 'max height:', maxHeight, 'footer space:', footerHeight);
+  }
+  
+  // Listen for checkbox changes
+  filterPopularAreas.addEventListener('change', adjustDrawerHeight);
+  filterEvents.addEventListener('change', adjustDrawerHeight);
+
+  // Listen for drawer toggle changes
+  const mobileDrawerHandle = document.getElementById('mobile-drawer-handle');
+  if (mobileDrawerHandle) {
+    mobileDrawerHandle.addEventListener('click', function() {
+      // Wait for the transition to complete before adjusting
+      setTimeout(adjustDrawerHeight, 300);
+    });
+  }
+
+  // Initial adjustment
+  adjustDrawerHeight();
+}
+
+// Mobile Drawer Functionality - Collapsible
+function initializeMobileDrawer() {
+  const legend = document.getElementById('legend');
+  const handle = document.getElementById('mobile-drawer-handle');
+  
+  if (!legend || !handle) return;
+  
+  // Check if we're on mobile
+  const isMobile = window.innerWidth <= 768;
+  
+  if (isMobile) {
+    // Add mobile-specific classes
+    legend.classList.add('mobile-drawer', 'mobile-expanded');
+    
+    // Add click handler to toggle drawer
+    handle.addEventListener('click', () => {
+      toggleMobileDrawer();
+    });
+    
+    // Add touch handler for better mobile experience
+    handle.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      toggleMobileDrawer();
+    });
+    
+    // Initialize map height after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      adjustMapHeight();
+      forceInlineSliders();
+    }, 100);
+    
+    console.log('[map-ui] Mobile drawer initialized with collapse functionality');
+  }
+}
+
+// Toggle mobile drawer between collapsed and expanded
+function toggleMobileDrawer() {
+  const legend = document.getElementById('legend');
+  if (!legend) return;
+  
+  const isCollapsed = legend.classList.contains('mobile-collapsed');
+  
+  if (isCollapsed) {
+    // Expand drawer
+    legend.classList.remove('mobile-collapsed');
+    legend.classList.add('mobile-expanded');
+    console.log('[map-ui] Mobile drawer expanded');
+  } else {
+    // Collapse drawer
+    legend.classList.remove('mobile-expanded');
+    legend.classList.add('mobile-collapsed');
+    console.log('[map-ui] Mobile drawer collapsed');
+  }
+  
+  // Adjust map height after drawer state change
+  adjustMapHeight();
+  
+  // Force sliders to stay inline on mobile
+  forceInlineSliders();
+}
+
+// Force sliders to stay inline on mobile
+function forceInlineSliders() {
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) return;
+  
+  const heatmapContainer = document.getElementById('heatmap-days-slider-container');
+  const eventContainer = document.getElementById('event-days-slider-container');
+  
+  console.log('[map-ui] forceInlineSliders called', {
+    isMobile,
+    heatmapContainer: !!heatmapContainer,
+    eventContainer: !!eventContainer,
+    heatmapDisplay: heatmapContainer ? heatmapContainer.style.display : 'not found',
+    eventDisplay: eventContainer ? eventContainer.style.display : 'not found'
+  });
+  
+  if (heatmapContainer) {
+    heatmapContainer.style.display = 'flex';
+    heatmapContainer.style.flexDirection = 'row';
+    console.log('[map-ui] Set heatmap container to flex');
+  }
+  
+  if (eventContainer) {
+    eventContainer.style.display = 'flex';
+    eventContainer.style.flexDirection = 'row';
+    console.log('[map-ui] Set event container to flex');
+  }
+}
+
+// Adjust map height based on drawer state
+function adjustMapHeight() {
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) return; // Only adjust on mobile
+  
+  const legend = document.getElementById('legend');
+  const map = document.getElementById('map');
+  
+  if (!legend || !map) return;
+  
+  const isCollapsed = legend.classList.contains('mobile-collapsed');
+  
+  if (isCollapsed) {
+    // Collapsed: map gets almost full height
+    const collapsedHeight = window.innerHeight - 20 - 50; // 20px drawer + 50px footer
+    map.style.height = collapsedHeight + 'px';
+    map.style.maxHeight = collapsedHeight + 'px';
+    console.log('[map-ui] Map height adjusted for collapsed drawer:', collapsedHeight + 'px');
+  } else {
+    // Expanded: map gets reduced height
+    const legendHeight = legend.offsetHeight;
+    const expandedHeight = window.innerHeight - legendHeight - 50; // legend height + 50px footer
+    map.style.height = expandedHeight + 'px';
+    map.style.maxHeight = expandedHeight + 'px';
+    console.log('[map-ui] Map height adjusted for expanded drawer:', expandedHeight + 'px');
+  }
+  
+  // Trigger map resize to ensure proper rendering (but not if info window is open)
+  if (window.map && typeof window.map.panToBounds === 'function' && !window.currentOpenMarker) {
+    setTimeout(() => {
+      google.maps.event.trigger(window.map, 'resize');
+    }, 100);
+  }
+}
 
 // Don't auto-initialize - let map-init.js handle it
 // if (document.readyState === 'loading') {

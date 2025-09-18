@@ -333,14 +333,14 @@ export class MarkerManager {
             
             let marker;
             if (type === 'retailer') {
-                marker = createRetailerMarker(null, data); // Don't add to map yet
+                marker = createRetailerMarker(this.map, data); // Pass the map instance
                 // Store additional data for filtering compatibility
                 if (marker) {
                     marker.retailer_type = data.retailer_type || '';
                     marker.retailer_data = data;
                 }
             } else if (type === 'event') {
-                marker = createEventMarker(null, data); // Don't add to map yet
+                marker = createEventMarker(this.map, data); // Pass the map instance
                 // Store additional data for filtering compatibility
                 if (marker) {
                     marker.event_title = data.event_title || '';
@@ -426,6 +426,9 @@ export class MarkerManager {
                 // Only add to map if not already visible
                 if (!this.visibleMarkers.has(marker)) {
                     marker.setMap(this.map);
+                    if (window.__TM_DEBUG__) {
+                        console.log('[markerManager] Marker added to map:', marker.title || 'Unknown');
+                    }
                     shown++;
                 }
             } else if (shouldShow) {

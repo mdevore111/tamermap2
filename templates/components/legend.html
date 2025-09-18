@@ -1,16 +1,15 @@
 <!-- Updated Legend: Integrated header with toggle button -->
 <div id="legend">
+  <!-- Mobile Drawer Toggle Handle -->
+  <div id="mobile-drawer-handle" class="mobile-drawer-handle">
+    <div class="handle-bar"></div>
+  </div>
   <div id="legend-header">
     <h3 style="margin: 0;">Legend</h3>
     <div class="legend-header-controls">
       <div class="toggle-button-container" id="reset-button-container">
         <button id="legend-reset" aria-label="Reset Filters" data-bs-toggle="tooltip" data-bs-placement="top" title="Reset Filters">
           <i class="fas fa-redo-alt"></i>
-        </button>
-      </div>
-      <div class="toggle-button-container">
-        <button id="legend-toggle" aria-label="Toggle Legend" data-bs-toggle="tooltip" data-bs-placement="top">
-          <i class="fas fa-chevron-up"></i>
         </button>
       </div>
     </div>
@@ -24,10 +23,10 @@
 
     <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of kiosk locations.">
       <input type="checkbox" id="filter-kiosk" checked> 🤖 Kiosks
-    </label><br>
+    </label>
     
     <!-- Pro Features Section with darker background -->
-    <div id="pro-features-section" style="background-color: #e9ecef; border-radius: 6px; padding: 4px 4px; margin: 2px 0; position: relative;" 
+    <div id="pro-features-section" style="background-color: #e9ecef; border-radius: 5px; padding: 4px 0px 4px 5px; margin: 2px -5px; position: relative;" 
          data-pro-section="true" data-is-pro="{{ is_pro|tojson }}">
       <!-- Pro Badge in upper-right corner -->
       <div style="position: absolute; top: 4px; right: 4px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.5px; z-index: 1;">Pro</div>
@@ -36,65 +35,51 @@
         <input type="checkbox" id="filter-retail"
                {% if is_pro %}checked{% endif %}>
          🏬 Retail Stores
-      </label><br>
+      </label>
       <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle display of independent store locations.">
         <input type="checkbox" id="filter-indie"
                {% if is_pro %}checked{% endif %}>
          🤓 Indie Stores
       </label>
-      <br>
       <label data-bs-toggle="tooltip" data-bs-placement="right" title="Only show locations that are currently open.">
         <input type="checkbox" id="filter-open-now">
          ⏰ Open Now
       </label>
-      <br>
       <label data-bs-toggle="tooltip" data-bs-placement="right" title="Only show new kiosks or stores.">
         <input type="checkbox" id="filter-new">
          🌟 New Locations
       </label>
-      <br>
       <label data-bs-toggle="tooltip" data-bs-placement="right" title="Show a heat map of popular locations.">
         <input type="checkbox" id="filter-popular-areas">
-        🔥 Popular Areas
-      </label>
-      
-      <!-- Heatmap Time Range Slider - only visible when popular areas checkbox is checked -->
-      <div id="heatmap-days-slider-container" style="display: none; margin: 5px 0 8px 20px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 12px; padding-right: 10px;">
-          <span>1 day</span>
-          <span id="heatmap-days-value">60 days</span>
-          <span>90 days</span>
+        <span>🔥 Heatmap</span>
+        <!-- Heatmap Time Range Slider - inline on mobile -->
+        <div id="heatmap-days-slider-container" style="display: none; margin-left: 12px; flex-direction: row; align-items: center;">
+          <input type="range" id="heatmap-days-slider" min="1" max="90" value="60"
+                 class="form-range custom-range-slider"
+                 style="width: 180px; margin: 0;" 
+                 data-bs-toggle="tooltip" data-bs-placement="right" 
+                 title="Adjust heatmap time range (1-90 days)">
+          <span id="heatmap-days-value" style="margin-left: 8px; font-size: 10px; color: #666;">60 days</span>
         </div>
-           <input type="range" id="heatmap-days-slider" min="1" max="90" value="60"
-               class="form-range custom-range-slider"
-               style="width: 95%; margin: 0;" 
-               data-bs-toggle="tooltip" data-bs-placement="right" 
-               title="Adjust heatmap time range (1-90 days)">
-      </div>
-      <br>
+      </label>
       <label data-bs-toggle="tooltip" data-bs-placement="right" title="Toggle upcoming events">
-      <input type="checkbox" id="filter-events">
-         📅 Events
-      </label>
-      
-      <!-- Events Day Range Slider - only visible when events checkbox is checked -->
-      <div id="event-days-slider-container" style="display: none; margin: 5px 0 8px 20px;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 12px; padding-right: 10px;">
-          <span>1 day</span>
-          <span id="event-days-value">30 days</span>
-          <span>60 days</span>
+        <input type="checkbox" id="filter-events">
+        <span>📅 Events</span>
+        <!-- Events Day Range Slider - inline on mobile -->
+        <div id="event-days-slider-container" style="display: none; margin-left: 20px; flex-direction: row; align-items: center;">
+          <input type="range" id="event-days-slider" 
+                 min="1" max="60" value="30" step="1" 
+                 class="form-range custom-range-slider" 
+                 style="width: 180px;"
+                 data-bs-toggle="tooltip" 
+                 data-bs-placement="right" 
+                 title="Filter events by days in the future">
+          <span id="event-days-value" style="margin-left: 8px; font-size: 10px; color: #666;">30 days</span>
         </div>
-        <input type="range" id="event-days-slider" 
-               min="1" max="60" value="30" step="1" 
-               class="form-range custom-range-slider" 
-               style="width: 95%;"
-               data-bs-toggle="tooltip" 
-               data-bs-placement="right" 
-               title="Filter events by days in the future">
-      </div>
+      </label>
 
       <!-- Route Planning Section -->
-      <div id="route-planning-section">
+      <div id="route-planning-section" style="padding-left: 0px; padding-right: 5px;">
         <button class="route-planning-btn" id="plan-route-btn" 
                 data-bs-toggle="tooltip" 
                 data-bs-placement="right" 

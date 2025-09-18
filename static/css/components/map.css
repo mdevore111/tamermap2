@@ -34,7 +34,18 @@ html, body {
 }
 
 .gm-style > div:nth-of-type(2) {
-  z-index: 9000 !important; /* InfoWindow container */
+  z-index: 9999 !important; /* InfoWindow container - higher than mobile drawer */
+}
+
+/* Ensure InfoWindow content is visible and not clipped */
+.gm-style-iw {
+  z-index: 9999 !important;
+  position: relative !important;
+}
+
+.gm-style-iw-c {
+  z-index: 9999 !important;
+  position: relative !important;
 }
 
 /* Ensure proper stacking context for Google Maps elements */
@@ -53,10 +64,121 @@ html, body {
 
 /* Removed device-specific #map height override. The map fills via flex container. */
 
+/* Map Controls - Desktop and General */
 /* Ensure zoom controls are above footer */
 .gm-style .gm-control-active.gm-zoom-in,
 .gm-style .gm-control-active.gm-zoom-out {
     z-index: 1000 !important;
+}
+
+/* Improve My Location button positioning on desktop - Google Maps style */
+.my-location-button {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 1000 !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 2px !important;
+    box-sizing: border-box !important;
+    background-color: #fff !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+    cursor: pointer !important;
+    transition: background-color 0.2s !important;
+}
+
+/* Ensure Google Maps controls are positioned correctly */
+.gm-style .gm-control-active {
+    z-index: 1000 !important;
+}
+
+.my-location-button:hover {
+    background-color: #f5f5f5 !important;
+}
+
+.my-location-button:active {
+    background-color: #e0e0e0 !important;
+}
+
+/* Ensure SVG icon renders properly */
+.my-location-button svg {
+    width: 18px !important;
+    height: 18px !important;
+    display: block !important;
+}
+
+/* Hide Google Maps default zoom controls */
+.gm-style .gm-control-active.gm-zoom-in,
+.gm-style .gm-control-active.gm-zoom-out {
+    display: none !important;
+}
+
+/* Hide any other Google Maps zoom controls */
+.gm-style .gmnoprint,
+.gm-style .gm-style-cc {
+    display: none !important;
+}
+
+/* Allow InfoWindow content to be visible */
+.gm-style .gm-style-iw {
+    display: block !important;
+}
+
+/* Custom Zoom Controls - Google Maps style */
+.custom-zoom-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    z-index: 1000;
+    margin: 0 !important;
+}
+
+.custom-zoom-button {
+    width: 40px;
+    height: 40px;
+    background-color: #fff;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: background-color 0.2s;
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+/* Add divider line between zoom buttons */
+.custom-zoom-button:first-child::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+}
+
+.custom-zoom-button:hover {
+    background-color: #f5f5f5;
+}
+
+.custom-zoom-button:active {
+    background-color: #e0e0e0;
+}
+
+.custom-zoom-button svg {
+    width: 18px;
+    height: 18px;
+    color: #333;
 }
 
 /* Hide zoom buttons on mobile devices only */

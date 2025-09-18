@@ -10,7 +10,7 @@
   display: block !important;
   visibility: visible !important;
   box-sizing: border-box;
-  z-index: 1000 !important;
+  z-index: 500 !important; /* Lower than InfoWindow */
 }
 
 @media only screen and (min-width: 769px) {
@@ -36,16 +36,7 @@
   width: 100%; /* Ensure header takes full width of legend */
 }
 
-/* When collapsed, reduce width but ensure buttons fit */
-#legend.collapsed {
-  display: block !important;
-  min-width: 140px; /* Increased from 120px to ensure buttons fit */
-}
-
-/* When expanded, ensure there's enough width */
-#legend:not(.collapsed) {
-  min-width: 180px; /* Increased from 168px to match container */
-}
+/* Collapse functionality removed - using mobile drawer instead */
 
 /* Group legend header controls (reset and toggle buttons) */
 .legend-header-controls {
@@ -68,13 +59,9 @@
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-/* Only show reset button when legend is expanded */
-#legend.collapsed #reset-button-container {
-  display: none;
-}
+/* Reset button always visible - no collapse functionality */
 
-/* Styling for the toggle button and reset button */
-#legend-toggle,
+/* Styling for the reset button */
 #legend-reset {
   background: none;
   border: none;
@@ -86,26 +73,29 @@
   justify-content: center;
 }
 
-/* Keep header styling the same whether collapsed or not */
-#legend.collapsed #legend-header {
-  display: flex !important;
-  /* Do not change the border here so that the header remains consistent */
-}
-
-/* Legend Body: visible by default */
+/* Legend Body: always visible */
 #legend #legend-body {
-  padding: 10px;
+  padding: 8px 10px 10px 10px; /* Reduced padding */
   display: block;
 }
 
-/* When the legend is collapsed, ONLY hide the legend-body */
-#legend.collapsed #legend-body {
-  display: none !important;
+/* Ensure all checkbox labels are on separate lines */
+#legend #legend-body label {
+  display: block !important;
+  margin-bottom: 2px !important;
 }
 
-/* Ensure collapsed class doesn't hide the container */
-#legend.collapsed {
-  display: block !important;
+/* Override mobile drawer layout for desktop */
+@media only screen and (min-width: 769px) {
+  #legend #legend-body label {
+    display: block !important;
+    width: 100% !important;
+  }
+}
+
+/* Hide mobile drawer handle on desktop */
+.mobile-drawer-handle {
+  display: none;
 }
 
 /* Add extra spacing above the legend search container */
@@ -186,8 +176,8 @@
 
 /* Route Planning Section */
 #route-planning-section {
-  margin-top: 8px;
-  padding-top: 5px;
+  margin-top: 4px;  /* Reduced from 8px */
+  padding-top: 2px; /* Reduced from 5px */
 }
 
 .route-planning-btn {

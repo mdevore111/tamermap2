@@ -2,6 +2,26 @@
 @media only screen and (max-width: 768px) {
   /* Only handle UI positioning - let base.css handle main layout */
   
+  /* Fix scrolling wiggle by ensuring exact viewport height */
+  html, body {
+    height: 100vh !important;
+    height: 100dvh !important; /* Use dynamic viewport height for mobile */
+    overflow-x: hidden !important;
+    overflow-y: hidden !important; /* Prevent body scrolling */
+  }
+  
+  /* Position footer above the drawer */
+  #footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1001 !important; /* Above drawer */
+    margin: 0 !important;
+    background: #007bff !important; /* Ensure footer has background */
+    height: 50px !important; /* Increased height for footer */
+  }
+  
   /* Optimize map rendering for mobile to prevent blinking */
   #map {
     backface-visibility: hidden !important; /* Prevent flickering during transforms */
@@ -28,18 +48,192 @@
     visibility: visible !important;
   }
   
-  /* Adjust legend positioning for mobile - auto-size to content width */
+  /* Mobile Legend Drawer - Bottom Sheet Style */
   #legend {
-    position: absolute !important;
-    top: 70px !important; /* Position below search bar */
-    left: 10px !important;
-    width: fit-content !important; /* Auto-size to content width */
-    max-width: calc(100vw - 20px) !important; /* Don't exceed screen width minus padding */
-    max-height: 60% !important; /* Increased height limit for better content visibility */
-    overflow-y: auto !important; /* Allow scrolling if legend is too tall */
+    position: fixed !important;
+    bottom: 50px !important; /* Right above footer with no gap */
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important; /* Let content determine height */
+    min-height: 60px !important; /* Minimum height for collapsed state */
+    max-height: 80vh !important; /* Maximum height before scrolling */
+    z-index: 500 !important; /* Lower than InfoWindow */
     display: block !important;
-    visibility: visible !important;
-    z-index: 1000 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 12px 12px 0 0 !important; /* Rounded top corners only */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
+    font-size: 14px !important;
+    overflow-y: visible !important; /* No scrolling - show all content */
+    transform: translateY(0) !important; /* Start visible by default */
+    transition: height 0.3s ease-in-out !important;
+  }
+
+  /* Ensure map doesn't get covered by drawer */
+  #map {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  
+  /* Mobile Drawer Handle */
+  .mobile-drawer-handle {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 2px 0 !important;
+    cursor: pointer !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+  
+  .handle-bar {
+    width: 40px !important;
+    height: 4px !important;
+    background: #ccc !important;
+    border-radius: 2px !important;
+    transition: background-color 0.2s ease !important;
+  }
+  
+  .mobile-drawer-handle:hover .handle-bar {
+    background: #999 !important;
+  }
+  
+  /* Collapsed state - only show handle */
+  #legend.mobile-collapsed {
+    height: 20px !important;
+    min-height: 20px !important;
+    overflow: hidden !important;
+  }
+  
+  #legend.mobile-collapsed #legend-body {
+    display: none !important;
+  }
+  
+  #legend.mobile-collapsed #legend-header {
+    display: none !important;
+  }
+  
+  /* Expanded state - show full content */
+  #legend.mobile-expanded {
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+  
+  #legend.mobile-expanded #legend-body {
+    display: block !important;
+  }
+  
+  /* Horizontal slider layout for mobile - FORCE inline layout */
+  #legend.mobile-drawer label {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    margin-bottom: 2px !important; /* Reduced from 4px to match Popular Areas/Events */
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+  }
+  
+  /* Reduce spacing between all checkboxes to match Popular Areas/Events */
+  #legend.mobile-drawer label + br {
+    display: none !important; /* Remove line breaks */
+  }
+  
+  #legend.mobile-drawer label input[type="checkbox"] {
+    margin-right: 8px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Slider containers - FORCE inline display */
+  #heatmap-days-slider-container,
+  #event-days-slider-container {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    width: auto !important;
+  }
+  
+  /* Force spacing between labels and sliders */
+  #legend.mobile-drawer #heatmap-days-slider-container {
+    margin-left: 12px !important;
+  }
+  
+  #legend.mobile-drawer #event-days-slider-container {
+    margin-left: 24px !important;
+  }
+  
+  #heatmap-days-slider-container .custom-range-slider,
+  #event-days-slider-container .custom-range-slider {
+    width: 180px !important; /* Even longer sliders - increased from 160px */
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Override any conflicting styles that might cause vertical layout */
+  #legend.mobile-drawer #heatmap-days-slider-container,
+  #legend.mobile-drawer #event-days-slider-container {
+    display: flex !important;
+    flex-direction: row !important;
+  }
+  
+  /* Ensure sliders stay inline even when visible */
+  #legend.mobile-drawer #heatmap-days-slider-container[style*="display: block"],
+  #legend.mobile-drawer #event-days-slider-container[style*="display: block"] {
+    display: flex !important;
+  }
+
+  /* Heatmap and events labels are now handled by JavaScript for better compatibility */
+  
+  /* Mobile Map Controls Positioning */
+  /* Move My Location button to top-right to avoid drawer interference */
+  .my-location-button {
+    position: fixed !important;
+    top: 80px !important; /* Below search bar */
+    right: 10px !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    padding: 0 !important; /* Remove padding for square button */
+    z-index: 1001 !important; /* Above legend drawer */
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+  }
+  
+  .my-location-button svg {
+    width: 16px !important; /* Smaller icon */
+    height: 16px !important;
+    display: block !important;
+  }
+  
+  /* Hide all zoom controls on mobile (use pinch-to-zoom) */
+  .gm-style .gm-control-active.gm-zoom-in,
+  .gm-style .gm-control-active.gm-zoom-out {
+    display: none !important;
+  }
+  
+  /* Hide custom zoom controls on mobile */
+  .custom-zoom-container {
+    display: none !important;
+  }
+  
+  /* Show mobile drawer handle only on mobile */
+  .mobile-drawer-handle {
+    display: flex !important;
+  }
+  
+  /* My Location button is repositioned in mobile.css above */
+  
+  /* Hide any other Google Maps controls that might interfere */
+  .gm-style .gmnoprint {
+    display: none !important;
   }
   
   /* Portrait orientation adjustments for phones */

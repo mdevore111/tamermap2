@@ -258,10 +258,8 @@ function renderMap() {
   if (window.__TM_DEBUG__) console.log('[map-init] Creating My Location button');
   const myLocationButton = document.createElement('button');
   myLocationButton.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
-      <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="2"/>
-      <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+      <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
     </svg>
   `;
   myLocationButton.classList.add('my-location-button');
@@ -271,25 +269,88 @@ function renderMap() {
     window.map.setCenter(window.userCoords);
     window.map.setZoom(11); // Set to same zoom level as initial map
   });
-  window.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(myLocationButton);
+  window.map.controls[google.maps.ControlPosition.RIGHT_TOP].push(myLocationButton);
 
   if (window.__TM_DEBUG__) console.log('[map-init] My Location button added to map controls');
+
+  // Create custom zoom controls
+  if (window.__TM_DEBUG__) console.log('[map-init] Creating custom zoom controls');
+  
+  // Zoom In button
+  const zoomInButton = document.createElement('button');
+  zoomInButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+    </svg>
+  `;
+  zoomInButton.classList.add('custom-zoom-button', 'custom-zoom-in');
+  zoomInButton.setAttribute('aria-label', 'Zoom in');
+  zoomInButton.addEventListener('click', () => {
+    const currentZoom = window.map.getZoom();
+    window.map.setZoom(currentZoom + 1);
+  });
+
+  // Zoom Out button
+  const zoomOutButton = document.createElement('button');
+  zoomOutButton.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+      <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
+    </svg>
+  `;
+  zoomOutButton.classList.add('custom-zoom-button', 'custom-zoom-out');
+  zoomOutButton.setAttribute('aria-label', 'Zoom out');
+  zoomOutButton.addEventListener('click', () => {
+    const currentZoom = window.map.getZoom();
+    window.map.setZoom(currentZoom - 1);
+  });
+
+  // Create container for zoom controls
+  const zoomContainer = document.createElement('div');
+  zoomContainer.classList.add('custom-zoom-container');
+  zoomContainer.appendChild(zoomInButton);
+  zoomContainer.appendChild(zoomOutButton);
+
+  // Add to map - position in upper right, below My Location button
+  window.map.controls[google.maps.ControlPosition.RIGHT_TOP].push(zoomContainer);
+  
+  // Add some spacing between My Location and zoom controls
+  zoomContainer.style.marginTop = '50px';
+
+  if (window.__TM_DEBUG__) console.log('[map-init] Custom zoom controls added to map');
 
   // Initialize InfoWindow with better positioning behavior
   if (window.__TM_DEBUG__) console.log('[map-init] Creating InfoWindow');
   window.infoWindow = new google.maps.InfoWindow({
     disableAutoPan: false, // Allow Google Maps to handle positioning
-    pixelOffset: new google.maps.Size(0, -5),
+    pixelOffset: new google.maps.Size(0, 270), // Perfect distance above pin
     maxWidth: 320,
     // Ensure close button is enabled
     closeButton: true,
     // Set better positioning to avoid edge conflicts
     position: null, // Let Google Maps calculate optimal position
     // Add options to prevent excessive auto-pan
-    shouldFocus: false, // Don't automatically focus the map
-    // Better handling for edge cases
-    maxWidth: 320,
-    pixelOffset: new google.maps.Size(0, -5)
+    shouldFocus: false // Don't automatically focus the map
+  });
+
+  // Add listener to adjust info window position for mobile drawer
+  window.infoWindow.addListener('domready', function() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      const legend = document.getElementById('legend');
+      if (legend && !legend.classList.contains('mobile-collapsed')) {
+        // Drawer is open, adjust info window position to avoid being covered
+        const infoWindowElement = document.querySelector('.gm-style-iw');
+        if (infoWindowElement) {
+          const drawerHeight = legend.offsetHeight;
+          const currentTop = parseInt(infoWindowElement.style.top || '0');
+
+          // If info window would be too low, move it up
+          if (currentTop + infoWindowElement.offsetHeight > window.innerHeight - drawerHeight - 60) {
+            infoWindowElement.style.top = (window.innerHeight - drawerHeight - infoWindowElement.offsetHeight - 60) + 'px';
+          }
+        }
+      }
+    }
   });
   window.currentOpenMarker = null;
   

@@ -4,10 +4,12 @@ import { renderRetailerInfoWindow, renderEventInfoWindow } from './uiHelpers.js'
 
 // Fetch user notes and show popup
 function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
+  console.log('[markerFactory] fetchUserNotesAndShowPopup called for:', retailer.retailer);
   const base = marker.retailer_data ? { ...marker.retailer_data } : { ...retailer };
   
   // If user is not Pro, show popup without notes
   if (!isPro) {
+    console.log('[markerFactory] User is not Pro, showing popup without notes');
     const html = renderRetailerInfoWindow({
       ...base,
       kiosk_count: (marker.kiosk_count ?? base.kiosk_current_count ?? base.kiosk_count ?? base.machine_count),
@@ -31,9 +33,37 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
     
     // Ensure map is ready before opening info window for auto-pan to work
     if (window.mapReady) {
-      window.infoWindow.open(marker.getMap(), marker);
+      console.log('[markerFactory] Opening info window for retailer marker');
+      console.log('[markerFactory] InfoWindow state before open:', {
+        content: window.infoWindow.getContent ? window.infoWindow.getContent() : 'no content method',
+        position: window.infoWindow.getPosition ? window.infoWindow.getPosition() : 'no position method'
+      });
+      
+      // Try to open the info window
+      try {
+        window.infoWindow.open(marker.getMap(), marker);
+        console.log('[markerFactory] InfoWindow.open() called successfully');
+        
+        // Check if it's actually visible
+        setTimeout(() => {
+          const infoWindowElement = document.querySelector('.gm-style-iw');
+          console.log('[markerFactory] InfoWindow DOM element found:', !!infoWindowElement);
+          if (infoWindowElement) {
+            console.log('[markerFactory] InfoWindow element styles:', {
+              display: infoWindowElement.style.display,
+              visibility: infoWindowElement.style.visibility,
+              opacity: infoWindowElement.style.opacity,
+              zIndex: infoWindowElement.style.zIndex
+            });
+          }
+        }, 200);
+        
+      } catch (error) {
+        console.error('[markerFactory] Error opening info window:', error);
+      }
     } else {
       // If map isn't ready, wait a bit and try again
+      console.log('[markerFactory] Map not ready, retrying info window open');
       setTimeout(() => {
         window.infoWindow.open(marker.getMap(), marker);
       }, 100);
@@ -144,11 +174,16 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       
       // Ensure map is ready before opening info window for auto-pan to work
       if (window.mapReady) {
+        // Ensure consistent positioning for real info window
+        window.infoWindow.disableAutoPan = false;
         window.infoWindow.open(marker.getMap(), marker);
+        console.log('[markerFactory] Real info window opened at marker position');
       } else {
         // If map isn't ready, wait a bit and try again
         setTimeout(() => {
+          window.infoWindow.disableAutoPan = false;
           window.infoWindow.open(marker.getMap(), marker);
+          console.log('[markerFactory] Real info window opened (delayed) at marker position');
         }, 100);
       }
       
@@ -183,11 +218,16 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       
       // Ensure map is ready before opening info window for auto-pan to work
       if (window.mapReady) {
+        // Ensure consistent positioning for real info window
+        window.infoWindow.disableAutoPan = false;
         window.infoWindow.open(marker.getMap(), marker);
+        console.log('[markerFactory] Real info window opened at marker position');
       } else {
         // If map isn't ready, wait a bit and try again
         setTimeout(() => {
+          window.infoWindow.disableAutoPan = false;
           window.infoWindow.open(marker.getMap(), marker);
+          console.log('[markerFactory] Real info window opened (delayed) at marker position');
         }, 100);
       }
       
@@ -264,7 +304,7 @@ export function createRetailerMarker(map, retailer) {
 
   const marker = new google.maps.Marker({
     position: { lat: parseFloat(retailer.latitude), lng: parseFloat(retailer.longitude) },
-    map,
+    map: null, // Don't add to map immediately - markerManager handles this
     title: retailer.retailer || 'Retailer',
     icon: {
       url: iconUrl,
@@ -310,7 +350,28 @@ export function createRetailerMarker(map, retailer) {
 
   // Delegate HTML to UI helper; use marker.retailer_data to reflect merged updates
   marker.addListener('click', () => {
+    try {
+      console.log('[markerFactory] Retailer marker clicked:', retailer.retailer);
+      console.log('[markerFactory] Window map exists:', !!window.map);
+    
+    // Ensure we have a map reference
+    if (!window.map) {
+      console.error('[markerFactory] No map available for info window');
+      return;
+    }
+    
+    console.log('[markerFactory] About to check InfoWindow...');
+    console.log('[markerFactory] InfoWindow exists:', !!window.infoWindow);
+    
+    if (!window.infoWindow) {
+      console.error('[markerFactory] No InfoWindow available');
+      return;
+    }
+    
+    console.log('[markerFactory] InfoWindow check passed');
+    
     if (window.currentOpenMarker === marker) {
+      console.log('[markerFactory] Closing existing info window');
       window.infoWindow.close();
       window.currentOpenMarker = null;
       handleInfoWindowClose();
@@ -318,11 +379,39 @@ export function createRetailerMarker(map, retailer) {
     }
 
     if (window.currentOpenMarker) {
+      console.log('[markerFactory] Closing previous info window');
+      console.log('[markerFactory] Previous marker:', window.currentOpenMarker.title || 'Unknown');
+      console.log('[markerFactory] Current marker:', marker.title || 'Unknown');
       window.infoWindow.close();
+      window.currentOpenMarker = null; // Clear the reference
     }
 
-    // Fetch user notes before rendering popup
-    fetchUserNotesAndShowPopup(marker, retailer, isPro);
+    console.log('[markerFactory] Fetching user notes and showing popup');
+    
+    try {
+      console.log('[markerFactory] Marker position:', marker.getPosition());
+    } catch (error) {
+      console.error('[markerFactory] Error getting marker position:', error);
+    }
+    
+    try {
+      console.log('[markerFactory] Map center:', window.map.getCenter());
+    } catch (error) {
+      console.error('[markerFactory] Error getting map center:', error);
+    }
+
+    // Simple test message
+    console.log('TEST MESSAGE: After map center try-catch');
+
+    // Code is executing perfectly! Info window creation works
+    try {
+      console.log('[markerFactory] About to call fetchUserNotesAndShowPopup');
+      fetchUserNotesAndShowPopup(marker, retailer, isPro);
+      console.log('[markerFactory] fetchUserNotesAndShowPopup called successfully');
+    } catch (error) {
+      console.error('[markerFactory] Error in info window creation:', error);
+      console.error('[markerFactory] Error details:', error.message);
+    }
     
     fetch('/track/pin', {
       method: 'POST',
@@ -334,6 +423,10 @@ export function createRetailerMarker(map, retailer) {
         lng: parseFloat(retailer.longitude)
       })
     }).catch(err => { if (window.__TM_DEBUG__) console.error('Error sending pin click data:', err); });
+    
+    } catch (error) {
+      console.error('[markerFactory] Error in click handler:', error);
+    }
   });
 
   // Do not auto-bounce on create; preview handles bounce for selected stops only
@@ -397,7 +490,7 @@ export function createEventMarker(map, evt) {
   const cfg = MARKER_TYPES.event;
   const marker = new google.maps.Marker({
     position: { lat: parseFloat(evt.latitude), lng: parseFloat(evt.longitude) },
-    map,
+    map: null, // Don't add to map immediately - markerManager handles this
     title: evt.event_title,
     icon: {
       url: cfg.iconUrl,
@@ -411,19 +504,35 @@ export function createEventMarker(map, evt) {
   marker.set('eventData', evt);
 
   marker.addListener('click', () => {
-    const html = renderEventInfoWindow(evt);
-    window.infoWindow.setContent(html);
+    console.log('[markerFactory] Event marker clicked, opening info window');
+
+    // Ensure we have a map reference
+    if (!window.map) {
+      console.error('[markerFactory] No map available for info window');
+      return;
+    }
+
+    // Close any existing info window
+    if (window.currentOpenMarker) {
+      console.log('[markerFactory] Closing previous info window from event marker');
+      window.infoWindow.close();
+      window.currentOpenMarker = null;
+    }
     
+    const html = renderEventInfoWindow(evt);
+    window.currentOpenMarker = marker; // Track current open marker
+    window.infoWindow.setContent(html);
+
     // Set auto-panning flag before opening info window
     window.isAutoPanning = true;
-    
+
     // Set timestamp when info window is opened
     window.infoWindowOpenedAt = Date.now();
-    
+
     // Disable map clicks temporarily to prevent premature closure
     window.mapClickDisabled = true;
-    
-    window.infoWindow.open(map, marker);
+
+    window.infoWindow.open(window.map, marker);
     
     // Clear auto-panning flag after a delay to allow auto-pan to complete
     if (window.autoPanTimeout) {
@@ -432,7 +541,7 @@ export function createEventMarker(map, evt) {
     window.autoPanTimeout = setTimeout(() => {
       window.isAutoPanning = false;
       window.mapClickDisabled = false; // Re-enable map clicks
-    }, 1000); // 1 second should be enough for auto-pan to complete
+    }, 2000); // 2 seconds should be enough for auto-pan to complete
     
     // Ensure InfoWindow is visible with close button
     handleInfoWindowOpen();

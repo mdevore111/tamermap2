@@ -1,6 +1,12 @@
 // Main initialization function that will be called by Google Maps
+// DISABLED - Using map-core.js instead to prevent duplicate controls
 function initMap() {
-    
+    console.log('[map-simple] initMap called but disabled - using map-core.js instead');
+    return;
+}
+
+// DISABLE ALL FUNCTIONALITY TO PREVENT DUPLICATE CONTROLS
+return;
     
     // Initialize MapConfig first
     if (typeof initMapConfig === 'function') {
