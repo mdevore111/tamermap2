@@ -18,7 +18,7 @@ function releaseAfterAutoPan() {
       window.autoPanReleaseTimer = setTimeout(() => {
         window.isAutoPanning = false;
         window.mapClickDisabled = false;
-      }, 1200);
+      }, 1700);
       return;
     }
 
@@ -40,7 +40,7 @@ function releaseAfterAutoPan() {
           window.google.maps.event.removeListener(window.autoPanIdleListener);
           window.autoPanIdleListener = null;
         }
-      }, 200);
+      }, 300);
     });
 
     // Fallback: if idle never fires
@@ -51,7 +51,7 @@ function releaseAfterAutoPan() {
         window.google.maps.event.removeListener(window.autoPanIdleListener);
         window.autoPanIdleListener = null;
       }
-    }, 1500);
+    }, 2200);
   } catch (e) {
     // Worst-case release quickly
     setTimeout(() => {
@@ -138,7 +138,7 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       
       if (!centerChanged) {
         // No meaningful pan; release sooner
-        setTimeout(() => { window.isAutoPanning = false; window.mapClickDisabled = false; }, 300);
+        setTimeout(() => { window.isAutoPanning = false; window.mapClickDisabled = false; }, 500);
       }
     }, 200); // Check after 200ms to give auto-pan more time to start
     

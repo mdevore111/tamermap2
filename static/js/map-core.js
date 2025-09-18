@@ -606,7 +606,7 @@ function refreshHeatmapData(days) {
     const now = Date.now();
     const timeSinceInfoWindowOpened = now - window.infoWindowOpenedAt;
     const isMobile = window.innerWidth <= 768;
-    const minDelay = isMobile ? 900 : 300; // allow more time on mobile for auto-pan to complete
+    const minDelay = isMobile ? 1200 : 300; // allow more time on mobile for longer auto-pans
     
     // Only close info window if it's a genuine click, not a drag end, and enough time has passed
     if (!window.isDragging && !window.isAutoPanning && !window.mapClickDisabled && timeSinceInfoWindowOpened > minDelay) {
