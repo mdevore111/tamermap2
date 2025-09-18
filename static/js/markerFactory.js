@@ -175,13 +175,13 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       // Ensure map is ready before opening info window for auto-pan to work
       if (window.mapReady) {
         // Ensure consistent positioning for real info window
-        window.infoWindow.disableAutoPan = false;
+        window.infoWindow.setOptions({ disableAutoPan: false });
         window.infoWindow.open(marker.getMap(), marker);
         console.log('[markerFactory] Real info window opened at marker position');
       } else {
         // If map isn't ready, wait a bit and try again
         setTimeout(() => {
-          window.infoWindow.disableAutoPan = false;
+          window.infoWindow.setOptions({ disableAutoPan: false });
           window.infoWindow.open(marker.getMap(), marker);
           console.log('[markerFactory] Real info window opened (delayed) at marker position');
         }, 100);
@@ -219,13 +219,13 @@ function fetchUserNotesAndShowPopup(marker, retailer, isPro) {
       // Ensure map is ready before opening info window for auto-pan to work
       if (window.mapReady) {
         // Ensure consistent positioning for real info window
-        window.infoWindow.disableAutoPan = false;
+        window.infoWindow.setOptions({ disableAutoPan: false });
         window.infoWindow.open(marker.getMap(), marker);
         console.log('[markerFactory] Real info window opened at marker position');
       } else {
         // If map isn't ready, wait a bit and try again
         setTimeout(() => {
-          window.infoWindow.disableAutoPan = false;
+          window.infoWindow.setOptions({ disableAutoPan: false });
           window.infoWindow.open(marker.getMap(), marker);
           console.log('[markerFactory] Real info window opened (delayed) at marker position');
         }, 100);

@@ -74,12 +74,12 @@ export function formatTime(timeString) {
 /**
  * Wrap the inner HTML in a styled info-window container.
  */
-function wrapInfoWindow(innerHtml, iconUrl, titleText, titleSize = 26) {
+function wrapInfoWindow(innerHtml, iconUrl, titleText, titleSize = 21) {
   return `
-    <div class="info-window" style="padding:10px; font-family:Arial, sans-serif; font-size:14px;">
-      <div style="display:flex;align-items:center; margin-bottom:12px;">
-        <img src="${iconUrl}" alt="" style="width:40px; height:40px; margin-right:12px;" />
-        <h4 style="margin:0; font-size:${titleSize}px;">${titleText}</h4>
+    <div class="info-window" style="padding:6px 8px; font-family:Arial, sans-serif;">
+      <div class="iw-header" style="display:flex;align-items:center; margin:0 0 6px; gap:8px;">
+        <img class="iw-icon" src="${iconUrl}" alt="" style="width:30px; height:30px;" />
+        <h4 class="iw-title" style="margin:0; font-size:${titleSize}px; line-height:1.12;">${titleText}</h4>
       </div>
       ${innerHtml}
     </div>
@@ -143,13 +143,13 @@ export function renderRetailerInfoWindow(retailer, isPro) {
 
   // Phone section
   const phoneSection = isPro
-    ? `<p style="margin:8px 0; font-size:14px;"><a href=\"tel:${phoneRaw}\">${phoneText}</a></p>`
-    : `<p style="margin:8px 0; font-size:14px;">Phone (Pro Only)</p>`;
+    ? `<p style="margin:6px 0; font-size:14px;"><a href=\"tel:${phoneRaw}\">${phoneText}</a></p>`
+    : `<p style="margin:6px 0; font-size:14px;">Phone (Pro Only)</p>`;
 
   // Website section
   const websiteSection = isPro
-    ? `<p style="margin:8px 0; font-size:14px;"><a href=\"${websiteRaw}\" target=\"_blank\">${websiteText}</a></p>`
-    : `<p style="margin:8px 0; font-size:14px;">Website (Pro Only)</p>`;
+    ? `<p style="margin:6px 0; font-size:14px;"><a href=\"${websiteRaw}\" target=\"_blank\">${websiteText}</a></p>`
+    : `<p style="margin:6px 0; font-size:14px;">Website (Pro Only)</p>`;
 
   // Hours section
   let hoursSection = '';
@@ -157,13 +157,13 @@ export function renderRetailerInfoWindow(retailer, isPro) {
     const lines = window.formatHours(retailer.opening_hours || 'N/A')
       .split('</div>').filter(Boolean)
       .map(line => line.replace(/<div[^>]*>/, '') + '</div>');
-    hoursSection = `<div style="margin:8px 0;">${lines.map(line =>
+    hoursSection = `<div style="margin:6px 0;">${lines.map(line =>
       `<div style=\"display:flex;justify-content:space-between; font-size:14px; margin:2px 0;\">` +
         line.replace(/<\/div>/, '') +
       `</div>`
     ).join('')}</div>`;
   } else {
-    hoursSection = `<p style="margin:8px 0; font-size:14px;">Hours (Pro Only)</p>`;
+    hoursSection = `<p style="margin:6px 0; font-size:14px;">Hours (Pro Only)</p>`;
   }
 
   const reportLink = `<p style=\"margin-top:12px; font-size:12px;\">` +
@@ -174,23 +174,23 @@ export function renderRetailerInfoWindow(retailer, isPro) {
   // User Notes Section (Pro only)
   const notesSection = isPro ? 
     (retailer.user_notes ? 
-      `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #007bff;">
+      `<div style="margin-top:8px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #007bff;">
         <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#007bff;">Your Notes:</p>
         <p style="margin:0; font-size:12px; color:#333;">${retailer.user_notes}</p>
         <button onclick="editNote(${retailer.id})" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#007bff; color:white; border:none; border-radius:2px; cursor:pointer;">Edit</button>
       </div>` : 
-      `<div style="margin-top:12px; font-size:12px;">
+      `<div style="margin-top:8px; font-size:12px;">
         <button onclick="addNote(${retailer.id})" style="padding:4px 8px; font-size:10px; background:#28a745; color:white; border:none; border-radius:2px; cursor:pointer;">Add Personal Note</button>
       </div>`) :
-    `<div style="margin-top:12px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #ffc107;">
+    `<div style="margin-top:8px; padding:8px; background:#f8f9fa; border-radius:4px; border-left:3px solid #ffc107;">
       <p style="margin:0 0 4px 0; font-size:12px; font-weight:bold; color:#ffc107;">Personal Notes (Pro)</p>
       <p style="margin:0; font-size:12px; color:#666;">Track your hunting success with private notes</p>
       <button onclick="showProUpgradeToast()" style="margin-top:4px; padding:2px 6px; font-size:10px; background:#ffc107; color:#000; border:none; border-radius:2px; cursor:pointer;">Upgrade to Pro</button>
     </div>`;
 
   const inner = `
-    <p style="margin:8px 0; font-size:16px;">${displayType(retailer, isPro)}</p>
-    <p style="margin:8px 0; line-height:1.2; font-size:14px;"><a href=\"https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(retailer.full_address || '')}\" target=\"_blank\">${addressText}</a></p>
+    <p style="margin:6px 0; font-size:16px;">${displayType(retailer, isPro)}</p>
+    <p style="margin:6px 0; line-height:1.2; font-size:14px;"><a href=\"https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(retailer.full_address || '')}\" target=\"_blank\">${addressText}</a></p>
     ${phoneSection}
     ${websiteSection}
     ${hoursSection}
@@ -198,7 +198,7 @@ export function renderRetailerInfoWindow(retailer, isPro) {
     ${reportLink}
   `;
 
-  return wrapInfoWindow(inner, iconUrl, titleText, 26);
+  return wrapInfoWindow(inner, iconUrl, titleText, 21);
 }
 
 /**

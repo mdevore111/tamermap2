@@ -319,8 +319,8 @@ function renderMap() {
   // Initialize InfoWindow with better positioning behavior
   if (window.__TM_DEBUG__) console.log('[map-init] Creating InfoWindow');
   window.infoWindow = new google.maps.InfoWindow({
-    disableAutoPan: false, // Allow Google Maps to handle positioning
-    pixelOffset: new google.maps.Size(0, 270), // Perfect distance above pin
+    disableAutoPan: false, // Let Google handle primary auto-pan
+    pixelOffset: new google.maps.Size(0, 0), // Revert: anchor bubble normally to the marker
     maxWidth: 320,
     // Ensure close button is enabled
     closeButton: true,
@@ -330,7 +330,9 @@ function renderMap() {
     shouldFocus: false // Don't automatically focus the map
   });
 
-  // Add listener to adjust info window position for mobile drawer
+  // Removed custom ensure-in-view; rely on Google auto-pan to avoid oscillations
+
+  // Add listener to adjust info window position and ensure full visibility
   window.infoWindow.addListener('domready', function() {
     const isMobile = window.innerWidth <= 768;
     if (isMobile) {
@@ -349,6 +351,7 @@ function renderMap() {
         }
       }
     }
+    // No extra pan logic here; prevents tug-of-war with Google auto-pan
   });
   window.currentOpenMarker = null;
   
@@ -359,37 +362,7 @@ function renderMap() {
     if (legend) legend.classList.remove('has-active-infowindow');
   });
 
-  // Add listener for info window position changes to prevent excessive auto-pan
-  google.maps.event.addListener(window.infoWindow, 'position_changed', function() {
-    // If the info window is near the edge, adjust the map view more gently
-    const position = window.infoWindow.getPosition();
-    if (position && window.map) {
-      const bounds = window.map.getBounds();
-      if (bounds) {
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-        const latRange = ne.lat() - sw.lat();
-        const lngRange = ne.lng() - sw.lng();
-        
-        // Check if info window is near the edge (within 20% of viewport)
-        const edgeThreshold = 0.2;
-        const isNearEdge = 
-          position.lat() > ne.lat() - latRange * edgeThreshold ||
-          position.lat() < sw.lat() + latRange * edgeThreshold ||
-          position.lng() > ne.lng() - lngRange * edgeThreshold ||
-          position.lng() < sw.lng() + lngRange * edgeThreshold;
-        
-        if (isNearEdge) {
-          // Temporarily disable auto-pan for edge cases
-          window.infoWindow.setOptions({ disableAutoPan: true });
-          // Re-enable after a short delay
-          setTimeout(() => {
-            window.infoWindow.setOptions({ disableAutoPan: false });
-          }, 100);
-        }
-      }
-    }
-  });
+  // Remove previous throttling of auto-pan; rely on Google Maps + ensureInView
 
   if (window.__TM_DEBUG__) console.log('[map-init] InfoWindow setup complete');
 

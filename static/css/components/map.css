@@ -1,3 +1,18 @@
+/* InfoWindow content tweaks */
+.info-window {
+  max-width: 320px;
+}
+.info-window .iw-header { margin: 0 0 4px !important; }
+.info-window .iw-icon { width: 30px !important; height: 30px !important; }
+.info-window .iw-title { font-size: 21px !important; line-height: 1.12 !important; }
+
+/* Slightly tighter layout on small screens */
+@media (max-width: 768px) {
+  .info-window { padding: 6px 8px !important; }
+  .info-window .iw-icon { width: 28px !important; height: 28px !important; }
+  .info-window .iw-title { font-size: 20px !important; line-height: 1.1 !important; }
+  .info-window p { margin: 4px 0 !important; font-size: 13px !important; }
+}
 /* ========================================================================== */
 /* MAP CONTAINER */
 /* ========================================================================== */
@@ -28,24 +43,17 @@ html, body {
   z-index: 0;
 }
 
-/* Override Google Maps InfoWindow stacking - simplified to prevent conflicts */
-.gm-style > div:nth-of-type(1) {
-  z-index: 0 !important; /* Map tiles */
-}
-
-.gm-style > div:nth-of-type(2) {
-  z-index: 9999 !important; /* InfoWindow container - higher than mobile drawer */
-}
+/* Keep default Google stacking; avoid overriding container order to prevent layout glitches */
 
 /* Ensure InfoWindow content is visible and not clipped */
 .gm-style-iw {
   z-index: 9999 !important;
-  position: relative !important;
+  /* position override removed to keep Google default behavior */
 }
 
 .gm-style-iw-c {
   z-index: 9999 !important;
-  position: relative !important;
+  /* position override removed to keep Google default behavior */
 }
 
 /* Ensure proper stacking context for Google Maps elements */
@@ -59,7 +67,7 @@ html, body {
 /* Set priority for Google Maps elements - simplified */
 .gm-style-iw-a {
   z-index: 9000 !important;
-  position: absolute !important;
+  /* position override removed to keep Google default behavior */
 }
 
 /* Removed device-specific #map height override. The map fills via flex container. */
@@ -186,10 +194,8 @@ html, body {
 
 /* MISC Google Maps Overrides - simplified */
 .gm-style-iw-chr {
-  position: absolute;
+  /* positioning overrides removed; use Google defaults */
   display: flex;
-  top: 0;
-  right: 0;
 }
 
 .gm-style-iw.gm-style-iw-c {
@@ -197,6 +203,7 @@ html, body {
 }
 
 /* Simplified z-index management to prevent conflicts */
+/* Maintain high z-index for InfoWindow parts without altering positioning */
 .gm-style-iw-c,
 .gm-style-iw-d,
 .gm-style-iw-t,
@@ -223,8 +230,5 @@ button.gm-ui-hover-effect span {
   opacity: 1 !important;
 }
 
-.gm-style-iw-c, 
-.gm-style-iw-d, 
-.gm-style-iw {
-  z-index: 999 !important;
-} 
+/* Remove conflicting low z-index override that could cause flicker */
+/* .gm-style-iw-c, .gm-style-iw-d, .gm-style-iw { z-index: 999 !important; } */
