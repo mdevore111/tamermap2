@@ -101,6 +101,24 @@
     .navbar .show .fa-chevron-down {
       transform: rotate(180deg);
     }
+
+    /* Ensure dropdown remains readable on small screens (fix iPad portrait) */
+    @media (max-width: 991.98px) {
+      .navbar-nav .dropdown-menu {
+        background: #ffffff !important;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+      }
+      .navbar-nav .dropdown-item {
+        color: #333 !important;
+      }
+      .navbar-nav .dropdown-item:hover {
+        background: #f8f9fa !important;
+        color: #007bff !important;
+      }
+      .navbar-nav .dropdown-item i {
+        color: #007bff !important;
+      }
+    }
   </style>
 </head>
 <body class="d-flex flex-column{% block body_class %}{% endblock %}">
