@@ -111,14 +111,18 @@ MONITOR_URLS = {
     "stripe_checkout": {
         "url": "https://tamermap.com/payment/create-checkout-session",
         "method": "POST",
-        "headers": {"Content-Type": "application/json"},
+        "headers": {
+            "Content-Type": "application/json",
+            "Referer": "https://tamermap.com/learn"
+        },
         "body": '{"subscription": true}',
         "content_checks": [
-            {"text": "login", "description": "Redirect to login page (expected for unauthenticated requests)"},
-            {"text": "create-checkout-session", "description": "Redirect preserves original endpoint"},
+            {"text": '"id":', "description": "Session ID field in JSON response"},
+            {"text": "cs_", "description": "Stripe session ID format (cs_...)"},
         ],
         "timeout": 10,
-        "expected_status": 302  # Expect redirect, not 200
+        "expected_status": 200,  # Back to expecting 200
+        "setup_session": True  # New flag to visit learn page first
     },
     "health": {
         "url": "https://tamermap.com/health",
@@ -757,12 +761,22 @@ def check_http_endpoints() -> List[CheckResult]:
             headers = config.get("headers", {})
             body = config.get("body", None)
             expected_status = config.get("expected_status", 200)
+            setup_session = config.get("setup_session", False)
+            
+            # Setup session if required (visit learn page first to get cookies)
+            session = requests.Session()
+            if setup_session:
+                try:
+                    # Visit learn page first to establish session
+                    session.get("https://tamermap.com/learn", timeout=timeout)
+                except Exception as e:
+                    logger.warning(f"Failed to setup session for {endpoint_name}: {e}")
             
             # Make HTTP request
             if method.upper() == "POST":
-                response = requests.post(url, timeout=timeout, headers=headers, data=body)
+                response = session.post(url, timeout=timeout, headers=headers, data=body)
             else:
-                response = requests.get(url, timeout=timeout)
+                response = session.get(url, timeout=timeout)
             
             if response.status_code != expected_status:
                 if optional and response.status_code == 404:
