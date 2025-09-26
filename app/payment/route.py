@@ -9,7 +9,6 @@ payment_bp = Blueprint('payment', __name__, url_prefix='/payment')
 
 
 @payment_bp.route('/create-checkout-session', methods=['POST'])
-@login_required
 def create_checkout_session():
     """
     Create a Stripe Checkout session for a Pro subscription.
