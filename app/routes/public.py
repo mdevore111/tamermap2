@@ -1191,9 +1191,9 @@ Allow: /card-hunting-tips
 Allow: /about
 Allow: /sitemap
 
-# State pages are search engine only (XML) - users get 404
+# Allow all state pages for search engines
+Allow: /state/
 Disallow: /states
-Disallow: /state/
 
 # Disallow admin and private areas
 Disallow: /admin/
