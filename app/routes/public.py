@@ -1202,6 +1202,11 @@ Disallow: /payment/
 Disallow: /api/
 Disallow: /dev/
 
+# Disallow submission forms (no SEO value)
+Disallow: /add-location
+Disallow: /correct-location
+Disallow: /message
+
 # Sitemap location
 Sitemap: {request.url_root.rstrip('/')}/sitemap.xml
 
