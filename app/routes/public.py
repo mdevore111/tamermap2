@@ -1193,7 +1193,7 @@ Allow: /sitemap
 
 # Allow all state pages for search engines
 Allow: /state/
-Disallow: /states
+Allow: /states
 
 # Disallow admin and private areas
 Disallow: /admin/
