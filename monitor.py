@@ -1054,6 +1054,8 @@ def check_frontend_stripe_integration() -> List[CheckResult]:
     finally:
         if driver:
             driver.quit()  # Ensure cleanup
+    
+    return results
             
 
 
