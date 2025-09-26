@@ -114,10 +114,11 @@ MONITOR_URLS = {
         "headers": {"Content-Type": "application/json"},
         "body": '{"subscription": true}',
         "content_checks": [
-            {"text": '"id":', "description": "Session ID field in JSON response"},
-            {"text": "cs_", "description": "Stripe session ID format (cs_...)"},
+            {"text": "login", "description": "Redirect to login page (expected for unauthenticated requests)"},
+            {"text": "create-checkout-session", "description": "Redirect preserves original endpoint"},
         ],
-        "timeout": 10
+        "timeout": 10,
+        "expected_status": 302  # Expect redirect, not 200
     },
     "health": {
         "url": "https://tamermap.com/health",
@@ -755,6 +756,7 @@ def check_http_endpoints() -> List[CheckResult]:
             optional = config.get("optional", False)
             headers = config.get("headers", {})
             body = config.get("body", None)
+            expected_status = config.get("expected_status", 200)
             
             # Make HTTP request
             if method.upper() == "POST":
@@ -762,7 +764,7 @@ def check_http_endpoints() -> List[CheckResult]:
             else:
                 response = requests.get(url, timeout=timeout)
             
-            if response.status_code != 200:
+            if response.status_code != expected_status:
                 if optional and response.status_code == 404:
                     results.append(CheckResult(
                         f"http_{endpoint_name}",
@@ -775,8 +777,8 @@ def check_http_endpoints() -> List[CheckResult]:
                     results.append(CheckResult(
                         f"http_{endpoint_name}",
                         False,
-                        f"{endpoint_name} {method} returned {response.status_code}",
-                        details={"status_code": response.status_code, "url": url, "method": method}
+                        f"{endpoint_name} {method} returned {response.status_code}, expected {expected_status}",
+                        details={"status_code": response.status_code, "expected_status": expected_status, "url": url, "method": method}
                     ))
                     continue
             
