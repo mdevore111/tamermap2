@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, request, session
 from sqlalchemy import func
 
 from app.extensions import cache, limiter, db
-from app.models import MapUsage, PinInteraction, Retailer, PinPopularity, LegendClick, RouteEvent
+from app.models import MapUsage, PinInteraction, Retailer, PinPopularity, LegendClick, RouteEvent, User, Role
 from app.routes.security import check_referrer
 
 map_bp = Blueprint("map", __name__)
@@ -270,13 +270,13 @@ def track_legend_click():
     print(f"🔍 DEBUG: track_legend_click - user_id: {user_id}, session keys: {list(session.keys())}")
     print(f"🔍 DEBUG: session.get('is_pro'): {session.get('is_pro')}, session.get('user_id'): {session.get('user_id')}")
     
-    # Better Pro user detection - check session first, then fall back to database lookup
+    # Pro user detection - check database directly
     is_pro = False
     if user_id:
         try:
             from app.models import User
             user = User.query.get(user_id)
-            if user and user.is_pro:
+            if user and user.has_role('Pro'):
                 is_pro = True
                 print(f"🔍 DEBUG: User {user_id} is Pro (from database)")
             else:
@@ -284,11 +284,6 @@ def track_legend_click():
         except Exception as e:
             print(f"🔍 DEBUG: Error looking up user {user_id}: {e}")
             pass
-    
-    # Fall back to session if database lookup fails
-    if not is_pro:
-        is_pro = bool(session.get('is_pro'))
-        print(f"🔍 DEBUG: Fallback to session: is_pro = {is_pro}")
     
     print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
@@ -323,13 +318,13 @@ def track_route_event():
     print(f"🔍 DEBUG: track_route_event - user_id: {user_id}, session keys: {list(session.keys())}")
     print(f"🔍 DEBUG: session.get('is_pro'): {session.get('is_pro')}, session.get('user_id'): {session.get('user_id')}")
     
-    # Better Pro user detection - check session first, then fall back to database lookup
+    # Pro user detection - check database directly
     is_pro = False
     if user_id:
         try:
             from app.models import User
             user = User.query.get(user_id)
-            if user and user.is_pro:
+            if user and user.has_role('Pro'):
                 is_pro = True
                 print(f"🔍 DEBUG: User {user_id} is Pro (from database)")
             else:
@@ -337,11 +332,6 @@ def track_route_event():
         except Exception as e:
             print(f"🔍 DEBUG: Error looking up user {user_id}: {e}")
             pass
-    
-    # Fall back to session if database lookup fails
-    if not is_pro:
-        is_pro = bool(session.get('is_pro'))
-        print(f"🔍 DEBUG: Fallback to session: is_pro = {is_pro}")
     
     print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
@@ -363,16 +353,21 @@ def track_route_event():
 def engagement_legend():
     days = int(request.args.get('days', 30))
     cutoff = datetime.utcnow() - timedelta(days=days)
+    # Get Pro users for comparison
+    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    
     rows = db.session.query(
         LegendClick.control_id,
-        LegendClick.is_pro,
+        LegendClick.user_id,
         func.count().label('cnt')
     ).filter(
         LegendClick.created_at >= cutoff
-    ).group_by(LegendClick.control_id, LegendClick.is_pro).all()
+    ).group_by(LegendClick.control_id, LegendClick.user_id).all()
+    
     result = {}
-    for control_id, is_pro, cnt in rows:
+    for control_id, user_id, cnt in rows:
         bucket = result.setdefault(control_id, {"pro": 0, "non_pro": 0})
+        is_pro = user_id in [row[0] for row in db.session.query(pro_user_ids).all()] if user_id else False
         bucket['pro' if is_pro else 'non_pro'] += cnt
     return jsonify(result)
 

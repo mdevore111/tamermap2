@@ -1577,17 +1577,20 @@ def get_traffic_by_hour(days=30):
     # This is a reasonable approximation since most users care about current patterns
     # Future enhancement: could analyze each timestamp individually for exact timezone state
     
+    # Get Pro users for comparison
+    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    
     logs = (
         query
         .with_entities(
             # Convert UTC hour to Pacific hour: (UTC_hour + offset) % 24
             func.extract('hour', VisitorLog.timestamp).label('utc_hour'),
-            VisitorLog.is_pro,
+            VisitorLog.user_id,
             func.count(VisitorLog.id).label('count')
         )
         .filter(VisitorLog.timestamp >= since)
-        .group_by(func.extract('hour', VisitorLog.timestamp), VisitorLog.is_pro)
-        .order_by(func.extract('hour', VisitorLog.timestamp), VisitorLog.is_pro)
+        .group_by(func.extract('hour', VisitorLog.timestamp), VisitorLog.user_id)
+        .order_by(func.extract('hour', VisitorLog.timestamp), VisitorLog.user_id)
         .all()
     )
     
@@ -1606,8 +1609,11 @@ def get_traffic_by_hour(days=30):
     # Count visits by hour and Pro status, converting UTC to Pacific time
     for log in logs:
         utc_hour = int(log.utc_hour)
-        is_pro = bool(log.is_pro)
+        user_id = log.user_id
         count = int(log.count)
+        
+        # Check if user is Pro
+        is_pro = user_id in [row[0] for row in db.session.query(pro_user_ids).all()] if user_id else False
         
         print(f"🔍 DEBUG: Processing hour {utc_hour}, is_pro={is_pro}, count={count}")
         
@@ -1785,17 +1791,20 @@ def get_traffic_by_day_of_week(days=30):
                 current_app.logger.warning(f"Unexpected estimated timezone offset: {timezone_name} (UTC{pacific_offset:+d})")
     
     # Query for Pro vs non-Pro traffic by day of week
+    # Get Pro users for comparison
+    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    
     logs = (
         query
         .with_entities(
             # Extract day of week (0=Monday, 6=Sunday in SQLite)
             func.strftime('%w', VisitorLog.timestamp).label('day_of_week'),
-            VisitorLog.is_pro,
+            VisitorLog.user_id,
             func.count(VisitorLog.id).label('count')
         )
         .filter(VisitorLog.timestamp >= since)
-        .group_by(func.strftime('%w', VisitorLog.timestamp), VisitorLog.is_pro)
-        .order_by(func.strftime('%w', VisitorLog.timestamp), VisitorLog.is_pro)
+        .group_by(func.strftime('%w', VisitorLog.timestamp), VisitorLog.user_id)
+        .order_by(func.strftime('%w', VisitorLog.timestamp), VisitorLog.user_id)
         .all()
     )
     
@@ -1814,8 +1823,11 @@ def get_traffic_by_day_of_week(days=30):
     # Count visits by day of week and Pro status
     for log in logs:
         day_of_week = int(log.day_of_week)
-        is_pro = bool(log.is_pro)
+        user_id = log.user_id
         count = int(log.count)
+        
+        # Check if user is Pro
+        is_pro = user_id in [row[0] for row in db.session.query(pro_user_ids).all()] if user_id else False
         
         print(f"🔍 DEBUG: Processing day {day_of_week}, is_pro={is_pro}, count={count}")
         

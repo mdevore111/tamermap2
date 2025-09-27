@@ -31,7 +31,7 @@ def account():
     
     # Get user roles and determine pro status
     user_roles = [role.name for role in current_user.roles]
-    is_pro = current_user.pro_end_date and current_user.pro_end_date > datetime.utcnow()
+    is_pro = current_user.has_role('Pro')
     
     return render_template("account.html", 
                          user_roles=user_roles, 

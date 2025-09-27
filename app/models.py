@@ -59,7 +59,6 @@ class VisitorLog(db.Model):
     city = db.Column(db.String(100))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
-    is_pro = db.Column(db.Boolean, default=False)  # Track Pro user status
 
 
 class Event(db.Model):
@@ -337,7 +336,6 @@ class LegendClick(db.Model):
     created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, index=True)
     session_id = db.Column(db.String(100), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    is_pro = db.Column(db.Boolean, default=False)
     control_id = db.Column(db.String(100), nullable=False, index=True)
     path = db.Column(db.String(500))
     zoom = db.Column(db.Integer)
@@ -351,7 +349,6 @@ class RouteEvent(db.Model):
     created_at = db.Column(db.DateTime, default=_datetime.datetime.utcnow, index=True)
     session_id = db.Column(db.String(100), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    is_pro = db.Column(db.Boolean, default=False)
     event = db.Column(db.String(20), nullable=False, index=True)  # open | preview | go
     max_distance = db.Column(db.Integer)
     max_stops = db.Column(db.Integer)

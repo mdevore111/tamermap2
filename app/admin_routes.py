@@ -587,10 +587,13 @@ def engagement():
     completion_rate = (sessions_go / sessions_open) if sessions_open else 0
 
     # Legend clicks by control (top 10)
+    # Get Pro users for comparison
+    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    
     legend_rows = db.session.query(
         LegendClick.control_id,
-        func.sum(case((LegendClick.is_pro == True, 1), else_=0)).label('pro'),
-        func.sum(case((LegendClick.is_pro == False, 1), else_=0)).label('non_pro')
+        func.sum(case((LegendClick.user_id.in_(pro_user_ids), 1), else_=0)).label('pro'),
+        func.sum(case((~LegendClick.user_id.in_(pro_user_ids), 1), else_=0)).label('non_pro')
     ).filter(
         LegendClick.created_at >= cutoff
     ).group_by(LegendClick.control_id).order_by(func.count().desc()).limit(10).all()
@@ -618,10 +621,13 @@ def api_engagement_legend_recent():
     limit = request.args.get('limit', 200, type=int)
     cutoff = datetime.utcnow() - timedelta(days=days)
     
+    # Get Pro users for comparison
+    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    
     rows = db.session.query(
         LegendClick.created_at,
         LegendClick.session_id,
-        LegendClick.is_pro,
+        LegendClick.user_id,
         LegendClick.control_id,
         LegendClick.path,
         LegendClick.zoom,
@@ -635,7 +641,7 @@ def api_engagement_legend_recent():
         {
             'created_at': r[0].strftime('%Y-%m-%d %H:%M:%S') if r[0] else '',
             'session_id': r[1],
-            'is_pro': bool(r[2]),
+            'is_pro': r[2] in [row[0] for row in db.session.query(pro_user_ids).all()] if r[2] else False,
             'control_id': r[3],
             'path': r[4],
             'zoom': r[5],
@@ -703,10 +709,13 @@ def api_engagement_legend_chart():
     
     try:
         # Legend clicks by control (top 10)
+        # Get Pro users for comparison
+        pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+        
         legend_rows = db.session.query(
             LegendClick.control_id,
-            func.sum(case((LegendClick.is_pro == True, 1), else_=0)).label('pro'),
-            func.sum(case((LegendClick.is_pro == False, 1), else_=0)).label('non_pro')
+            func.sum(case((LegendClick.user_id.in_(pro_user_ids), 1), else_=0)).label('pro'),
+            func.sum(case((~LegendClick.user_id.in_(pro_user_ids), 1), else_=0)).label('non_pro')
         ).filter(
             LegendClick.created_at >= cutoff
         ).group_by(LegendClick.control_id).order_by(func.count().desc()).limit(10).all()

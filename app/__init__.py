@@ -436,20 +436,13 @@ def create_app(config_class=BaseConfig):
                     try:
                         from app.models import User
                         user = User.query.get(user_id)
-                        if user and user.is_pro:
+                        if user and user.has_role('Pro'):
                             is_pro = True
                             print(f"🔍 DEBUG: User {user_id} is Pro (from database)")
                         else:
                             print(f"🔍 DEBUG: User {user_id} is NOT Pro (from database)")
                     except Exception as e:
                         print(f"🔍 DEBUG: Error looking up user {user_id}: {e}")
-                        # Fall back to session if database lookup fails
-                        is_pro = bool(session.get('is_pro'))
-                
-                # Fall back to session if database lookup fails
-                if not is_pro:
-                    is_pro = bool(session.get('is_pro'))
-                    print(f"🔍 DEBUG: Fallback to session: is_pro = {is_pro}")
                 
                 print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
