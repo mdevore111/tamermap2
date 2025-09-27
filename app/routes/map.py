@@ -354,7 +354,7 @@ def engagement_legend():
     days = int(request.args.get('days', 30))
     cutoff = datetime.utcnow() - timedelta(days=days)
     # Get Pro users for comparison
-    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    pro_user_ids = [row[0] for row in db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").all()]
     
     rows = db.session.query(
         LegendClick.control_id,
@@ -367,7 +367,7 @@ def engagement_legend():
     result = {}
     for control_id, user_id, cnt in rows:
         bucket = result.setdefault(control_id, {"pro": 0, "non_pro": 0})
-        is_pro = user_id in [row[0] for row in db.session.query(pro_user_ids).all()] if user_id else False
+        is_pro = user_id in pro_user_ids if user_id else False
         bucket['pro' if is_pro else 'non_pro'] += cnt
     return jsonify(result)
 

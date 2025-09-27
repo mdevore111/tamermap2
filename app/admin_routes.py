@@ -588,7 +588,7 @@ def engagement():
 
     # Legend clicks by control (top 10)
     # Get Pro users for comparison
-    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    pro_user_ids = [row[0] for row in db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").all()]
     
     legend_rows = db.session.query(
         LegendClick.control_id,
@@ -622,7 +622,7 @@ def api_engagement_legend_recent():
     cutoff = datetime.utcnow() - timedelta(days=days)
     
     # Get Pro users for comparison
-    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    pro_user_ids = [row[0] for row in db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").all()]
     
     rows = db.session.query(
         LegendClick.created_at,
@@ -641,7 +641,7 @@ def api_engagement_legend_recent():
         {
             'created_at': r[0].strftime('%Y-%m-%d %H:%M:%S') if r[0] else '',
             'session_id': r[1],
-            'is_pro': r[2] in [row[0] for row in db.session.query(pro_user_ids).all()] if r[2] else False,
+            'is_pro': r[2] in pro_user_ids if r[2] else False,
             'control_id': r[3],
             'path': r[4],
             'zoom': r[5],

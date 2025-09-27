@@ -1578,7 +1578,7 @@ def get_traffic_by_hour(days=30):
     # Future enhancement: could analyze each timestamp individually for exact timezone state
     
     # Get Pro users for comparison
-    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    pro_user_ids = [row[0] for row in db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").all()]
     
     logs = (
         query
@@ -1613,7 +1613,7 @@ def get_traffic_by_hour(days=30):
         count = int(log.count)
         
         # Check if user is Pro
-        is_pro = user_id in [row[0] for row in db.session.query(pro_user_ids).all()] if user_id else False
+        is_pro = user_id in pro_user_ids if user_id else False
         
         print(f"🔍 DEBUG: Processing hour {utc_hour}, is_pro={is_pro}, count={count}")
         
@@ -1792,7 +1792,7 @@ def get_traffic_by_day_of_week(days=30):
     
     # Query for Pro vs non-Pro traffic by day of week
     # Get Pro users for comparison
-    pro_user_ids = db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").subquery()
+    pro_user_ids = [row[0] for row in db.session.query(User.id).join(User.roles).filter(Role.name == "Pro").all()]
     
     logs = (
         query
@@ -1827,7 +1827,7 @@ def get_traffic_by_day_of_week(days=30):
         count = int(log.count)
         
         # Check if user is Pro
-        is_pro = user_id in [row[0] for row in db.session.query(pro_user_ids).all()] if user_id else False
+        is_pro = user_id in pro_user_ids if user_id else False
         
         print(f"🔍 DEBUG: Processing day {day_of_week}, is_pro={is_pro}, count={count}")
         
