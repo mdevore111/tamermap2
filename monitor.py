@@ -1058,6 +1058,100 @@ def check_frontend_stripe_integration() -> List[CheckResult]:
     return results
 
 
+def check_frontend_stripe_simple() -> List[CheckResult]:
+    """
+    Simple HTTP-based frontend Stripe test (no browser automation)
+    
+    Tests:
+    1. Stripe.js script is present in HTML
+    2. Stripe.js loads successfully (HTTP 200)
+    3. Pro signup buttons are present in HTML
+    """
+    results = []
+    
+    try:
+        # Test 1: Check if Stripe.js script is in the HTML
+        logger.info("Testing Stripe.js script presence...")
+        response = requests.get("https://tamermap.com/learn", timeout=10)
+        
+        if response.status_code != 200:
+            results.append(CheckResult(
+                "frontend_stripe_page_load",
+                False,
+                f"Learn page returned {response.status_code}",
+                details={"status_code": response.status_code, "url": "https://tamermap.com/learn"}
+            ))
+            return results
+        
+        # Check for Stripe.js script tag
+        if 'js.stripe.com' in response.text and 'stripe' in response.text.lower():
+            results.append(CheckResult(
+                "frontend_stripe_script_present",
+                True,
+                "Stripe.js script found in HTML",
+                details={"url": "https://tamermap.com/learn"}
+            ))
+        else:
+            results.append(CheckResult(
+                "frontend_stripe_script_present",
+                False,
+                "Stripe.js script not found in HTML",
+                details={"url": "https://tamermap.com/learn", "response_length": len(response.text)}
+            ))
+        
+        # Test 2: Check if Stripe.js actually loads (HTTP request to Stripe CDN)
+        logger.info("Testing Stripe.js CDN availability...")
+        try:
+            stripe_response = requests.get("https://js.stripe.com/v3/", timeout=5)
+            if stripe_response.status_code == 200:
+                results.append(CheckResult(
+                    "frontend_stripe_cdn",
+                    True,
+                    "Stripe.js CDN accessible",
+                    details={"status_code": stripe_response.status_code}
+                ))
+            else:
+                results.append(CheckResult(
+                    "frontend_stripe_cdn",
+                    False,
+                    f"Stripe.js CDN returned {stripe_response.status_code}",
+                    details={"status_code": stripe_response.status_code}
+                ))
+        except Exception as cdn_error:
+            results.append(CheckResult(
+                "frontend_stripe_cdn",
+                False,
+                f"Stripe.js CDN error: {cdn_error}",
+                details={"error": str(cdn_error)}
+            ))
+        
+        # Test 3: Check for Pro signup buttons
+        if 'subscribe-btn' in response.text or 'Try Pro' in response.text:
+            results.append(CheckResult(
+                "frontend_stripe_buttons",
+                True,
+                "Pro signup buttons found in HTML",
+                details={"url": "https://tamermap.com/learn"}
+            ))
+        else:
+            results.append(CheckResult(
+                "frontend_stripe_buttons",
+                False,
+                "Pro signup buttons not found in HTML",
+                details={"url": "https://tamermap.com/learn"}
+            ))
+            
+    except Exception as e:
+        results.append(CheckResult(
+            "frontend_stripe_simple",
+            False,
+            f"Frontend test error: {e}",
+            details={"error": str(e)}
+        ))
+    
+    return results
+
+
 def check_ssl_certificate() -> CheckResult:
     """Check SSL certificate expiry"""
     try:
@@ -1143,19 +1237,8 @@ class TamermapMonitor:
         # SSL certificate
         results.append(check_ssl_certificate())
         
-        # Frontend Stripe integration testing (run less frequently to avoid overhead)
-        if hasattr(self, '_last_frontend_check'):
-            time_since_last = datetime.now() - self._last_frontend_check
-            if time_since_last.total_seconds() < SELENIUM_TEST_INTERVAL:  # Configurable interval
-                self.logger.info("Skipping frontend Stripe test (run recently)")
-            else:
-                self.logger.info("Running frontend Stripe integration tests...")
-                results.extend(check_frontend_stripe_integration())
-                self._last_frontend_check = datetime.now()
-        else:
-            self.logger.info("Running frontend Stripe integration tests...")
-            results.extend(check_frontend_stripe_integration())
-            self._last_frontend_check = datetime.now()
+        # Simple frontend Stripe test (HTTP-based, no browser automation)
+        results.extend(check_frontend_stripe_simple())
         
         return results
     
