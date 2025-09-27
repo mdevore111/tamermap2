@@ -1154,6 +1154,100 @@ def check_frontend_stripe_simple() -> List[CheckResult]:
     return results
 
 
+def check_database_size() -> CheckResult:
+    """Monitor database file size"""
+    try:
+        db_size = os.path.getsize(DATABASE_PATH)
+        size_mb = db_size / (1024 * 1024)
+        
+        # Alert if database is larger than 100MB
+        if db_size > 100 * 1024 * 1024:  # 100MB
+            return CheckResult(
+                "database_size", 
+                False, 
+                f"Database size warning: {size_mb:.1f}MB (over 100MB limit)",
+                details={"size_bytes": db_size, "size_mb": size_mb, "limit_mb": 100}
+            )
+        
+        return CheckResult(
+            "database_size", 
+            True, 
+            f"Database size OK: {size_mb:.1f}MB",
+            details={"size_bytes": db_size, "size_mb": size_mb}
+        )
+        
+    except Exception as e:
+        return CheckResult("database_size", False, f"Database size check error: {e}")
+
+
+def check_response_times() -> CheckResult:
+    """Check page response times"""
+    try:
+        start_time = time.time()
+        response = requests.get("https://tamermap.com/", timeout=10)
+        duration = time.time() - start_time
+        
+        # Alert if response time is over 3 seconds
+        if duration > 3.0:
+            return CheckResult(
+                "response_time", 
+                False, 
+                f"Home page slow: {duration:.1f}s (over 3s limit)",
+                details={"duration_seconds": duration, "status_code": response.status_code}
+            )
+        
+        return CheckResult(
+            "response_time", 
+            True, 
+            f"Home page fast: {duration:.1f}s",
+            details={"duration_seconds": duration, "status_code": response.status_code}
+        )
+        
+    except Exception as e:
+        return CheckResult("response_time", False, f"Response time check error: {e}")
+
+
+def check_security_headers() -> CheckResult:
+    """Check for essential security headers"""
+    try:
+        response = requests.get("https://tamermap.com/", timeout=10)
+        headers = response.headers
+        
+        # Check for essential security headers
+        required_headers = {
+            'Strict-Transport-Security': 'HSTS header',
+            'X-Frame-Options': 'Clickjacking protection',
+            'X-Content-Type-Options': 'MIME type sniffing protection'
+        }
+        
+        missing_headers = []
+        present_headers = []
+        
+        for header, description in required_headers.items():
+            if header in headers:
+                present_headers.append(f"{header}: {headers[header]}")
+            else:
+                missing_headers.append(f"{header} ({description})")
+        
+        if missing_headers:
+            return CheckResult(
+                "security_headers", 
+                False, 
+                f"Missing security headers: {', '.join(missing_headers)}",
+                details={"missing": missing_headers, "present": present_headers}
+            )
+        
+        return CheckResult(
+            "security_headers", 
+            True, 
+            f"All security headers present ({len(present_headers)}/{len(required_headers)})",
+            details={"present": present_headers}
+        )
+        
+    except Exception as e:
+        return CheckResult("security_headers", False, f"Security headers check error: {e}")
+
+
 def check_ssl_certificate() -> CheckResult:
     """Check SSL certificate expiry"""
     try:
@@ -1245,6 +1339,11 @@ class TamermapMonitor:
         
         # Simple frontend Stripe test (HTTP-based, no browser automation)
         results.extend(check_frontend_stripe_simple())
+        
+        # Quick win monitoring checks
+        results.append(check_database_size())
+        results.append(check_response_times())
+        results.append(check_security_headers())
         
         return results
     
