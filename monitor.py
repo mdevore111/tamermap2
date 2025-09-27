@@ -1565,9 +1565,13 @@ class TamermapMonitor:
                 # Process results and send alerts
                 self.process_results(results)
                 
-                # Sleep until next check
+                # Sleep until next check (interruptible)
                 if self.running:
-                    time.sleep(MONITOR_INTERVAL)
+                    # Sleep in smaller chunks to respond to shutdown signals
+                    for _ in range(MONITOR_INTERVAL):
+                        if not self.running:
+                            break
+                        time.sleep(1)
                     
             except KeyboardInterrupt:
                 self.logger.info("Received keyboard interrupt, shutting down...")
