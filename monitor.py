@@ -1214,6 +1214,10 @@ class TamermapMonitor:
         self.logger.info(f"Received signal {signum}, shutting down gracefully...")
         self.running = False
         
+        # Stop the scheduler thread
+        global scheduler_running
+        scheduler_running = False
+        
     def run_all_checks(self) -> List[CheckResult]:
         """Run all monitoring checks"""
         if TEST_MODE:
@@ -1900,15 +1904,28 @@ def run_scheduler_thread():
     
     logger = setup_logging()
     
+    # Global flag for shutdown
+    global scheduler_running
+    scheduler_running = True
+    
     def scheduler_worker():
         logger.info("Daily summary scheduler thread started")
-        while True:
+        while scheduler_running:
             try:
                 schedule.run_pending()
-                time.sleep(60)  # Check every minute
+                # Sleep in smaller chunks to respond to shutdown faster
+                for _ in range(60):  # 60 seconds total
+                    if not scheduler_running:
+                        break
+                    time.sleep(1)
             except Exception as e:
                 logger.error(f"Error in scheduler thread: {e}", exc_info=True)
-                time.sleep(300)  # Wait 5 minutes on error
+                # Sleep in smaller chunks on error too
+                for _ in range(300):  # 5 minutes total
+                    if not scheduler_running:
+                        break
+                    time.sleep(1)
+        logger.info("Daily summary scheduler thread stopped")
     
     scheduler_thread = threading.Thread(target=scheduler_worker, daemon=True)
     scheduler_thread.start()
