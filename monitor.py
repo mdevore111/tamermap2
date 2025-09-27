@@ -1071,7 +1071,8 @@ def check_frontend_stripe_simple() -> List[CheckResult]:
     
     try:
         # Test 1: Check if Stripe.js script is in the HTML
-        logger.info("Testing Stripe.js script presence...")
+        if logger:
+            logger.info("Testing Stripe.js script presence...")
         response = requests.get("https://tamermap.com/learn", timeout=10)
         
         if response.status_code != 200:
@@ -1100,7 +1101,8 @@ def check_frontend_stripe_simple() -> List[CheckResult]:
             ))
         
         # Test 2: Check if Stripe.js actually loads (HTTP request to Stripe CDN)
-        logger.info("Testing Stripe.js CDN availability...")
+        if logger:
+            logger.info("Testing Stripe.js CDN availability...")
         try:
             stripe_response = requests.get("https://js.stripe.com/v3/", timeout=5)
             if stripe_response.status_code == 200:
