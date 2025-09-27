@@ -25,7 +25,7 @@ def test_frontend_stripe_simple():
         
         for result in results:
             status = "✅ PASS" if result.success else "❌ FAIL"
-            print(f"{status} {result.check_name}: {result.message}")
+            print(f"{status} {result.name}: {result.message}")
             
             if result.details:
                 print(f"    Details: {result.details}")
