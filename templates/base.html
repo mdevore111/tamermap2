@@ -193,11 +193,11 @@
               </li>
               {% if is_admin %}
                 <li class="nav-item">
-                  <a class="nav-link text-white" href="{{ url_for('admin.index') }}">Admin</a>
+                  <a class="nav-link text-white" href="{{ url_for('admin.index') }}" data-admin-only>Admin</a>
                 </li>
               {% endif %}
               <li class="nav-item">
-                <a class="nav-link text-white" href="{{ url_for('security.logout') }}">Logout</a>
+                <a class="nav-link text-white" href="{{ url_for('security.logout') }}" id="logout-link">Logout</a>
               </li>
             {% else %}
               <li class="nav-item">

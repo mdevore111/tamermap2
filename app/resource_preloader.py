@@ -30,27 +30,17 @@ def get_critical_resources():
     """Get list of critical resources for the current page"""
     resources = []
     
-    # Critical CSS files
+    # Only preload the most critical CSS (base.css is loaded in base.html)
     resources.extend([
-        {'url': url_for('static', filename='css/base.css'), 'type': 'style'},
         {'url': url_for('static', filename='css/maps.css'), 'type': 'style'},
     ])
     
-    # Critical JavaScript files
+    # Only preload the most critical JavaScript (config.js is loaded first)
     resources.extend([
         {'url': url_for('static', filename='js/config.js'), 'type': 'script'},
-        {'url': url_for('static', filename='js/utils.js'), 'type': 'script'},
-        {'url': url_for('static', filename='js/map-core.js'), 'type': 'script'},
     ])
     
-    # Critical images (only for maps page)
-    if request.endpoint == 'public.home':
-        resources.extend([
-            {'url': url_for('static', filename='map-pins/safeway.png'), 'type': 'image'},
-            {'url': url_for('static', filename='map-pins/qfc.png'), 'type': 'image'},
-            {'url': url_for('static', filename='map-pins/fred-meyer.png'), 'type': 'image'},
-            {'url': url_for('static', filename='map-pins/card-shop.png'), 'type': 'image'},
-        ])
+    # Skip image preloading to avoid warnings (images are loaded via JavaScript)
     
     return resources
 

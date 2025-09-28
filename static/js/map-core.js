@@ -155,10 +155,9 @@ function renderMap() {
       dataService = new DataService();
       if (window.__TM_DEBUG__) console.log('[map-init] DataService constructed early');
     }
-    if (!loadingOverlay) {
-      initLoadingOverlay();
-      if (window.__TM_DEBUG__) console.log('[map-init] loading overlay initialized (early)');
-    }
+    // Initialize loading overlay (no need to check if it exists)
+    initLoadingOverlay();
+    if (window.__TM_DEBUG__) console.log('[map-init] loading overlay initialized (early)');
     if (window.initUI) {
       window.initUI();
       if (window.__TM_DEBUG__) console.log('[map-init] window.initUI called (early)');

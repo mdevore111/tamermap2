@@ -14,9 +14,8 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
   <!-- Load map-specific CSS styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/maps.css') }}">
   
-  <!-- Defer non-critical CSS for faster initial load -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"></noscript>
+  <!-- Load SweetAlert2 CSS when needed -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   
   <!-- Preload critical map pin images for better performance -->
   <!-- Images will be preloaded with WebP support via JavaScript -->
@@ -114,6 +113,77 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
   window.userRole = "{{ current_user.is_authenticated and current_user.roles and current_user.roles|length > 0 and current_user.roles[0].name or 'User' }}";
   window.retailersEndpoint = "{{ url_for('api.retailers_endpoint') }}";
   
+  // Function to update frontend authentication state
+  window.updateAuthState = function(isAuthenticated, isPro, userRole) {
+    console.log('Updating auth state:', { isAuthenticated, isPro, userRole });
+    window.is_pro = isPro;
+    window.userRole = userRole;
+    
+    // Update Pro-only elements visibility
+    if (isPro) {
+      document.querySelectorAll('.pro-only').forEach(el => {
+        el.style.display = '';
+      });
+    } else {
+      document.querySelectorAll('.pro-only').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+    
+    // Update Admin elements visibility
+    const adminElements = document.querySelectorAll('[data-admin-only]');
+    if (userRole === 'Admin') {
+      adminElements.forEach(el => {
+        el.style.display = '';
+      });
+    } else {
+      adminElements.forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+    
+    // Trigger UI refresh if available
+    if (window.initUI) {
+      window.initUI();
+    }
+  };
+  
+  // Detect logout by monitoring for redirects to login page
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    return originalFetch.apply(this, args).then(response => {
+      if (response.url && response.url.includes('/login') && response.status === 200) {
+        // User was redirected to login, likely logged out
+        console.log('Detected logout redirect, updating auth state');
+        window.updateAuthState(false, false, 'User');
+      }
+      return response;
+    });
+  };
+  
+  // Add logout click handler for immediate UI update
+  document.addEventListener('DOMContentLoaded', function() {
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+      logoutLink.addEventListener('click', function(e) {
+        console.log('Logout clicked, updating UI immediately');
+        // Update UI immediately when logout is clicked
+        window.updateAuthState(false, false, 'User');
+        
+        // Update navigation elements directly without full page refresh
+        const adminLink = document.querySelector('[data-admin-only]');
+        if (adminLink) {
+          adminLink.style.display = 'none';
+        }
+        
+        // Update Pro elements
+        document.querySelectorAll('.pro-only').forEach(el => {
+          el.style.display = 'none';
+        });
+      });
+    }
+  });
+  
   // Define initApp function immediately to ensure it's available for Google Maps API
   window.initApp = function() {
     console.log('[maps.html] window.initApp called');
@@ -191,8 +261,10 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
   setTimeout(loadFontAwesome, 1000);
   
   // Preload critical images with WebP support
-  import('./imageOptimizer.js').then(module => {
+  import('{{ url_for("static", filename="js/imageOptimizer.js") }}').then(module => {
     module.preloadCriticalImages();
+  }).catch(error => {
+    console.warn('imageOptimizer.js not available, skipping image preload:', error);
   });
 </script>
 {% endif %}

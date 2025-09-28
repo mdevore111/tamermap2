@@ -237,24 +237,16 @@ def create_app(config_class=BaseConfig):
             'debug_mode': app.config.get('DEBUG', False)
         }
         
-        # Set template context variables with debug logging
+        # Set template context variables
         if current_user.is_authenticated:
             is_admin = current_user.has_role('Admin')
             is_pro = current_user.has_role('Pro')
-            
-            # Debug logging
-            print(f"DEBUG: current_user.is_authenticated = {current_user.is_authenticated}")
-            print(f"DEBUG: current_user.email = {current_user.email}")
-            print(f"DEBUG: current_user.roles = {[r.name for r in current_user.roles]}")
-            print(f"DEBUG: has_role('Pro') = {is_pro}")
-            print(f"DEBUG: has_role('Admin') = {is_admin}")
             
             context.update({
                 'is_admin': is_admin,
                 'is_pro': is_pro
             })
         else:
-            print(f"DEBUG: User not authenticated")
             context.update({
                 'is_admin': False,
                 'is_pro': False
