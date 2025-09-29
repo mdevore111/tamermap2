@@ -1,7 +1,7 @@
 # app/routes/auth.py
 
-from flask import Blueprint, redirect, request, current_app, render_template, url_for, flash
-from flask_login import login_required, current_user
+from flask import Blueprint, redirect, request, current_app, render_template, url_for, flash, session
+from flask_login import login_required, current_user, logout_user
 from flask_security import utils
 from flask_security.utils import send_mail
 from datetime import datetime
@@ -183,3 +183,25 @@ def initiate_password_setup():
     token = stripe_session.initial_password_token
     current_app.logger.info("Redirecting to set_password with token: %s", token)
     return redirect(url_for('auth.set_password', token=token))
+
+
+@auth_bp.route('/logout-manual', methods=['GET', 'POST'])
+def manual_logout():
+    """
+    Manual logout route that explicitly clears session and redirects.
+
+    This bypasses Flask-Security's logout mechanism which may not be
+    properly clearing the Flask-Session data.
+    """
+    # Clear Flask-Login user
+    logout_user()
+
+    # Clear the entire session
+    session.clear()
+    session.modified = True
+
+    # Flash a message
+    flash('You have been logged out successfully.', 'info')
+
+    # Redirect to home page
+    return redirect(url_for('public.home'))
