@@ -161,25 +161,14 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
     });
   };
   
-  // Add logout click handler for immediate UI update
+  // Add logout click handler for page refresh
   document.addEventListener('DOMContentLoaded', function() {
     const logoutLink = document.getElementById('logout-link');
     if (logoutLink) {
       logoutLink.addEventListener('click', function(e) {
-        console.log('Logout clicked, updating UI immediately');
-        // Update UI immediately when logout is clicked
-        window.updateAuthState(false, false, 'User');
-        
-        // Update navigation elements directly without full page refresh
-        const adminLink = document.querySelector('[data-admin-only]');
-        if (adminLink) {
-          adminLink.style.display = 'none';
-        }
-        
-        // Update Pro elements
-        document.querySelectorAll('.pro-only').forEach(el => {
-          el.style.display = 'none';
-        });
+        console.log('Logout clicked, refreshing page');
+        // Force page refresh to ensure clean state
+        window.location.reload();
       });
     }
   });
