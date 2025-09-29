@@ -197,10 +197,7 @@
                 </li>
               {% endif %}
               <li class="nav-item">
-                <form method="POST" action="{{ url_for('security.logout') }}" style="display: inline;">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                  <button type="submit" class="nav-link text-white btn btn-link" style="border: none; background: none; padding: 0; text-decoration: none;">Logout</button>
-                </form>
+                <a class="nav-link text-white" href="{{ url_for('security.logout') }}">Logout</a>
               </li>
             {% else %}
               <li class="nav-item">

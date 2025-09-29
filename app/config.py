@@ -158,6 +158,7 @@ class BaseConfig:
     # --------------------------
     SECURITY_POST_LOGIN_VIEW = "/"  # Redirect to home page after successful login
     SECURITY_POST_LOGOUT_VIEW = "/"  # Redirect to home page after logout
+    SECURITY_LOGOUT_METHODS = ['GET', 'POST']  # Allow both GET and POST for logout
     SECURITY_POST_RESET_VIEW = "/login"
     SECURITY_POST_FORGOT_PASSWORD_VIEW = None  # Changed to None - don't redirect after forgot password
     SECURITY_REGISTERABLE = False  # Registration controlled by Stripe payment system webhooks.
