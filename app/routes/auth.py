@@ -199,18 +199,30 @@ def manual_logout():
     logout_user()
     current_app.logger.info("LOGOUT: Called logout_user()")
 
-    # Clear the entire session
-    session.clear()
-    current_app.logger.info(f"LOGOUT: Cleared session, keys before: {list(session.keys())}")
-
-    # Force session to be marked as modified and saved
-    session.modified = True
-    current_app.logger.info("LOGOUT: Marked session as modified")
+    # Session clearing is handled by user_logged_out signal to avoid duplication
 
     # Delete the session cookie
     response = redirect(url_for('public.home'))
     response.delete_cookie('tamermap_session')
     current_app.logger.info("LOGOUT: Deleted session cookie")
+
+    # Delete remember-me cookie explicitly with matching attributes
+    remember_name = current_app.config.get('REMEMBER_COOKIE_NAME', 'remember_token')
+    remember_path = current_app.config.get('REMEMBER_COOKIE_PATH', '/')
+    remember_domain = current_app.config.get('REMEMBER_COOKIE_DOMAIN', None)
+    remember_secure = current_app.config.get('REMEMBER_COOKIE_SECURE', True)
+    remember_httponly = current_app.config.get('REMEMBER_COOKIE_HTTPONLY', True)
+    remember_samesite = current_app.config.get('REMEMBER_COOKIE_SAMESITE', 'Lax')
+
+    response.delete_cookie(
+        remember_name,
+        path=remember_path,
+        domain=remember_domain,
+        secure=remember_secure,
+        httponly=remember_httponly,
+        samesite=remember_samesite
+    )
+    current_app.logger.info(f"LOGOUT: Deleted remember cookie '{remember_name}' with path={remember_path}, domain={remember_domain}")
 
     # Flash a message
     flash('You have been logged out successfully.', 'info')

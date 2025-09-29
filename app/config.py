@@ -218,6 +218,14 @@ class BaseConfig:
     SESSION_REFRESH_EACH_REQUEST = True  # Refresh session on each request
     SESSION_COOKIE_DOMAIN = None  # Allow cross-subdomain cookies if needed
 
+    # Remember-me cookie settings (explicit to ensure consistent set/delete behavior)
+    REMEMBER_COOKIE_NAME = 'remember_token'
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_PATH = '/'
+    REMEMBER_COOKIE_DOMAIN = None
+
     # --------------------------
     # Flask-Session Configuration (Using Redis)
     # --------------------------
