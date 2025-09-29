@@ -233,6 +233,7 @@ class BaseConfig:
         # On Linux/Ubuntu, use Redis (adjust as needed for your production/staging settings)
         SESSION_TYPE = 'redis'
         SESSION_REDIS = redis.Redis(host='localhost', port=6379, db=0)
+        SESSION_COOKIE_NAME = 'tamermap_session'
 
     SESSION_USE_SIGNER = True  # Sign the session cookie to protect against tampering.
     PERMANENT_SESSION_LIFETIME = timedelta(days=14)

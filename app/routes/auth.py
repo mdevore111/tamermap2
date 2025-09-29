@@ -193,15 +193,27 @@ def manual_logout():
     This bypasses Flask-Security's logout mechanism which may not be
     properly clearing the Flask-Session data.
     """
+    current_app.logger.info(f"LOGOUT: Starting manual logout for user: {current_user.email if current_user.is_authenticated else 'Not authenticated'}")
+
     # Clear Flask-Login user
     logout_user()
+    current_app.logger.info("LOGOUT: Called logout_user()")
 
     # Clear the entire session
     session.clear()
+    current_app.logger.info(f"LOGOUT: Cleared session, keys before: {list(session.keys())}")
+
+    # Force session to be marked as modified and saved
     session.modified = True
+    current_app.logger.info("LOGOUT: Marked session as modified")
+
+    # Delete the session cookie
+    response = redirect(url_for('public.home'))
+    response.delete_cookie('tamermap_session')
+    current_app.logger.info("LOGOUT: Deleted session cookie")
 
     # Flash a message
     flash('You have been logged out successfully.', 'info')
+    current_app.logger.info("LOGOUT: Redirecting to home page")
 
-    # Redirect to home page
-    return redirect(url_for('public.home'))
+    return response
