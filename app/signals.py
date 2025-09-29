@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from flask import request, session
-from flask_login import user_logged_in
+from flask_login import user_logged_in, user_logged_out
 from flask_security.signals import user_registered, user_authenticated
 
 from .models import LoginEvent
@@ -72,6 +72,20 @@ def register_signals(app, user_datastore, db):
         db.session.add(user)
         db.session.add(event)
         db.session.commit()
+    
+    @user_logged_out.connect_via(app)
+    def clear_session_on_logout(sender, user, **extra):
+        """
+        Clear the session completely when user logs out.
+        
+        This ensures that all session data is removed, including any custom
+        session variables that might persist after Flask-Security logout.
+        """
+        # Clear all session data
+        session.clear()
+        
+        # Force session to be marked as modified so it gets saved
+        session.modified = True
     
     # Add Flask-Security debugging signals
     @user_authenticated.connect_via(app)
