@@ -161,30 +161,7 @@ Find Pokemon cards near you with our interactive map! Discover Pokemon card kios
     });
   };
   
-  // Add logout click handler for page refresh
-  document.addEventListener('DOMContentLoaded', function() {
-    const logoutLink = document.getElementById('logout-link');
-    if (logoutLink) {
-      logoutLink.addEventListener('click', function(e) {
-        console.log('Logout clicked, intercepting and refreshing');
-        e.preventDefault(); // Prevent default navigation
-        
-        // Make the logout request manually
-        fetch(logoutLink.href, {
-          method: 'GET',
-          credentials: 'same-origin'
-        }).then(() => {
-          // After logout completes, refresh the page
-          console.log('Logout completed, refreshing page');
-          window.location.reload();
-        }).catch(() => {
-          // If fetch fails, still refresh
-          console.log('Logout fetch failed, refreshing anyway');
-          window.location.reload();
-        });
-      });
-    }
-  });
+  // Let Flask-Security handle logout naturally - no JavaScript intervention needed
   
   // Define initApp function immediately to ensure it's available for Google Maps API
   window.initApp = function() {
