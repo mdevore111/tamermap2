@@ -67,9 +67,7 @@ def register_signals(app, user_datastore, db):
         if 'visitor_session_id' in session:
             link_session_to_user(session['visitor_session_id'], user.id)
 
-        # Set boolean flags in session for quick access to user roles
-        session['is_admin'] = user.has_role('Admin')
-        session['is_pro'] = user.has_role('Pro')
+        # Session caching removed - using has_role() as single source of truth
 
         db.session.add(user)
         db.session.add(event)
