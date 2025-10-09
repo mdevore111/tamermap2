@@ -3,9 +3,7 @@
 {% block title %}States - Pokémon Card Retailers by State | TamerMap{% endblock %}
 {% block meta_description %}Browse Pokémon card kiosks and card shops by U.S. state. Simple index of state pages for search engines and users.{% endblock %}
 
-{% block canonical %}
-<link rel="canonical" href="{{ url_for('public.states_index', _external=True) }}">
-{% endblock %}
+{# canonical link handled by base via request.url #}
 
 {% block content %}
 <main>
