@@ -461,8 +461,7 @@ def create_app(config_class=BaseConfig):
                     'method': request.method,
                     'user_agent': request.user_agent.string,
                     'referrer': referrer,
-                    'is_internal_referrer': is_internal_referrer,
-                    'is_pro': is_pro  # Add Pro status tracking
+                    'is_internal_referrer': is_internal_referrer
                 })
                 db.session.add(log)
                 db.session.commit()
