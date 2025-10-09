@@ -13,30 +13,18 @@
   <p>Total kiosks: {{ total_kiosks }} · Total card shops: {{ total_card_shops }}</p>
 
   {% if cities %}
-    {% for city, groups in cities.items() %}
-      <section>
-        <h2>{{ city }}</h2>
-        {% if groups.kiosks %}
-          <h3>Kiosks</h3>
-          <ul>
-            {% for r in groups.kiosks %}
-              <li>{{ r.retailer }} — {{ r.full_address }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-        {% if groups.card_shops %}
-          <h3>Card Shops</h3>
-          <ul>
-            {% for r in groups.card_shops %}
-              <li>{{ r.retailer }} — {{ r.full_address }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-      </section>
-    {% endfor %}
+    <ul>
+      {% for city, groups in cities.items() %}
+        <li>
+          <strong>{{ city }}</strong>: kiosks {{ groups.kiosks | length }}, card shops {{ groups.card_shops | length }}
+        </li>
+      {% endfor %}
+    </ul>
   {% else %}
     <p>No retailers listed yet.</p>
   {% endif %}
+
+  <p>For detailed locations and features, please <a href="{{ url_for('public.learn') }}">learn about Pro</a>.</p>
 </main>
 {% endblock %}
 

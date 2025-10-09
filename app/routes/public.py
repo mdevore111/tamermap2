@@ -620,17 +620,10 @@ def state_page_xml(state_name):
     <retailers>
 '''
     for city, city_data in sorted_cities.items():
-        for retailer in city_data['kiosks']:
-            xml_content += f'''        <retailer>
-            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - Pokemon cards at {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
-            <type>Kiosk</type>
-        </retailer>
-'''
-        for retailer in city_data['card_shops']:
-            xml_content += f'''        <retailer>
-            <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - Pokemon trading card shop {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
-            <type>Card Shop</type>
-        </retailer>
+        xml_content += f'''        <city name="{escape_xml(city)}">
+            <kiosks>{len(city_data['kiosks'])}</kiosks>
+            <card_shops>{len(city_data['card_shops'])}</card_shops>
+        </city>
 '''
     xml_content += '''    </retailers>
 </state_retailers>'''
