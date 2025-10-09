@@ -59,6 +59,8 @@ class VisitorLog(db.Model):
     city = db.Column(db.String(100))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    # Optional snapshot of Pro status at visit time; nullable for backward compatibility
+    is_pro = db.Column(db.Boolean, nullable=True)
 
 
 class Event(db.Model):

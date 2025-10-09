@@ -1,3 +1,14 @@
+-- Migration: Add is_pro to visitor_log (SQLite)
+-- Note: SQLite ALTER TABLE is limited; use table rebuild pattern if needed.
+
+-- Safe add column (SQLite supports ADD COLUMN without default expression)
+ALTER TABLE visitor_log ADD COLUMN is_pro BOOLEAN;
+
+-- Optional: Backfill recent 60 days best-effort using current role state
+-- This is heuristic; a dedicated Python backfill is recommended for accuracy.
+-- UPDATE visitor_log SET is_pro = 1 WHERE user_id IN (
+--   SELECT id FROM user WHERE pro_end_date > datetime('now')
+-- ) AND timestamp >= datetime('now','-60 days');
 -- Production Message Table Update Script
 -- This script safely adds all missing columns to the message table
 -- Run this script on your production database to ensure all 24 fields are present

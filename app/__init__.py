@@ -329,8 +329,22 @@ def create_app(config_class=BaseConfig):
                 # Only log if there's a tracking issue
                 return
 
-            ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-            ip = ip.split(',')[0].strip() if ip else request.remote_addr
+            # Prefer Nginx-adjusted remote_addr; if Cloudflare header present and
+            # remote_addr appears to be a Cloudflare edge IP, use CF-Connecting-IP
+            ip = request.remote_addr
+            cf_ip = request.headers.get('CF-Connecting-IP')
+            # Common Cloudflare IPv4 ranges quick check (coarse) to guard regressions
+            try:
+                if ip and cf_ip and (
+                    ip.startswith('173.245.') or ip.startswith('103.21.') or ip.startswith('103.22.') or
+                    ip.startswith('103.31.') or ip.startswith('141.101.') or ip.startswith('108.162.') or
+                    ip.startswith('190.93.') or ip.startswith('188.114.') or ip.startswith('197.234.') or
+                    ip.startswith('198.41.') or ip.startswith('162.158.') or ip.startswith('104.16.') or
+                    ip.startswith('104.24.') or ip.startswith('172.64.') or ip.startswith('131.0.')):
+                    ip = cf_ip
+            except Exception:
+                # Fallback silently to remote_addr
+                pass
 
             user_id = current_user.id if current_user.is_authenticated else None
             ref_code = request.args.get("ref")
@@ -447,8 +461,8 @@ def create_app(config_class=BaseConfig):
                 print(f"🔍 DEBUG: Final is_pro value: {is_pro}")
 
                 # Create visitor log entry with proper internal flags and session tracking
-                log = VisitorLog(**{
-                    'session_id': session_id,  # New session tracking field
+                log_kwargs = {
+                    'session_id': session_id,
                     'ip_address': ip,
                     'user_id': user_id,
                     'ref_code': ref_code,
@@ -462,7 +476,20 @@ def create_app(config_class=BaseConfig):
                     'user_agent': request.user_agent.string,
                     'referrer': referrer,
                     'is_internal_referrer': is_internal_referrer
-                })
+                }
+
+                # If DB schema has is_pro, include it (backward compatible during rollout)
+                try:
+                    from sqlalchemy import inspect
+                    insp = inspect(db.engine)
+                    cols = [c['name'] for c in insp.get_columns('visitor_log')]
+                    if 'is_pro' in cols:
+                        log_kwargs['is_pro'] = is_pro
+                except Exception:
+                    # If inspection fails, skip setting is_pro
+                    pass
+
+                log = VisitorLog(**log_kwargs)
                 db.session.add(log)
                 db.session.commit()
 
