@@ -1,5 +1,47 @@
 {% extends "base.html" %}
 
+{% block title %}{{ state_title }} - Pokémon Card Retailers | TamerMap{% endblock %}
+{% block meta_description %}Find Pokémon card kiosks and card shops across {{ state_title }}. Simple directory grouped by city.{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ url_for('public.state_page', state_name=state_slug, _external=True) }}">
+{% endblock %}
+
+{% block content %}
+<main>
+  <h1>{{ state_title }}</h1>
+  <p>Total kiosks: {{ total_kiosks }} · Total card shops: {{ total_card_shops }}</p>
+
+  {% if cities %}
+    {% for city, groups in cities.items() %}
+      <section>
+        <h2>{{ city }}</h2>
+        {% if groups.kiosks %}
+          <h3>Kiosks</h3>
+          <ul>
+            {% for r in groups.kiosks %}
+              <li>{{ r.retailer }} — {{ r.full_address }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if groups.card_shops %}
+          <h3>Card Shops</h3>
+          <ul>
+            {% for r in groups.card_shops %}
+              <li>{{ r.retailer }} — {{ r.full_address }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </section>
+    {% endfor %}
+  {% else %}
+    <p>No retailers listed yet.</p>
+  {% endif %}
+</main>
+{% endblock %}
+
+{% extends "base.html" %}
+
 {% block title %}Pokemon Card Kiosks in {{ state_name }} - TamerMap{% endblock %}
 
 {% block meta_description %}Find Pokemon card kiosks and retail locations in {{ state_name }}. Browse {{ total_locations }} locations by city with addresses, phone numbers, and hours. Plan your card hunting routes efficiently.{% endblock %}

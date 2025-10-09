@@ -1,5 +1,25 @@
 {% extends "base.html" %}
 
+{% block title %}States - Pokémon Card Retailers by State | TamerMap{% endblock %}
+{% block meta_description %}Browse Pokémon card kiosks and card shops by U.S. state. Simple index of state pages for search engines and users.{% endblock %}
+
+{% block canonical %}
+<link rel="canonical" href="{{ url_for('public.states_index', _external=True) }}">
+{% endblock %}
+
+{% block content %}
+<main>
+  <h1>States</h1>
+  <ul>
+    {% for s in states %}
+      <li><a href="{{ url_for('public.state_page', state_name=s.slug) }}">{{ s.name }}</a></li>
+    {% endfor %}
+  </ul>
+</main>
+{% endblock %}
+
+{% extends "base.html" %}
+
 {% block title %}Pokemon Card Kiosks by State - TamerMap{% endblock %}
 
 {% block meta_description %}Find Pokemon card kiosks and retail locations across the United States. Browse by state to discover card hunting spots in Washington, California, Texas, Florida, New York, and more states.{% endblock %}

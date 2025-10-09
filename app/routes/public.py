@@ -63,19 +63,9 @@ def learn():
 @public_bp.route("/states")
 def states_index():
     """
-    States index page showing all available state pages.
-    BLOCKED: This route is for search engines only, not user access.
-    
-    Returns:
-        str: 404 error for users, XML for search engines
+    States index page showing all available state pages (simple HTML for SEO).
     """
-    # Block user access - this is for search engines only
-    user_agent = request.headers.get('User-Agent', '').lower()
-    # Allow preview via query param; otherwise restrict to bots
-    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
-        return "Page not found", 404
-    
-    # Define all available states with their metadata and keyword-rich descriptions
+    # Define all available states with their metadata and descriptions
     states = [
         # West Coast
         {
@@ -380,50 +370,15 @@ def states_index():
         }
     ]
     
-    # Return XML for search engines instead of HTML template
-    from flask import make_response
-    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<states xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <title>Pokemon Card Kiosks by State</title>
-    <description>Find Pokemon card kiosks across the United States</description>
-    <total_states>{len(states)}</total_states>
-    <states_list>
-'''
-    
-    for state in states:
-        xml_content += f'''        <state>
-            <name>{state['name']}</name>
-            <slug>{state['slug']}</slug>
-            <description>{state['description']}</description>
-            <url>{request.url_root.rstrip('/')}/state/{state['slug']}</url>
-        </state>
-'''
-    
-    xml_content += '''    </states_list>
-</states>'''
-    
-    response = make_response(xml_content)
-    response.headers['Content-Type'] = 'application/xml'
-    return response
+    return render_template("states_index.html", states=states)
 
 
 
 @public_bp.route("/state/<state_name>")
 def state_page(state_name):
     """
-    Dynamic state page showing all KIOSKS AND CARD SHOPS in a specific state organized by city.
-    BLOCKED: This route is for search engines only, not user access.
-    
-    Args:
-        state_name (str): The state name (e.g., 'washington', 'california')
-    
-    Returns:
-        str: 404 error for users, XML for search engines
+    State page showing all kiosks and card shops in a specific state (simple HTML for SEO).
     """
-    # Block user access - this is for search engines only
-    user_agent = request.headers.get('User-Agent', '').lower()
-    if 'preview' not in request.args and not any(bot in user_agent for bot in ['bot', 'crawler', 'spider', 'googlebot', 'bingbot']):
-        return "Page not found", 404
     
     # Normalize state name for database query
     state_name_normalized = state_name.title()
@@ -507,16 +462,154 @@ def state_page(state_name):
     total_kiosks = len(kiosks)
     total_card_shops = len(card_shops)
     
-    # Return XML for search engines instead of HTML template
+    state_title = state_name.replace('-', ' ').title()
+    return render_template(
+        "state.html",
+        state_slug=state_name,
+        state_title=state_title,
+        total_kiosks=total_kiosks,
+        total_card_shops=total_card_shops,
+        cities=sorted_cities
+    )
+
+# XML endpoints for machines
+@public_bp.route("/api/states.xml")
+def states_index_xml():
+    states = [
+        {'name': 'Washington', 'slug': 'washington', 'description': 'Find Pokemon cards early in Washington - Premier card hunting spots in Pacific Northwest with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Oregon', 'slug': 'oregon', 'description': 'Discover Pokemon cards first in Oregon - Top card hunting locations in Beaver State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'California', 'slug': 'california', 'description': 'Get Pokemon cards before anyone else in California - Best card hunting destinations in Golden State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'Nevada', 'slug': 'nevada', 'description': 'Find Pokemon cards early in Nevada - Premier card hunting spots in Silver State with fresh Pokemon card inventory and exclusive finds'},
+        {'name': 'Arizona', 'slug': 'arizona', 'description': 'Discover Pokemon cards first in Arizona - Top card hunting locations in Grand Canyon State with early access to new releases and rare Pokemon cards'},
+        {'name': 'Texas', 'slug': 'texas', 'description': 'Get Pokemon cards before anyone else in Texas - Best card hunting destinations in Lone Star State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'New Mexico', 'slug': 'new-mexico', 'description': 'Find Pokemon cards early in New Mexico - Premier card hunting spots in Land of Enchantment with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Florida', 'slug': 'florida', 'description': 'Discover Pokemon cards first in Florida - Top card hunting locations in Sunshine State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Georgia', 'slug': 'georgia', 'description': 'Get Pokemon cards before anyone else in Georgia - Best card hunting destinations in Peach State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'North Carolina', 'slug': 'north-carolina', 'description': 'Find Pokemon cards early in North Carolina - Premier card hunting spots in Tar Heel State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'South Carolina', 'slug': 'south-carolina', 'description': 'Discover Pokemon cards first in South Carolina - Top card hunting locations in Palmetto State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Tennessee', 'slug': 'tennessee', 'description': 'Get Pokemon cards before anyone else in Tennessee - Best card hunting destinations in Volunteer State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'Alabama', 'slug': 'alabama', 'description': 'Find Pokemon cards early in Alabama - Premier card hunting spots in Yellowhammer State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Mississippi', 'slug': 'mississippi', 'description': 'Discover Pokemon cards first in Mississippi - Top card hunting locations in Magnolia State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Louisiana', 'slug': 'louisiana', 'description': 'Get Pokemon cards before anyone else in Louisiana - Best card hunting destinations in Pelican State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'Arkansas', 'slug': 'arkansas', 'description': 'Find Pokemon cards early in Arkansas - Premier card hunting spots in Natural State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'New York', 'slug': 'new-york', 'description': 'Discover Pokemon cards first in New York - Top card hunting locations in Empire State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'New Jersey', 'slug': 'new-jersey', 'description': 'Get Pokemon cards before anyone else in New Jersey - Best card hunting destinations in Garden State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'Pennsylvania', 'slug': 'pennsylvania', 'description': 'Find Pokemon cards early in Pennsylvania - Premier card hunting spots in Keystone State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Delaware', 'slug': 'delaware', 'description': 'Discover Pokemon cards first in Delaware - Top card hunting locations in First State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Maryland', 'slug': 'maryland', 'description': 'Get Pokemon cards before anyone else in Maryland - Best card hunting destinations in Old Line State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'Virginia', 'slug': 'virginia', 'description': 'Find Pokemon cards early in Virginia - Premier card hunting spots in Old Dominion with fresh Pokemon card inventory and rare finds'},
+        {'name': 'West Virginia', 'slug': 'west-virginia', 'description': 'Discover Pokemon cards first in West Virginia - Top card hunting locations in Mountain State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Massachusetts', 'slug': 'massachusetts', 'description': 'Get Pokemon cards before anyone else in Massachusetts - Best card hunting destinations in Bay State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'Connecticut', 'slug': 'connecticut', 'description': 'Find Pokemon cards early in Connecticut - Premier card hunting spots in Constitution State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Rhode Island', 'slug': 'rhode-island', 'description': 'Discover Pokemon cards first in Rhode Island - Top card hunting locations in Ocean State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Vermont', 'slug': 'vermont', 'description': 'Get Pokemon cards before anyone else in Vermont - Best card hunting destinations in Green Mountain State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'New Hampshire', 'slug': 'new-hampshire', 'description': 'Find Pokemon cards early in New Hampshire - Premier card hunting spots in Granite State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Maine', 'slug': 'maine', 'description': 'Discover Pokemon cards first in Maine - Top card hunting locations in Pine Tree State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Illinois', 'slug': 'illinois', 'description': 'Get Pokemon cards before anyone else in Illinois - Best card hunting destinations in Prairie State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'Indiana', 'slug': 'indiana', 'description': 'Find Pokemon cards early in Indiana - Premier card hunting spots in Hoosier State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Michigan', 'slug': 'michigan', 'description': 'Discover Pokemon cards first in Michigan - Top card hunting locations in Great Lakes State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Ohio', 'slug': 'ohio', 'description': 'Get Pokemon cards before anyone else in Ohio - Best card hunting destinations in Buckeye State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'Wisconsin', 'slug': 'wisconsin', 'description': 'Find Pokemon cards early in Wisconsin - Premier card hunting spots in Badger State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Minnesota', 'slug': 'minnesota', 'description': 'Discover Pokemon cards first in Minnesota - Top card hunting locations in North Star State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Iowa', 'slug': 'iowa', 'description': 'Get Pokemon cards before anyone else in Iowa - Best card hunting destinations in Hawkeye State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'Missouri', 'slug': 'missouri', 'description': 'Find Pokemon cards early in Missouri - Premier card hunting spots in Show Me State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Kansas', 'slug': 'kansas', 'description': 'Discover Pokemon cards first in Kansas - Top card hunting locations in Sunflower State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Nebraska', 'slug': 'nebraska', 'description': 'Get Pokemon cards before anyone else in Nebraska - Best card hunting destinations in Cornhusker State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'North Dakota', 'slug': 'north-dakota', 'description': 'Find Pokemon cards early in North Dakota - Premier card hunting spots in Peace Garden State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'South Dakota', 'slug': 'south-dakota', 'description': 'Discover Pokemon cards first in South Dakota - Top card hunting locations in Mount Rushmore State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Colorado', 'slug': 'colorado', 'description': 'Get Pokemon cards before anyone else in Colorado - Best card hunting destinations in Centennial State with first pick of rare Pokemon cards and fresh inventory'},
+        {'name': 'Utah', 'slug': 'utah', 'description': 'Find Pokemon cards early in Utah - Premier card hunting spots in Beehive State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Wyoming', 'slug': 'wyoming', 'description': 'Discover Pokemon cards first in Wyoming - Top card hunting locations in Equality State with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Montana', 'slug': 'montana', 'description': 'Get Pokemon cards before anyone else in Montana - Best card hunting destinations in Treasure State with first pick of rare Pokemon cards and fresh stock'},
+        {'name': 'Idaho', 'slug': 'idaho', 'description': 'Find Pokemon cards early in Idaho - Premier card hunting spots in Gem State with fresh Pokemon card inventory and rare finds'},
+        {'name': 'Alaska', 'slug': 'alaska', 'description': 'Discover Pokemon cards first in Alaska - Top card hunting locations in Last Frontier with early access to new releases and exclusive Pokemon cards'},
+        {'name': 'Hawaii', 'slug': 'hawaii', 'description': 'Get Pokemon cards before anyone else in Hawaii - Best card hunting destinations in Aloha State with first pick of rare Pokemon cards and fresh stock'}
+    ]
+    from flask import make_response
+    xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+<states xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <title>Pokemon Card Kiosks by State</title>
+    <description>Find Pokemon card kiosks across the United States</description>
+    <total_states>{len(states)}</total_states>
+    <states_list>
+'''
+    for state in states:
+        xml_content += f'''        <state>
+            <name>{state['name']}</name>
+            <slug>{state['slug']}</slug>
+            <description>{state['description']}</description>
+            <url>{request.url_root.rstrip('/')}/state/{state['slug']}</url>
+        </state>
+'''
+    xml_content += '''    </states_list>
+</states>'''
+    response = make_response(xml_content)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
+
+@public_bp.route("/api/state/<state_name>.xml")
+def state_page_xml(state_name):
+    state_name_normalized = state_name.title()
+    from sqlalchemy import or_
+    kiosk_query = db.session.query(Retailer).filter(
+        Retailer.enabled == True,
+        Retailer.retailer_type.ilike('%kiosk%')
+    )
+    cardshop_type_filters = or_(
+        Retailer.retailer_type.ilike('%card shop%'),
+        Retailer.retailer_type.ilike('%card_shop%'),
+        Retailer.retailer_type.ilike('%indie%'),
+        Retailer.retailer_type.ilike('%card%shop%'),
+        Retailer.retailer_type.ilike('%shop%')
+    )
+    cardshop_query = db.session.query(Retailer).filter(
+        Retailer.enabled == True,
+        cardshop_type_filters
+    )
+    state_variations = {
+        'washington': ['Washington', 'WA', 'Wash'],
+        'california': ['California', 'CA', 'Calif'],
+        'texas': ['Texas', 'TX', 'Tex'],
+        'florida': ['Florida', 'FL', 'Fla'],
+        'new-york': ['New York', 'NY', 'New York State'],
+        'illinois': ['Illinois', 'IL', 'Ill'],
+        'pennsylvania': ['Pennsylvania', 'PA', 'Penn'],
+        'ohio': ['Ohio', 'OH'],
+        'michigan': ['Michigan', 'MI', 'Mich'],
+        'georgia': ['Georgia', 'GA']
+    }
+    search_terms = state_variations.get(state_name.lower(), [state_name_normalized])
+    state_filters = []
+    for term in search_terms:
+        state_filters.append(Retailer.full_address.ilike(f'%{term}%'))
+    kiosks = kiosk_query.filter(or_(*state_filters)).all()
+    card_shops = cardshop_query.filter(or_(*state_filters)).all()
+    cities = {}
+    for retailer in kiosks:
+        address_parts = retailer.full_address.split(',')
+        if len(address_parts) >= 2:
+            city = ' '.join(address_parts[1].strip().split())
+            if city:
+                if city not in cities:
+                    cities[city] = {'kiosks': [], 'card_shops': []}
+                cities[city]['kiosks'].append(retailer)
+    for retailer in card_shops:
+        address_parts = retailer.full_address.split(',')
+        if len(address_parts) >= 2:
+            city = ' '.join(address_parts[1].strip().split())
+            if city:
+                if city not in cities:
+                    cities[city] = {'kiosks': [], 'card_shops': []}
+                cities[city]['card_shops'].append(retailer)
+    sorted_cities = dict(sorted(cities.items()))
+    total_kiosks = len(kiosks)
+    total_card_shops = len(card_shops)
     from flask import make_response
     import html
-    
     def escape_xml(text):
-        """Escape XML special characters"""
         if text is None:
             return 'N/A'
         return html.escape(str(text))
-    
     xml_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <state_retailers xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <state_name>{escape_xml(state_name_normalized)}</state_name>
@@ -526,30 +619,21 @@ def state_page(state_name):
     <total_cities>{len(sorted_cities)}</total_cities>
     <retailers>
 '''
-    
     for city, city_data in sorted_cities.items():
-        city_kiosks = city_data['kiosks']
-        city_card_shops = city_data['card_shops']
-        
-        # Add all kiosks for this city in simple format
-        for retailer in city_kiosks:
+        for retailer in city_data['kiosks']:
             xml_content += f'''        <retailer>
             <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - Pokemon cards at {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
             <type>Kiosk</type>
         </retailer>
 '''
-        
-        # Add all card shops for this city in simple format  
-        for retailer in city_card_shops:
+        for retailer in city_data['card_shops']:
             xml_content += f'''        <retailer>
             <location>{escape_xml(state_name_normalized)} - {escape_xml(city)} - Pokemon trading card shop {escape_xml(retailer.retailer)} {escape_xml(retailer.full_address)}</location>
             <type>Card Shop</type>
         </retailer>
 '''
-    
     xml_content += '''    </retailers>
 </state_retailers>'''
-    
     response = make_response(xml_content)
     response.headers['Content-Type'] = 'application/xml'
     return response
@@ -1216,6 +1300,7 @@ Crawl-delay: 1
     
     response = make_response(robots_content)
     response.headers['Content-Type'] = 'text/plain'
+    response.headers['Cache-Control'] = 'public, max-age=3600'
     return response
 
 
